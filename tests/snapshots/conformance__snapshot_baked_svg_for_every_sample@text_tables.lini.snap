@@ -21,6 +21,7 @@ input_file: samples/text_tables.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-link .lini-marker { fill: #989898; }
   </style>
   <defs>
     <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
@@ -629,7 +630,7 @@ input_file: samples/text_tables.lini
     <g class="lini-link" data-from="a" data-to="b">
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="97" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="97" width="24.5" height="79"/><rect class="lini-cut" x="9.1" y="130.95" width="100.8" height="15.6"/></mask>
       <path d="M 43.5 99 L 43.5 99 A 16 16 0 0 1 59.5 115 L 59.5 158 A 16 16 0 0 1 43.5 174 L 42.5 174" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="38.5,174 47.5,169.5 47.5,178.5" style="fill: #989898"/>
+      <polygon class="lini-marker lini-marker-arrow" points="38.5,174 47.5,169.5 47.5,178.5"/>
       <g class="lini-link-label" style="fill: #005d56; font-weight: bold">
         <use href="#lg0700-87" transform="translate(12.7 143.046) scale(0.006 -0.006)"/>
         <use href="#lg0700-88" transform="translate(19.9 143.046) scale(0.006 -0.006)"/>
@@ -647,7 +648,7 @@ input_file: samples/text_tables.lini
     <g class="lini-link" data-from="b" data-to="c">
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37" y="188" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="188" width="24.5" height="79"/><rect class="lini-cut" x="1.9" y="211.45" width="115.2" height="15.6"/></mask>
       <path d="M 39 190 L 43.5 190 A 16 16 0 0 1 59.5 206 L 59.5 252.5 A 12.5 12.5 0 0 1 47 265 L 47 265" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="43,265 52,260.5 52,269.5" style="fill: #989898"/>
+      <polygon class="lini-marker lini-marker-arrow" points="43,265 52,260.5 52,269.5"/>
       <g class="lini-link-label" style="fill: #851618; font-weight: bold; text-shadow: 1px 1px 2px #484848" transform="rotate(-6 59.5 219.25)">
         <use href="#lg0700-82" transform="translate(5.5 223.546) scale(0.006 -0.006)"/>
         <use href="#lg0700-89" transform="translate(12.7 223.546) scale(0.006 -0.006)"/>

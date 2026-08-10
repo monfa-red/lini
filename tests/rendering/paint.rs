@@ -262,3 +262,61 @@ fn projection_line_chrome_rides_one_rule_and_removes_via_the_cascade() {
         "the cascade removes the projection line: {removed}"
     );
 }
+
+// ── The class-diff law, scope by scope [SPEC 18] ──
+// Every look the engine states once — a schematic scope's wire dress, a
+// drawing's dimension chrome — rides a class rule; an element carries
+// `style=` only for an authored diff.
+
+#[test]
+fn a_schematic_scene_emits_no_inline_style() {
+    let svg = render_live(
+        "{ layout: schematic }\n|R#R5| \"470\"\n|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n]\n|gnd|\n",
+    );
+    assert!(!svg.contains("style=\""), "no inline style: {svg}");
+}
+
+#[test]
+fn a_nested_schematic_scope_emits_no_inline_style() {
+    // The dress cannot ride `.lini-link` (the root is no sheet), so the wires
+    // wear a generated class and the dress states itself once [SPEC 16.5].
+    let svg = render_live(
+        "{ |bay::group| { layout: schematic } }\n|bay#b| [\n  |R#R1| \"470\"\n  |R#R2| \"1k\"\n  R1.p2 - R2.p1\n]\n",
+    );
+    assert!(!svg.contains("style=\""), "no inline style: {svg}");
+    assert!(
+        svg.contains(r#"<g class="lini-link lini-schematic-wire""#),
+        "the wire wears the dress class: {svg}"
+    );
+}
+
+#[test]
+fn a_recoloured_drawing_states_its_chrome_tone_once() {
+    // A `|-| { stroke: … }` recolours every dimension and leader: the tone is
+    // the sheet's, so no chrome node repeats it [SPEC 15.6].
+    let svg = render_live(
+        "{ |-| { stroke: red } }\n|drawing#d| { unit: mm } [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n  p:top <- \"note\"\n]\n",
+    );
+    assert!(
+        svg.contains(".lini .lini-dim-line { fill: none; stroke: red; stroke-width: 1; }"),
+        "the linework tone rides the rule: {svg}"
+    );
+    assert!(
+        !svg.contains(r#"style="stroke: red""#) && !svg.contains(r#"style="fill: red""#),
+        "no chrome node repeats it: {svg}"
+    );
+}
+
+#[test]
+fn a_recoloured_link_states_its_marker_fill_once() {
+    // The heads follow the wire through one `.lini-link .lini-marker` rule.
+    let svg = render_live("{ |-| { stroke: red } }\na -> b\nb -> c\nc -> a\n");
+    assert!(
+        svg.contains(".lini .lini-link .lini-marker { fill: red; }"),
+        "one rule states the head fill: {svg}"
+    );
+    assert!(
+        !svg.contains(r#"style="fill: red""#),
+        "no head repeats it: {svg}"
+    );
+}

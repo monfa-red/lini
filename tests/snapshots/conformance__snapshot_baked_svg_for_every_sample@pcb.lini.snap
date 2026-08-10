@@ -16,6 +16,7 @@ input_file: samples/pcb.lini
     .lini .lini-passive { fill: #484848; stroke: none; color: #eeeeee; }
     .lini .lini-link { fill: none; stroke: #cb8b00; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-link .lini-marker { fill: #cb8b00; }
   </style>
   <defs>
     <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
@@ -169,123 +170,123 @@ input_file: samples/pcb.lini
   <g class="lini-links">
     <g class="lini-link" data-from="usb" data-to="mcu">
       <path d="M -12.5 -152 L -12.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-12.5,-89.5 -17,-98.5 -8,-98.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-12.5,-89.5 -17,-98.5 -8,-98.5"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
       <path d="M -22.5 -152 L -22.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-22.5,-89.5 -27,-98.5 -18,-98.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-22.5,-89.5 -27,-98.5 -18,-98.5"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
       <path d="M -32.5 -152 L -32.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-32.5,-89.5 -37,-98.5 -28,-98.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-32.5,-89.5 -37,-98.5 -28,-98.5"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
       <path d="M -42.5 -152 L -42.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-42.5,-89.5 -47,-98.5 -38,-98.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-42.5,-89.5 -47,-98.5 -38,-98.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="rf">
       <path d="M 0 -90 L 0 -115.5 A 10 10 0 0 1 10 -125.5 L 205 -125.5 A 20 20 0 0 0 225 -145.5 L 225 -146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="225,-150.5 229.5,-141.5 220.5,-141.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="225,-150.5 229.5,-141.5 220.5,-141.5"/>
     </g>
     <g class="lini-link" data-from="rf" data-to="r1">
       <path d="M 215 -150 L 215 -145.5 A 10 10 0 0 1 205 -135.5 L 120 -135.5 A 10 10 0 0 1 110 -145.5 L 110 -155.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="110,-159.5 114.5,-150.5 105.5,-150.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="110,-159.5 114.5,-150.5 105.5,-150.5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
       <path d="M -190 -10 L -93.5 -10"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-10 -98.5,-5.5 -98.5,-14.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-10 -98.5,-5.5 -98.5,-14.5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
       <path d="M -190 0 L -93.5 0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,0 -98.5,4.5 -98.5,-4.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,0 -98.5,4.5 -98.5,-4.5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
       <path d="M -190 10 L -93.5 10"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,10 -98.5,14.5 -98.5,5.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,10 -98.5,14.5 -98.5,5.5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
       <path d="M -190 20 L -93.5 20"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,20 -98.5,24.5 -98.5,15.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,20 -98.5,24.5 -98.5,15.5"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
       <path d="M -190 -100 L -160 -100 A 30 30 0 0 1 -130 -70 L -130 -50 A 10 10 0 0 0 -120 -40 L -93.5 -40"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-40 -98.5,-35.5 -98.5,-44.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-40 -98.5,-35.5 -98.5,-44.5"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
       <path d="M -190 -90 L -160 -90 A 20 20 0 0 1 -140 -70 L -140 -50 A 20 20 0 0 0 -120 -30 L -93.5 -30"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-30 -98.5,-25.5 -98.5,-34.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-30 -98.5,-25.5 -98.5,-34.5"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
       <path d="M -190 -80 L -160 -80 A 10 10 0 0 1 -150 -70 L -150 -50 A 30 30 0 0 0 -120 -20 L -93.5 -20"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-20 -98.5,-15.5 -98.5,-24.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-20 -98.5,-15.5 -98.5,-24.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
       <path d="M 90 -15 L 186.5 -15"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,-15 181.5,-10.5 181.5,-19.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="190.5,-15 181.5,-10.5 181.5,-19.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
       <path d="M 90 -5 L 186.5 -5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,-5 181.5,-0.5 181.5,-9.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="190.5,-5 181.5,-0.5 181.5,-9.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
       <path d="M 90 5 L 186.5 5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,5 181.5,9.5 181.5,0.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="190.5,5 181.5,9.5 181.5,0.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
       <path d="M 90 15 L 186.5 15"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,15 181.5,19.5 181.5,10.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="190.5,15 181.5,19.5 181.5,10.5"/>
     </g>
     <g class="lini-link" data-from="osc" data-to="motor">
       <path d="M 220 -69 L 220 -33.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,-29.5 215.5,-38.5 224.5,-38.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="220,-29.5 215.5,-38.5 224.5,-38.5"/>
     </g>
     <g class="lini-link" data-from="osc" data-to="mcu">
       <path d="M 193 -90 L 150 -90 A 10 10 0 0 0 140 -80 L 140 -35 A 10 10 0 0 1 130 -25 L 93.5 -25"/>
-      <polygon class="lini-marker lini-marker-arrow" points="89.5,-25 98.5,-29.5 98.5,-20.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="89.5,-25 98.5,-29.5 98.5,-20.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="sens">
       <path d="M 15 90 L 15 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="15,150.5 10.5,141.5 19.5,141.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="15,150.5 10.5,141.5 19.5,141.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="sens">
       <path d="M 5 90 L 5 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="5,150.5 0.5,141.5 9.5,141.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="5,150.5 0.5,141.5 9.5,141.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="adc">
       <path d="M -5 90 L -5 105 A 20 20 0 0 1 -25 125 L -95 125 A 10 10 0 0 0 -105 135 L -105 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-105,150.5 -109.5,141.5 -100.5,141.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-105,150.5 -109.5,141.5 -100.5,141.5"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="adc">
       <path d="M -15 90 L -15 105 A 10 10 0 0 1 -25 115 L -95 115 A 20 20 0 0 0 -115 135 L -115 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-115,150.5 -119.5,141.5 -110.5,141.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-115,150.5 -119.5,141.5 -110.5,141.5"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="c1">
       <path d="M -130 -180 L -189.5 -180"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-193.5,-180 -184.5,-184.5 -184.5,-175.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-193.5,-180 -184.5,-184.5 -184.5,-175.5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="c2">
       <path d="M -220 30 L -220 65.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-220,69.5 -224.5,60.5 -215.5,60.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-220,69.5 -224.5,60.5 -215.5,60.5"/>
     </g>
     <g class="lini-link" data-from="motor" data-to="r2">
       <path d="M 220 30 L 220 65.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,69.5 215.5,60.5 224.5,60.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="220,69.5 215.5,60.5 224.5,60.5"/>
     </g>
     <g class="lini-link" data-from="imu" data-to="r2">
       <path d="M 220 150 L 220 114.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,110.5 224.5,119.5 215.5,119.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="220,110.5 224.5,119.5 215.5,119.5"/>
     </g>
     <g class="lini-link" data-from="imu" data-to="mcu">
       <path d="M 190 180 L 173.5 180 A 10 10 0 0 1 163.5 170 L 163.5 35 A 10 10 0 0 0 153.5 25 L 93.5 25"/>
-      <polygon class="lini-marker lini-marker-arrow" points="89.5,25 98.5,20.5 98.5,29.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="89.5,25 98.5,20.5 98.5,29.5"/>
     </g>
     <g class="lini-link" data-from="adc" data-to="c3">
       <path d="M -140 180 L -189.5 180"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-193.5,180 -184.5,175.5 -184.5,184.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-193.5,180 -184.5,175.5 -184.5,184.5"/>
     </g>
     <g class="lini-link" data-from="sens" data-to="r3">
       <path d="M 30 180 L 46.5 180 A 10 10 0 0 0 56.5 170 L 56.5 134.5 A 10 10 0 0 1 66.5 124.5 L 100 124.5 A 10 10 0 0 1 110 134.5 L 110 155.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="110,159.5 105.5,150.5 114.5,150.5" style="fill: #cb8b00"/>
+      <polygon class="lini-marker lini-marker-arrow" points="110,159.5 105.5,150.5 114.5,150.5"/>
     </g>
   </g>
 </svg>

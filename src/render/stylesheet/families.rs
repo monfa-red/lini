@@ -9,7 +9,7 @@ use super::super::values::{css_value, dash_pattern, format_value, num};
 use super::paint_props;
 use crate::Options;
 use crate::layout::LaidOut;
-use crate::resolve::{AttrMap, NodeKind, ResolvedValue, VarTable};
+use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::collections::{BTreeSet, HashMap};
 
 /// Emit a generated class's default paint [SPEC 18] — the look for a class the
@@ -148,8 +148,12 @@ pub(super) fn build_shape_rules(
     }
     // The drawing dimension anatomy [SPEC 15.6] states its constant paint
     // once: dimension / leader linework at the drafting thin weight, and the
-    // extension lines a step lighter (`--lini-stroke-light`) so the geometry
-    // reads first. After the shape rules, so they win the same-specificity tie.
+    // extension lines a step lighter so the geometry reads first. The tones
+    // are the document's own annotation paint ([`annotation_tones`]) — a
+    // sheet that recolours its `|-|` states the colour here, once, instead of
+    // on every chrome node [SPEC 18]. After the shape rules, so they win the
+    // same-specificity tie.
+    let (dim_tone, ext_tone) = annotation_tones(laid, vars, opts);
     emit_generated_default(
         rules,
         laid,
@@ -157,7 +161,7 @@ pub(super) fn build_shape_rules(
         present.contains("dim-line"),
         vec![
             ("fill".into(), "none".into()),
-            ("stroke".into(), live("stroke-dark", vars, opts)),
+            ("stroke".into(), dim_tone),
             ("stroke-width".into(), "1".into()),
         ],
     );
@@ -168,7 +172,7 @@ pub(super) fn build_shape_rules(
         present.contains("ext-line"),
         vec![
             ("fill".into(), "none".into()),
-            ("stroke".into(), live("stroke-light", vars, opts)),
+            ("stroke".into(), ext_tone),
             ("stroke-width".into(), "1".into()),
         ],
     );
@@ -335,10 +339,7 @@ pub(super) fn build_link_rules(
         let from_defaults = |p: &str| dp.iter().find(|(k, _)| k == p).map(|(_, v)| v.clone());
         let mut props = vec![
             ("fill".into(), "none".into()),
-            (
-                "stroke".into(),
-                from_defaults("stroke").unwrap_or_else(|| live("stroke", vars, opts)),
-            ),
+            ("stroke".into(), link_default_stroke(laid, vars, opts)),
             (
                 "stroke-width".into(),
                 from_defaults("stroke-width").unwrap_or_else(|| "2".into()),
@@ -395,7 +396,7 @@ pub(super) fn build_link_label_rules(
     laid: &LaidOut,
     has_link_labels: bool,
     has_seq_labels: bool,
-    has_labels: bool,
+    has_cuts: bool,
     vars: &VarTable,
     opts: &Options,
 ) {
@@ -437,14 +438,16 @@ pub(super) fn build_link_label_rules(
     // The label cut's mask rects state their fill/stroke as CSS, not inline — so
     // the link's own `stroke` can't bleed into the luminance mask, and the SVG
     // stays free of per-label paint attrs [SPEC 18]. White shows the link, a black
-    // box per label punches the hole. When labels exist the white ground seats
-    // here beside `.lini-cut` (the halo path defers it via its `present` flag).
-    emit_generated_default(rules, laid, "lini-cut-bg", has_labels, cut_bg_props());
+    // box per label punches the hole. Gated on a cut actually landing on a wire
+    // (`has_cuts`), so neither rule emits with nobody to wear it; when one does,
+    // the white ground seats here beside `.lini-cut` (the halo path defers it
+    // via its `present` flag).
+    emit_generated_default(rules, laid, "lini-cut-bg", has_cuts, cut_bg_props());
     emit_generated_default(
         rules,
         laid,
         "lini-cut",
-        has_labels,
+        has_cuts,
         vec![
             ("fill".into(), "black".into()),
             ("stroke".into(), "none".into()),
@@ -471,13 +474,13 @@ pub(super) fn build_halo_rules(
     rules: &mut Vec<Rule>,
     laid: &LaidOut,
     has_halos: bool,
-    has_labels: bool,
+    has_cuts: bool,
 ) {
     emit_generated_default(
         rules,
         laid,
         "lini-cut-bg",
-        has_halos && !has_labels,
+        has_halos && !has_cuts,
         cut_bg_props(),
     );
     emit_generated_default(
@@ -512,16 +515,32 @@ pub(super) fn build_marker_rules(
             ],
         });
     }
-    // The drafting heads read the geometry tone [SPEC 10.1]: the slender dim
-    // arrow and the datum triangle at full black/white, after `.lini-marker`
-    // so the variant wins the same-specificity tie.
+    // A head caps the wire it sits on, so it fills with the wire's colour: when
+    // the document restyles `|-|`, that is stated **once** here as the
+    // `.lini-link .lini-marker` companion (the same shape a `.style` class
+    // contributes below), never inlined on every head [SPEC 18].
+    let link_markers = laid
+        .links
+        .iter()
+        .any(|w| w.markers.start != MarkerKind::None || w.markers.end != MarkerKind::None);
+    let wire_fill = link_default_stroke(laid, vars, opts);
+    if link_markers && wire_fill != live("stroke", vars, opts) {
+        rules.push(Rule {
+            class: "lini-link .lini-marker".into(),
+            props: vec![("fill".into(), wire_fill)],
+        });
+    }
+    // The drafting heads read the document's annotation tone [SPEC 10.1/15.6]:
+    // the slender dim arrow and the datum triangle fill with the linework
+    // colour, after `.lini-marker` so the variant wins the same-specificity tie.
+    let (dim_tone, _) = annotation_tones(laid, vars, opts);
     for variant in ["marker-dim", "marker-datum"] {
         emit_generated_default(
             rules,
             laid,
             &format!("lini-{variant}"),
             present.contains(variant),
-            vec![("fill".into(), live("stroke-dark", vars, opts))],
+            vec![("fill".into(), dim_tone.clone())],
         );
     }
 
@@ -589,6 +608,31 @@ pub(super) fn build_open_marker_rule(rules: &mut Vec<Rule>, has_open: bool) {
             ],
         });
     }
+}
+
+/// The stroke a document's wires default to — what the `.lini-link` rule
+/// states, and therefore what a filled marker head fills with. **One home**,
+/// so a head can never drift from the wire it caps [SPEC 18].
+fn link_default_stroke(laid: &LaidOut, vars: &VarTable, opts: &Options) -> String {
+    paint_props(&laid.sheet.link_defaults, vars, opts)
+        .into_iter()
+        .find(|(k, _)| k == "stroke")
+        .map(|(_, v)| v)
+        .unwrap_or_else(|| live("stroke", vars, opts))
+}
+
+/// The document's default drawing-annotation tones — `(linework, extension
+/// line)` — formatted for CSS. Read from the **one** place that decides a
+/// statement's chrome paint ([`crate::layout::drawing::annotate::default_paint`]),
+/// applied to a statement dressed by nothing but the document's `|-|`
+/// defaults; so the emitted chrome rules say exactly what a default statement
+/// paints and its wearers diff to nothing [SPEC 18].
+fn annotation_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String) {
+    let (dim, ext) = crate::layout::drawing::annotate::default_paint(&laid.sheet.link_defaults);
+    (
+        format_value(&dim, vars, opts),
+        format_value(&ext, vars, opts),
+    )
 }
 
 /// A live-var reference formatted for CSS — `var(--lini-name)` live, its baked

@@ -103,6 +103,18 @@ impl Paint {
     }
 }
 
+/// The tones a document's drawing chrome defaults to — `(linework, extension
+/// line)` — for a statement dressed by nothing but the document's `|-|`
+/// defaults. The renderer states these in the `.lini-dim-line` /
+/// `.lini-ext-line` / drafting-head rules, so a sheet that recolours its
+/// annotations says it once in CSS rather than on every chrome node
+/// [SPEC 18]. Read through [`Paint::of`], the one place the tone is decided,
+/// so the rule and its wearers can never disagree.
+pub(crate) fn default_paint(link_defaults: &AttrMap) -> (ResolvedValue, ResolvedValue) {
+    let paint = Paint::of(link_defaults);
+    (paint.stroke, paint.light)
+}
+
 /// Lower every non-mate link of a drawing scope. Leaders, callouts, and
 /// angles go first — their placement is feature-anchored — and their **texts
 /// register as obstacles** with the row packer, so a dimension never seats

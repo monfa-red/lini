@@ -129,6 +129,25 @@ pub fn resolve_with_env(
     // statement's own scope chain as it resolves, never reconstructed from a
     // path afterwards; the wire laws below are gated on it.
     let mut owners: Vec<links::Owner> = Vec::new();
+    // A schematic scope written **inside** the file dresses its wires off the
+    // root's own link defaults, so the `.lini-link` rule cannot state that
+    // dress [SPEC 16.5]. The wires wear a generated class instead and the
+    // dress rides one rule (`build_sheet_inputs`) — the class-diff law, the
+    // same shape a mindmap's hue walk takes [SPEC 18]. A root-level sheet
+    // needs none of it: `.lini-link` already carries the dress.
+    let root_owner = link_scope::statement_owner(&[], &root_attrs);
+    let mut nested_sheet = false;
+    let mut dress_wires =
+        |owner: links::Owner, resolved: &mut Vec<crate::resolve::ResolvedLink>| {
+            if owner != links::Owner::Sheet || root_owner == links::Owner::Sheet {
+                return;
+            }
+            nested_sheet = true;
+            for w in resolved {
+                w.applied_styles
+                    .push(link_scope::SCHEMATIC_WIRE_CLASS.to_string());
+            }
+        };
     let mut datums = DatumTable::default();
     // `|datum|` nodes join the identity set first [SPEC 15.9] — one alphabet
     // per drawing scope, shared with the `>-` leader form below.
@@ -139,13 +158,13 @@ pub fn resolve_with_env(
         &mut datums,
     )?;
     for w in &file.links {
-        let owner = link_scope::statement_owner(&[], &root_attrs);
+        let owner = root_owner;
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[], owner);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
         collect_datum_letter(w, &[], &kind, &mut datums)?;
         let carried = resolve_carried(w, &ctx, &kind, &ancestors, &[], &root_text_ctx, &[])?;
         collect_datum_nodes(&carried, "", kind.drawing.then_some(""), &mut datums)?;
-        let resolved = links::resolve_link(
+        let mut resolved = links::resolve_link(
             w,
             &ctx,
             &index,
@@ -157,6 +176,7 @@ pub fn resolve_with_env(
             &enclosing_view,
             carried,
         )?;
+        dress_wires(owner, &mut resolved);
         owners.resize(owners.len() + resolved.len(), owner);
         link_list.extend(resolved);
     }
@@ -181,7 +201,7 @@ pub fn resolve_with_env(
             kind.drawing.then_some(scope.as_str()),
             &mut datums,
         )?;
-        let resolved = links::resolve_link(
+        let mut resolved = links::resolve_link(
             &lw.link,
             &ctx,
             &index,
@@ -193,6 +213,7 @@ pub fn resolve_with_env(
             &enclosing_view,
             carried,
         )?;
+        dress_wires(owner, &mut resolved);
         owners.resize(owners.len() + resolved.len(), owner);
         link_list.extend(resolved);
     }
@@ -201,7 +222,15 @@ pub fn resolve_with_env(
     // pair errors. One pass, after every statement has an endpoint.
     let link_list = links::wire_laws(link_list, &owners, &nodes)?;
 
-    let sheet_inputs = build_sheet_inputs(file, &vars, &funcs, &root_attrs, &baked, &sheet)?;
+    let sheet_inputs = build_sheet_inputs(
+        file,
+        &vars,
+        &funcs,
+        &root_attrs,
+        &baked,
+        &sheet,
+        nested_sheet,
+    )?;
 
     Ok(Program {
         vars,
@@ -398,7 +427,8 @@ fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap
 /// The renderer's [`SheetInputs`]: every single-class rule's attrs (the generated
 /// `.lini-*` type classes and the user `.style` classes, in source order), the
 /// link defaults, and the root inherited-text font size. Descendant rules
-/// (`|.lini-table .lini-box| { }`) bake inline via the cascade and carry no entry.
+/// (`|.lini-table .lini-box| { }`) bake inline via the cascade and carry no entry
+/// — save the one this pass generates when `nested_sheet` wires exist.
 fn build_sheet_inputs(
     file: &File,
     vars: &VarTable,
@@ -406,6 +436,7 @@ fn build_sheet_inputs(
     root_attrs: &AttrMap,
     baked: &link_scope::LinkBases,
     sheet: &Stylesheet,
+    nested_sheet: bool,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
     let mut descendant_rules = Vec::new();
@@ -429,15 +460,25 @@ fn build_sheet_inputs(
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
     // scope config, then the root `|-|` element rule [SPEC 9, 16]. Its paint states
     // the `.lini-link` CSS rule; a link that differs inlines the difference.
-    let (base, _) = link_scope::link_scope(
-        baked,
-        root_attrs,
-        &[],
-        link_scope::statement_owner(&[], root_attrs),
-    );
-    let mut link_defaults = base;
-    link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
-    let link_defaults = collapse(&link_defaults);
+    let dress = |owner| {
+        let (base, _) = link_scope::link_scope(baked, root_attrs, &[], owner);
+        let mut ordered = base;
+        ordered.extend(sheet.class_decls(links::LINK_CLASS));
+        collapse(&ordered)
+    };
+    let link_defaults = dress(link_scope::statement_owner(&[], root_attrs));
+    // …and the same recipe once more for a schematic scope written inside the
+    // file: its wires wear `SCHEMATIC_WIRE_CLASS`, so the dress states itself
+    // as the one `.lini-links .lini-schematic-wire` rule the renderer emits
+    // for a generated class a wire wears — never a `style=` per wire
+    // [SPEC 16.5/18].
+    if nested_sheet {
+        descendant_rules.push((
+            "lini-links".to_string(),
+            link_scope::SCHEMATIC_WIRE_CLASS.to_string(),
+            dress(links::Owner::Sheet),
+        ));
+    }
     let root_font_size = root_attrs
         .number("font-size")
         .unwrap_or(consts::ROOT_FONT_SIZE);

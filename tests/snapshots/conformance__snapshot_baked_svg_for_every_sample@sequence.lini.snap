@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/sequence.lini
 ---
@@ -20,8 +21,6 @@ input_file: samples/sequence.lini
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
     .lini .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; font-size: 13px; font-weight: normal; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs>

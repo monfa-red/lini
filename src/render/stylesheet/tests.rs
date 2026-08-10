@@ -145,3 +145,80 @@ fn user_shape_rule_carries_its_paint() {
         css
     );
 }
+
+/// A `|group| { layout: schematic }` nested in a plain document: the root's
+/// `.lini-link` rule cannot state the scope's wire dress, so it rides the
+/// generated class the wires wear [SPEC 16.5/18].
+const NESTED_SHEET: &str = "{ |bay::group| { layout: schematic } }\n|bay#b| [\n  |R#R1| \"1k\"\n  |R#R2| \"2k\"\n  R1.p2 - R2.p1\n]\n";
+
+#[test]
+fn a_nested_schematic_scope_states_its_wire_dress_once() {
+    let css = emit_str(&rules_for(NESTED_SHEET));
+    assert!(
+        css.contains(
+            ".lini .lini-links .lini-schematic-wire { stroke: var(--lini-wire); stroke-width: 1.5; }"
+        ),
+        "{css}"
+    );
+}
+
+#[test]
+fn a_root_schematic_scope_needs_no_wire_class() {
+    // `.lini-link` already carries the dress there, so no second rule and no
+    // class with a dead rule behind it.
+    let css = emit_str(&rules_for(
+        "{ layout: schematic }\n|R#R1| \"1k\"\n|R#R2| \"2k\"\nR1.p2 - R2.p1\n",
+    ));
+    assert!(!css.contains("lini-schematic-wire"), "{css}");
+    assert!(
+        css.contains(".lini .lini-link { fill: none; stroke: var(--lini-wire); stroke-width: 1.5;"),
+        "{css}"
+    );
+}
+
+#[test]
+fn a_restyled_link_states_its_marker_fill_once() {
+    // A head fills with the wire it caps: the document's `|-|` colour rides
+    // one `.lini-link .lini-marker` rule, never a `fill` per head [SPEC 18].
+    let css = emit_str(&rules_for("{ |-| { stroke: red } }\na -> b\nb -> c\n"));
+    assert!(
+        css.contains(".lini .lini-link .lini-marker { fill: red; }"),
+        "{css}"
+    );
+    // Undressed links leave the base rule alone — no redundant companion.
+    let plain = emit_str(&rules_for("a -> b\n"));
+    assert!(!plain.contains(".lini-link .lini-marker"), "{plain}");
+}
+
+#[test]
+fn drawing_chrome_rules_carry_the_documents_annotation_tone() {
+    // A recoloured `|-|` states the dimension anatomy's colour in the sheet,
+    // so no chrome node inlines it [SPEC 15.6/18].
+    let css = emit_str(&rules_for(
+        "{ |-| { stroke: red } }\n|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n]\n",
+    ));
+    for rule in [
+        ".lini .lini-dim-line { fill: none; stroke: red; stroke-width: 1; }",
+        ".lini .lini-ext-line { fill: none; stroke: red; stroke-width: 1; }",
+        ".lini .lini-marker-dim { fill: red; }",
+    ] {
+        assert!(css.contains(rule), "missing {rule}: {css}");
+    }
+}
+
+#[test]
+fn the_cut_rules_wait_for_an_actual_cut() {
+    // A wire label that reaches its wire punches a mask, so the mask rects'
+    // rules emit…
+    let cut = emit_str(&rules_for("a -> b \"x\"\n"));
+    assert!(
+        cut.contains(".lini .lini-cut-bg {") && cut.contains(".lini .lini-cut {"),
+        "{cut}"
+    );
+    // …but a sequence's messages ride *above* their arrows and cut nothing,
+    // so neither rule may emit with nobody to wear it [SPEC 18].
+    let seq = emit_str(&rules_for(
+        "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\na -> b \"hi\"\n",
+    ));
+    assert!(!seq.contains("lini-cut"), "{seq}");
+}

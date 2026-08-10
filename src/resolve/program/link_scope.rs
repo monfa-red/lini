@@ -6,6 +6,13 @@ use scene::ScopeStep;
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
+/// The generated class a schematic scope's wires wear when the scope is
+/// written **inside** the file [SPEC 16.5/18]. The root's `.lini-link` rule
+/// states only the root's dress, so a nested sheet's wires would each inline
+/// their whole dress; wearing this class instead lets the dress ride one
+/// rule, exactly as a mindmap's branch hue does.
+pub(crate) const SCHEMATIC_WIRE_CLASS: &str = "lini-schematic-wire";
+
 /// A link's baked base layers [SPEC 10.5] — the lowest-specificity layer, below
 /// the scope cascade, class rules, and its own block. The values live in the one
 /// tuning home (`ledger::defaults`); resolved once per file, then layered per

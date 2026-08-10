@@ -7,7 +7,7 @@
 
 pub(crate) mod anchors;
 mod angle;
-mod annotate;
+pub(crate) mod annotate;
 pub(crate) mod breaks;
 pub(crate) mod chrome;
 mod compose;

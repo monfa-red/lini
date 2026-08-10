@@ -8,7 +8,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, escape_xml, format_value, num};
 use super::wavy;
 use crate::Options;
-use crate::layout::{RoutedLink, RoutedText, Stray, approx_height, approx_width};
+use crate::layout::{LaidOut, RoutedLink, RoutedText, Stray, approx_height, approx_width};
 use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, VarTable};
 use std::fmt::Write;
@@ -25,6 +25,10 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 /// clips descenders) so g/y/p stay inside the cut.
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
+
+/// A user-space rectangle `(x, y, w, h)` — a label's cut box, or the region a
+/// wire's mask covers.
+type Rect = (f64, f64, f64, f64);
 
 /// The link's corner-radius cap (ROUTING Model step 7) — **the** one corner-
 /// rounding authority: the link's resolved `corner-radius` [SPEC 17], and at
@@ -44,7 +48,7 @@ pub fn render_link(
     idx: usize,
     w: &RoutedLink,
     targets: &[f64],
-    cuts: &[(f64, f64, f64, f64)],
+    cuts: &[Rect],
     vars: &VarTable,
     ruleset: &RuleSet,
     opts: &Options,
@@ -117,15 +121,7 @@ pub fn render_link(
 
     let wavy = is_wavy(&w.attrs);
 
-    // A label cuts the link out beneath it (a mask hole, not a painted halo) so
-    // it reads cleanly over the link on any background. A wavy line swings
-    // `AMPLITUDE` past the routed bbox, so the cut region grows to match.
-    let reach = if wavy {
-        crate::ledger::consts::WAVY_AMPLITUDE
-    } else {
-        0.0
-    };
-    let mask = label_mask(idx, &w.path, cuts, thickness, reach);
+    let mask = label_mask(idx, w, cuts);
     let mask_attr = match &mask {
         Some((id, svg)) => {
             writeln!(out, "      {svg}").unwrap();
@@ -447,7 +443,7 @@ fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
 /// One label's cut box — the rect the mask punches out beneath it, and the
 /// rect other wires test against. One computation, so a label cuts every
 /// wire identically.
-pub(super) fn cut_rect(t: &RoutedText) -> (f64, f64, f64, f64) {
+pub(super) fn cut_rect(t: &RoutedText) -> Rect {
     let size = t.attrs.number("font-size").unwrap_or(0.0);
     let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
     let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
@@ -458,25 +454,43 @@ pub(super) fn cut_rect(t: &RoutedText) -> (f64, f64, f64, f64) {
     (cx - cw / 2.0, cy - ch / 2.0, cw, ch)
 }
 
-/// A luminance mask that cuts the link path out under **every** label box the
-/// path reaches — its own and any other statement's (a fan sibling's arc can
-/// sweep beneath a label seated on its twin) — the background-independent
-/// replacement for a painted halo. White shows the path (over its stroked
-/// bounds); a black box per label punches a hole; a box the path never enters
-/// is a mask no-op, so the padded-bbox filter only trims noise. An explicit
-/// `userSpaceOnUse` region is required, else a straight link's near-flat bbox
-/// would shrink the default region to nothing and hide the whole link. `None`
-/// when no label box reaches the path.
-fn label_mask(
-    idx: usize,
-    path: &[(f64, f64)],
-    cuts: &[(f64, f64, f64, f64)],
-    thickness: f64,
-    reach: f64,
-) -> Option<(String, String)> {
-    let pad = thickness / 2.0 + 1.0 + reach;
+/// Every label's cut box, document-wide: a label knocks out *any* wire beneath
+/// it, not only its own (a fan sibling's arc can pass under a label seated on
+/// its twin) [SPEC 9/17].
+pub(super) fn cut_boxes(laid: &LaidOut) -> Vec<Rect> {
+    laid.links
+        .iter()
+        .flat_map(|w| &w.texts)
+        .map(cut_rect)
+        .collect()
+}
+
+/// Whether any wire is actually cut — **the** wearer test for the
+/// `.lini-cut` / `.lini-cut-bg` mask rules, so a document whose labels all sit
+/// clear of every wire emits no rule with nobody to wear it [SPEC 18]. The one
+/// hit computation ([`cut_hits`]) the mask itself runs, so the sheet and the
+/// SVG can never disagree.
+pub(super) fn any_label_cut(laid: &LaidOut) -> bool {
+    let cuts = cut_boxes(laid);
+    !cuts.is_empty() && laid.links.iter().any(|w| cut_hits(w, &cuts).is_some())
+}
+
+/// The mask region for one wire and the label boxes that reach it: the wire's
+/// padded bbox — a wavy line swings `AMPLITUDE` past the routed path, so the
+/// region grows to match — filtered to the cut boxes that overlap it. `None`
+/// when the wire is too short to draw or no label reaches it.
+fn cut_hits<'a>(w: &RoutedLink, cuts: &'a [Rect]) -> Option<(Rect, Vec<&'a Rect>)> {
+    if w.path.len() < 2 {
+        return None;
+    }
+    let reach = if is_wavy(&w.attrs) {
+        crate::ledger::consts::WAVY_AMPLITUDE
+    } else {
+        0.0
+    };
+    let pad = w.attrs.number("stroke-width").unwrap_or(0.0) / 2.0 + 1.0 + reach;
     let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
-    for &(x, y) in path {
+    for &(x, y) in &w.path {
         x0 = x0.min(x);
         y0 = y0.min(y);
         x1 = x1.max(x);
@@ -484,15 +498,25 @@ fn label_mask(
     }
     let (rx, ry) = (x0 - pad, y0 - pad);
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
-    let hits: Vec<&(f64, f64, f64, f64)> = cuts
+    let hits: Vec<&Rect> = cuts
         .iter()
         .filter(|(cx, cy, cw, ch)| {
             cx + cw >= rx && *cx <= rx + rw && cy + ch >= ry && *cy <= ry + rh
         })
         .collect();
-    if hits.is_empty() {
-        return None;
-    }
+    (!hits.is_empty()).then_some(((rx, ry, rw, rh), hits))
+}
+
+/// A luminance mask that cuts the link path out under **every** label box the
+/// path reaches — the background-independent replacement for a painted halo.
+/// White shows the path (over its stroked bounds); a black box per label
+/// punches a hole; a box the path never enters is a mask no-op, so the
+/// padded-bbox filter only trims noise. An explicit `userSpaceOnUse` region is
+/// required, else a straight link's near-flat bbox would shrink the default
+/// region to nothing and hide the whole link. `None` when no label box reaches
+/// the path.
+fn label_mask(idx: usize, w: &RoutedLink, cuts: &[Rect]) -> Option<(String, String)> {
+    let ((rx, ry, rw, rh), hits) = cut_hits(w, cuts)?;
     let id = format!("lini-label-cut-{idx}");
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
