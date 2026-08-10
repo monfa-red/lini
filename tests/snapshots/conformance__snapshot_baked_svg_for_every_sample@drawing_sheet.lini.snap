@@ -4,7 +4,7 @@ assertion_line: 48
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="1188" height="840" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="297mm" height="210mm" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }

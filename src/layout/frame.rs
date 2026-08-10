@@ -137,7 +137,5 @@ fn pages_only(nodes: &[PlacedNode]) -> Option<f64> {
         .filter(|n| !drawing::chrome::is_chrome(&n.attrs))
         .peekable();
     let first = pages.peek()?.attrs.number("px-per-unit").unwrap_or(4.0);
-    pages
-        .all(|n| page::is_page(&n.type_chain))
-        .then_some(first)
+    pages.all(|n| page::is_page(&n.type_chain)).then_some(first)
 }
