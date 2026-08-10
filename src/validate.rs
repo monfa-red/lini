@@ -336,11 +336,22 @@ impl<'a> Ctx<'a> {
         }
         match d.name.as_str() {
             "cell" | "span" => {
-                let is_band = chain.iter().any(|c| c == "band");
+                // The one-time migration pointer [SPEC 14.5]: a band's extent
+                // moved to `range:` (the axis's interval shape).
+                if d.name == "span" && chain.iter().any(|c| c == "band") {
+                    out.push(
+                        Diagnostic::error(
+                            d.span,
+                            "a band's extent is 'range: a b' — 'span' places a grid child",
+                        )
+                        .code(Code::MISUSED_PROPERTY),
+                    );
+                    return;
+                }
                 // `cell:` places on a grid *and* on a schematic's own ordinal
                 // track grid [SPEC 16.1], where it also promotes a satellite to
                 // an anchor. `span:` stays grid-only — schematic tracks have no
-                // spans (the `|band|` exception aside).
+                // spans.
                 let host = if d.name == "cell" {
                     &["grid", "schematic"][..]
                 } else {
@@ -348,7 +359,6 @@ impl<'a> Ctx<'a> {
                 };
                 if let Some(parent) = parent_layout
                     && !host.contains(parent)
-                    && !(d.name == "span" && is_band)
                 {
                     let verb = if d.name == "cell" {
                         "places a grid or schematic child"

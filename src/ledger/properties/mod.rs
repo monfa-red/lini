@@ -458,7 +458,7 @@ pub static PROPERTIES: &[Property] = &[
     .hard(),
     row(
         "span",
-        &[Layout("grid"), Type("band")],
+        &[Layout("grid")],
         One(Kind::Number),
         DefaultRef::None,
         No,
@@ -551,7 +551,7 @@ pub static PROPERTIES: &[Property] = &[
     ),
     row(
         "range",
-        &[Type("axis")],
+        &[Type("axis"), Type("band")],
         One(Kind::Number),
         DefaultRef::None,
         No,

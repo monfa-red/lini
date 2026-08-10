@@ -30,9 +30,9 @@
   |chart| "Reactor temperature (°C)" { width: 340; height: 240; } [
     |axis#t| { side: bottom; range: 0 6; }
     |axis| { side: left; }
-    |band| "Warm-up" { span: 0 1.5; axis: t; fill: --sky; }
-    |band| "Hold" { span: 1.5 4; axis: t; fill: --amber; }
-    |band| "Cool" { span: 4 6; axis: t; fill: --teal; }
+    |band| "Warm-up" { range: 0 1.5; axis: t; fill: --sky; }
+    |band| "Hold" { range: 1.5 4; axis: t; fill: --amber; }
+    |band| "Cool" { range: 4 6; axis: t; fill: --teal; }
     |area| "core" {
       data: 0 20, 1 120, 2 300, 3 320, 4 260, 5 80; fill: --rose;
     }

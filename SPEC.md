@@ -1644,8 +1644,7 @@ node has no block to carry them). A grid is positional, so an empty `""` cell is
 empty `""` is dropped). `cell:` / `span:` are read only on a grid; off a grid — where the
 container's layout is statically known to be something else — they are an **error**
 ([SPEC 17](#17-property-ledger--support)'s strict rule, [SPEC 21](#21-errors): `'cell' places a
-grid child — this box sits in a 'layout: flow'`). The one exception is `span:` on a chart
-`|band|`, which reads it as the band's extent ([SPEC 14](#14-charts)).
+grid child — this box sits in a 'layout: flow'`).
 
 **Per-column alignment.** On a grid, `align` (horizontal ↔) and `justify`
 (vertical ↕) accept a **list parallel to `columns`** (one value per track) or a
@@ -2053,12 +2052,12 @@ Both are children placed in **data** coordinates; the model gives them for free.
 
 A **`|band|`** partitions an axis and drives three things from one declaration: a
 background **shade**, a **tick** (its smart label), and the **segment boundaries** every
-series shares. `span: a b` is its data range on its bound `axis:` (the grid `span:`,
-valid on a chart band too — [SPEC 12](#12-flow-grid--tree)); `fill: none` makes it a divider + label
-with no shading.
+series shares. `range: a b` is its data range on its bound `axis:` — the same
+interval shape the axis itself reads ([SPEC 14.4](#144-axes-scales--domain));
+`fill: none` makes it a divider + label with no shading.
 
 ```
-|band| "Inject" { span: 1.4 3.1; axis: time; fill: --rose }
+|band| "Inject" { range: 1.4 3.1; axis: time; fill: --rose }
 ```
 
 **A series opts into segmentation** with a per-band `fn:` **list** — one `(…)` expression
@@ -3459,7 +3458,7 @@ text, and box-model properties are universal to every node — the tables that f
 | `padding` | ✓ | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet | ✓ |
 | `align` / `justify` | ✓ | ✓ per-column | — | ✓ᵇ | — | — | — | — |
 | `width` / `height` | ✓ (slack) | ✓ (slack) | ✓ a floor | ✓ (surplus distributed) | ✓ box size | ✓ box size | ✓ a floor | ✓ a floor |
-| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — | — (`span`→band) | — | — | ✓ `columns` + ordinal `cell` ([SPEC 16.1](#161-placement--anchors--satellites)) |
+| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — | — | — | — | ✓ `columns` + ordinal `cell` ([SPEC 16.1](#161-placement--anchors--satellites)) |
 | container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 **✓ᵇ** — honoured on the participant / frame **boxes' own content** (they are ordinary
@@ -3564,7 +3563,7 @@ out of scope.
 | `legend` · `tooltip` | `\|chart\|` `\|pie\|`, series (`tooltip`) | see [SPEC 14](#14-charts) | auto · auto | [SPEC 14](#14-charts) |
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
 | `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
-| `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
+| `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` (`range` also a `\|band\|`'s extent — [SPEC 14.5](#145-bands--annotations)) | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
 | `format` | chart / drawing scope · `\|axis\|` · series · a dimension — **inherits** | `auto` · `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` · `fraction D` · date preset (`year`·`month`·`day`·`hour`·`minute`) | `auto` | presentation only, never measurement; composes before `unit:`, `tol:`, the `⌀`/`R`/`°` glyphs, and `N×` counts ([SPEC 14.4](#144-axes-scales--domain), [SPEC 15.6](#156-dimensions)) |
 | `side` (homonym: also an `\|axis\|`'s / a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
 | `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
@@ -4481,7 +4480,7 @@ db      --> api     "record"
   |axis#bar| "Pressure (bar)" { side: left; range: 0 1100 }
   |axis#x|   "Speed (mm/s)"   { side: bottom; range: 0 133 }
   |area| "Pressure" { axis: bar; fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
-  |band| { span: 93 133; axis: x; fill: --red }
+  |band| { range: 93 133; axis: x; fill: --red }
   |mark| "1000 bar @ 93" { at: 93; axis: x; color: --muted }
 ]
 

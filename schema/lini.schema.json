@@ -2339,10 +2339,6 @@
         {
           "kind": "layout",
           "name": "grid"
-        },
-        {
-          "kind": "type",
-          "name": "band"
         }
       ],
       "shape": "one",
@@ -2676,6 +2672,10 @@
         {
           "kind": "type",
           "name": "axis"
+        },
+        {
+          "kind": "type",
+          "name": "band"
         }
       ],
       "shape": "one",

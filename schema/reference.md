@@ -163,7 +163,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `columns` | grid (layout), schematic (layout) | `list:track` | `bundles` | — | — |
 | `rows` | grid (layout) | `list:track` | `none` | — | — |
 | `cell` | grid (layout), schematic (layout) | `one:number` | `none` | — | hard-gate |
-| `span` | grid (layout), \|band\| | `one:number` | `none` | — | hard-gate |
+| `span` | grid (layout) | `one:number` | `none` | — | hard-gate |
 | `data` | series (role) | `list:number` | `none` | — | — |
 | `fn` | series (role) | `list:any` | `none` | — | — |
 | `labels` | series (role) | `list:string` | `none` | — | — |
@@ -178,7 +178,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `value` | \|slice\|, \|bubble\| | `one:number` | `none` | — | — |
 | `at` | \|mark\|, \|bubble\|, \|plane\| | `one:any` | `none` | — | — |
 | `side` | \|axis\|, \|topic\|, \|pin\|, dimension (role) | `one:ident` | `engine` | — | — |
-| `range` | \|axis\| | `one:number` | `none` | — | — |
+| `range` | \|axis\|, \|band\| | `one:number` | `none` | — | — |
 | `step` | \|axis\| | `one:number` | `none` | — | — |
 | `ticks` | \|axis\| | `list:number` | `none` | — | — |
 | `unit` | \|drawing\|, \|axis\| | `one:any` | `none` | — | — |

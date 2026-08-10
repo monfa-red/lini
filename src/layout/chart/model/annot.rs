@@ -50,13 +50,18 @@ pub(super) fn read_mark(
     })
 }
 
-/// A `|band|`'s `span: a b` — its data range on the bound axis [SPEC 14.5].
+/// A `|band|`'s `range: a b` — its data range on the bound axis [SPEC 14.5],
+/// the same interval shape an `|axis|` reads.
 fn read_span(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
-    match inst.attrs.get("span") {
+    match inst.attrs.get("range") {
         Some(ResolvedValue::Tuple(items)) if items.len() == 2 => {
             Ok((number(&items[0], inst.span)?, number(&items[1], inst.span)?))
         }
-        _ => Err(Error::at(inst.span, "a '|band|' needs 'span: a b'")),
+        _ if inst.attrs.get("span").is_some() => Err(Error::at(
+            inst.span,
+            "a band's extent is 'range: a b' — 'span' places a grid child",
+        )),
+        _ => Err(Error::at(inst.span, "a '|band|' needs 'range: a b'")),
     }
 }
 

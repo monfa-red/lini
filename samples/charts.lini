@@ -30,7 +30,7 @@
   |axis#people| "people" { side: bottom; }
   |bars| "Q1" { data: 12, 8, 5, 3; }
   |bars| "Q2" { data: 15, 10, 6, 4; }
-  |band| "surge" { span: 10 15; axis: people; fill: --amber; }
+  |band| "surge" { range: 10 15; axis: people; fill: --amber; }
   |mark| "target 10" {
     at: 10; axis: people; stroke: --rose-deep; stroke-style: dashed;
   }

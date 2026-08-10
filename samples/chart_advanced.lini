@@ -38,9 +38,9 @@
 |chart| "Motor draw (A)" [
   |axis| "phase" { side: bottom; }
   |axis| { side: left; }
-  |band| "Close" { span: 0 1.4; fill: --sky; }
-  |band| "Inject" { span: 1.4 3.1; fill: --rose; }
-  |band| "Hold" { span: 3.1 5.1; fill: --amber; }
+  |band| "Close" { range: 0 1.4; fill: --sky; }
+  |band| "Inject" { range: 1.4 3.1; fill: --rose; }
+  |band| "Hold" { range: 3.1 5.1; fill: --amber; }
   |line| "draw" {
     stroke: --rose-deep; fn: (0.12 + 1.2*exp(-((u-0.8)/0.12)^2)), (1.5 + 3.0*u^1.1), 0.5;
   }
@@ -49,9 +49,9 @@
 |chart| "Reactor warm-up" [
   |axis#t| "min" { side: bottom; range: 0 6; }
   |axis| "°C" { side: left; }
-  |band| "Warm" { span: 0 1.5; axis: t; fill: --sky; }
-  |band| "Hold" { span: 1.5 3.5; axis: t; fill: --amber; }
-  |band| "Cool" { span: 3.5 6; axis: t; fill: --teal; }
+  |band| "Warm" { range: 0 1.5; axis: t; fill: --sky; }
+  |band| "Hold" { range: 1.5 3.5; axis: t; fill: --amber; }
+  |band| "Cool" { range: 3.5 6; axis: t; fill: --teal; }
   |line| "core" {
     data: 0 20, 1 90, 2 300, 3 330, 4 160, 5 60; stroke: --rose-deep;
   }

@@ -240,7 +240,7 @@ fn a_fn_list_without_bands_reports_the_mismatch() {
 #[test]
 fn a_filled_band_shades_the_plot_and_labels_it() {
     let s = svg(
-        "|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 5, 8 }\n  |band| \"zone\" { span: 0 1; fill: --amber }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 5, 8 }\n  |band| \"zone\" { range: 0 1; fill: --amber }\n]\n",
     );
     // Amber is unused by the palette walk, so it is unambiguously the band.
     assert!(s.contains("var(--lini-amber)"), "band shade tint: {s}");
@@ -251,7 +251,7 @@ fn a_filled_band_shades_the_plot_and_labels_it() {
 #[test]
 fn an_unfilled_band_draws_a_divider_not_a_shade() {
     let s = svg(
-        "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |bars| { data: 5, 8, 6 }\n  |band| \"L\" { span: 0 1 }\n  |band| \"R\" { span: 1 3 }\n]\n",
+        "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |bars| { data: 5, 8, 6 }\n  |band| \"L\" { range: 0 1 }\n  |band| \"R\" { range: 1 3 }\n]\n",
     );
     assert!(
         s.contains(">L</text>") && s.contains(">R</text>"),
@@ -266,7 +266,7 @@ fn an_unfilled_band_draws_a_divider_not_a_shade() {
 #[test]
 fn a_segmented_fn_draws_one_polyline_across_the_bands() {
     let s = svg(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: (u), (1-u) }\n]\n",
+        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { range: 0 1 }\n  |band| { range: 1 2 }\n  |line| { fn: (u), (1-u) }\n]\n",
     );
     assert!(s.contains("<polyline"), "segmented curve polyline: {s}");
 }
@@ -274,7 +274,7 @@ fn a_segmented_fn_draws_one_polyline_across_the_bands() {
 #[test]
 fn a_fn_list_length_must_match_the_band_count() {
     let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: (1), (2), (3) }\n]\n",
+        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { range: 0 1 }\n  |line| { fn: (1), (2), (3) }\n]\n",
     );
     assert!(e.contains("3 formulas"), "{e}");
     assert!(e.contains("1 bands"), "{e}");
@@ -626,7 +626,7 @@ fn row_bands_and_marks_flip_with_the_direction() {
     // a value-bound band shades a vertical strip and a value-bound mark draws a
     // vertical dashed line — same declarations, flipped projection.
     let s = svg(
-        "|chart| { direction: row; categories: \"a\", \"b\" } [\n  |axis#v| { side: bottom; range: 0 20 }\n  |bars| { data: 12, 8 }\n  |band| \"hot\" { span: 10 15; axis: v; fill: --amber }\n  |mark| \"target\" { at: 10; axis: v; stroke-style: dashed }\n]\n",
+        "|chart| { direction: row; categories: \"a\", \"b\" } [\n  |axis#v| { side: bottom; range: 0 20 }\n  |bars| { data: 12, 8 }\n  |band| \"hot\" { range: 10 15; axis: v; fill: --amber }\n  |mark| \"target\" { at: 10; axis: v; stroke-style: dashed }\n]\n",
     );
     // The band's wash: full plot height, x-span 10..15 — a rect taller than wide.
     let band = s.find("opacity: 0.15").expect("the band wash");
@@ -726,5 +726,23 @@ fn a_log_domain_axis_keeps_its_gridlines() {
     assert!(
         s.contains("var(--lini-grid)"),
         "the domain grid stands: {s}"
+    );
+}
+
+#[test]
+fn a_bands_old_span_points_at_range() {
+    // The one-time migration pointer [SPEC 14.5]: a band's extent renamed to
+    // `range:` — the axis's own interval shape.
+    let e = crate::lint_str(
+        "|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n  |band| \"z\" { span: 0 1 }\n]\n",
+    )
+    .expect("parse")
+    .iter()
+    .map(|d| d.message.clone())
+    .collect::<Vec<_>>()
+    .join("\n");
+    assert!(
+        e.contains("a band's extent is 'range: a b'"),
+        "the migration pointer: {e}"
     );
 }
