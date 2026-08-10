@@ -121,6 +121,17 @@ fn container_scoped_property_reads_on_a_matching_root() {
     assert_silent("{ layout: drawing; unit: mm; }\n|rect#p| { width: 40; height: 20; }\n");
 }
 
+#[test]
+fn layout_owned_property_off_its_root_layout_errors() {
+    // A layout-owned property reads on the root only when the root runs that
+    // layout — `activation:` on a flow root is the same misuse as on a node.
+    insta::assert_snapshot!(
+        diags("{ layout: flow; activation: none; }\n|box#a| \"x\"\n"),
+        @"test.lini:1:17: error: 'activation' has no meaning on the root block — it reads on a 'layout: sequence'"
+    );
+    assert_silent("{ layout: sequence; activation: none; }\n|box#a| \"x\"\na -> b \"m\"\n");
+}
+
 // ── Class rules: CSS semantics — inert is fine, dead-everywhere warns ──
 
 #[test]

@@ -397,7 +397,11 @@ impl<'a> Ctx<'a> {
             return;
         }
         let ok = prop.owners.iter().any(|o| match o {
-            Owner::Universal | Owner::Root | Owner::Layout(_) => true,
+            Owner::Universal | Owner::Root => true,
+            // A layout-owned property reads on the root only when the root
+            // *runs* that layout — `{ layout: flow; activation: none }` is the
+            // same misuse as `activation:` on a flow node [SPEC 21].
+            Owner::Layout(l) => *l == self.root_layout,
             Owner::Link => false,
             Owner::Type(t) => container_layout(t) == Some(self.root_layout.as_str()),
             Owner::Role(_) => false,
