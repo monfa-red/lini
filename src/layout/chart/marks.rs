@@ -7,6 +7,7 @@ use super::model::{Chart, Curve, Data, Series, SeriesKind};
 use super::palette::deepen;
 use super::project::{Dir, Plot};
 use super::scale::Scale;
+use super::tooltip;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::ledger::date;
@@ -175,7 +176,7 @@ fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<Pl
     for ((xd, yd), (xp, yp)) in pts {
         if in_domain(chart, ser, *xd, *yd) {
             let mut m = prim::marker(ser.marker, *xp, *yp, d, d, ser.color.clone());
-            prim::set_hint(&mut m, dot_title(chart, ser, *xd, *yd));
+            tooltip::hint(&mut m, ser.tooltip, || dot_title(chart, ser, *xd, *yd));
             out.push(m);
         }
     }
@@ -200,7 +201,7 @@ fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         {
             dot.attrs.insert("opacity", ResolvedValue::Number(op));
         }
-        prim::set_hint(&mut dot, dot_title(chart, ser, xd, yd));
+        tooltip::hint(&mut dot, ser.tooltip, || dot_title(chart, ser, xd, yd));
         out.push(dot);
     }
 }

@@ -17,7 +17,13 @@ pub enum Scale {
         ticks: Vec<f64>,
     },
     /// A logarithmic domain `[min, max]` (both > 0); decade ticks labelled 1-2-5.
-    Log { min: f64, max: f64, ticks: Vec<f64> },
+    /// `rev` runs it high→low, as on a linear axis.
+    Log {
+        min: f64,
+        max: f64,
+        rev: bool,
+        ticks: Vec<f64>,
+    },
     /// A time domain in **epoch seconds** [SPEC 14.4]: linear projection,
     /// calendar-aware ticks reading at `unit`'s granularity.
     Time {
@@ -43,11 +49,13 @@ impl Scale {
         }
     }
 
-    /// A log scale over `[min, max]` (both > 0), with decade ticks at 1-2-5 × 10ⁿ.
-    pub fn log(min: f64, max: f64) -> Scale {
+    /// A log scale over `[min, max]` (both > 0), with decade ticks at 1-2-5 × 10ⁿ;
+    /// `rev` runs it high→low ([SPEC 14.4] — a reversed `range:` flips any scale).
+    pub fn log(min: f64, max: f64, rev: bool) -> Scale {
         Scale::Log {
             min,
             max,
+            rev,
             ticks: decade_ticks(min, max),
         }
     }
@@ -79,13 +87,14 @@ impl Scale {
                 };
                 if *rev { 1.0 - f } else { f }
             }
-            Scale::Log { min, max, .. } => {
+            Scale::Log { min, max, rev, .. } => {
                 let span = max.log10() - min.log10();
-                if span.abs() < f64::EPSILON || v <= 0.0 {
+                let f = if span.abs() < f64::EPSILON || v <= 0.0 {
                     0.0
                 } else {
                     (v.log10() - min.log10()) / span
-                }
+                };
+                if *rev { 1.0 - f } else { f }
             }
         }
     }

@@ -38,7 +38,7 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
         if let Some((color, width)) = &b.outline {
             prim::outline(&mut bubble, color.clone(), *width);
         }
-        prim::set_hint(&mut bubble, bubble_title(b, chart.fmt));
+        super::tooltip::hint(&mut bubble, b.tooltip, || bubble_title(b, chart.fmt));
         out.push(bubble);
         // The label joins the shared pass [SPEC 14.8]: its `inside` seat centres it
         // on the bubble when the text fits (the on-fill tint), else it sits beside (muted);

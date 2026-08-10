@@ -108,10 +108,21 @@ fn gather<'a>(children: &'a [ResolvedInst], depth: usize, out: &mut Vec<Frame<'a
 
 /// The frame operator a node carries, if any (`loop` / `opt` / `alt`).
 fn keyword_of(inst: &ResolvedInst) -> Option<&str> {
-    inst.type_chain
+    keyword(&inst.type_chain)
+}
+
+/// The frame operator in a type chain — the one place a frame is recognised, shared
+/// with the note collector (which descends through frames, [SPEC 13]).
+pub(super) fn keyword(types: &[String]) -> Option<&str> {
+    types
         .iter()
         .map(String::as_str)
         .find(|t| FRAME_KINDS.contains(t))
+}
+
+/// Whether this type chain names a frame.
+pub(crate) fn is_frame(types: &[String]) -> bool {
+    keyword(types).is_some()
 }
 
 fn is_else(inst: &ResolvedInst) -> bool {

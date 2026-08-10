@@ -2,6 +2,7 @@
 
 use super::*;
 
+#[derive(Clone, Copy)]
 pub enum Side {
     Bottom,
     Top,

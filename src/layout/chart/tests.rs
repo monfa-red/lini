@@ -672,3 +672,59 @@ fn radial_bands_and_marks_error() {
         "{e}"
     );
 }
+
+#[test]
+fn a_series_tooltip_none_strips_its_titles() {
+    // [SPEC 14.8]: only `tooltip: none` strips the native <title> floor — and
+    // a series' own mode overrides the chart's.
+    let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 3; tooltip: none }\n]\n");
+    assert!(!s.contains("<title>"), "no hover floor: {s}");
+    let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 3 }\n]\n");
+    assert!(s.contains("<title>"), "the default keeps it: {s}");
+}
+
+#[test]
+fn a_row_chart_with_a_numeric_domain_draws_its_domain_ticks() {
+    // The row projection used to gate domain labels on a categorical scale,
+    // so a numeric x lost its ticks, gridlines and title entirely.
+    let s = svg("|chart| { direction: row } [\n  |line| { data: 1 5, 2 3, 4 8 }\n]\n");
+    for tick in [">1</text>", ">2</text>", ">4</text>"] {
+        assert!(s.contains(tick), "domain tick {tick}: {s}");
+    }
+}
+
+#[test]
+fn a_log_axis_reverses_like_a_linear_one() {
+    // [SPEC 14.4]: `range: a b` with a > b reverses unconditionally.
+    let s = svg(
+        "|chart| [\n  |axis| { side: left; scale: log; range: 1000 1 }\n  |line| { data: 1 5, 2 500, 3 900 }\n]\n",
+    );
+    let y_of = |label: &str| -> f64 {
+        let needle = format!(">{label}</text>");
+        let i = s
+            .find(&needle)
+            .unwrap_or_else(|| panic!("tick {label}: {s}"));
+        let head = &s[..i];
+        let y = head.rfind(" y=\"").expect("a y attr") + 4;
+        head[y..head[y..].find('"').map(|e| y + e).expect("closing quote")]
+            .parse()
+            .expect("a number")
+    };
+    assert!(
+        y_of("1000") > y_of("10"),
+        "1000 sits at the bottom when the range runs high to low"
+    );
+}
+
+#[test]
+fn a_log_domain_axis_keeps_its_gridlines() {
+    // Default x gridlines were an allow-list of linear — a log (or time) x
+    // silently lost its grid.
+    let s = svg(
+        "|chart| [\n  |axis| { side: left; gridlines: none }\n  |axis#x| { side: bottom; scale: log }\n  |dots| { data: 1 5, 100 3, 1000 8 }\n]\n",
+    );
+    assert!(
+        s.contains("var(--lini-grid)"),
+        "the domain grid stands: {s}"
+    );
+}

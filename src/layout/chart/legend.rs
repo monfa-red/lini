@@ -56,7 +56,10 @@ pub(super) fn lay_out_legend(
     const ITEM_GAP: f64 = 16.0; // entry → entry
     let widths: Vec<f64> = entries
         .iter()
-        .map(|(l, _, _)| prim::text_width(l, LABEL_SIZE, crate::font::Font::bold(kind)))
+        // Measured at the weight `prim::text(bold)` actually renders — semibold, the
+        // chart's chrome [SPEC 14.6]; measuring at bold drifts the swatches on a
+        // proportional family.
+        .map(|(l, _, _)| prim::text_width(l, LABEL_SIZE, crate::font::Font::semibold(kind)))
         .collect();
     let per: f64 = widths.iter().map(|w| SW + GAP + w).sum();
     let total = per + ITEM_GAP * widths.len().saturating_sub(1) as f64;

@@ -197,10 +197,9 @@ fn emit_rect(
     if let Some((color, width)) = ser.outline_at(i) {
         prim::outline(&mut bar, color, width);
     }
-    prim::set_hint(
-        &mut bar,
-        title(category, ser.label.as_deref(), value, ser.fmt),
-    );
+    super::tooltip::hint(&mut bar, ser.tooltip, || {
+        title(category, ser.label.as_deref(), value, ser.fmt)
+    });
     out.push(bar);
 }
 
@@ -241,10 +240,9 @@ fn emit_wedge(
     if let Some((color, width)) = ser.outline_at(i) {
         prim::outline(&mut wedge, color, width);
     }
-    prim::set_hint(
-        &mut wedge,
-        title(category, ser.label.as_deref(), value, ser.fmt),
-    );
+    super::tooltip::hint(&mut wedge, ser.tooltip, || {
+        title(category, ser.label.as_deref(), value, ser.fmt)
+    });
     out.push(wedge);
 }
 

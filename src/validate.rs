@@ -165,11 +165,22 @@ impl<'a> Ctx<'a> {
         if let Some(label) = &n.label {
             self.check_text(label, out);
         }
+        // A sequence frame's `[ ]` opens no scope [SPEC 13]: its notes and messages are
+        // the sequence's own, so they keep its layout as their placement context.
+        let frame_body = parent_layout == Some("sequence")
+            && info
+                .as_ref()
+                .is_some_and(|i| crate::layout::sequence::is_frame(&i.chain));
+        let body_layout = if frame_body {
+            parent_layout
+        } else {
+            own_layout.as_deref()
+        };
         for c in &n.children {
-            self.check_child(c, own_layout.as_deref(), out);
+            self.check_child(c, body_layout, out);
         }
         for w in &n.links {
-            self.check_link(w, own_layout.as_deref(), out);
+            self.check_link(w, body_layout, out);
         }
     }
 

@@ -10,8 +10,13 @@ use crate::resolve::{NodeKind, ResolvedValue};
 
 /// Reshape a laid-out note box: the silhouette changes from a `Block` rect to a
 /// `Path`; the box's resolved `fill` / `stroke` (carried on its `<g>`) and its
-/// text child stay.
+/// text child stay. Re-entrant — folding an already-folded note (one a layout has
+/// since resized, as a sequence note spanning its lifelines) rebuilds the silhouette
+/// from the new box instead of stacking a second dog-ear.
 pub(crate) fn fold(note: &mut PlacedNode) {
+    if note.kind == NodeKind::Path && !note.children.is_empty() {
+        note.children.remove(0); // the flap this fold replaces
+    }
     let (w, h) = (note.bbox.w(), note.bbox.h());
     let fold = (h * NOTE_FOLD_FRAC).min(NOTE_FOLD_MAX).min(w * 0.5);
     let (l, t, rg, b) = (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0);

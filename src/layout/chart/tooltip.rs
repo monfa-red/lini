@@ -37,6 +37,17 @@ impl Tooltip {
     }
 }
 
+/// Attach a mark's `<title>` floor unless its own mode is `none` [SPEC 14.8]. The
+/// cascade's per-node half: `apply` reads the chart's mode, this reads the series' /
+/// node's (already cascaded from it), so `|line| { tooltip: none }` under a plain chart
+/// keeps both the title and its hover card off. The one gate over [`prim::set_hint`] —
+/// every chart mark emits through it.
+pub fn hint(node: &mut PlacedNode, mode: Tooltip, text: impl FnOnce() -> String) {
+    if mode != Tooltip::None {
+        prim::set_hint(node, text());
+    }
+}
+
 const SIZE: f64 = 11.0;
 const PAD: f64 = 5.0;
 const GAP: f64 = 7.0;

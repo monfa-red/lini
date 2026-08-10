@@ -1114,6 +1114,21 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="-59.8" x2="168" y2="-59.8"/>
       </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-97.1429" y1="-59.8" x2="-97.1429" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-35.2762" y1="-59.8" x2="-35.2762" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="33.219" y1="-59.8" x2="33.219" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="99.5048" y1="-59.8" x2="99.5048" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="168" y1="-59.8" x2="168" y2="88.6"/>
+      </g>
       <g class="lini-node lini-line" style="stroke: #0085b3" transform="translate(0,0)">
         <polyline points="-156.8,52.984 -94.9333,44.08 -33.0667,26.272 44.2667,5.496 106.1333,-12.312 168,-44.96"/>
       </g>

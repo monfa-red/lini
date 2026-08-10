@@ -36,35 +36,52 @@ pub(super) fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     }
 }
 
-/// A row chart's plot rect: the cartesian flip [SPEC 14.7]. The domain
-/// (category) labels sit on the left and the value labels along the bottom, so the
-/// gutters swap — a left gutter sized to the widest category, a bottom gutter for the
-/// value labels and axis title.
+/// A row chart's plot rect: the cartesian flip [SPEC 14.7]. The domain labels sit
+/// on the left (with the domain title above the plot) and the value labels along the
+/// bottom — or the top, at their `side:` — so the gutters swap: a left gutter sized to
+/// the widest domain label, a value band on the edge each value axis names.
 fn row_plot(chart: &Chart, w: f64, h: f64) -> Plot {
     let title_h = title_reserve(chart.title.is_some(), chart.gap);
-    let value_title_h = if chart.values.iter().any(|a| a.title.is_some()) {
+    let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
+    let x_title_h = if chart.x.title.is_some() {
         AXIS_TITLE_SIZE * 1.4
     } else {
         0.0
     };
-    let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
     let left = nonzero(domain_gutter(chart), 12.0);
     Plot {
         x0: -w / 2.0 + left,
         x1: w / 2.0 - 12.0,
-        y0: -h / 2.0 + 8.0 + title_h,
-        y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - value_title_h - legend_h,
+        y0: -h / 2.0 + 8.0 + title_h + x_title_h + value_band(chart, true),
+        y1: h / 2.0 - 6.0 - value_band(chart, false) - legend_h,
         dir: Dir::Row,
     }
 }
 
-/// The left-gutter width for a row chart's domain (category) labels.
+/// The band a row chart's value axes need on one screen edge (`top`, else the
+/// bottom): their tick-label row plus a title row, or 0 with no value axis there.
+/// Shared with the label placement, so the ticks and titles land in what was
+/// reserved [SPEC 14.7].
+pub(super) fn value_band(chart: &Chart, top: bool) -> f64 {
+    let mut band = 0.0_f64;
+    for axis in &chart.values {
+        if matches!(axis.side, Side::Top) != top {
+            continue;
+        }
+        band = band.max(LABEL_SIZE * 1.4);
+        if axis.title.is_some() {
+            band = LABEL_SIZE * 1.4 + AXIS_TITLE_SIZE * 1.4;
+        }
+    }
+    band
+}
+
+/// The left-gutter width for a row chart's domain labels — categories or numeric
+/// ticks, measured off the very texts the axis draws ([`axis::domain_ticks`]).
 fn domain_gutter(chart: &Chart) -> f64 {
-    let maxw = chart
-        .x
-        .labels
+    let maxw = axis::domain_ticks(chart)
         .iter()
-        .map(|l| prim::text_width(l, LABEL_SIZE, crate::font::Font::regular(chart.font_kind)))
+        .map(|(_, l)| prim::text_width(l, LABEL_SIZE, crate::font::Font::regular(chart.font_kind)))
         .fold(0.0_f64, f64::max);
     if maxw > 0.0 { maxw + 8.0 } else { 0.0 }
 }

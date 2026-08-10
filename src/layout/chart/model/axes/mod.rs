@@ -236,9 +236,9 @@ pub(super) fn build_value_axes(
         }
         let scale = value_scale(&vals, !bar_data.is_empty(), spec)?;
         out.push(ValueAxis {
-            side: matches!(spec.side, Side::Right)
-                .then_some(Side::Right)
-                .unwrap_or(Side::Left),
+            // The screen edge as written [SPEC 14.7] — `side:` is honoured, never
+            // folded to a default; the direction already fixed which pair is reachable.
+            side: spec.side,
             scale,
             title: spec.title.clone(),
             unit: spec.unit.clone(),
@@ -354,8 +354,8 @@ fn time_scale(xs: &[f64], x_inst: Option<&ResolvedInst>) -> Result<Scale, Error>
 }
 
 /// A log scale over a positive domain [SPEC 14.4]: the data domain is rounded
-/// out to whole decades unless an explicit `range:` fixes it. A non-positive domain
-/// is an error.
+/// out to whole decades unless an explicit `range:` fixes it. A high→low `range:`
+/// reverses it, exactly as on a linear axis. A non-positive domain is an error.
 fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Error> {
     if lo <= 0.0 || hi <= 0.0 {
         return Err(Error::at(
@@ -369,7 +369,7 @@ fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Err
     } else {
         (10f64.powf(a.log10().floor()), 10f64.powf(b.log10().ceil()))
     };
-    Ok(Scale::log(min, max))
+    Ok(Scale::log(min, max, lo > hi))
 }
 
 fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {

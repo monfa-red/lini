@@ -5,11 +5,57 @@
 //! styling are reused — no parallel layout); this module only reads the placement and
 //! fixes the box's centre over the right lifelines at its row.
 
-use crate::resolve::{AttrMap, ResolvedValue};
+use crate::layout::PlacedNode;
+use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 use std::collections::HashMap;
 
 /// Clear space between a `left` / `right` note and the lifeline it sits beside.
 const SIDE_GAP: f64 = 12.0;
+
+/// A node of either sequence body — a `|sequence|` node's resolved children, or a root
+/// sequence's already-placed scene nodes — so one collector reads both.
+pub(super) trait Body: Sized {
+    fn types(&self) -> &[String];
+    fn into_children(self) -> Vec<Self>;
+}
+
+impl Body for &ResolvedInst {
+    fn types(&self) -> &[String] {
+        &self.type_chain
+    }
+
+    fn into_children(self) -> Vec<Self> {
+        self.children.iter().collect()
+    }
+}
+
+impl Body for PlacedNode {
+    fn types(&self) -> &[String] {
+        &self.type_chain
+    }
+
+    fn into_children(self) -> Vec<Self> {
+        self.children
+    }
+}
+
+/// Every `|note|` in a sequence body, in source order [SPEC 13]. A frame's `[ ]` opens
+/// no scope, so a note written inside one is the **sequence's** note and takes its own
+/// row on the shared timeline — hence the descent through frames.
+pub(super) fn collect<T: Body>(nodes: Vec<T>, out: &mut Vec<T>) {
+    for n in nodes {
+        if is_note(n.types()) {
+            out.push(n);
+        } else if super::frames::is_frame(n.types()) {
+            collect(n.into_children(), out);
+        }
+    }
+}
+
+/// A `|note|` — a callout placed beside / over lifelines, not a participant [SPEC 13].
+pub(super) fn is_note(types: &[String]) -> bool {
+    types.iter().any(|t| t == "note")
+}
 
 /// Where a note binds to the lifelines [SPEC 13]. `over` may name several — the box
 /// centres over their span.
@@ -46,13 +92,16 @@ pub(super) fn placement(
     }
 }
 
-/// The note box's centre x for its placement: over the midpoint of the named lifelines, or
-/// beside one. `None` if a named participant has no lifeline (an unknown id).
-pub(super) fn centre_x(
+/// The note box's centre x **and width** for its placement [SPEC 13]: an `over` note is
+/// a box **spanning** the named lifelines (and every one between — their pixel extent,
+/// plus a `SIDE_GAP` overhang each side), never narrower than its own content; a `left` /
+/// `right` note keeps its content width beside the lifeline. `None` if a named
+/// participant has no lifeline (an unknown id).
+pub(super) fn box_at(
     placement: &Placement,
     box_w: f64,
     lifeline_x: &HashMap<String, f64>,
-) -> Option<f64> {
+) -> Option<(f64, f64)> {
     match placement {
         Placement::Over(ids) => {
             let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
@@ -61,10 +110,14 @@ pub(super) fn centre_x(
                 lo = lo.min(x);
                 hi = hi.max(x);
             }
-            (lo <= hi).then_some((lo + hi) / 2.0)
+            (lo <= hi).then_some(((lo + hi) / 2.0, box_w.max(hi - lo + SIDE_GAP * 2.0)))
         }
-        Placement::Left(id) => lifeline_x.get(id).map(|x| x - box_w / 2.0 - SIDE_GAP),
-        Placement::Right(id) => lifeline_x.get(id).map(|x| x + box_w / 2.0 + SIDE_GAP),
+        Placement::Left(id) => lifeline_x
+            .get(id)
+            .map(|x| (x - box_w / 2.0 - SIDE_GAP, box_w)),
+        Placement::Right(id) => lifeline_x
+            .get(id)
+            .map(|x| (x + box_w / 2.0 + SIDE_GAP, box_w)),
     }
 }
 

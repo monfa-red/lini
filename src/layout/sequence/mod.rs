@@ -14,6 +14,7 @@
 
 mod activations;
 mod frames;
+pub(crate) use frames::is_frame;
 pub(crate) mod messages;
 mod notes;
 
@@ -43,20 +44,27 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    // Participants and notes are real boxes — lay each out as usual, then arrange.
+    // Participants and notes are real boxes — lay each out as usual, then arrange. A
+    // sequence's interior is sheet-space [SPEC 15.1], so neither inherits an enclosing
+    // drawing's view scale. Notes are gathered through the frames too [SPEC 13].
+    let place = |c: &ResolvedInst| {
+        super::layout_inst(c, &super::child_path(path, c), program, super::Ctx::sheet())
+    };
     let mut participants = Vec::new();
-    let mut notes = Vec::new();
+    let mut rest: Vec<&ResolvedInst> = Vec::new();
     for c in &inst.children {
-        // A sequence's interior is sheet-space [SPEC 15.1] — participants never
-        // inherit an enclosing drawing's view scale.
-        let placed =
-            || super::layout_inst(c, &super::child_path(path, c), program, super::Ctx::sheet());
         if is_participant(&c.kind, &c.type_chain) {
-            participants.push(placed()?);
-        } else if is_note(&c.type_chain) {
-            notes.push(placed()?);
+            participants.push(place(c)?);
+        } else {
+            rest.push(c);
         }
     }
+    let mut note_insts = Vec::new();
+    notes::collect(rest, &mut note_insts);
+    let notes = note_insts
+        .into_iter()
+        .map(place)
+        .collect::<Result<Vec<_>, _>>()?;
     // An **anonymous** sequence node is scope-transparent [SPEC 9]: its path is
     // its parent's, and its (mis-scoped) messages resolved there — consuming by
     // path here would steal the parent's links instead.
@@ -87,14 +95,17 @@ pub(super) fn layout_root(
     program: &Program,
 ) -> Result<(Bbox, Vec<RoutedLink>), Error> {
     let mut participants = Vec::new();
-    let mut notes = Vec::new();
+    let mut rest = Vec::new();
     for p in std::mem::take(scene_nodes) {
         if is_participant(&p.kind, &p.type_chain) {
             participants.push(p);
-        } else if is_note(&p.type_chain) {
-            notes.push(p);
+        } else {
+            rest.push(p);
         }
     }
+    // The notes among them — inside the frames' placed boxes too [SPEC 13].
+    let mut notes = Vec::new();
+    notes::collect(rest, &mut notes);
     let messages = messages_for(program, "");
     let (children, bbox, wires) = lay_out(
         &program.scene.attrs,
@@ -300,11 +311,6 @@ fn is_participant(kind: &NodeKind, type_chain: &[String]) -> bool {
             .any(|t| NON_PARTICIPANT.contains(&t.as_str()))
 }
 
-/// A `|note|` — a callout placed beside / over lifelines, not a participant [SPEC 13].
-fn is_note(type_chain: &[String]) -> bool {
-    type_chain.iter().any(|t| t == "note")
-}
-
 /// The properties valid only in a sequence [SPEC 21]: a note's placement and the
 /// activation toggle.
 const SEQ_PROPS: &[&str] = &["place", "activation"];
@@ -380,8 +386,15 @@ fn place_notes(
             // Validated when the note was collected; a malformed `place:`
             // never reaches here.
             let placement = notes::placement(&n.attrs, n.span).ok().flatten()?;
-            n.cx = notes::centre_x(&placement, n.bbox.w(), lifeline_x)?;
+            let (cx, w) = notes::box_at(&placement, n.bbox.w(), lifeline_x)?;
+            n.cx = cx;
             n.cy = y;
+            // An `over` note spanning several lifelines is a box across them
+            // [SPEC 13]: widen the card and re-cut its silhouette at the new size.
+            if w > n.bbox.w() {
+                n.bbox = Bbox::centered(w, n.bbox.h());
+                super::note::fold(&mut n);
+            }
             // `translate: x y` nudges a note off its placement, so it can be positioned by
             // hand [SPEC 5] — the one post-placement mechanism, reused here.
             if let Ok(Some((dx, dy))) = super::anchors::translate(&n.attrs, n.span) {
@@ -606,6 +619,64 @@ mod tests {
             "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"spanning\" { place: over a b }\na -> b \"x\"\n",
         );
         assert!(s.contains(">spanning</text>"), "the note text renders: {s}");
+    }
+
+    #[test]
+    fn a_note_inside_a_frame_is_kept() {
+        // [SPEC 13]: a frame's `[ ]` opens no scope — its note is the
+        // sequence's own, at its source-order row. It was silently dropped.
+        let s = svg(
+            "{ layout: sequence }\na -> b \"m1\"\n|alt| \"ok\" [\n  b --> a \"m2\"\n  |note| \"careful\" { place: over a }\n]\n",
+        );
+        assert!(
+            s.contains(">careful</text>"),
+            "the framed note renders: {s}"
+        );
+    }
+
+    #[test]
+    fn an_over_note_spans_its_lifelines() {
+        // [SPEC 13]: `place: over a c` is a box spanning those lifelines and
+        // any between — not a centred card.
+        let l = {
+            let toks = crate::lexer::lex(
+                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|box#c| \"C\"\n|note| \"wide\" { place: over a c }\na -> c \"x\"\n",
+            )
+            .expect("lex");
+            let file = crate::syntax::parser::parse(
+                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|box#c| \"C\"\n|note| \"wide\" { place: over a c }\na -> c \"x\"\n",
+                &toks,
+            )
+            .expect("parse");
+            let lowered = crate::desugar::desugar(&file).expect("desugar");
+            let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
+            crate::layout::layout(&program).expect("layout")
+        };
+        fn find<'a>(
+            nodes: &'a [crate::layout::PlacedNode],
+            pred: &dyn Fn(&crate::layout::PlacedNode) -> bool,
+            off: f64,
+        ) -> Option<(&'a crate::layout::PlacedNode, f64)> {
+            for n in nodes {
+                if pred(n) {
+                    return Some((n, off + n.cx));
+                }
+                if let Some(hit) = find(&n.children, pred, off + n.cx) {
+                    return Some(hit);
+                }
+            }
+            None
+        }
+        let (note, _) = find(&l.nodes, &|n| n.type_chain.iter().any(|t| t == "note"), 0.0)
+            .expect("the note node");
+        let (_, ax) = find(&l.nodes, &|n| n.id.as_deref() == Some("a"), 0.0).expect("a");
+        let (_, cx) = find(&l.nodes, &|n| n.id.as_deref() == Some("c"), 0.0).expect("c");
+        assert!(
+            note.bbox.w() >= (cx - ax).abs(),
+            "the note spans a→c: note {} vs span {}",
+            note.bbox.w(),
+            (cx - ax).abs()
+        );
     }
 
     // ── Structural errors [SPEC 21] ──
