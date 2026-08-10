@@ -178,13 +178,21 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             ),
             pair("translate", 0.0, -20.0),
             var("color", "caption-color"),
-            n("font-size", 12.0),
+            pair(
+                "font-scale",
+                consts::CAPTION_FONT_AT_ROOT,
+                consts::ROOT_FONT_SIZE,
+            ),
             var("font-weight", "caption-font-weight"),
         ],
         "footnote" => vec![
             id("pin", "bottom"),
             pair("translate", 0.0, 19.0),
-            n("font-size", 12.0),
+            pair(
+                "font-scale",
+                consts::CAPTION_FONT_AT_ROOT,
+                consts::ROOT_FONT_SIZE,
+            ),
             var("color", "footer-color"),
         ],
         "badge" => vec![
@@ -688,11 +696,14 @@ pub fn root_defaults() -> Vec<Decl> {
 /// The baked link base [SPEC 10.5]: a link's lowest-specificity layer, resolved
 /// per link below the scope's `link*` / `clearance` / `routing` cascade, the
 /// class rules, and the link's own block.
+/// A link label's size at the default body size — `LINK_FONT_AT_ROOT` at
+/// `ROOT_FONT_SIZE`, scaling with an inherited `font-size:` [SPEC 6/9]. The
+/// derived seat is pushed in `link_scope`, not here: the ratio needs the
+/// scope's inherited size, which only the scope chain knows.
 pub fn link_defaults() -> Vec<Decl> {
     vec![
         n("stroke-width", 2.0),
         n("clearance", consts::DEFAULT_CLEARANCE),
-        n("font-size", 11.0),
     ]
 }
 
@@ -860,7 +871,9 @@ mod tests {
         assert_eq!(num(&root_defaults(), "padding"), Some(20.0));
         assert_eq!(num(&root_defaults(), "font-size"), Some(15.0));
         assert_eq!(num(&link_defaults(), "clearance"), Some(16.0));
-        assert_eq!(num(&link_defaults(), "font-size"), Some(11.0));
+        // No baked font-size: a label's size derives from the scope's
+        // inherited body size in `link_scope` [SPEC 6/9].
+        assert!(!has(&link_defaults(), "font-size"));
     }
 
     #[test]
@@ -885,6 +898,8 @@ mod tests {
         // The footnote (the renamed old footer): still the pinned bottom caption.
         let foot = template_bundle("footnote");
         assert_eq!(ident(&foot, "pin").as_deref(), Some("bottom"));
-        assert_eq!(num(&foot, "font-size"), Some(12.0));
+        // Chrome text scales with the inherited body size [SPEC 6]: the
+        // bundle carries the ratio marker, not an absolute.
+        assert!(!has(&foot, "font-size") && has(&foot, "font-scale"));
     }
 }

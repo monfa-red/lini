@@ -72,6 +72,11 @@ pub(crate) const DRAWING_LINK_FONT_SIZE: f64 = 12.0;
 pub(crate) const DEFAULT_CLEARANCE: f64 = 16.0;
 /// The baked root `font-size` (body text).
 pub(crate) const ROOT_FONT_SIZE: f64 = 15.0;
+/// Chrome text scales with the inherited body size [SPEC 6]: a link label
+/// reads 11 and a caption 12 at the default 15, each derived as
+/// `inherited × N / 15` (multiply before divide — exact at the default).
+pub(crate) const LINK_FONT_AT_ROOT: f64 = 11.0;
+pub(crate) const CAPTION_FONT_AT_ROOT: f64 = 12.0;
 /// The default ISO 5457 sheet — A4 portrait, mm [SPEC 15.8].
 pub(crate) const A4: (f64, f64) = (210.0, 297.0);
 

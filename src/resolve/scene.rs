@@ -220,6 +220,24 @@ pub fn resolve_node(
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
     let mut attrs = collapse(&ordered);
 
+    // The `font-scale` marker [SPEC 6]: a chrome bundle (caption, footnote)
+    // states its text size as `N at-the-default-D` and the size derives from
+    // the **inherited** body size — `inherited × N / D`, exact at the default —
+    // so one `font-size:` scales the scene. Any authored `font-size` at any
+    // tier stands absolute; the marker is consumed here, never emitted.
+    if let Some((at, of)) = attrs.font_scale() {
+        attrs.remove("font-scale");
+        if attrs.get("font-size").is_none() {
+            let inherited = text_ctx
+                .number("font-size")
+                .unwrap_or(crate::ledger::consts::ROOT_FONT_SIZE);
+            attrs.insert(
+                "font-size",
+                crate::resolve::ResolvedValue::Number(inherited * at / of),
+            );
+        }
+    }
+
     if kind == NodeKind::Slant
         && let Some(skew) = attrs.number("skew")
         && (skew <= -89.0 || skew >= 89.0)

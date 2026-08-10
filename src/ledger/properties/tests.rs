@@ -44,6 +44,11 @@ fn every_bundled_default_has_a_row() {
         decls.extend(root_layout_defaults(layout));
     }
     for d in decls {
+        // `font-scale` is the internal chrome-ratio marker [SPEC 6] — consumed
+        // at resolve, never a user property, so it has no row.
+        if d.name == "font-scale" {
+            continue;
+        }
         assert!(
             get(&d.name).is_some(),
             "bundled default '{}' has no ledger row",

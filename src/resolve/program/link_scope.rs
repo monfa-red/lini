@@ -198,6 +198,21 @@ pub(super) fn link_scope(
     owner: links::Owner,
 ) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
     let mut base = baked.every.clone();
+    // A link label's size derives from the scope's **inherited** body size
+    // [SPEC 6/9] — 11 at the default 15 — so one `font-size:` scales the whole
+    // scene. Base-layer seat: any authored `font-size` (`|-|`, a class, the
+    // link's block) wins absolutely; the drawing's own 12 (below) overrides it
+    // too, drafting text being a sheet convention.
+    let inherited = chain
+        .iter()
+        .rev()
+        .find_map(|s| s.attrs.number("font-size"))
+        .or_else(|| root_attrs.number("font-size"))
+        .unwrap_or(consts::ROOT_FONT_SIZE);
+    base.push((
+        "font-size".to_string(),
+        ResolvedValue::Number(inherited * consts::LINK_FONT_AT_ROOT / consts::ROOT_FONT_SIZE),
+    ));
     // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
     // a drawing's links thin to 1. A **scope default**, not a rule — it rides
     // the base layer below every user rule, so a plain `|-| { stroke-width: … }`

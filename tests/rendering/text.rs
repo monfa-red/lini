@@ -351,3 +351,31 @@ fn line_alignment_rides_the_holding_boxes_knob() {
         .collect();
     assert!(xs.windows(2).all(|w| w[0] == w[1]), "{svg}");
 }
+
+#[test]
+fn chrome_text_scales_with_the_inherited_body_size() {
+    // [SPEC 6]: captions read 12/15 and link labels 11/15 of the inherited
+    // font-size — one knob scales the scene; explicit sizes stay absolute.
+    let s = lini::compile_str(
+        "{ font-size: 30; }\n|group#g| \"Cap\" [\n  |box#a| \"x\"\n  |box#b| \"y\"\n  a -> b \"wire\"\n]\n",
+    )
+    .expect("compile");
+    assert!(s.contains("font-size: 24px"), "caption 30 x 12/15: {s}");
+    assert!(s.contains("font-size: 22px"), "link label 30 x 11/15: {s}");
+    let s = lini::compile_str(
+        "{ font-size: 30;\n  |caption| { font-size: 13 }\n  |-| { font-size: 9 }\n}\n|group#g| \"Cap\" [\n  |box#a| \"x\"\n  |box#b| \"y\"\n  a -> b \"wire\"\n]\n",
+    )
+    .expect("compile");
+    assert!(
+        s.contains("font-size: 13px"),
+        "explicit caption absolute: {s}"
+    );
+    assert!(s.contains("font-size: 9px"), "explicit label absolute: {s}");
+    // The default scene is byte-exact: 15 / 12 / 11, no ratio dust.
+    let s = lini::compile_str(
+        "|group#g| \"Cap\" [\n  |box#a| \"x\"\n  |box#b| \"y\"\n  a -> b \"wire\"\n]\n",
+    )
+    .expect("compile");
+    assert!(s.contains("font-size: 12px"), "caption exactly 12: {s}");
+    assert!(s.contains("font-size: 11px"), "label exactly 11: {s}");
+}

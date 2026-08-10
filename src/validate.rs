@@ -39,6 +39,7 @@ const INTERNAL: &[&str] = &[
     "mount",
     "px-per-unit",
     "field",
+    "font-scale",
 ];
 
 pub fn validate(file: &File) -> Vec<Diagnostic> {

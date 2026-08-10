@@ -14,11 +14,11 @@ input_file: samples/paint.lini
     .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 10.4px; font-weight: 400; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-card { stroke: none; color: white; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 9.5333px; font-weight: 400; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
@@ -382,16 +382,16 @@ input_file: samples/paint.lini
           <use href="#lg0500-87" transform="translate(23.4 6.304) scale(0.0065 -0.0065)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-47,-128.5)">
-        <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-50.36,-129.3)">
+        <rect x="-21.84" y="-5.2" width="43.68" height="10.4" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-55" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-73" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-86" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-90" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-77" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-71" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-73" transform="translate(18 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-55" transform="translate(-21.84 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-73" transform="translate(-15.6 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-86" transform="translate(-9.36 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-90" transform="translate(-3.12 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-77" transform="translate(3.12 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-71" transform="translate(9.36 3.7232) scale(0.0052 -0.0052)"/>
+          <use href="#lg0400-73" transform="translate(15.6 3.7232) scale(0.0052 -0.0052)"/>
         </g>
       </g>
     </g>
@@ -402,15 +402,15 @@ input_file: samples/paint.lini
       <polygon class="lini-marker lini-marker-arrow" points="32.2,230 41.2,225.5 41.2,234.5"/>
     </g>
     <g class="lini-link" data-from="service.api" data-to="service.db">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="30.7" y="244" width="41.75" height="63"><rect class="lini-cut-bg" x="30.7" y="244" width="41.75" height="63"/><rect class="lini-cut" x="50.65" y="258.6" width="39.6" height="14.3"/></mask>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="30.7" y="244" width="41.75" height="63"><rect class="lini-cut-bg" x="30.7" y="244" width="41.75" height="63"/><rect class="lini-cut" x="53.29" y="259.5533" width="34.32" height="12.3933"/></mask>
       <path d="M 32.7 246 L 54.45 246 A 16 16 0 0 1 70.45 262 L 70.45 290.25 A 14.75 14.75 0 0 1 55.7 305 L 55.7 305" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="51.7,305 60.7,300.5 60.7,309.5"/>
       <g class="lini-link-label">
-        <use href="#lg0400-85" transform="translate(53.95 269.688) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-89" transform="translate(60.55 269.688) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-73" transform="translate(67.15 269.688) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(73.75 269.688) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-93" transform="translate(80.35 269.688) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-85" transform="translate(56.15 269.1629) scale(0.0048 -0.0048)"/>
+        <use href="#lg0400-89" transform="translate(61.87 269.1629) scale(0.0048 -0.0048)"/>
+        <use href="#lg0400-73" transform="translate(67.59 269.1629) scale(0.0048 -0.0048)"/>
+        <use href="#lg0400-86" transform="translate(73.31 269.1629) scale(0.0048 -0.0048)"/>
+        <use href="#lg0400-93" transform="translate(79.03 269.1629) scale(0.0048 -0.0048)"/>
       </g>
     </g>
   </g>

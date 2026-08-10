@@ -617,8 +617,12 @@ The text family — `font-family`, `font-size`, `font-weight`, `font-style`,
 `text-transform`, `text-decoration`, `letter-spacing`, `line-spacing`, and `color` —
 **inherits**: nearest ancestor wins, like CSS. Set it on a containing box (or the root)
 and it cascades down, or on a string's own block (`"x" { font-weight: bold }`) for
-that one text node. Body text defaults to `font-size` 15, `font-weight` `500`;
-captions 12 and link labels 11 carry their own baked defaults.
+that one text node. Body text defaults to `font-size` 15, `font-weight` `500`.
+**Chrome text scales with the body**: a caption reads 12∕15 and a link label
+11∕15 of the *inherited* `font-size` — 12 and 11 at the default — so one
+`font-size:` scales the whole scene; an explicit `font-size` on either
+(`|caption| { }`, `|-| { }`, a class, an own block) is absolute. (A drawing's
+annotation text stays the sheet convention, 12 — [SPEC 15.1](#151-the-container-the-datum--the-scale).)
 
 **Two bundled families** (both SIL OFL 1.1) carry the metrics ([SPEC 5](#5-the-box-model)):
 **Google Sans Code**, the mono default, and **Google Sans**, the proportional one
@@ -1080,9 +1084,12 @@ Each label is an ordinary **styleable text leaf**; the head label takes no style
 ([SPEC 3](#3-statements--the-label)) — a styled label rides the `[ ]`, exactly as a
 node's does. Keep one link's labels in **one** `[ ]` — a head label *and* a
 `[ ]` of labels on the same link warns ([SPEC 21](#21-errors)). A label is an obstacle to nothing, and may slide along the link to keep
-clear of nodes and other labels; the link never moves for it. Link labels default to
-`font-size: 11`, `font-weight: normal`; a link's text props cascade to its labels
-(`|-| { font-size: 14; color: --blue }` restyles every link's labels at once).
+clear of nodes and other labels; the link never moves for it. Link labels read
+11∕15 of the scope's inherited `font-size` (11 at the default 15 —
+[SPEC 6](#6-paint-stroke--text)) at `font-weight: normal`; a link's text props
+cascade to its labels
+(`|-| { font-size: 14; color: --blue }` restyles every link's labels at once,
+absolutely).
 
 ### Endpoints & scope
 

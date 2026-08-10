@@ -438,13 +438,27 @@ fn build_sheet_inputs(
     sheet: &Stylesheet,
     nested_sheet: bool,
 ) -> Result<SheetInputs, Error> {
+    let root_font_size = root_attrs
+        .number("font-size")
+        .unwrap_or(consts::ROOT_FONT_SIZE);
     let mut class_rules = Vec::new();
     let mut descendant_rules = Vec::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item {
             match r.selector.units.as_slice() {
                 [SelUnit::Class(c)] => {
-                    class_rules.push((c.clone(), decls_attrmap(&r.decls, vars, funcs)?));
+                    let mut m = decls_attrmap(&r.decls, vars, funcs)?;
+                    // A chrome bundle's `font-scale` marker states the class
+                    // rule's size at the **root** body size [SPEC 6/18], so
+                    // default wearers diff to nothing and only a caption in a
+                    // locally-resized subtree inlines its own derived size.
+                    if let Some((at, of)) = m.font_scale() {
+                        m.remove("font-scale");
+                        if m.get("font-size").is_none() {
+                            m.insert("font-size", ResolvedValue::Number(root_font_size * at / of));
+                        }
+                    }
+                    class_rules.push((c.clone(), m));
                 }
                 [SelUnit::Class(a), SelUnit::Class(b)] => {
                     descendant_rules.push((
@@ -479,9 +493,6 @@ fn build_sheet_inputs(
             dress(links::Owner::Sheet),
         ));
     }
-    let root_font_size = root_attrs
-        .number("font-size")
-        .unwrap_or(consts::ROOT_FONT_SIZE);
     // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
     // `font-family` / `font-weight` / `color` override their themeable var when set
     // globally; the rest are live CSS with no default, present only when authored.

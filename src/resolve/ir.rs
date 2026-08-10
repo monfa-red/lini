@@ -195,6 +195,21 @@ impl AttrMap {
         self.get(name).and_then(ResolvedValue::as_number)
     }
 
+    /// The internal `font-scale` marker's `(at, of)` pair [SPEC 6] — a chrome
+    /// bundle's text size stated as `at` the default body size `of`, derived
+    /// against the inherited size as `inherited × at / of` (multiply before
+    /// divide, exact at the default). One reader for the class-rule seat and
+    /// the per-node derivation, so the two can never disagree.
+    pub fn font_scale(&self) -> Option<(f64, f64)> {
+        match self.get("font-scale") {
+            Some(ResolvedValue::Tuple(nd)) => match nd.as_slice() {
+                [a, b] => a.as_number().zip(b.as_number()),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     /// Half the painted stroke's reach either side of the drawn geometry — the
     /// one number layout inflates a bbox by and render deflates it by, so the
     /// two can never disagree. `stroke: none` paints nothing and counts

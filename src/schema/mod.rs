@@ -111,6 +111,10 @@ fn bundle_json(decls: &[Decl]) -> J {
     J::Obj(
         decls
             .iter()
+            // `font-scale` is the internal chrome-ratio marker [SPEC 6] —
+            // consumed at resolve, never a user property; the schema publishes
+            // the user surface only.
+            .filter(|d| d.name != "font-scale")
             .map(|d| {
                 let name: &'static str = leak(&d.name);
                 (name, J::s(crate::fmt::print_decl_value(d)))
