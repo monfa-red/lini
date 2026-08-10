@@ -85,10 +85,7 @@ pub(crate) fn cheapest(
     use std::cmp::{Ordering, Reverse};
     use std::collections::BinaryHeap;
 
-    let centre = |c: usize| {
-        let r = graph.cells[c].rect;
-        ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0)
-    };
+    let centre = |c: usize| graph.cells[c].rect.centre();
     let l1 = |a: (f64, f64), b: (f64, f64)| (a.0 - b.0).abs() + (a.1 - b.1).abs();
     let xc = cross_cost(clearance);
     let tc = turn_cost(clearance);

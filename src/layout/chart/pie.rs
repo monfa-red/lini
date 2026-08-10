@@ -6,7 +6,6 @@
 use super::metrics::{LABEL_SIZE, TITLE_SIZE};
 use super::model::{Pie, Slice, fill_color, fill_outline, label_of, read_gap, tag};
 use super::palette;
-use super::tint::live;
 use super::{chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
@@ -33,11 +32,8 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     let title_h = title_reserve(pie.title.is_some(), pie.gap);
     let entries = legend_entries(&pie.slices);
     let legend_h = legend_reserve(entries.len(), pie.gap);
-    let margin = 8.0;
-    let top = title_h + margin;
-    let avail_h = h - top - legend_h - margin;
-    let r = avail_h.min(w - 2.0 * margin).max(0.0) / 2.0;
-    let cy = -h / 2.0 + top + avail_h / 2.0;
+    let (side, cy) = super::frame::square_inset(w, h, title_h, legend_h, 8.0);
+    let r = side / 2.0;
     let inner = pie.hole * r;
     let total: f64 = pie.slices.iter().map(|s| s.value).sum();
 
@@ -84,15 +80,12 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     Ok(chart_box(inst, w, h, kids))
 }
 
-/// The legend entries — one per slice that carries a label [SPEC 14.6]. The swatch
-/// mirrors the slice's fill and its (default-deep or explicit) edge.
+/// The legend entries — one per slice that carries a label, through the shared
+/// builder ([`super::legend::entry`]).
 fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
     slices
         .iter()
-        .filter_map(|s| {
-            let edge = s.outline.as_ref().map(|(c, _)| c.clone());
-            s.label.clone().map(|l| (l, s.color.clone(), edge))
-        })
+        .filter_map(|s| super::legend::entry(&s.label, &s.color, &s.outline, false))
         .collect()
 }
 
@@ -145,8 +138,8 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         if value < 0.0 {
             return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
         }
-        let color =
-            fill_color(&s.attrs).unwrap_or_else(|| live(&format!("{}-soft", palette::hue(i))));
+        let color = fill_color(&s.attrs)
+            .unwrap_or_else(|| ResolvedValue::live(format!("{}-soft", palette::hue(i))));
         let edge = fill_outline(&s.attrs, &color);
         slices.push(Slice {
             value,

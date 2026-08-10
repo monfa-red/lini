@@ -6,7 +6,7 @@
 //! crosses. The search ([`super::search`]) prices routes between entries.
 
 use super::graph::{Axis, ChannelGraph};
-use super::rect::Rect;
+use super::rect::{Rect, port_window};
 use super::search::{DIRS, opposite};
 use crate::ast::Side;
 
@@ -47,31 +47,23 @@ pub(crate) fn entries(
         fixed.is_none() || forced.is_some(),
         "a fixed port rides a forced side (ROUTING.md Fixed ports)"
     );
-    let cx = (body.x0 + body.x1) / 2.0;
-    let cy = (body.y0 + body.y1) / 2.0;
-    let window = |lo: f64, hi: f64, centre: f64| {
-        let (wlo, whi) = (lo + clearance, hi - clearance);
-        if whi < wlo {
-            (centre, centre)
-        } else {
-            (wlo, whi)
-        }
-    };
-    let candidates = [
-        (Side::Right, (body.x1, cy), 0, Axis::H),
-        (Side::Bottom, (cx, body.y1), 1, Axis::V),
-        (Side::Left, (body.x0, cy), 2, Axis::H),
-        (Side::Top, (cx, body.y0), 3, Axis::V),
-    ];
-    candidates
+    let (cx, cy) = body.centre();
+    // The candidate sides in tie-break order (ROUTING.md Law 4) — and the
+    // graph's direction id **is** that rank: `DIRS[r]` is the outward normal
+    // of `Side::RANK[r]`.
+    Side::RANK
         .into_iter()
-        .filter(|(s, ..)| forced.is_none_or(|f| f == *s))
-        .filter_map(|(side, port, dir, axis)| {
-            let dir = if inward { opposite(dir) } else { dir };
-            let (lo, hi, centre) = match axis {
-                Axis::H => (body.y0, body.y1, cy),
-                Axis::V => (body.x0, body.x1, cx),
+        .filter(|s| forced.is_none_or(|f| f == *s))
+        .filter_map(|side| {
+            let (port, axis) = match side {
+                Side::Right => ((body.x1, cy), Axis::H),
+                Side::Bottom => ((cx, body.y1), Axis::V),
+                Side::Left => ((body.x0, cy), Axis::H),
+                Side::Top => ((cx, body.y0), Axis::V),
             };
+            let dir = side.rank() as usize;
+            let dir = if inward { opposite(dir) } else { dir };
+            let (lo, hi) = body.side_span(side);
             let (port, win) = match fixed {
                 Some(f) => {
                     // A port off its own side has no lawful landing — no
@@ -85,7 +77,7 @@ pub(crate) fn entries(
                     };
                     (port, (f, f))
                 }
-                None => (port, window(lo, hi, centre)),
+                None => (port, port_window(body, side, clearance)),
             };
             punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| Entry {
                 side,

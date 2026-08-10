@@ -13,11 +13,7 @@ use crate::error::Code;
 /// Every hop the program declares, as `(from, to)` resolved paths — one
 /// entry per drawn wire, so a chain threading a part shows as two.
 fn hops(src: &str) -> Vec<(String, String)> {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    program
+    crate::testutil::program(src)
         .links
         .iter()
         .flat_map(|w| {
@@ -31,10 +27,7 @@ fn hops(src: &str) -> Vec<(String, String)> {
 
 #[track_caller]
 fn err(src: &str) -> crate::error::Error {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    crate::desugar::desugar(&file)
-        .and_then(|f| crate::resolve::resolve_with_theme(&f, &[]))
+    crate::testutil::try_program(src)
         .err()
         .expect("the wire laws report")
 }
@@ -535,11 +528,7 @@ fn no_wire_leaves_resolve_with_more_than_two_ends() {
         lowered.contains("a - b - c"),
         "desugar's carrier says schematic, so it left the chain whole: {lowered}"
     );
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let program =
-        crate::resolve::resolve_with_theme(&crate::desugar::desugar(&file).expect("desugar"), &[])
-            .expect("resolve");
+    let program = crate::testutil::program(src);
     let ends: Vec<usize> = program.links.iter().map(|w| w.endpoints.len()).collect();
     assert_eq!(ends, vec![2, 2], "one two-ended wire per hop");
     assert_eq!(
@@ -557,11 +546,7 @@ fn no_wire_leaves_resolve_with_more_than_two_ends() {
                   |hole#b| { width: 10; pattern: grid(2, 2, 100, 30) }\n  ]\n  \
                   p.b.1 & p.b.2 & p.b.4 <- \"3× CSK 90°\"\n  \
                   p:left (-) p.b (-) p:right\n]\n";
-    let toks = crate::lexer::lex(leader).expect("lex");
-    let file = crate::syntax::parser::parse(leader, &toks).expect("parse");
-    let program =
-        crate::resolve::resolve_with_theme(&crate::desugar::desugar(&file).expect("desugar"), &[])
-            .expect("resolve");
+    let program = crate::testutil::program(leader);
     let leaders: Vec<usize> = program
         .links
         .iter()
@@ -646,11 +631,8 @@ fn a_sealed_engine_inside_a_sheet_still_owns_its_own_statements() {
     // The parts are the family's and the sheet encloses them, but the wire is
     // the drawing's statement: no landing, so the paths stay bare.
     assert_eq!(hops(src), vec![("d.r1".into(), "d.r2".into())]);
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let program =
-        crate::resolve::resolve_with_theme(&crate::desugar::desugar(&file).expect("desugar"), &[])
-            .expect("the drawing's own statements are not the sheet's");
+    // The drawing's own statements are not the sheet's.
+    let program = crate::testutil::program(src);
     assert_eq!(
         program.links.iter().filter(|w| w.one_ended).count(),
         1,

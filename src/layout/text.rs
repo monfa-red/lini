@@ -6,8 +6,38 @@
 //! estimate at every weight. `letter-spacing` / `line-spacing` [SPEC 13] feed
 //! in here so the box grows to fit the baked spacing.
 
+use super::ir::Bbox;
 use crate::font::Font;
 use crate::ledger::consts::TEXT_LEADING;
+use crate::resolve::AttrMap;
+
+/// The measurement props a text run reads off its resolved attrs, as
+/// `(font-size, letter-spacing, line-spacing)` — **the** default table, so a
+/// text leaf's bbox, a `max-width` re-measure, the canvas frame, a link
+/// label's dodge box and its cut rect all agree to the last float.
+pub(crate) fn metrics(attrs: &AttrMap) -> (f64, f64, f64) {
+    (
+        attrs.number("font-size").unwrap_or(0.0),
+        attrs.number("letter-spacing").unwrap_or(0.0),
+        attrs.number("line-spacing").unwrap_or(0.0),
+    )
+}
+
+/// A text run's drawn box, centred on the origin — measured from its attrs at
+/// the given effective font. The one text-leaf measurement [SPEC 5].
+pub(crate) fn measure_with(content: &str, font: Font, attrs: &AttrMap) -> Bbox {
+    let (size, ls, lsp) = metrics(attrs);
+    Bbox::centered(
+        approx_width(content, font, size, ls),
+        approx_height(content, size, lsp),
+    )
+}
+
+/// [`measure_with`] reading the font off the same attrs — for a run whose
+/// attrs *are* its whole text context (a link label, a routed readout).
+pub(crate) fn measure(content: &str, attrs: &AttrMap) -> Bbox {
+    measure_with(content, Font::of(attrs), attrs)
+}
 
 /// The width of a label at the given measurement font and size, in px.
 /// Multi-line labels (containing `\n`) take the widest line. With

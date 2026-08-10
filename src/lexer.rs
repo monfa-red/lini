@@ -655,12 +655,21 @@ fn is_link_line_start(c: u8) -> bool {
 /// The UTF-8 byte-order mark, ignored when it opens a source [SPEC 2].
 const BOM: &str = "\u{feff}";
 
-fn is_ident_start(c: u8) -> bool {
+/// The one ident alphabet [SPEC 2]: what may open a name…
+pub(crate) fn is_ident_start(c: u8) -> bool {
     c.is_ascii_alphabetic() || c == b'_'
 }
 
-fn is_ident_continue(c: u8) -> bool {
+/// …and what may continue one.
+pub(crate) fn is_ident_continue(c: u8) -> bool {
     c.is_ascii_alphanumeric() || c == b'_' || c == b'-'
+}
+
+/// A whole run read as one ident — the selector parser's reading of the same
+/// alphabet the lexer tokenizes by.
+pub(crate) fn is_ident(s: &str) -> bool {
+    let mut bytes = s.bytes();
+    matches!(bytes.next(), Some(c) if is_ident_start(c)) && bytes.all(is_ident_continue)
 }
 
 #[cfg(test)]

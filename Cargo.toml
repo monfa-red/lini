@@ -39,7 +39,7 @@ icons = []
 font = ["dep:ttf-parser"]
 
 [dev-dependencies]
-insta = { version = "1.47", features = ["glob"] }
+insta = { version = "1.47", features = ["glob", "filters"] }
 
 [profile.release]
 lto = "thin"

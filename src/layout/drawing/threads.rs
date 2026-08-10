@@ -14,6 +14,7 @@
 use super::geometry::{MirrorAxis, P, PathSeg, Subpath};
 use super::{Segment, breaks::ViewMap, outline};
 use crate::error::Error;
+use crate::layout::geom::dot;
 use crate::ledger::consts::{THREAD_DEPTH, THREAD_DEPTH_INTERNAL};
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
@@ -236,7 +237,7 @@ fn parallel(a: P, b: P, axis: MirrorAxis) -> bool {
         return false;
     }
     let u = axis.dir();
-    ((d.0 * u.0 + d.1 * u.1) / len).abs() > 1.0 - 1e-9
+    (dot(d, u) / len).abs() > 1.0 - 1e-9
 }
 
 fn order(a: f64, b: f64) -> (f64, f64) {

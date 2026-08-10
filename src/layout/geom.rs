@@ -8,6 +8,68 @@ use super::ir::Bbox;
 
 pub type P = (f64, f64);
 
+// ── 2-vector arithmetic ──
+// The one set every engine reaches for; a caller writing `a.0 - b.0` inline is
+// re-deriving these.
+
+pub fn sub(a: P, b: P) -> P {
+    (a.0 - b.0, a.1 - b.1)
+}
+
+pub fn add(a: P, b: P) -> P {
+    (a.0 + b.0, a.1 + b.1)
+}
+
+pub fn scale(a: P, s: f64) -> P {
+    (a.0 * s, a.1 * s)
+}
+
+pub fn dot(a: P, b: P) -> f64 {
+    a.0 * b.0 + a.1 * b.1
+}
+
+/// The 2-D cross product's scalar (z) component — positive turns clockwise on
+/// a y-down screen.
+pub fn cross(a: P, b: P) -> f64 {
+    a.0 * b.1 - a.1 * b.0
+}
+
+/// `a` scaled to unit length; a degenerate vector is returned unchanged.
+pub fn norm(a: P) -> P {
+    let l = a.0.hypot(a.1);
+    if l > 1e-12 { (a.0 / l, a.1 / l) } else { a }
+}
+
+/// Rotate about the origin by `t` **radians** — positive reads clockwise on a
+/// y-down screen.
+pub fn rotate_rad(a: P, t: f64) -> P {
+    let (s, c) = t.sin_cos();
+    (a.0 * c - a.1 * s, a.0 * s + a.1 * c)
+}
+
+/// Rotate about the origin by `deg` **degrees**, clockwise on a y-down screen.
+/// The zero case returns the point untouched, so an unturned node's coords
+/// survive bit-exact.
+pub fn rotate(a: P, deg: f64) -> P {
+    if deg == 0.0 {
+        return a;
+    }
+    rotate_rad(a, deg.to_radians())
+}
+
+/// Rotate `p` about `centre` by `deg` degrees.
+pub fn rotate_about(p: P, centre: P, deg: f64) -> P {
+    add(centre, rotate(sub(p, centre), deg))
+}
+
+/// The point at radius `r` from `centre` on the ray `a` **radians** from 12
+/// o'clock, increasing clockwise — the polar convention every arc-shaped
+/// primitive, the chart's radial projection, and the hatch tiles share
+/// [SPEC 14.7].
+pub fn polar(centre: P, r: f64, a: f64) -> P {
+    add(centre, rotate_rad((0.0, -r), a))
+}
+
 /// The `[min, max]` projection of a point set onto a unit direction.
 pub fn proj(pts: &[P], dir: P) -> (f64, f64) {
     pts.iter()

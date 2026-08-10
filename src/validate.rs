@@ -27,6 +27,7 @@ use crate::syntax::ast::{
     layout_of, root_ident,
 };
 use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
 
 /// Attr names desugar/layout write internally (view chrome, detail clips, the
 /// sourced-view title, mate seating, title-block field markers) — never user
@@ -348,17 +349,13 @@ impl<'a> Ctx<'a> {
                     );
                     return;
                 }
-                // `cell:` places on a grid *and* on a schematic's own ordinal
+                // A placement prop's legal hosts are its ledger `Layout` owners
+                // — `cell:` places on a grid *and* on a schematic's own ordinal
                 // track grid [SPEC 16.1], where it also promotes a satellite to
-                // an anchor. `span:` stays grid-only — schematic tracks have no
+                // an anchor; `span:` stays grid-only, schematic tracks have no
                 // spans.
-                let host = if d.name == "cell" {
-                    &["grid", "schematic"][..]
-                } else {
-                    &["grid"][..]
-                };
                 if let Some(parent) = parent_layout
-                    && !host.contains(parent)
+                    && !prop.layout_owners().any(|l| l == *parent)
                 {
                     let verb = if d.name == "cell" {
                         "places a grid or schematic child"
@@ -592,17 +589,28 @@ impl<'a> Ctx<'a> {
 }
 
 /// The layout a built-in container type owns [SPEC 8] — how a `Type` owner is
-/// satisfied by a scope whose `layout:` matches it.
+/// satisfied by a scope whose `layout:` matches it. Read off the ledger, never
+/// restated: a type owns the `layout:` its own template bundle declares, or the
+/// one a template it builds on declares (`|entity|` is a `|table|`, which is the
+/// grid). Built once, since the bundles are constant.
 fn container_layout(t: &str) -> Option<&'static str> {
-    Some(match t {
-        "drawing" => "drawing",
-        "chart" => "chart",
-        "pie" => "pie",
-        "sequence" => "sequence",
-        "schematic" => "schematic",
-        "table" | "entity" | "title-block" | "grid" => "grid",
-        _ => return None,
+    static MAP: OnceLock<HashMap<&'static str, String>> = OnceLock::new();
+    MAP.get_or_init(|| {
+        let mut m = HashMap::new();
+        for (name, _) in types::TEMPLATES {
+            let mut walk = Some(*name);
+            while let Some(n) = walk {
+                if let Some(l) = layout_of(&crate::ledger::defaults::template_bundle(n)) {
+                    m.insert(*name, l.to_string());
+                    break;
+                }
+                walk = types::template_base(n);
+            }
+        }
+        m
     })
+    .get(t)
+    .map(String::as_str)
 }
 
 /// Whether a node wearer can use the property at all [SPEC 17].

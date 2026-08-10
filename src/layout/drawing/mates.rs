@@ -15,6 +15,7 @@ use super::super::ir::PlacedNode;
 use super::anchors;
 use super::geometry::P;
 use crate::error::Error;
+use crate::layout::geom::cross;
 use crate::resolve::{ResolvedEndpoint, ResolvedLink};
 use crate::span::Span;
 use std::collections::HashMap;
@@ -250,7 +251,7 @@ fn delta(
     let pf = fixed.point;
     match (fixed.outward, mover.outward) {
         (Some(nf), Some(nm)) => {
-            if (nf.0 * nm.1 - nf.1 * nm.0).abs() > 1e-6 {
+            if cross(nf, nm).abs() > 1e-6 {
                 return Err(Error::at(
                     w.span,
                     format!(

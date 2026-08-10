@@ -253,8 +253,8 @@ fn mindmap_root_arms_share_one_trunk_port_per_side() {
             .expect("wire path");
         let d = path.trim_start().strip_prefix("<path d=\"M ").unwrap();
         let xy: Vec<&str> = d.split(' ').take(2).collect();
-        let to = &l[l.find("data-to=\"").unwrap() + 9..];
-        starts.push((xy.join(" "), to[..to.find('"').unwrap()].to_string()));
+        let to = scrape(l, "data-to=\"")[0];
+        starts.push((xy.join(" "), to.to_string()));
     }
     assert_eq!(starts.len(), 4, "four root arms: {starts:?}");
     let mut ports: Vec<&str> = starts.iter().map(|(p, _)| p.as_str()).collect();
@@ -282,9 +282,9 @@ fn sch_sheet(extra: &str, tail: &str) -> String {
 
 /// Every drawn wire `d=` of an SVG.
 fn wire_ds(svg: &str) -> Vec<String> {
-    svg.lines()
-        .filter_map(|l| l.trim_start().strip_prefix("<path d=\""))
-        .map(|d| d[..d.find('"').unwrap()].to_string())
+    scrape(svg, "<path d=\"")
+        .into_iter()
+        .map(str::to_string)
         .collect()
 }
 

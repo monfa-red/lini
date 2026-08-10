@@ -8,13 +8,15 @@
 
 use super::super::ir::PlacedNode;
 use super::super::{approx_height, approx_width, prim};
-use super::anchors::{self, Anchor, Spot, rotated};
+use super::anchors::{self, Anchor, Spot};
 use super::annotate::{Ctx, Paint, side_attr, side_unit};
 use super::compose::DimText;
 use super::geometry::{P, dist, unit};
 use super::symbols::CarriedStack;
 use super::{dims, outline};
 use crate::error::Error;
+use crate::layout::geom::dot;
+use crate::layout::geom::rotate;
 use crate::ledger::consts::ARROW_LEN;
 use crate::resolve::{MarkerKind, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -210,7 +212,7 @@ fn leg(a: &Anchor, marker: MarkerKind, mut points: Vec<P>, paint: &Paint) -> Vec
         // apex meets the leg, which approaches from outside the material (an
         // edge authored the other way round flips `outward`).
         let to_elbow = (points[1].0 - tip.0, points[1].1 - tip.1);
-        let n = if n.0 * to_elbow.0 + n.1 * to_elbow.1 < 0.0 {
+        let n = if dot(n, to_elbow) < 0.0 {
             (-n.0, -n.1)
         } else {
             n
@@ -280,7 +282,7 @@ fn fan_tip(
     let d = ((aim.0 - elbow.0) / full, (aim.1 - elbow.1) / full);
     let o = b.to_local(elbow);
     let explicit = !matches!(b.spot, Spot::Origin);
-    match outline::raycast(b.node, o, rotated(d, -b.rot)) {
+    match outline::raycast(b.node, o, rotate(d, -b.rot)) {
         // A default anchor lands on the first outline the ray strikes; an
         // explicit one must be reachable — a nearer strike means the anchored
         // face turns away from the shared landing.
@@ -397,7 +399,7 @@ fn trim(anchor: &Anchor, p: P, other: P, marker: MarkerKind, full: f64) -> P {
     }
     let d = unit((other.0 - p.0, other.1 - p.1));
     let o = anchor.to_local(p);
-    match outline::raycast(anchor.node, o, rotated(d, -anchor.rot)) {
+    match outline::raycast(anchor.node, o, rotate(d, -anchor.rot)) {
         Some(t) if t < full => (p.0 + d.0 * t, p.1 + d.1 * t),
         _ => p,
     }

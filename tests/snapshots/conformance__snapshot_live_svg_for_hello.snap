@@ -1,5 +1,5 @@
 ---
-source: tests/hello.rs
+source: tests/conformance.rs
 expression: svg
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -48.5 127 97" width="127" height="97" class="lini">

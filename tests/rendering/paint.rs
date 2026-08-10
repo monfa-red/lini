@@ -43,27 +43,6 @@ fn colors_support_rgba_hsl_hsla_and_alpha_hex() {
 }
 
 #[test]
-fn define_paint_rides_its_shape_rule() {
-    // SPEC §13: a define's own paint states on its `lini-{name}` rule;
-    // geometry (radius) stays baked, never on the rule.
-    let svg = render_baked("{\n  |s::box| { stroke: blue; radius: 5; }\n}\n|s#n| \"n\"\n");
-    let rule = svg
-        .lines()
-        .find(|l| l.contains(".lini-s {"))
-        .expect("shape-s rule present");
-    assert!(
-        rule.contains("stroke: blue"),
-        "define paint on its rule: {}",
-        rule
-    );
-    assert!(
-        !rule.contains("radius"),
-        "geometry must not ride CSS: {}",
-        rule
-    );
-}
-
-#[test]
 fn bake_mode_resolves_var_refs_to_literals() {
     let svg = render_baked("|box| \"hi\"\n");
     assert!(svg.contains("fill: white; stroke: #444;"), "{}", svg);

@@ -1,28 +1,12 @@
-use std::ffi::OsStr;
-use std::path::PathBuf;
+use lini::testing::{read_sample, sample_opts, samples};
 
-/// Every sample must lex, parse, and resolve cleanly.
+/// Every sweep sample must lex, parse, and resolve cleanly.
 #[test]
 fn all_samples_resolve() {
-    let samples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
     let mut failures = Vec::new();
 
-    for entry in std::fs::read_dir(&samples_dir).expect("read samples dir") {
-        let path = entry.expect("readdir entry").path();
-        if path.extension() != Some(OsStr::new("lini")) {
-            continue;
-        }
-        let src = std::fs::read_to_string(&path).expect("read sample");
-        // Icons need the `icons` feature; skip icon-using samples when it's off.
-        if !cfg!(feature = "icons") && src.contains("|icon|") {
-            continue;
-        }
-        // Samples resolve their image assets against their own dir [SPEC 7].
-        let opts = lini::Options {
-            base_dir: path.parent().map(std::path::Path::to_path_buf),
-            ..Default::default()
-        };
-        if let Err(e) = lini::check_with(&src, &opts) {
+    for path in samples() {
+        if let Err(e) = lini::check_with(&read_sample(&path), &sample_opts()) {
             let name = path.file_name().unwrap().to_string_lossy().into_owned();
             failures.push(format!("{}: {}", name, e));
         }
@@ -47,11 +31,6 @@ fn assert_resolve_error(src: &str, expect_msg_substr: &str) {
         expect_msg_substr,
         msg
     );
-}
-
-#[test]
-fn err_duplicate_scene_id() {
-    assert_resolve_error("|box#cat| \"1\"\n|box#cat| \"2\"\n", "duplicate id 'cat'");
 }
 
 #[test]
@@ -88,29 +67,6 @@ fn err_slant_skew_out_of_range() {
     assert_resolve_error(
         "|slant#a| \"x\" { skew: 90 }\n",
         "skew: 90 must be in (-89, 89)",
-    );
-}
-
-#[test]
-fn err_unknown_shape_type() {
-    assert_resolve_error("|nosuch#cat| \"x\"\n", "unknown type 'nosuch'");
-}
-
-#[test]
-fn err_unknown_class() {
-    assert_resolve_error("|box#cat| \"x\" .nope\n", "unknown class '.nope'");
-}
-
-#[test]
-fn err_define_cycle() {
-    assert_resolve_error("{\n  |looper::looper| { }\n}\n|box#cat|\n", "cycle in");
-}
-
-#[test]
-fn err_define_name_collides_with_primitive() {
-    assert_resolve_error(
-        "{\n  |rect::oval| { }\n}\n|box#cat|\n",
-        "'rect' shadows a built-in type",
     );
 }
 
@@ -530,9 +486,17 @@ fn a_capsule_composes_with_a_side() {
     lini::check("|cyl#db|:left -> x\n").expect("sided capsule endpoint");
 }
 
+/// The `lini-` prefix is reserved for generated names, mirroring the
+/// `.lini-*` class reservation [SPEC 21/23] — at a statement head and on a
+/// capsule endpoint alike, with the same whole message.
 #[test]
-fn err_authored_reserved_capsule_id() {
-    assert_resolve_error("a -> |box#lini-x|\n", "an id may not begin 'lini-'");
+fn err_authored_reserved_id() {
+    for src in ["|box#lini-foo|\n", "a -> |box#lini-x|\n"] {
+        assert_resolve_error(
+            src,
+            "an id may not begin 'lini-' — the prefix is reserved for generated names",
+        );
+    }
 }
 
 // ─────────────────────────── Schematic types [SPEC 16] ───────────────────────────

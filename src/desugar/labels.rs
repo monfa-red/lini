@@ -4,7 +4,7 @@
 //! transform [SPEC 3, 7, 9, 16].
 
 use super::pose::Pose;
-use super::{Lower, Nest, header_node, lower_node, schematic};
+use super::{Lower, Nest, header_node, lower_node, schematic, synth};
 use crate::ast::ChainOp;
 use crate::error::Error;
 use crate::resolve::NodeKind;
@@ -84,15 +84,20 @@ pub(super) fn lower_smart(
             children.insert(0, Child::Box(lower_node(cx, &title, Nest::NONE)?));
         } else if what.is_drawing {
             // A drawing's smart label is its title, lowered to a |footnote|
-            // under the view [SPEC 15.8].
-            let title = lower_node(cx, &footnote_node(label), Nest::NONE)?;
+            // under the view [SPEC 15.8] — drafting titles sit **under** the
+            // view, so it rides the bottom-centred caption template and
+            // `|drawing| |footnote| { … }` styles it.
+            let title = lower_node(cx, &synth::labelled("footnote", label.clone()), Nest::NONE)?;
             children.insert(0, Child::Box(title));
         } else if let Some(kind) = what.sch.filter(|k| *k != schematic::SchKind::Label) {
             // A part's smart label is its name / value [SPEC 16.2/16.3], drawn
             // as readout chrome at the seat its family and pose give it.
             children.push(schematic::value_readout(cx, &label.text, kind, what.pose)?);
         } else if what.is_container {
-            let caption = lower_node(cx, &caption_node(label), Nest::NONE)?;
+            // A container's label is a `|caption|` child [SPEC 3/8], lowered
+            // through the normal node path so it gains its `.lini-caption`
+            // chain and its centred text child.
+            let caption = lower_node(cx, &synth::labelled("caption", label.clone()), Nest::NONE)?;
             children.insert(0, Child::Box(caption));
         } else if what.text_capable {
             children.insert(0, Child::Text(label.clone()));
@@ -117,61 +122,21 @@ pub(super) fn lower_smart(
     Ok(kept_label)
 }
 
-/// A `|caption|` node carrying a group/table's smart-label text [SPEC 3/8]: the
-/// container's label lowers to this, then through the normal node path (so it
-/// gains its `.lini-caption` chain and its centred text child).
-pub(super) fn caption_node(label: &TextNode) -> Node {
-    Node {
-        id: None,
-        ty: Some("caption".to_string()),
-        label: Some(label.clone()),
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span: label.span,
-    }
-}
-
-/// A `|footnote|` node carrying a drawing's smart-label title [SPEC 15.8] —
-/// drafting titles sit **under** the view, so the label lowers to the
-/// bottom-centred caption template and `|drawing| |footnote| { … }` styles it.
-pub(super) fn footnote_node(label: &TextNode) -> Node {
-    Node {
-        id: None,
-        ty: Some("footnote".to_string()),
-        label: Some(label.clone()),
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span: label.span,
-    }
-}
-
 /// A placeholder title `|footnote|` for a marker-sourced view [SPEC 15.8]: a
 /// `|drawing| { of: X }` with no authored label seeds this carrying a bare
 /// `of-title` marker. The letter (and doubled-or-not) come from X's kind, and
 /// the scale ratio from the seat — both known only at layout, so the drawing
 /// engine fills the text where it pins the title.
 pub(super) fn of_footnote(span: Span) -> Node {
-    Node {
-        id: None,
-        ty: Some("footnote".to_string()),
-        label: None,
-        classes: Vec::new(),
-        style: vec![Decl {
+    synth::styled(
+        "footnote",
+        vec![Decl {
             name: "of-title".to_string(),
             groups: vec![vec![Value::Ident("view".to_string())]],
             span,
         }],
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
         span,
-    }
+    )
 }
 
 /// The `symbol: <name>` declaration an icon's smart label lowers to [SPEC 7].

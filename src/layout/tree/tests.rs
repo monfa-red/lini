@@ -3,47 +3,19 @@
 use crate::layout::PlacedNode;
 
 fn laid(src: &str) -> Vec<PlacedNode> {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    crate::layout::layout(&program).expect("layout").nodes
+    crate::testutil::laid(src).nodes
 }
 
 /// The placed topic card by id, searched flat (topics are direct children of
 /// the tree container).
 fn topic<'a>(nodes: &'a [PlacedNode], id: &str) -> &'a PlacedNode {
-    fn find<'a>(nodes: &'a [PlacedNode], id: &str) -> Option<&'a PlacedNode> {
-        for n in nodes {
-            if n.id.as_deref() == Some(id) {
-                return Some(n);
-            }
-            if let Some(f) = find(&n.children, id) {
-                return Some(f);
-            }
-        }
-        None
-    }
-    find(nodes, id).unwrap_or_else(|| panic!("no topic '{id}'"))
+    crate::testutil::placed_by_id(nodes, id).0
 }
 
 /// Absolute centre of a topic — container `cx/cy` plus the card's own.
 fn centre(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
-    // The tree container is a top node; its card offset adds in. Search the
-    // container that holds the topic and sum offsets.
-    fn walk(nodes: &[PlacedNode], id: &str, ox: f64, oy: f64) -> Option<(f64, f64)> {
-        for n in nodes {
-            let (x, y) = (ox + n.cx, oy + n.cy);
-            if n.id.as_deref() == Some(id) {
-                return Some((x, y));
-            }
-            if let Some(p) = walk(&n.children, id, x, y) {
-                return Some(p);
-            }
-        }
-        None
-    }
-    walk(nodes, id, 0.0, 0.0).expect("topic placed")
+    let (_, x, y) = crate::testutil::placed_by_id(nodes, id);
+    (x, y)
 }
 
 #[test]

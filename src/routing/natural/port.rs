@@ -14,7 +14,7 @@ use super::curve::Pt;
 use crate::ast::Side;
 use crate::resolve::Strategy;
 use crate::routing::ortho::ladder::ladder;
-use crate::routing::ortho::rect::Rect;
+use crate::routing::ortho::rect::{Rect, port_window};
 use crate::routing::ortho::request::{EdgeReq, End, Fans};
 use crate::routing::ortho::scene::SceneIndex;
 use crate::routing::ortho::self_loop_sides;
@@ -26,38 +26,6 @@ use crate::routing::ortho::self_loop_sides;
 pub(crate) struct Landing {
     pub port: Pt,
     pub normal: Pt,
-}
-
-/// The tie rank every routing tie breaks on (ROUTING.md Law 4).
-const RANK: [Side; 4] = [Side::Right, Side::Bottom, Side::Left, Side::Top];
-
-fn normal(side: Side) -> Pt {
-    match side {
-        Side::Right => (1.0, 0.0),
-        Side::Bottom => (0.0, 1.0),
-        Side::Left => (-1.0, 0.0),
-        Side::Top => (0.0, -1.0),
-    }
-}
-
-fn centre(r: Rect) -> Pt {
-    ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0)
-}
-
-/// The lawful port window on a side — the side span minus `clearance`
-/// corner margins, collapsing to the centre point when the side is too
-/// short (the entry.rs window shape, graph-free).
-fn window(rect: Rect, side: Side, c: f64) -> (f64, f64) {
-    let (lo, hi) = match side {
-        Side::Left | Side::Right => (rect.y0, rect.y1),
-        Side::Top | Side::Bottom => (rect.x0, rect.x1),
-    };
-    if hi - lo < 2.0 * c {
-        let mid = (lo + hi) / 2.0;
-        (mid, mid)
-    } else {
-        (lo + c, hi - c)
-    }
 }
 
 /// A port point from a side and its ordinate across the side.
@@ -75,12 +43,12 @@ fn port_at(rect: Rect, side: Side, ord: f64) -> Pt {
 /// (containment) end scores the same way: the side nearest the inner node is
 /// the one whose inner face sees it.
 fn facing_side(rect: Rect, toward: Pt) -> Side {
-    let c = centre(rect);
+    let c = rect.centre();
     let chord = (toward.0 - c.0, toward.1 - c.1);
-    let mut best = RANK[0];
+    let mut best = Side::RANK[0];
     let mut score = f64::NEG_INFINITY;
-    for side in RANK {
-        let n = normal(side);
+    for side in Side::RANK {
+        let n = side.outward();
         let s = n.0 * chord.0 + n.1 * chord.1;
         if s.total_cmp(&score) == std::cmp::Ordering::Greater {
             (best, score) = (side, s);
@@ -165,7 +133,7 @@ pub(crate) fn landings(
                 loop_sides.map_or(req.side_b, |(_, s)| Some(s)),
             ),
         ] {
-            let far = centre(far_rect);
+            let far = far_rect.centre();
             let fan = if self_loop {
                 None
             } else {
@@ -229,7 +197,7 @@ pub(crate) fn landings(
                 .then(sa.decl.cmp(&sb.decl))
         });
         let first = &slots[group[0]];
-        let win = window(first.rect, first.side, c);
+        let win = port_window(first.rect, first.side, c);
         let centre = (win.0 + win.1) / 2.0;
         let n = group.len();
         let pitch = if n > 1 {
@@ -253,7 +221,7 @@ pub(crate) fn landings(
             (req.routing == Strategy::Natural).then(|| {
                 [End::A, End::B].map(|end| {
                     let slot = &slots[slot_of[i][end as usize]];
-                    let n = normal(slot.side);
+                    let n = slot.side.outward();
                     Landing {
                         port: port_at(slot.rect, slot.side, ords[slot_of[i][end as usize]]),
                         normal: if slot.inward { (-n.0, -n.1) } else { n },
@@ -310,8 +278,8 @@ mod tests {
                 attrs: AttrMap::default(),
                 own_style: AttrMap::default(),
                 markers: Markers::default(),
-                cx: (r.x0 + r.x1) / 2.0,
-                cy: (r.y0 + r.y1) / 2.0,
+                cx: r.centre().0,
+                cy: r.centre().1,
                 bbox: Bbox::centered(r.x1 - r.x0, r.y1 - r.y0),
                 rotation: 0.0,
                 children: Vec::new(),

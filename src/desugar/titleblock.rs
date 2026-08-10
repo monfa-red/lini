@@ -99,36 +99,19 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
             span,
         });
     }
-    Node {
-        id: None,
-        ty: Some("cell".into()),
-        label: None,
-        classes: Vec::new(),
-        style,
-        style_span: None,
-        children: vec![
-            Child::Box(caption_field(caption, span)),
-            Child::Text(text(value, span)),
-        ],
-        links: Vec::new(),
-        span,
-    }
+    let mut n = super::synth::node("cell", span);
+    n.style = style;
+    n.children = vec![
+        Child::Box(caption_field(caption, span)),
+        Child::Text(text(value, span)),
+    ];
+    n
 }
 
 /// The field caption — a `|field|` node, so its small muted font states once as
 /// the `.lini-field` class rule (not an inline style per caption).
 fn caption_field(s: &str, span: Span) -> Node {
-    Node {
-        id: None,
-        ty: Some("field".into()),
-        label: Some(text(s, span)),
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span,
-    }
+    super::synth::labelled("field", text(s, span))
 }
 
 /// A bare text leaf — inherits its box's font.

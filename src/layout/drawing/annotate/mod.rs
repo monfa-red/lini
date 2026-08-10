@@ -60,13 +60,11 @@ pub(super) struct Paint {
 impl Paint {
     pub fn of(attrs: &AttrMap) -> Paint {
         let set = attrs.get("stroke").cloned();
-        let live = |name: &str| ResolvedValue::LiveVar {
-            name: name.into(),
-            raw: false,
-        };
         Paint {
-            stroke: set.clone().unwrap_or_else(|| live("stroke-dark")),
-            light: set.unwrap_or_else(|| live("stroke-light")),
+            stroke: set
+                .clone()
+                .unwrap_or_else(|| ResolvedValue::live("stroke-dark")),
+            light: set.unwrap_or_else(|| ResolvedValue::live("stroke-light")),
             sw: attrs
                 .number("stroke-width")
                 .unwrap_or(DRAWING_LINK_STROKE_WIDTH),
@@ -215,9 +213,9 @@ fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
 /// The drawn-geometry extent of an already-annotated drawing's children —
 /// [`geometry_extent`] re-read after lowering: the same sheet / pinned
 /// exclusions, minus the annotation ink the lowering appended (dim and
-/// extension lines, arrow markers). The overlap oracle's ground truth.
-#[cfg(test)]
-fn drawn_geometry(kids: &[PlacedNode]) -> Bbox {
+/// extension lines, arrow markers). The overlap oracle's ground truth
+/// ([`crate::testing::carried_over_geometry`]).
+pub(crate) fn drawn_geometry(kids: &[PlacedNode]) -> Bbox {
     Bbox::extent_of(kids, |k| {
         super::is_geometry(k)
             && !k
@@ -237,12 +235,11 @@ pub(super) fn annotation_obstacle(n: &PlacedNode) -> bool {
 /// A side / corner name as its outward unit vector — a leader's `side:`
 /// direction, a diametral dim's line [SPEC 15.6/15.7].
 pub(super) fn side_unit(name: &str) -> Option<P> {
+    if let Some(side) = Side::parse(name) {
+        return Some(side.outward());
+    }
     let d = std::f64::consts::FRAC_1_SQRT_2;
     Some(match name {
-        "top" => (0.0, -1.0),
-        "bottom" => (0.0, 1.0),
-        "left" => (-1.0, 0.0),
-        "right" => (1.0, 0.0),
         "top-left" => (-d, -d),
         "top-right" => (d, -d),
         "bottom-left" => (-d, d),

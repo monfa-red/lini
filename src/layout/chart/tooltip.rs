@@ -6,7 +6,6 @@
 //! the cards and strips the hooks when baking). One post-pass over the lowered nodes does
 //! all three modes.
 
-use super::tint::live;
 use crate::error::Error;
 use crate::layout::prim;
 use crate::layout::{Bbox, PlacedNode};
@@ -150,9 +149,17 @@ fn make_card(
     let ch = SIZE + PAD * 2.0;
     let cx = (ax + GAP + cw / 2.0).clamp(-w / 2.0 + cw / 2.0, w / 2.0 - cw / 2.0);
     let cy = (ay - GAP - ch / 2.0).clamp(-h / 2.0 + ch / 2.0, h / 2.0 - ch / 2.0);
-    let mut bg = prim::rect(cx, cy, cw, ch, live("tip-bg"), 1.0);
+    let mut bg = prim::rect(cx, cy, cw, ch, ResolvedValue::live("tip-bg"), 1.0);
     prim::round(&mut bg, 3.0);
-    let txt = prim::text(text, cx, cy, SIZE, Some(live("tip-fg")), false, kind);
+    let txt = prim::text(
+        text,
+        cx,
+        cy,
+        SIZE,
+        Some(ResolvedValue::live("tip-fg")),
+        false,
+        kind,
+    );
     let bbox = Bbox {
         min_x: cx - cw / 2.0,
         min_y: cy - ch / 2.0,

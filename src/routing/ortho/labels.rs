@@ -8,8 +8,8 @@
 use super::rect::Rect;
 use super::request::EdgeReq;
 use super::scene::SceneIndex;
+use crate::layout::as_pair;
 use crate::layout::ir::{RoutedLink, RoutedText};
-use crate::layout::{approx_height, approx_width, as_pair};
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -74,13 +74,8 @@ pub fn place(
         let mut auto_i = 0;
 
         for t in &w.texts {
-            let size = t.attrs.number("font-size").unwrap_or(0.0);
-            let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
-            let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
-            let (bw, bh) = (
-                approx_width(&t.text, crate::font::Font::of(&t.attrs), size, ls),
-                approx_height(&t.text, size, lsp),
-            );
+            let box_ = crate::layout::text::measure(&t.text, &t.attrs);
+            let (bw, bh) = (box_.w(), box_.h());
             let (tx, ty) = translate_of(t.attrs.get("translate"));
             let s0 = match t.along {
                 Along::Auto => {

@@ -375,7 +375,7 @@ fn frame_stroke(inst: &ResolvedInst) -> ResolvedValue {
     inst.attrs
         .get("stroke")
         .cloned()
-        .unwrap_or_else(|| super::live("group-stroke"))
+        .unwrap_or_else(|| ResolvedValue::live("group-stroke"))
 }
 
 /// The frame's text colour for its tab keyword + guards — its `color` if set (so styling the
@@ -409,7 +409,7 @@ fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
     // is the frame's own stroke colour (solid), so the chrome matches the dashed border.
     let mut banner = prim::path(
         tab_path(left + hw, top + hw, tab_w, TAB_H, r, cut),
-        super::live("fill"),
+        ResolvedValue::live("fill"),
         Bbox {
             min_x: left,
             min_y: top,

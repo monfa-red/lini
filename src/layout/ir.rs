@@ -362,4 +362,20 @@ impl Bbox {
             Self::empty()
         }
     }
+
+    /// One node's true drawn extent **in its own frame** — its box unioned with
+    /// every descendant's, through the same rotation- and clip-aware walk
+    /// [`Bbox::extent_of`] runs. A `pin:` overlay (a schematic's ref or value
+    /// readout) is out of the flow that sized the box, but it is ink on the
+    /// sheet and an obstacle all the same.
+    pub fn drawn_of(n: &PlacedNode) -> Self {
+        let mut ext = Self {
+            min_x: f64::INFINITY,
+            min_y: f64::INFINITY,
+            max_x: f64::NEG_INFINITY,
+            max_y: f64::NEG_INFINITY,
+        };
+        super::accumulate_extent(n, -n.cx, -n.cy, 0.0, &mut ext);
+        ext
+    }
 }

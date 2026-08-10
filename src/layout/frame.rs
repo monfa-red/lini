@@ -11,13 +11,7 @@ use super::*;
 /// bbox corners swung about its origin — without this, a `rotate:`d part
 /// (a mated bar stood on end, [SPEC 15.5]) clips at the canvas edge.
 pub(super) fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, rot: f64, bbox: &mut Bbox) {
-    let turn = |x: f64, y: f64, deg: f64| -> (f64, f64) {
-        if deg == 0.0 {
-            return (x, y);
-        }
-        let (s, c) = deg.to_radians().sin_cos();
-        (x * c - y * s, x * s + y * c)
-    };
+    let turn = |x: f64, y: f64, deg: f64| geom::rotate((x, y), deg);
     let (dx, dy) = turn(n.cx, n.cy, rot);
     let (wx, wy) = (ox + dx, oy + dy);
     let total = rot + n.rotation;
@@ -78,18 +72,7 @@ pub(super) fn finish(
         bbox.max_y = bbox.max_y.max(y);
     }
     for t in routing.links.iter().flat_map(|w| &w.texts) {
-        let font = crate::font::Font::of(&t.attrs);
-        let size = t.attrs.number("font-size").unwrap_or(0.0);
-        let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
-        let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
-        let (hw, hh) = (
-            text::approx_width(&t.content, font, size, ls) / 2.0,
-            text::approx_height(&t.content, size, lsp) / 2.0,
-        );
-        bbox.min_x = bbox.min_x.min(t.position.0 - hw);
-        bbox.min_y = bbox.min_y.min(t.position.1 - hh);
-        bbox.max_x = bbox.max_x.max(t.position.0 + hw);
-        bbox.max_y = bbox.max_y.max(t.position.1 + hh);
+        bbox = bbox.union(text::measure(&t.content, &t.attrs).shifted(t.position.0, t.position.1));
     }
     let vb = ViewBox {
         x: bbox.min_x - pad.left,

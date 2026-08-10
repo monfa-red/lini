@@ -2,7 +2,7 @@
 //! auto-header and body-cell wrapping, and per-column align/justify distribution.
 
 use super::*;
-use crate::error::Code;
+use crate::ledger::properties::{self, Kind};
 use crate::syntax::ast::TextNode;
 
 /// The grid column count for a table / entity node [SPEC 8]: its own `columns:` decl,
@@ -13,34 +13,18 @@ pub(super) fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
     // reads [SPEC 4] — a repeated declaration must not leave the sugar counting
     // one list while the layout sizes another.
     if let Some(d) = style.iter().rev().find(|d| d.name == "columns") {
-        let n = count_tracks(d);
+        let n = d.track_count();
         if n > 0 {
             return Some(n);
         }
     }
     chain.iter().rev().find_map(|name| {
-        let n = count_tracks(
-            crate::ledger::defaults::template_bundle(name)
-                .iter()
-                .find(|d| d.name == "columns")?,
-        );
+        let n = crate::ledger::defaults::template_bundle(name)
+            .iter()
+            .find(|d| d.name == "columns")?
+            .track_count();
         (n > 0).then_some(n)
     })
-}
-
-/// Tracks a `columns:` value declares — each token is one track, `repeat(N)` is N.
-fn count_tracks(d: &Decl) -> usize {
-    d.groups
-        .iter()
-        .flatten()
-        .map(|v| match v {
-            Value::Call(c) if c.name == "repeat" => match c.args.first() {
-                Some(Value::Number(n)) if *n >= 1.0 => *n as usize,
-                _ => 1,
-            },
-            _ => 1,
-        })
-        .sum()
 }
 
 /// A `|header|` node carrying `text` [SPEC 8]. With `span`, it is an `|entity|`'s title
@@ -53,34 +37,18 @@ pub(super) fn header_node(text: &TextNode, span: Option<usize>) -> Node {
         ],
         None => Vec::new(),
     };
-    Node {
-        id: None,
-        ty: Some("header".into()),
-        label: Some(text.clone()),
-        classes: Vec::new(),
-        style,
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span: text.span,
-    }
+    let mut n = synth::labelled("header", text.clone());
+    n.style = style;
+    n
 }
 
 /// A `|cell|` wrapping one bare-text table/entity body cell [SPEC 8]: the text
 /// node survives inside it, and the `|cell|` type carries the padding inset and the
 /// column's alignment class. Header/footer/box cells stay as they are.
 fn block_cell(text: &TextNode) -> Node {
-    Node {
-        id: None,
-        ty: Some("cell".into()),
-        label: None,
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: vec![Child::Text(text.clone())],
-        links: Vec::new(),
-        span: text.span,
-    }
+    let mut n = synth::node("cell", text.span);
+    n.children = vec![Child::Text(text.clone())];
+    n
 }
 
 /// Wrap each remaining bare-text body cell of a `|table|`/`|entity|` in a `|cell|`
@@ -146,12 +114,14 @@ fn per_column(style: &[Decl], name: &str, cols: usize) -> Result<Option<Vec<Stri
         match g.as_slice() {
             [Value::Ident(s)] => vals.push(s.clone()),
             [_] => {}
+            // Per-column `align:` / `justify:` are keyword lists — the ledger's
+            // `List(Ident)` rows, so their migration spelling is that kind's.
             _ => {
-                return Err(Error::at(
+                return Err(properties::legacy_list_error(
+                    name,
+                    Kind::Ident.list_example(),
                     d.span,
-                    format!("'{name}' takes comma-separated values — '{name}: start, center, end'"),
-                )
-                .code(Code::LEGACY_LIST));
+                ));
             }
         }
     }

@@ -126,14 +126,7 @@ pub fn attr_or_var(
 ) -> String {
     match attrs.get(name) {
         Some(v) => format_value(v, vars, opts),
-        None => format_value(
-            &ResolvedValue::LiveVar {
-                name: var_name.to_string(),
-                raw: false,
-            },
-            vars,
-            opts,
-        ),
+        None => format_value(&ResolvedValue::live(var_name), vars, opts),
     }
 }
 

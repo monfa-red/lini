@@ -92,11 +92,7 @@ fn domain_gutter(chart: &Chart) -> f64 {
 fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
     let title_h = title_reserve(chart.title.is_some(), chart.gap);
     let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
-    let margin = LABEL_SIZE * 2.0;
-    let top = title_h + margin;
-    let avail_h = h - top - legend_h - margin;
-    let side = avail_h.min(w - 2.0 * margin).max(0.0);
-    let cy = -h / 2.0 + top + avail_h / 2.0;
+    let (side, cy) = square_inset(w, h, title_h, legend_h, LABEL_SIZE * 2.0);
     Plot {
         x0: -side / 2.0,
         x1: side / 2.0,
@@ -104,6 +100,16 @@ fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
         y1: cy + side / 2.0,
         dir: Dir::Radial,
     }
+}
+
+/// The largest square that fits a `w`×`h` chart box under its title and over its
+/// legend, with `margin` clear all round — its `(side, centre y)`. The one inset a
+/// round layout takes: a radial chart's spoke-circle box and a pie's disc [SPEC 14.7].
+pub(super) fn square_inset(w: f64, h: f64, title_h: f64, legend_h: f64, margin: f64) -> (f64, f64) {
+    let top = title_h + margin;
+    let avail_h = h - top - legend_h - margin;
+    let side = avail_h.min(w - 2.0 * margin).max(0.0);
+    (side, -h / 2.0 + top + avail_h / 2.0)
 }
 
 /// The label-width gutter for the value axes on one side (`right` = right edge), or

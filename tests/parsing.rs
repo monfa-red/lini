@@ -1,20 +1,13 @@
-use std::ffi::OsStr;
-use std::path::PathBuf;
+use lini::testing::{read_sample, samples};
 
-/// Every `samples/*.lini` file must lex + parse without error.
+/// Every sweep sample must lex + parse without error.
 /// Resolve / layout / render correctness is enforced by sprint-specific tests.
 #[test]
 fn all_samples_parse() {
-    let samples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
     let mut failures = Vec::new();
 
-    for entry in std::fs::read_dir(&samples_dir).expect("read samples dir") {
-        let path = entry.expect("readdir entry").path();
-        if path.extension() != Some(OsStr::new("lini")) {
-            continue;
-        }
-        let src = std::fs::read_to_string(&path).expect("read sample");
-        if let Err(e) = lini::check_parse(&src) {
+    for path in samples() {
+        if let Err(e) = lini::check_parse(&read_sample(&path)) {
             let name = path.file_name().unwrap().to_string_lossy().into_owned();
             failures.push(format!("{}: {}", name, e));
         }

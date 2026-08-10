@@ -7,8 +7,6 @@ use lini::testing::{
 };
 use lini::{Rule, Severity};
 
-const PCB: &str = include_str!("../samples/pcb.lini");
-
 type Routes = Vec<((String, String), Vec<(f64, f64)>)>;
 
 fn routes(src: &str) -> Routes {
@@ -577,7 +575,7 @@ fn duplicate_detours_nest_without_crossing() {
 /// crossings.
 #[test]
 fn links_simple_reports_zero_crossings() {
-    let src = include_str!("../samples/links_simple.lini");
+    let src = include_str!("fixtures/routing/links_simple.lini");
     assert_eq!(crossings(src), 0);
 }
 
@@ -628,7 +626,7 @@ fn a_bundle_of_s_curves_keeps_pitch_on_both_legs() {
 /// pair half a clearance for free space no wire could reach).
 #[test]
 fn a_duplicate_pair_keeps_full_pitch_beside_a_keepout() {
-    let src = include_str!("../samples/links_hard.lini");
+    let src = include_str!("fixtures/routing/links_hard.lini");
     let r = routes(src);
     let pair = paths(&r, "west.w2", "south.s1");
     assert_eq!(pair.len(), 2, "both rails draw");
@@ -658,14 +656,6 @@ fn a_duplicate_pair_keeps_full_pitch_beside_a_keepout() {
 
 // ── Determinism (Law 4) ──
 
-#[test]
-fn identical_input_routes_identically() {
-    let first = routes(PCB);
-    for _ in 0..3 {
-        assert_eq!(routes(PCB), first);
-    }
-}
-
 /// A fan's ports land on their sides' centres when nothing contends there
 /// (user-reported: links_medium's `cat -> bowl & water` ports sat pinned
 /// at the top of their windows — the packed bowl↔dog band transmitted its
@@ -673,7 +663,7 @@ fn identical_input_routes_identically() {
 /// an order two span-disjoint wires never owed each other).
 #[test]
 fn uncontended_fan_ports_take_their_side_centres() {
-    let src = include_str!("../samples/links_medium.lini");
+    let src = include_str!("fixtures/routing/links_medium.lini");
     let r = routes(src);
     let laid = route_sample(src, 12.0);
     for to in ["kitchen.bowl", "kitchen.water"] {

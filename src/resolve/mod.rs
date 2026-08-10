@@ -9,7 +9,7 @@
 
 pub(crate) mod assets;
 mod cascade;
-mod defaults;
+pub(crate) mod defaults;
 mod ir;
 mod links;
 mod merge;

@@ -33,14 +33,30 @@ fn lini_root_rule(svg: &str) -> String {
         .to_string()
 }
 
+/// Every `marker`-introduced value in an SVG, in document order, each read to
+/// the next `end`. The one scrape every assertion below shares: `attr="` for
+/// an attribute value, a full opening tag for an element's text.
+fn scrape_to<'a>(svg: &'a str, marker: &str, end: char) -> Vec<&'a str> {
+    svg.match_indices(marker)
+        .map(|(i, m)| {
+            let rest = &svg[i + m.len()..];
+            &rest[..rest.find(end).unwrap_or(rest.len())]
+        })
+        .collect()
+}
+
+/// [`scrape_to`] for the common case — an attribute value, closed by its quote.
+fn scrape<'a>(svg: &'a str, marker: &str) -> Vec<&'a str> {
+    scrape_to(svg, marker, '"')
+}
+
 /// The drawn link lines of an SVG, split into (dashed, solid) `data-to` targets.
 fn link_targets(svg: &str) -> (Vec<&str>, Vec<&str>) {
     let (mut dashed, mut solid) = (Vec::new(), Vec::new());
     for l in svg.lines() {
-        let Some(at) = l.find("data-to=\"") else {
+        let Some(&to) = scrape(l, "data-to=\"").first() else {
             continue;
         };
-        let to = &l[at + 9..at + 9 + l[at + 9..].find('"').unwrap()];
         if l.contains("lini-link-dashed") {
             dashed.push(to);
         } else if l.contains("lini-link") {
@@ -54,13 +70,15 @@ fn link_targets(svg: &str) -> (Vec<&str>, Vec<&str>) {
 /// text nodes, minus the value-axis ticks (small numbers — the test data keeps
 /// its values < 1900 so year ticks stay).
 fn x_tick_texts(svg: &str) -> Vec<String> {
-    svg.match_indices("var(--lini-muted); font-size: 11px; font-weight: normal\">")
-        .map(|(i, m)| {
-            let rest = &svg[i + m.len()..];
-            rest[..rest.find('<').unwrap_or(0)].to_string()
-        })
-        .filter(|t| t.parse::<f64>().map(|n| n >= 1900.0).unwrap_or(true))
-        .collect()
+    scrape_to(
+        svg,
+        "var(--lini-muted); font-size: 11px; font-weight: normal\">",
+        '<',
+    )
+    .into_iter()
+    .map(str::to_string)
+    .filter(|t| t.parse::<f64>().map(|n| n >= 1900.0).unwrap_or(true))
+    .collect()
 }
 
 /// Compile with local `src:` paths anchored at `samples/` (the committed

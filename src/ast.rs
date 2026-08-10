@@ -23,7 +23,23 @@ impl Side {
         })
     }
 
-    /// Dense id (clockwise from top) — the routing stages' map key.
+    /// The four sides in **tie-break rank** (ROUTING.md Law 4): the order every
+    /// routing tie resolves in, and the order a side-candidate list is built in.
+    /// Not [`Side::index`] — that is a map key, this is the contract.
+    pub const RANK: [Side; 4] = [Side::Right, Side::Bottom, Side::Left, Side::Top];
+
+    /// This side's position in [`Side::RANK`] — lower wins a tie.
+    pub fn rank(self) -> u8 {
+        match self {
+            Side::Right => 0,
+            Side::Bottom => 1,
+            Side::Left => 2,
+            Side::Top => 3,
+        }
+    }
+
+    /// Dense id (clockwise from top) — the routing stages' **map key** only.
+    /// **Not** the tie-break rank; ties break on [`Side::rank`].
     pub fn index(self) -> u8 {
         match self {
             Side::Top => 0,

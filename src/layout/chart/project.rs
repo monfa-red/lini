@@ -20,6 +20,15 @@ pub enum Dir {
     Radial,
 }
 
+impl Dir {
+    /// Whether a **value** axis runs along the screen x in this direction — a row
+    /// chart's value grows rightward, every other direction's upward. The domain
+    /// axis runs the other way, so this one answer orients both [SPEC 14.7].
+    pub fn value_horizontal(self) -> bool {
+        self == Dir::Row
+    }
+}
+
 /// The laid-out plot rectangle (chart-local pixels, origin at the chart centre). For a
 /// radial chart it is the square bounding box of the spoke circle.
 pub struct Plot {
@@ -50,12 +59,11 @@ impl Plot {
             Dir::Row => (self.value_at(value, v), self.domain_at(x, xv)),
             // Radial: the domain is a spoke angle (from the top, clockwise), the value a
             // radius from the centre.
-            Dir::Radial => {
-                let (cx, cy) = self.center();
-                let theta = self.spoke_angle(x, xv);
-                let r = value.frac(v) * self.radius();
-                (cx + r * theta.sin(), cy - r * theta.cos())
-            }
+            Dir::Radial => crate::layout::geom::polar(
+                self.center(),
+                self.radius_at(value, v),
+                self.spoke_angle(x, xv),
+            ),
         }
     }
 
@@ -71,6 +79,12 @@ impl Plot {
     /// The rim radius of a radial chart (its square rect's half-side).
     pub fn radius(&self) -> f64 {
         self.w().min(self.h()) / 2.0
+    }
+
+    /// The radius of `v` on a value scale — the radial chart's value projection
+    /// (the pole at the scale's start, the rim at its end) [SPEC 14.7].
+    pub fn radius_at(&self, s: &Scale, v: f64) -> f64 {
+        s.frac(v) * self.radius()
     }
 
     /// The angle of spoke / domain coordinate `xv` [SPEC 14.7]: `0` straight up,

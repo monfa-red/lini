@@ -239,7 +239,7 @@ pub(super) fn draw(
         let y = row_y(i);
         let size = p.label_size();
         let ly = y - LABEL_RISE - size / 2.0;
-        let (path, text) = if fcx == tcx {
+        let (path, text) = if p.is_self() {
             // A self-message: the strategy's hook off the near (right) bar
             // edge, sized by the message's `clearance` so the loop bends
             // like a routed wire. Its label tucks over the loop: the left

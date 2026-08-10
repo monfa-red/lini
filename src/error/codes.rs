@@ -75,6 +75,18 @@ impl Code {
         self.phase == Phase::Internal
     }
 
+    /// This code if it names a family, else the phase's generic `x000` — the
+    /// one phase stamp, worn by [`crate::error::Error::in_phase`], its
+    /// [`crate::error::Diagnostic`] twin, and the batch
+    /// [`crate::error::stamp_phase`].
+    pub fn or_generic(self, phase: Phase) -> Code {
+        if self.is_unspecified() {
+            Code::generic(phase)
+        } else {
+            self
+        }
+    }
+
     /// The phase's generic `x000` code — what the boundary stamps onto an
     /// untriaged diagnostic.
     pub fn generic(phase: Phase) -> Code {

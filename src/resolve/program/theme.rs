@@ -26,16 +26,10 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
         if name == "var" {
             let v = inner.trim();
             if let Some(rest) = v.strip_prefix("--lini-") {
-                return ResolvedValue::LiveVar {
-                    name: rest.to_string(),
-                    raw: false,
-                };
+                return ResolvedValue::live(rest);
             }
             if let Some(rest) = v.strip_prefix("--") {
-                return ResolvedValue::LiveVar {
-                    name: rest.to_string(),
-                    raw: true,
-                };
+                return ResolvedValue::live_raw(rest, true);
             }
             return ResolvedValue::RawCss(s.to_string());
         }
@@ -52,8 +46,7 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
         return ResolvedValue::Number(n);
     }
     if let Some(hex) = s.strip_prefix('#')
-        && matches!(hex.len(), 3 | 6 | 8)
-        && hex.bytes().all(|b| b.is_ascii_hexdigit())
+        && crate::syntax::parser::values::is_hex_color(hex)
     {
         return ResolvedValue::Hex(hex.to_string());
     }

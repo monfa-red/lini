@@ -28,10 +28,7 @@ pub fn deepen(color: &ResolvedValue) -> ResolvedValue {
             Some((b, "wash" | "soft" | "deep" | "ink")) => b,
             _ => name.as_str(),
         };
-        return ResolvedValue::LiveVar {
-            name: format!("{base}-deep"),
-            raw: *raw,
-        };
+        return ResolvedValue::live_raw(format!("{base}-deep"), *raw);
     }
     color.clone()
 }

@@ -71,12 +71,7 @@ impl Side {
     /// down) — where a terminal on this side points, and the direction a
     /// satellite chain grows [SPEC 16.1].
     pub(crate) fn normal(self) -> (f64, f64) {
-        match self {
-            Side::Left => (-1.0, 0.0),
-            Side::Right => (1.0, 0.0),
-            Side::Top => (0.0, -1.0),
-            Side::Bottom => (0.0, 1.0),
-        }
+        crate::ast::Side::from(self).outward()
     }
 
     /// The direction a rail reads in: a column top-to-bottom, a row

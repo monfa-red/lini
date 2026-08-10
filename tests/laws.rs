@@ -6,51 +6,16 @@
 //! and turning the one routing knob (`clearance`) can shrink the drawable
 //! set but never produce illegal geometry.
 
-use lini::testing::{declared_edges_with, drawn_edges, laws, route_sample_with, routes_str_with};
-use lini::{Options, Rule, Severity};
-use std::path::PathBuf;
-
-/// Samples resolve their image assets against their own directory [SPEC 7].
-fn sample_opts() -> Options {
-    Options {
-        base_dir: Some(PathBuf::from("samples")),
-        ..Default::default()
-    }
-}
+use lini::Options;
+use lini::testing::{
+    annotation_text_overlaps, breaches, carried_over_geometry, declared_edges_with, drawn_edges,
+    laws, layout_sample, read_sample as read, route_sample_with, routes_str_with, sample_opts,
+    samples as sample_paths, strays,
+};
 
 /// The clearance sweep: the knob's native span, dense enough to cross every
 /// sample's capacity boundaries.
 const CLEARANCES: [f64; 7] = [6.0, 8.0, 9.0, 10.0, 12.0, 13.0, 16.0];
-
-fn sample_paths() -> Vec<PathBuf> {
-    let mut paths: Vec<PathBuf> = std::fs::read_dir("samples")
-        .expect("read samples/")
-        .filter_map(|e| e.ok().map(|e| e.path()))
-        .filter(|p| p.extension().is_some_and(|x| x == "lini"))
-        // Icons need the `icons` feature; drop icon-using samples when it's off.
-        .filter(|p| {
-            cfg!(feature = "icons")
-                || !std::fs::read_to_string(p)
-                    .unwrap_or_default()
-                    .contains("|icon|")
-        })
-        .collect();
-    paths.sort();
-    paths
-}
-
-fn read(path: &std::path::Path) -> String {
-    std::fs::read_to_string(path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
-}
-
-/// Law breaches: everything the checker or engine flags above counted output
-/// (`Info` crossings) and honest strays (`Impossible` — pinned separately).
-fn breaches(report: Vec<lini::Violation>) -> Vec<lini::Violation> {
-    report
-        .into_iter()
-        .filter(|v| v.severity != Severity::Info && v.rule != Rule::Impossible)
-        .collect()
-}
 
 /// Laws: on every sample at its native attributes, the independent validator
 /// reports nothing above an `Info` crossing and an honest stray.
@@ -78,12 +43,9 @@ fn every_sample_satisfies_the_laws() {
 fn impossible_links_are_exactly_the_known_capacity_truths() {
     for path in sample_paths() {
         let src = read(&path);
-        let impossible = lini::validate_str_with(&src, &sample_opts())
-            .unwrap_or_else(|e| panic!("validate {}: {e}", path.display()))
-            .into_iter()
-            .filter(|v| v.rule == Rule::Impossible)
-            .count();
-        assert_eq!(impossible, 0, "{}: stray count moved", path.display());
+        let report = lini::validate_str_with(&src, &sample_opts())
+            .unwrap_or_else(|e| panic!("validate {}: {e}", path.display()));
+        assert_eq!(strays(&report), 0, "{}: stray count moved", path.display());
     }
 }
 
@@ -130,7 +92,7 @@ fn every_sample_holds_the_laws_at_every_clearance() {
         for c in CLEARANCES {
             let laid = route_sample_with(&src, &sample_opts(), c);
             let report = laws(&laid);
-            let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
+            let impossible = strays(&report);
             let found = breaches(report);
             assert!(
                 found.is_empty(),
@@ -169,8 +131,11 @@ fn a_schematic_sheet_holds_the_laws_at_every_clearance() {
         r1.p2 - g2\n";
     let opts = Options::default();
     let report = lini::validate_str_with(SHEET, &opts).expect("validate the sheet");
-    let strays = report.iter().filter(|v| v.rule == Rule::Impossible).count();
-    assert_eq!(strays, 0, "a seated sheet routes whole: {report:?}");
+    assert_eq!(
+        strays(&report),
+        0,
+        "a seated sheet routes whole: {report:?}"
+    );
     let found = breaches(report);
     assert!(found.is_empty(), "the four laws hold on a sheet: {found:?}");
 
@@ -188,7 +153,7 @@ fn a_schematic_sheet_holds_the_laws_at_every_clearance() {
     for c in CLEARANCES {
         let laid = route_sample_with(SHEET, &opts, c);
         let report = laws(&laid);
-        let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
+        let impossible = strays(&report);
         let found = breaches(report);
         assert!(found.is_empty(), "the sheet at clearance {c}: {found:?}");
         assert_eq!(
@@ -233,4 +198,52 @@ fn routing_mindmap_ten_times_stays_fast() {
         took.as_secs_f64() < 10.0,
         "10 debug compiles took {took:?}, budget 10 s"
     );
+}
+
+// ── The drawing sheets' annotation oracles [SPEC 15.6/15.9] ──
+
+/// The packing oracle: a dimension row stands `clearance` off everything
+/// painted, so on every drawing sample no dim value may land on another
+/// annotation's text — another row's, a callout's, an angle's.
+#[test]
+fn no_annotation_text_lands_on_another_across_the_drawing_samples() {
+    let mut seen = 0;
+    for path in sample_paths() {
+        let src = read(&path);
+        if !src.contains("drawing") {
+            continue;
+        }
+        seen += 1;
+        let found = annotation_text_overlaps(&layout_sample(&src, &sample_opts()));
+        assert!(
+            found.is_empty(),
+            "{}: {}",
+            path.display(),
+            found.join("\n  ")
+        );
+    }
+    assert!(seen >= 6, "the drawing samples compiled: {seen}");
+}
+
+/// The carrying statement's own clearing: what a statement paints below its
+/// text — its carried stack — is part of its own painted band / leader block,
+/// so no carried box may cross the drawn geometry in any drawing sample.
+#[test]
+fn no_carried_annotation_lands_on_the_drawn_geometry_across_the_samples() {
+    let mut judged = 0;
+    for path in sample_paths() {
+        let src = read(&path);
+        if !src.contains("drawing") {
+            continue;
+        }
+        let (found, seen) = carried_over_geometry(&layout_sample(&src, &sample_opts()));
+        judged += seen;
+        assert!(
+            found.is_empty(),
+            "{}: {}",
+            path.display(),
+            found.join("\n  ")
+        );
+    }
+    assert!(judged >= 2, "the carried statements compiled: {judged}");
 }

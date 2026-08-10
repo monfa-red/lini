@@ -359,16 +359,7 @@ fn tag_facing(node: &PlacedNode, inbound: Option<&str>) -> Option<Side> {
 /// part's `overflow`). Seating measures this, or a chain clears a part's box
 /// and lands on its readout.
 pub(super) fn drawn(node: &PlacedNode) -> Bbox {
-    fn walk(n: &PlacedNode, ox: f64, oy: f64, out: &mut Bbox) {
-        for c in &n.children {
-            let (cx, cy) = (ox + c.cx, oy + c.cy);
-            *out = out.union(c.bbox.shifted(cx, cy));
-            walk(c, cx, cy, out);
-        }
-    }
-    let mut out = node.bbox;
-    walk(node, 0.0, 0.0, &mut out);
-    out
+    Bbox::drawn_of(node)
 }
 
 /// A box corner, `min` or `max` — the two the frame projections need.

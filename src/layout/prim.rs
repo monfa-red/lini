@@ -6,6 +6,7 @@
 //! `layout::primitives`, which *sizes* primitives.)
 
 use crate::font::{Font, Kind};
+use crate::layout::geom;
 use crate::layout::{Bbox, PlacedNode, approx_height, approx_width};
 use crate::resolve::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
@@ -165,7 +166,7 @@ pub fn wedge(
 ) -> PlacedNode {
     let span = a_hi - a_lo;
     let steps = (span.abs() / TAU * 64.0).ceil().max(2.0) as usize; // ~one segment / 6°
-    let at = |r: f64, a: f64| (cx + r * a.sin(), cy - r * a.cos());
+    let at = |r: f64, a: f64| geom::polar((cx, cy), r, a);
     let mut pts: Vec<(f64, f64)> = (0..=steps)
         .map(|k| at(r1, a_lo + span * k as f64 / steps as f64))
         .collect();

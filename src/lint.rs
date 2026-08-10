@@ -15,6 +15,7 @@
 use crate::ast::ChainOp;
 use crate::desugar::scene::{auto_created_ids, declared_ids};
 use crate::error::Diagnostic;
+use crate::resolve::scene::join_path;
 use crate::syntax::ast::{Child, File, Link, layout_of, root_ident};
 use std::collections::HashMap;
 
@@ -233,14 +234,6 @@ fn collect_paths(child: &Child, stack: &mut Vec<String>, out: &mut HashMap<Strin
         if n.id.is_some() {
             stack.pop();
         }
-    }
-}
-
-fn join_path(prefix: &[String], id: &str) -> String {
-    if prefix.is_empty() {
-        id.to_string()
-    } else {
-        format!("{}.{}", prefix.join("."), id)
     }
 }
 

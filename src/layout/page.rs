@@ -196,14 +196,7 @@ mod tests {
     use super::*;
     use crate::resolve::NodeKind;
 
-    fn compile_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        match crate::desugar::desugar(&file) {
-            Ok(_) => panic!("expected an error"),
-            Err(e) => e.message,
-        }
-    }
+    use crate::testutil::desugar_err as compile_err;
 
     #[test]
     fn sheet_desugars_to_mm_dims_with_iso_orientation() {

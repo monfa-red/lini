@@ -277,5 +277,5 @@ fn chrome(at: Span, ty: &str, marker: Vec<Value>, extra: Option<Decl>) -> Node {
         },
     ];
     style.extend(extra);
-    super::chrome::node(ty, style, tail)
+    super::synth::styled(ty, style, tail)
 }

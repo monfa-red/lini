@@ -117,8 +117,8 @@ fn row_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Ve
             let bar_h = group_h / s as f64;
             let by = group0 + (k as f64 + 0.5) * bar_h;
             let scale = &chart.values[ser.axis].scale;
-            let x0 = plot.x0 + scale.frac(scale.clamp(lo)) * plot.w();
-            let x1 = plot.x0 + scale.frac(scale.clamp(hi)) * plot.w();
+            let x0 = plot.value_at(scale, scale.clamp(lo));
+            let x1 = plot.value_at(scale, scale.clamp(hi));
             emit_rect(
                 (x0 + x1) / 2.0,
                 by,
@@ -222,8 +222,8 @@ fn emit_wedge(
 ) {
     let vs = &chart.values[ser.axis].scale;
     let (cx, cy) = plot.center();
-    let r0 = vs.frac(lo) * plot.radius();
-    let r1 = vs.frac(hi) * plot.radius();
+    let r0 = plot.radius_at(vs, lo);
+    let r1 = plot.radius_at(vs, hi);
     if (r1 - r0).abs() < 0.5 {
         return;
     }

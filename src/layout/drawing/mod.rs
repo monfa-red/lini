@@ -302,12 +302,7 @@ fn ride_view(node: &mut super::PlacedNode, v: &breaks::ViewMap, base_model: P, b
     // A pattern carrier's bbox is its copies' union (`pattern::expand`) —
     // re-union it around the ridden positions.
     if node.attrs.get("pattern").is_some() {
-        let mut bbox = Bbox::empty();
-        for (i, c) in node.children.iter().enumerate() {
-            let b = c.bbox.shifted(c.cx, c.cy);
-            bbox = if i == 0 { b } else { bbox.union(b) };
-        }
-        node.bbox = bbox;
+        node.bbox = super::pattern::carrier_bbox(&node.children);
     }
 }
 
@@ -315,50 +310,16 @@ fn ride_view(node: &mut super::PlacedNode, v: &breaks::ViewMap, base_model: P, b
 /// the layout error), plus the tree lookups every assertion needs.
 #[cfg(test)]
 pub(super) mod testutil {
-    use super::super::{LaidOut, PlacedNode};
+    use super::super::PlacedNode;
     use crate::resolve::NodeKind;
 
-    /// Resolve with the samples dir as the asset base [SPEC 7], so the sample
-    /// sweeps here compile files that embed local images; inline sources are
-    /// unaffected (they carry none).
-    fn resolved(lowered: &crate::syntax::ast::File) -> crate::resolve::Program {
-        let env = crate::resolve::AssetEnv {
-            base_dir: Some("samples".into()),
-            root: None,
-        };
-        crate::resolve::resolve_with_env(lowered, &[], env).expect("resolve")
-    }
-
-    pub fn laid(src: &str) -> LaidOut {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        crate::layout::layout(&resolved(&lowered)).expect("layout")
-    }
-
-    pub fn layout_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        match crate::layout::layout(&resolved(&lowered)) {
-            Ok(_) => panic!("expected a layout error"),
-            Err(e) => e.message,
-        }
-    }
+    /// The drawing sweeps compile sheets that embed committed images, so
+    /// they resolve against `samples/` [SPEC 7]; inline sources carry none
+    /// and never notice.
+    pub use crate::testutil::{laid_in_samples as laid, layout_err_in_samples as layout_err};
 
     pub fn by_id<'a>(nodes: &'a [PlacedNode], id: &str) -> &'a PlacedNode {
-        fn walk<'a>(nodes: &'a [PlacedNode], id: &str) -> Option<&'a PlacedNode> {
-            for n in nodes {
-                if n.id.as_deref() == Some(id) {
-                    return Some(n);
-                }
-                if let Some(hit) = walk(&n.children, id) {
-                    return Some(hit);
-                }
-            }
-            None
-        }
-        walk(nodes, id).unwrap_or_else(|| panic!("node '{id}' placed"))
+        crate::testutil::placed_by_id(nodes, id).0
     }
 
     /// Every placed text leaf, depth-first: (content, world cx, world cy,

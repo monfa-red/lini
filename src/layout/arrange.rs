@@ -176,29 +176,19 @@ pub(super) fn lay_out_container_children(
     // size collapses — and the canvas still includes them (see `finish`), so an
     // overlay is never clipped.
     for &i in &pinned_indices {
-        let pin = anchors::read_pin(&children[i].attrs, children[i].span)?
-            .expect("pinned child carries pin:");
-        let (cx, cy) = pin.target(anchor_parent_bbox, children[i].bbox);
-        children[i].cx = cx;
-        children[i].cy = cy;
+        anchors::seat(&mut children[i], anchor_parent_bbox)?;
     }
 
-    // `translate:` nudges every node after placement [SPEC 5] — applied last,
-    // once the body bbox is fixed, so it shifts the child (and its subtree, via
-    // `cx`/`cy`) without reflowing siblings or growing the parent. A flow
-    // child's translate is a position — drawing units under the parent's
-    // `scale:` — while a pinned overlay's is chrome anatomy (a badge's nudge,
-    // the title's gap) and stays sheet-space [SPEC 15.1].
+    // `translate:` nudges every node after placement [SPEC 5] — a flow child's
+    // in the parent's `scale:` units, a pinned overlay's (a badge's nudge, the
+    // title's gap) in sheet-space.
     for (i, c) in children.iter_mut().enumerate() {
-        if let Some((dx, dy)) = anchors::translate(&c.attrs, c.span)? {
-            let s = if pinned_indices.contains(&i) {
-                1.0
-            } else {
-                scale
-            };
-            c.cx += dx * s;
-            c.cy += dy * s;
-        }
+        let s = if pinned_indices.contains(&i) {
+            anchors::SHEET_SPACE
+        } else {
+            scale
+        };
+        anchors::nudge(c, s)?;
     }
 
     Ok((body_bbox, gutters))

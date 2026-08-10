@@ -8,7 +8,8 @@
 
 use crate::Options;
 use crate::render::values::format_value;
-use crate::resolve::{ResolvedCall, ResolvedValue, VarTable, built_in_defaults};
+use crate::resolve::defaults::{hex as hx, ident as idn, light_dark as ld, rgba};
+use crate::resolve::{ResolvedValue, VarTable, built_in_defaults};
 use std::collections::BTreeSet;
 
 /// Extract `(name_without_lini_prefix, raw_value_string)` pairs from CSS-like
@@ -168,31 +169,6 @@ fn to_css(vars: &VarTable) -> String {
     }
     out.push_str("}\n");
     out
-}
-
-// ── Palette value constructors ──
-fn idn(s: &str) -> ResolvedValue {
-    ResolvedValue::Ident(s.into())
-}
-fn hx(s: &str) -> ResolvedValue {
-    ResolvedValue::Hex(s.into())
-}
-fn rgba(r: f64, g: f64, b: f64, a: f64) -> ResolvedValue {
-    ResolvedValue::Call(ResolvedCall {
-        name: "rgba".into(),
-        args: vec![
-            ResolvedValue::Number(r),
-            ResolvedValue::Number(g),
-            ResolvedValue::Number(b),
-            ResolvedValue::Number(a),
-        ],
-    })
-}
-fn ld(l: ResolvedValue, d: ResolvedValue) -> ResolvedValue {
-    ResolvedValue::Call(ResolvedCall {
-        name: "light-dark".into(),
-        args: vec![l, d],
-    })
 }
 
 /// Maximal-contrast palette, light + dark (a11y). Colour only — line weights bake.

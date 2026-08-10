@@ -127,92 +127,6 @@ fn aligned_dims_pack_through_the_one_row_packer() {
 }
 
 #[test]
-fn no_annotation_text_lands_on_another_across_the_drawing_samples() {
-    // The packing oracle [SPEC 15.6]: a row stands `clearance` off everything
-    // painted, so no dim value may overlap any other annotation text —
-    // another row's, a callout's, an angle's — in any drawing sample.
-    use crate::layout::ir::Bbox;
-    fn collect(nodes: &[crate::layout::PlacedNode], ox: f64, oy: f64, out: &mut Vec<Bbox>) {
-        for n in nodes {
-            if n.type_chain.iter().any(|t| t == "dim-text") {
-                out.push(Bbox::extent_of(std::slice::from_ref(n), |_| true).shifted(ox, oy));
-            }
-            collect(&n.children, ox + n.cx, oy + n.cy, out);
-        }
-    }
-    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
-    let mut seen = 0;
-    for entry in std::fs::read_dir(&dir).unwrap() {
-        let path = entry.unwrap().path();
-        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
-            continue;
-        }
-        let src = std::fs::read_to_string(&path).unwrap();
-        if !src.contains("drawing") {
-            continue;
-        }
-        let mut boxes = Vec::new();
-        collect(&laid(&src).nodes, 0.0, 0.0, &mut boxes);
-        seen += 1;
-        for (i, a) in boxes.iter().enumerate() {
-            for b in &boxes[i + 1..] {
-                assert!(
-                    !a.inflate(-0.5).overlaps(b.inflate(-0.5)),
-                    "{}: annotation texts overlap: {a:?} vs {b:?}",
-                    path.display()
-                );
-            }
-        }
-    }
-    assert!(seen >= 6, "the drawing samples compiled: {seen}");
-}
-
-#[test]
-fn no_carried_annotation_lands_on_the_drawn_geometry_across_the_samples() {
-    // The carrying statement's own clearing [SPEC 15.6/15.9]: what a
-    // statement paints below its text — its carried stack — is part of its
-    // own painted band / leader block, so no carried box may cross the drawn
-    // geometry in any drawing sample.
-    use crate::layout::ir::Bbox;
-    fn check(nodes: &[crate::layout::PlacedNode], path: &std::path::Path, seen: &mut usize) {
-        for n in nodes {
-            let carried: Vec<Bbox> = n
-                .children
-                .iter()
-                .filter(|c| c.type_chain.iter().any(|t| t == "carried"))
-                .map(|c| c.bbox.shifted(c.cx, c.cy))
-                .collect();
-            if !carried.is_empty() {
-                let geo = super::drawn_geometry(&n.children);
-                for b in &carried {
-                    *seen += 1;
-                    assert!(
-                        !b.overlaps(geo),
-                        "{}: a carried annotation {b:?} crosses the drawn geometry {geo:?}",
-                        path.display()
-                    );
-                }
-            }
-            check(&n.children, path, seen);
-        }
-    }
-    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
-    let mut seen = 0;
-    for entry in std::fs::read_dir(&dir).unwrap() {
-        let path = entry.unwrap().path();
-        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
-            continue;
-        }
-        let src = std::fs::read_to_string(&path).unwrap();
-        if !src.contains("drawing") {
-            continue;
-        }
-        check(&laid(&src).nodes, &path, &mut seen);
-    }
-    assert!(seen >= 2, "the carried statements compiled: {seen}");
-}
-
-#[test]
 fn a_carrying_dim_row_stands_off_for_its_own_stack() {
     // The pinned before / after [SPEC 15.9]: bare, a right row's value
     // stands `BAND_NEG` off the line; carrying a datum frame centred under
@@ -1048,26 +962,15 @@ fn drawing_links_thin_to_stroke_width_1() {
 /// Every node (self + descendants, world frame) whose type chain carries
 /// `class`, as world bboxes.
 fn boxes_classed(nodes: &[crate::layout::PlacedNode], class: &str) -> Vec<crate::layout::ir::Bbox> {
-    fn walk(
-        nodes: &[crate::layout::PlacedNode],
-        ox: f64,
-        oy: f64,
-        class: &str,
-        out: &mut Vec<crate::layout::ir::Bbox>,
-    ) {
-        for n in nodes {
-            if n.type_chain.iter().any(|t| t == class) {
-                out.push(
-                    crate::layout::ir::Bbox::extent_of(std::slice::from_ref(n), |_| true)
-                        .shifted(ox, oy),
-                );
-            }
-            walk(&n.children, ox + n.cx, oy + n.cy, class, out);
-        }
-    }
-    let mut out = Vec::new();
-    walk(nodes, 0.0, 0.0, class, &mut out);
-    out
+    crate::testutil::all_placed(nodes, &|n| n.type_chain.iter().any(|t| t == class))
+        .into_iter()
+        // `extent_of` already carries the node's own centre, so shift by the
+        // parent offset alone: the world centre less that.
+        .map(|(n, x, y)| {
+            crate::layout::ir::Bbox::extent_of(std::slice::from_ref(n), |_| true)
+                .shifted(x - n.cx, y - n.cy)
+        })
+        .collect()
 }
 
 #[test]

@@ -7,9 +7,9 @@
 
 use super::super::ir::PlacedNode;
 use super::super::{approx_width, prim};
-use super::anchors::rotated;
 use super::geometry::P;
 use crate::error::{Code, Error};
+use crate::layout::geom::rotate;
 use crate::ledger::consts::TOL_STACK;
 use crate::ledger::format::{self, Format};
 use crate::resolve::{AttrMap, ResolvedValue};
@@ -270,7 +270,7 @@ impl DimText {
     /// lowered after everything, in the rotated frame.
     pub fn nodes(&self, centre: P, rot: f64, fs: f64, font: crate::font::Font) -> Vec<PlacedNode> {
         let place = |content: &str, local: P, size: f64| {
-            let p = rotated(local, rot);
+            let p = rotate(local, rot);
             let mut n = prim::dim_text(content, centre.0 + p.0, centre.1 + p.1, size, font.kind);
             if rot != 0.0 {
                 n.rotation = rot;

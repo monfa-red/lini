@@ -643,7 +643,9 @@ fn is_frame_type(type_chain: &[String]) -> bool {
         .any(|t| crate::desugar::FRAME_TYPES.contains(&t.as_str()))
 }
 
-fn join_path(prefix: &[String], id: &str) -> String {
+/// A node's fully-qualified dot-path [SPEC 9] — the one spelling, shared by
+/// resolve's duplicate-id check and the lint pass's.
+pub(crate) fn join_path(prefix: &[String], id: &str) -> String {
     if prefix.is_empty() {
         id.to_string()
     } else {

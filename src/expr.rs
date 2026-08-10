@@ -447,10 +447,7 @@ fn eval_var(
         _ => match funcs.get(name) {
             // A zero-arg function used bare is a named constant.
             Some(f) if f.params.is_empty() => eval_body(&f.body, HashMap::new(), ambient, funcs),
-            Some(f) => Err(ExprError::new(format!(
-                "'{name}' takes {} argument(s), got 0",
-                f.params.len()
-            ))),
+            Some(f) => Err(arity_error(name, f.params.len(), 0)),
             None => Err(ExprError::new(format!(
                 "unknown name '{name}' in an expression"
             ))),
@@ -471,11 +468,7 @@ fn eval_call(
     match funcs.get(name) {
         Some(f) => {
             if f.params.len() != args.len() {
-                return Err(ExprError::new(format!(
-                    "'{name}' takes {} argument(s), got {}",
-                    f.params.len(),
-                    args.len()
-                )));
+                return Err(arity_error(name, f.params.len(), args.len()));
             }
             let base = f.params.iter().cloned().zip(args.iter().copied()).collect();
             eval_body(&f.body, base, ambient, funcs)
@@ -558,11 +551,14 @@ fn check_arity(name: &str, args: &[Value], want: usize) -> Result<(), ExprError>
     if args.len() == want {
         Ok(())
     } else {
-        Err(ExprError::new(format!(
-            "'{name}' takes {want} argument(s), got {}",
-            args.len()
-        )))
+        Err(arity_error(name, want, args.len()))
     }
+}
+
+/// The one wrong-arity message — a math builtin's, a user function's, and a
+/// zero-arg call of a function that takes parameters all read the same.
+fn arity_error(name: &str, want: usize, got: usize) -> ExprError {
+    ExprError::new(format!("'{name}' takes {want} argument(s), got {got}"))
 }
 
 fn apply_binop(op: BinOp, x: f64, y: f64) -> f64 {

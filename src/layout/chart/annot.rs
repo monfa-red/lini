@@ -35,10 +35,10 @@ fn axis_px(plot: &Plot, chart: &Chart, axis: &AxisRef, v: f64) -> f64 {
 /// Whether `axis` runs along the screen x in this direction — the domain in a
 /// column chart, a value axis in a row. Everything an annotation draws
 /// (shades, dividers, reference lines, tick seats) orients off this.
-fn runs_horizontal(plot: &Plot, axis: &AxisRef) -> bool {
+pub(super) fn runs_horizontal(dir: Dir, axis: &AxisRef) -> bool {
     match axis {
-        AxisRef::X => plot.dir != Dir::Row,
-        AxisRef::Value(_) => plot.dir == Dir::Row,
+        AxisRef::X => !dir.value_horizontal(),
+        AxisRef::Value(_) => dir.value_horizontal(),
     }
 }
 
@@ -68,10 +68,10 @@ pub fn band_shades(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 
 /// A filled band: a faint wash over the span × the full perpendicular plot extent.
 fn shade(plot: &Plot, axis: &AxisRef, p0: f64, p1: f64, fill: ResolvedValue) -> PlacedNode {
-    if runs_horizontal(plot, axis) {
+    if runs_horizontal(plot.dir, axis) {
         prim::rect(
             (p0 + p1) / 2.0,
-            (plot.y0 + plot.y1) / 2.0,
+            plot.center().1,
             (p1 - p0).abs(),
             plot.h(),
             fill,
@@ -79,7 +79,7 @@ fn shade(plot: &Plot, axis: &AxisRef, p0: f64, p1: f64, fill: ResolvedValue) -> 
         )
     } else {
         prim::rect(
-            (plot.x0 + plot.x1) / 2.0,
+            plot.center().0,
             (p0 + p1) / 2.0,
             plot.w(),
             (p1 - p0).abs(),
@@ -100,7 +100,7 @@ fn dividers(
     drawn: &mut Vec<f64>,
     out: &mut Vec<PlacedNode>,
 ) {
-    let horizontal = runs_horizontal(plot, axis);
+    let horizontal = runs_horizontal(plot.dir, axis);
     for p in [p0, p1] {
         let edge = if horizontal {
             near(p, plot.x0) || near(p, plot.x1)
@@ -125,7 +125,7 @@ pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         // A horizontal-running axis seats its band names a row under the plot
         // (clear of the tick labels); a vertical one seats them in the left
         // gutter — whichever axis that is in this direction.
-        let node = if runs_horizontal(plot, &b.axis) {
+        let node = if runs_horizontal(plot.dir, &b.axis) {
             prim::text(
                 label,
                 mid,
@@ -154,14 +154,10 @@ pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 /// labelled. Shared by the plot-rect inset and the axis-title placement so
 /// the rows stack without overlap.
 pub fn x_band_row(chart: &Chart) -> f64 {
-    let horizontal = |axis: &AxisRef| match axis {
-        AxisRef::X => chart.dir != Dir::Row,
-        AxisRef::Value(_) => chart.dir == Dir::Row,
-    };
     let labelled = chart
         .bands
         .iter()
-        .any(|b| horizontal(&b.axis) && b.label.is_some());
+        .any(|b| runs_horizontal(chart.dir, &b.axis) && b.label.is_some());
     if labelled { LABEL_SIZE } else { 0.0 }
 }
 
@@ -182,7 +178,7 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
         return; // off-plot — cropped
     }
     let p = axis_px(plot, chart, &m.axis, v);
-    let horizontal = runs_horizontal(plot, &m.axis);
+    let horizontal = runs_horizontal(plot.dir, &m.axis);
     let mut ln = prim::line(plot.cross(horizontal, p), m.color.clone(), LINE_W);
     if let Some(ss) = &m.stroke_style {
         ln.attrs.insert("stroke-style", ss.clone());

@@ -18,26 +18,14 @@ pub(crate) type Fitted = (Vec<Pt>, Vec<[Pt; 4]>);
 /// checker all read the drawn curve faithfully, and all read the same one.
 pub(crate) const SAMPLES: usize = 24;
 
-fn sub(a: Pt, b: Pt) -> Pt {
-    (a.0 - b.0, a.1 - b.1)
-}
-
-fn add(a: Pt, b: Pt) -> Pt {
-    (a.0 + b.0, a.1 + b.1)
-}
-
-fn mul(a: Pt, k: f64) -> Pt {
-    (a.0 * k, a.1 * k)
-}
-
-fn dot(a: Pt, b: Pt) -> f64 {
-    a.0 * b.0 + a.1 * b.1
-}
+use crate::layout::geom::{add, dot, scale as mul, sub};
 
 fn len(a: Pt) -> f64 {
     a.0.hypot(a.1)
 }
 
+/// Unlike [`crate::layout::geom::norm`], a degenerate vector collapses to the
+/// origin here — a zero-length curve tangent has no direction to keep.
 fn unit(a: Pt) -> Pt {
     let l = len(a);
     if l <= 0.0 {

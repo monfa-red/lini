@@ -5,7 +5,7 @@
 use super::palette;
 use super::project::Dir;
 use super::scale::{self, Scale};
-use super::tint::{live, muted};
+use super::tint::muted;
 use super::tooltip::{self, Tooltip};
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};

@@ -15,6 +15,8 @@ use super::geometry::{MirrorAxis, P, unit};
 use super::{Segment, chrome};
 use crate::ast::Side;
 use crate::error::Error;
+use crate::layout::geom::dot;
+use crate::layout::geom::rotate;
 use crate::resolve::{ResolvedEndpoint, ResolvedValue};
 
 /// Where an endpoint's anchor sits on its node — resolved against the node's
@@ -105,9 +107,9 @@ pub(super) fn resolve<'a>(
             }
             None => d_local,
         };
-        let local = rotated(d_local, rot);
+        let local = rotate(d_local, rot);
         origin = (origin.0 + local.0, origin.1 + local.1);
-        let m = rotated(m_local, rot);
+        let m = rotate(m_local, rot);
         model_origin = (model_origin.0 + m.0, model_origin.1 + m.1);
         if next.rotation != 0.0 {
             *view = None;
@@ -294,7 +296,7 @@ impl Anchor<'_> {
 
     /// A displayed node-local point on the unbroken model, world frame.
     pub fn model_world(&self, local_disp: P) -> P {
-        let r = rotated(self.unmap_local(local_disp), self.rot);
+        let r = rotate(self.unmap_local(local_disp), self.rot);
         (self.model_origin.0 + r.0, self.model_origin.1 + r.1)
     }
 
@@ -330,7 +332,7 @@ impl Anchor<'_> {
             }
             _ => return None,
         };
-        Some(rotated(local, self.rot))
+        Some(rotate(local, self.rot))
     }
 
     /// A seat's default **facing side** [SPEC 15.5]: the bbox side whose
@@ -342,8 +344,8 @@ impl Anchor<'_> {
             .into_iter()
             .min_by(|a, b| {
                 let along = |s: Side| {
-                    let o = rotated(s.outward(), self.rot);
-                    o.0 * normal.0 + o.1 * normal.1
+                    let o = rotate(s.outward(), self.rot);
+                    dot(o, normal)
                 };
                 along(*a).total_cmp(&along(*b))
             })
@@ -356,14 +358,14 @@ impl Anchor<'_> {
     /// side (the edge along it). `None` for the point anchors.
     pub fn direction(&self) -> Option<P> {
         if let Spot::Segment(Segment::Edge(a, b)) = &self.spot {
-            return Some(rotated(unit((b.0 - a.0, b.1 - a.1)), self.rot));
+            return Some(rotate(unit((b.0 - a.0, b.1 - a.1)), self.rot));
         }
         if let Spot::Side(side) = &self.spot {
             let along = match side {
                 Side::Top | Side::Bottom => (1.0, 0.0),
                 Side::Left | Side::Right => (0.0, 1.0),
             };
-            return Some(rotated(along, self.rot));
+            return Some(rotate(along, self.rot));
         }
         // A whole `|line|` / `|centerline|` is line-like [SPEC 15.6]: its run
         // from first to last drawn point.
@@ -377,7 +379,7 @@ impl Anchor<'_> {
             && pts.len() >= 2
         {
             let (a, b) = (pts[0], pts[pts.len() - 1]);
-            return Some(rotated(unit((b.0 - a.0, b.1 - a.1)), self.rot));
+            return Some(rotate(unit((b.0 - a.0, b.1 - a.1)), self.rot));
         }
         None
     }
@@ -431,13 +433,13 @@ impl Anchor<'_> {
 
     /// Node-local → drawing frame.
     pub fn to_world(&self, p: P) -> P {
-        let r = rotated(p, self.rot);
+        let r = rotate(p, self.rot);
         (self.origin.0 + r.0, self.origin.1 + r.1)
     }
 
     /// Drawing frame → node-local.
     pub fn to_local(&self, p: P) -> P {
-        rotated((p.0 - self.origin.0, p.1 - self.origin.1), -self.rot)
+        rotate((p.0 - self.origin.0, p.1 - self.origin.1), -self.rot)
     }
 }
 
@@ -468,12 +470,4 @@ fn side_mid(g: &Bbox, side: Side) -> P {
         Side::Left => (g.min_x, cy),
         Side::Right => (g.max_x, cy),
     }
-}
-
-pub(super) fn rotated(p: P, deg: f64) -> P {
-    if deg == 0.0 {
-        return p;
-    }
-    let (s, c) = deg.to_radians().sin_cos();
-    (p.0 * c - p.1 * s, p.0 * s + p.1 * c)
 }

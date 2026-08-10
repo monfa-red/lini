@@ -68,9 +68,7 @@ impl Error {
     /// Stamp the phase at a phase boundary — fills the generic `x000` code onto
     /// an untriaged error, leaving any named family code untouched.
     pub fn in_phase(mut self, phase: Phase) -> Self {
-        if self.code.is_unspecified() {
-            self.code = Code::generic(phase);
-        }
+        self.code = self.code.or_generic(phase);
         self
     }
 
@@ -116,18 +114,38 @@ pub struct ErrorDisplay<'a> {
 
 impl<'a> fmt::Display for ErrorDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (line, col) = line_col(self.source, self.err.span.start);
-        write!(
+        write_located(
             f,
-            "{}:{}:{}: error: {}",
-            self.filename, line, col, self.err.message
-        )?;
-        if let Some(related) = self.err.related {
-            let (rl, rc) = line_col(self.source, related.start);
-            write!(f, " (previously at {}:{})", rl, rc)?;
-        }
-        Ok(())
+            self.source,
+            self.filename,
+            "error",
+            &self.err.message,
+            self.err.span,
+            self.err.related,
+        )
     }
+}
+
+/// The one human-readable rendering [SPEC 21] — `file:line:col: level: message`,
+/// a duplicate's prior definition trailing as `(previously at L:C)`. Both the
+/// hard error and the diagnostic print through it, so neither can quietly drop
+/// a span the other shows.
+fn write_located(
+    f: &mut fmt::Formatter<'_>,
+    source: &str,
+    filename: &str,
+    level: &str,
+    message: &str,
+    span: Span,
+    related: Option<Span>,
+) -> fmt::Result {
+    let (line, col) = line_col(source, span.start);
+    write!(f, "{}:{}:{}: {}: {}", filename, line, col, level, message)?;
+    if let Some(related) = related {
+        let (rl, rc) = line_col(source, related.start);
+        write!(f, " (previously at {}:{})", rl, rc)?;
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
@@ -199,9 +217,7 @@ impl Diagnostic {
 
     /// Stamp the phase onto an untriaged diagnostic, leaving a named code alone.
     pub fn in_phase(mut self, phase: Phase) -> Self {
-        if self.code.is_unspecified() {
-            self.code = Code::generic(phase);
-        }
+        self.code = self.code.or_generic(phase);
         self
     }
 
@@ -234,9 +250,7 @@ impl Diagnostic {
 /// Stamp a phase onto every untriaged diagnostic in a pass's output.
 pub fn stamp_phase(mut diags: Vec<Diagnostic>, phase: Phase) -> Vec<Diagnostic> {
     for d in &mut diags {
-        if d.code.is_unspecified() {
-            d.code = Code::generic(phase);
-        }
+        d.code = d.code.or_generic(phase);
     }
     diags
 }
@@ -249,15 +263,14 @@ pub struct DiagnosticDisplay<'a> {
 
 impl<'a> fmt::Display for DiagnosticDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (line, col) = line_col(self.source, self.diag.span.start);
-        write!(
+        write_located(
             f,
-            "{}:{}:{}: {}: {}",
+            self.source,
             self.filename,
-            line,
-            col,
             self.diag.level.as_str(),
-            self.diag.message
+            &self.diag.message,
+            self.diag.span,
+            self.diag.related,
         )
     }
 }

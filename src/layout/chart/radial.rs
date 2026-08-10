@@ -8,9 +8,9 @@ use super::metrics::LABEL_SIZE;
 use super::model::Chart;
 use super::project::Plot;
 use super::scale::{self, Scale};
-use super::tint::live;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::resolve::ResolvedValue;
 
 /// The web (concentric polygons through the spokes at each radius tick) and the spokes
 /// (centre → rim at each domain position), drawn first so the data sits over them.
@@ -23,9 +23,9 @@ pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
     let xs = &chart.x.scale;
     let vs = &chart.values[0].scale; // a radial chart has one radius (value) axis
-    let grid = live("grid");
+    let grid = ResolvedValue::live("grid");
     for &t in vs.ticks() {
-        if vs.frac(t) * plot.radius() < 1.0 {
+        if plot.radius_at(vs, t) < 1.0 {
             continue; // the centre ring collapses to the pole — skip the degenerate polygon
         }
         let mut poly: Vec<(f64, f64)> = (0..n).map(|i| plot.project(xs, i as f64, vs, t)).collect();
@@ -34,11 +34,10 @@ pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         }
         out.push(prim::line(poly, grid.clone(), 1.0));
     }
-    let (cx, cy) = plot.center();
+    let centre = plot.center();
     for i in 0..n {
-        let a = plot.spoke_angle(xs, i as f64);
-        let rim = (cx + plot.radius() * a.sin(), cy - plot.radius() * a.cos());
-        out.push(prim::line(vec![(cx, cy), rim], grid.clone(), 1.0));
+        let rim = crate::layout::geom::polar(centre, plot.radius(), plot.spoke_angle(xs, i as f64));
+        out.push(prim::line(vec![centre, rim], grid.clone(), 1.0));
     }
 }
 
@@ -51,18 +50,16 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     let xs = &chart.x.scale;
     let vs = &chart.values[0].scale;
     let (cx, cy) = plot.center();
-    let muted = live("muted");
+    let muted = ResolvedValue::live("muted");
     let lr = plot.radius() + LABEL_SIZE * 0.9;
     for i in 0..n {
-        let a = plot.spoke_angle(xs, i as f64);
         let label = chart
             .x
             .labels
             .get(i)
             .cloned()
             .unwrap_or_else(|| (i + 1).to_string());
-        let lx = cx + lr * a.sin();
-        let ly = cy - lr * a.cos();
+        let (lx, ly) = crate::layout::geom::polar((cx, cy), lr, plot.spoke_angle(xs, i as f64));
         out.push(prim::text(
             &label,
             lx,
@@ -74,7 +71,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         ));
     }
     for &t in vs.ticks() {
-        let r = vs.frac(t) * plot.radius();
+        let r = plot.radius_at(vs, t);
         if r < 1.0 {
             continue; // skip the centre tick — it would pile on the pole
         }

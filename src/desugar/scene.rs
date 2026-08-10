@@ -101,23 +101,18 @@ pub fn to_create(
 /// lowers it (so it gains its `.lini-box` class and its centred text label)
 /// exactly like a written box.
 pub fn auto_box(id: &str, span: Span) -> Node {
-    Node {
-        id: Some(id.to_string()),
-        ty: Some("box".to_string()),
-        label: Some(TextNode {
+    let mut n = super::synth::labelled(
+        "box",
+        TextNode {
             text: id.to_string(),
             classes: Vec::new(),
             style: Vec::new(),
             style_span: None,
             span,
-        }),
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span,
-    }
+        },
+    );
+    n.id = Some(id.to_string());
+    n
 }
 
 #[cfg(test)]

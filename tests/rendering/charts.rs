@@ -19,28 +19,6 @@ fn format_inherits_from_the_chart_and_reaches_titles() {
     assert!(svg.contains("S: 4.0"), "formatted title missing:\n{svg}");
 }
 
-#[test]
-fn format_date_preset_errors_off_a_time_axis() {
-    let err = lini::compile_str(
-        "|chart| [\n|axis| { side: left; format: month }\n|bars| { data: 1, 2 }\n]\n",
-    )
-    .unwrap_err();
-    assert!(
-        err.to_string().contains("a date preset reads a time axis"),
-        "got: {err}"
-    );
-}
-
-#[test]
-fn format_bad_value_errors_with_the_usage() {
-    let err =
-        lini::compile_str("|chart| { format: decimals } [ |bars| { data: 1 } ]\n").unwrap_err();
-    assert!(
-        err.to_string().contains("'format' takes auto"),
-        "got: {err}"
-    );
-}
-
 // ── Per-datum paint [SPEC 14.6, CHART-DRAW Stage 2] ──
 
 #[test]
@@ -64,37 +42,6 @@ fn per_datum_stroke_auto_deepens_each_datums_own_fill() {
     // Each datum's edge is the deep tier of its *own* fill.
     assert!(svg.contains("--lini-rose-deep"), "{svg}");
     assert!(svg.contains("--lini-red-deep"), "{svg}");
-}
-
-#[test]
-fn per_datum_list_count_mismatch_errors_with_both_counts() {
-    let err = lini::compile_str("|chart| [\n|bars| { data: 9, 15, 24; fill: auto, --red }\n]\n")
-        .unwrap_err();
-    assert!(
-        err.to_string()
-            .contains("'fill' lists 2 paints but the series has 3 data points"),
-        "got: {err}"
-    );
-}
-
-#[test]
-fn per_datum_list_on_a_line_errors() {
-    let err =
-        lini::compile_str("|chart| [\n|line| { data: 9, 15; stroke: red, blue }\n]\n").unwrap_err();
-    assert!(
-        err.to_string().contains("one shape with one paint"),
-        "got: {err}"
-    );
-}
-
-#[test]
-fn per_datum_list_with_fn_errors() {
-    let err =
-        lini::compile_str("|chart| [\n|bars| { fn: (x); fill: auto, --red }\n]\n").unwrap_err();
-    assert!(
-        err.to_string().contains("needs explicit 'data'"),
-        "got: {err}"
-    );
 }
 
 #[test]
@@ -138,42 +85,6 @@ fn calendar_step_overrides_the_auto_unit() {
         "{ticks:?}"
     );
     assert!(!ticks.iter().any(|t| t == "Mar 2026"), "{ticks:?}");
-}
-
-#[test]
-fn time_axis_error_rows() {
-    // Numeric step on a time axis.
-    let err = lini::compile_str(
-        "|chart| [\n|axis| { side: bottom; step: 5 }\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n]\n",
-    )
-    .unwrap_err();
-    assert!(err.to_string().contains("steps by calendar"), "got: {err}");
-    // Mixed date/numeric series.
-    let err = lini::compile_str(
-        "|chart| [\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n|dots| { data: 3 4, 5 6 }\n]\n",
-    )
-    .unwrap_err();
-    assert!(
-        err.to_string().contains("mixes dates and numbers"),
-        "got: {err}"
-    );
-    // An invalid date carries the literal.
-    let err =
-        lini::compile_str("|chart| [\n|line| { data: \"2026-13-01\" 1, \"2026-06-01\" 2 }\n]\n")
-            .unwrap_err();
-    assert!(
-        err.to_string().contains("'2026-13-01' is not a date"),
-        "got: {err}"
-    );
-    // scale: time belongs to the x axis.
-    let err = lini::compile_str(
-        "|chart| [\n|axis| { side: left; scale: time }\n|bars| { data: 1, 2 }\n]\n",
-    )
-    .unwrap_err();
-    assert!(
-        err.to_string().contains("a value axis is numeric"),
-        "got: {err}"
-    );
 }
 
 #[test]

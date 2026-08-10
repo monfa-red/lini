@@ -210,10 +210,7 @@ fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
     // stroke of a view boundary (ISO draws it thin — it is chrome, not part
     // geometry), never the part stroke. An authored `stroke`/`stroke-width`
     // on the detail still wins as an inline diff.
-    let light = ResolvedValue::LiveVar {
-        name: "stroke-light".into(),
-        raw: false,
-    };
+    let light = ResolvedValue::live("stroke-light");
     let stroke = match inst.attrs.get("stroke") {
         Some(ResolvedValue::Ident(s)) if s == "none" => light,
         Some(v) => v.clone(),

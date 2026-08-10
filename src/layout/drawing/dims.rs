@@ -15,6 +15,7 @@ use super::geometry::{Frame, P, dist, unit};
 use super::symbols::CarriedStack;
 use crate::ast::Side;
 use crate::error::{Code, Error};
+use crate::layout::geom::{cross, dot, scale, sub};
 use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -22,6 +23,9 @@ use crate::span::Span;
 /// Below this, a unit axis component reads as zero — the horizontal /
 /// vertical classification and the parallel test [SPEC 15.6].
 const AXIS_EPS: f64 = 1e-6;
+
+/// The stub the flipped-outside arrows and the dim line run past the span.
+const STUB: f64 = 2.0;
 
 /// `a (-) b` (and chains — each hop its own dim) [SPEC 15.6]. A hop's label
 /// **replaces** its number; labels map to hops in order. A chain **shares
@@ -49,7 +53,7 @@ pub(super) fn linear(
         // agree with a directed anchor.
         let directed = match (a.outward(), b.outward()) {
             (Some(x), Some(y)) => {
-                if (x.0 * y.1 - x.1 * y.0).abs() > AXIS_EPS {
+                if cross(x, y).abs() > AXIS_EPS {
                     return Err(Error::at(
                         w.span,
                         format!(
@@ -77,7 +81,7 @@ pub(super) fn linear(
             (Some((n, ep)), p) => {
                 if let Some(p) = p {
                     let pu = p.dir(span_dir).unwrap_or(n);
-                    if (n.0 * pu.1 - n.1 * pu.0).abs() > AXIS_EPS {
+                    if cross(n, pu).abs() > AXIS_EPS {
                         return Err(Error::at(
                             w.span,
                             format!(
@@ -108,7 +112,7 @@ pub(super) fn linear(
         let value = if true_aligned {
             dist(am, bm)
         } else {
-            ((bm.0 - am.0) * u.0 + (bm.1 - am.1) * u.1).abs()
+            dot(sub(bm, am), u).abs()
         } / ctx.scale;
         let label = w.texts.get(hop);
         let text = compose::compose(
@@ -328,6 +332,9 @@ struct Plan {
     interval: (f64, f64),
     text_u: f64,
     fits: bool,
+    /// The span's ends along the frame — the anatomy's own reference points.
+    u_lo: f64,
+    u_hi: f64,
 }
 
 fn plan(s: &Stacked, paint: &Paint) -> Plan {
@@ -335,14 +342,13 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
     let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
     let arrow_len = ARROW_LEN * paint.sw;
     let tw = s.text.width(paint.fs, paint.font);
-    let stub = 2.0;
     let span = u_hi - u_lo;
     let fits = span >= 2.0 * arrow_len + tw + 6.0;
     // A narrow span flips its arrows outside the extension lines; the value
     // stays **inside** while it still reads there (drafting's middle form —
     // chained narrow hops keep their numbers apart), and only a span too
     // tight even for the bare text slides it past the nearer line.
-    let reach = arrow_len + stub;
+    let reach = arrow_len + STUB;
     let (interval, text_u) = if fits {
         ((u_lo, u_hi), (u_lo + u_hi) / 2.0)
     } else if span >= tw + 4.0 {
@@ -362,6 +368,8 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
         interval,
         text_u,
         fits,
+        u_lo,
+        u_hi,
     }
 }
 
@@ -369,10 +377,8 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
 fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     let sw = paint.sw;
     let f = s.frame;
-    let (ua, ub) = (f.u(s.a), f.u(s.b));
-    let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
+    let (u_lo, u_hi) = (p.u_lo, p.u_hi);
     let arrow_len = ARROW_LEN * sw;
-    let stub = 2.0;
     let fits = p.fits;
 
     let mut out = Vec::new();
@@ -393,15 +399,15 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     let (l0, l1) = if fits {
         (u_lo + trim, u_hi - trim)
     } else {
-        (u_lo - arrow_len - stub, u_hi + arrow_len + stub)
+        (u_lo - arrow_len - STUB, u_hi + arrow_len + STUB)
     };
     out.push(paint.dim(vec![f.pt(l0, line_c), f.pt(l1, line_c)]));
     // Slender arrows: tips on the extension lines; bodies inside the span,
     // or outside pointing in when flipped.
     let along = f.u;
     let flip = if fits { -1.0 } else { 1.0 };
-    out.push(arrow(f.pt(u_lo, line_c), scale_p(along, flip), paint));
-    out.push(arrow(f.pt(u_hi, line_c), scale_p(along, -flip), paint));
+    out.push(arrow(f.pt(u_lo, line_c), scale(along, flip), paint));
+    out.push(arrow(f.pt(u_hi, line_c), scale(along, -flip), paint));
     out.extend(value_texts(&s, p, line_c, paint));
     out
 }
@@ -447,8 +453,4 @@ pub(super) fn span_on(a: P, b: P, axis: Axis) -> f64 {
         Axis::Horizontal => (b.0 - a.0).abs(),
         Axis::Vertical => (b.1 - a.1).abs(),
     }
-}
-
-fn scale_p(p: P, k: f64) -> P {
-    (p.0 * k, p.1 * k)
 }

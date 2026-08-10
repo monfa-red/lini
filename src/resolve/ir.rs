@@ -274,6 +274,26 @@ pub enum ResolvedValue {
 }
 
 impl ResolvedValue {
+    /// A `--name` role reference the renderer resolves, so it themes, flips,
+    /// and bakes [SPEC 10.2]. **The** constructor: every layer that names a
+    /// role var — a resolved default, a theme's `var()`, a lowered chart or
+    /// drawing primitive, a render-time fallback tint — builds it here.
+    pub fn live(name: impl Into<String>) -> Self {
+        ResolvedValue::LiveVar {
+            name: name.into(),
+            raw: false,
+        }
+    }
+
+    /// [`ResolvedValue::live`] carrying an explicit `raw` — a theme override
+    /// naming a non-`--lini-` custom property passes it through verbatim.
+    pub fn live_raw(name: impl Into<String>, raw: bool) -> Self {
+        ResolvedValue::LiveVar {
+            name: name.into(),
+            raw,
+        }
+    }
+
     /// The numeric value, if this is a plain number. A `--name` reference is a
     /// visual var [SPEC 10.2], never a layout number, so it has none.
     pub fn as_number(&self) -> Option<f64> {
@@ -464,7 +484,7 @@ pub struct ResolvedLink {
     pub applied_styles: Vec<String>,
     pub markers: Markers,
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn
-    /// route by the router's label pass (ROUTING Model step 7).
+    /// route by the router's label pass (ROUTING Model step 6).
     pub texts: Vec<ResolvedText>,
     /// Annotation nodes carried in a drawing link's `[ ]` [SPEC 15.9] —
     /// resolved like scene children, lowered at the statement's text seat.

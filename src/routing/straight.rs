@@ -74,7 +74,7 @@ pub(crate) fn route(reqs: &[EdgeReq], routing: &mut Routing, req_of: &mut Vec<us
         let path = if req.a_path == req.b_path {
             let r = req.a_rect;
             let s = req.clearance.max(HOOK_MIN);
-            let cy = (r.y0 + r.y1) / 2.0;
+            let cy = r.centre().1;
             hook(r.x1, cy - s / 2.0, cy + s / 2.0, s)
         } else {
             match stray_segment(req.a_rect, req.b_rect) {

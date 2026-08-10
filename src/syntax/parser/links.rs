@@ -15,7 +15,7 @@ impl<'a> Parser<'a> {
         // text [SPEC 15.6/21]: after the op, an ident or a `|` (bars: a capsule,
         // [SPEC 9/22]) opens an endpoint; anything else is the tail. Which ops
         // (and scopes) allow it is resolve's call.
-        if matches!(self.kind(), Some(TokKind::Ident(_)) | Some(TokKind::Pipe)) {
+        if self.at_endpoint_head() {
             chain.push(self.parse_endpoint_group()?);
             while let Some((next, width)) = self.peek_chain_op() {
                 // Wire hops may each carry their own op — `a - b -> c` is the
@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
                     )));
                 }
                 self.pos += width;
-                if !matches!(self.kind(), Some(TokKind::Ident(_)) | Some(TokKind::Pipe)) {
+                if !self.at_endpoint_head() {
                     return Err(self.err("a text callout ends its statement — chain before it"));
                 }
                 ops.push(next);
@@ -64,6 +64,12 @@ impl<'a> Parser<'a> {
             labels,
             span: self.span_from(start),
         })
+    }
+
+    /// Whether the cursor opens an endpoint [SPEC 9]: a bare id, or the `|` of
+    /// an identity capsule. Anything else ends the chain.
+    fn at_endpoint_head(&self) -> bool {
+        matches!(self.kind(), Some(TokKind::Ident(_)) | Some(TokKind::Pipe))
     }
 
     pub(super) fn parse_endpoint_group(&mut self) -> Result<EndpointGroup, Error> {

@@ -508,17 +508,6 @@ fn a_pinless_landing_seats_the_satellite_at_the_pin_it_resolved() {
     assert_eq!(paths(&series), paths(&spelled), "the same drawn sheet");
 }
 
-#[test]
-fn a_sheets_wires_are_deterministic() {
-    let src = full_sheet();
-    let once: Vec<Vec<(f64, f64)>> = routed(&src).links.iter().map(|w| w.path.clone()).collect();
-    for _ in 0..3 {
-        let again: Vec<Vec<(f64, f64)>> =
-            routed(&src).links.iter().map(|w| w.path.clone()).collect();
-        assert_eq!(once, again, "the same sheet routes identically");
-    }
-}
-
 // ───────────── the nested sheet's margin [Phase 4 carry-over] ─────────────
 
 /// A sheet's interior, as a body: an anchor, two seated satellites and a tag.

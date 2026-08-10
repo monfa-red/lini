@@ -21,192 +21,122 @@ fn idempotent(src: &str) {
     );
 }
 
-#[test]
-fn node_head_label() {
-    // A head label is preserved; a `[ ]` text child is left as written (fmt resolves
-    // no types, and the head label's meaning is type-dependent — [SPEC 3]).
-    assert_eq!(fmt("|box#x| \"hi\"\n"), "|box#x| \"hi\"\n");
-    assert_eq!(fmt("|box#x|[ \"hi\" ]\n"), "|box#x| [ \"hi\" ]\n");
+/// A canonical spelling is a contract: every form the formatter owns, as
+/// `(written, canonical)`. Each row is also re-parsed and run a second time —
+/// valid output that a save-loop cannot churn.
+#[track_caller]
+fn canonicalizes(rows: &[(&str, &str)]) {
+    for (src, want) in rows {
+        assert_eq!(&fmt(src), want, "canonical form of {src:?}");
+        reparses(src);
+        idempotent(src);
+    }
 }
 
 #[test]
-fn id_only_bars() {
-    assert_eq!(fmt("|#cat|\n"), "|#cat|\n");
+fn fmt_canonicalizes_a_node() {
+    canonicalizes(&[
+        // A head label is preserved; a `[ ]` text child is left as written (fmt
+        // resolves no types, and the head label's meaning is type-dependent
+        // [SPEC 3]).
+        ("|box#x| \"hi\"\n", "|box#x| \"hi\"\n"),
+        ("|box#x|[ \"hi\" ]\n", "|box#x| [ \"hi\" ]\n"),
+        ("|#cat|\n", "|#cat|\n"),
+        ("\"Apple\"\n", "\"Apple\"\n"),
+        ("|box#x| .hot.loud\n", "|box#x| .hot.loud\n"),
+        // A class on a default box (id only).
+        ("|#x| .hot\n", "|#x| .hot\n"),
+        (
+            "|box#api| \"API\" .hot{fill:red}\n",
+            "|box#api| \"API\" .hot { fill: red; }\n",
+        ),
+        (
+            "|group#g|{direction:column}[\n|box#a|\n|box#b|\n]\n",
+            "|group#g| { direction: column; } [\n  |box#a|\n  |box#b|\n]\n",
+        ),
+        // [SPEC 20]: config decls share a line in the style block, off the head.
+        (
+            "|group#g| { cell: 1 2; direction: column; gap: 16 } [\n|box#a|\n]\n",
+            "|group#g| { cell: 1 2; direction: column; gap: 16; } [\n  |box#a|\n]\n",
+        ),
+        // …but a comment breaks the group and forces a block.
+        (
+            "|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n",
+            "|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n",
+        ),
+    ]);
 }
 
 #[test]
-fn bare_label_node() {
-    assert_eq!(fmt("\"Apple\"\n"), "\"Apple\"\n");
-}
-
-#[test]
-fn root_declaration() {
-    assert_eq!(fmt("{layout:grid}\n"), "{\n  layout: grid;\n}\n");
-}
-
-#[test]
-fn variable_declaration() {
-    assert_eq!(fmt("{--brand:#ff6600}\n"), "{\n  --brand: #ff6600;\n}\n");
-}
-
-#[test]
-fn element_rule() {
-    assert_eq!(fmt("{|box|{radius:6}}\n"), "{\n  |box| { radius: 6; }\n}\n");
-}
-
-#[test]
-fn class_rule() {
-    assert_eq!(
-        fmt("{.hot{stroke-width:2}}\n"),
-        "{\n  .hot { stroke-width: 2; }\n}\n"
-    );
-}
-
-#[test]
-fn id_rule() {
-    assert_eq!(
-        fmt("{#hero{fill:gold}}\n"),
-        "{\n  #hero { fill: gold; }\n}\n"
-    );
-}
-
-#[test]
-fn descendant_rule() {
-    assert_eq!(
-        fmt("{|table| |box|{padding:4 8}}\n"),
-        "{\n  |table| |box| { padding: 4 8; }\n}\n"
-    );
-}
-
-#[test]
-fn id_pinned_descendant_rule() {
-    assert_eq!(
-        fmt("{|table#main| |box|{fill:white}}\n"),
-        "{\n  |table#main| |box| { fill: white; }\n}\n"
-    );
-}
-
-#[test]
-fn define() {
-    assert_eq!(
-        fmt("{|treat::box|{radius:5}}\n"),
-        "{\n  |treat::box| { radius: 5; }\n}\n"
-    );
-}
-
-#[test]
-fn multi_group_value_list() {
-    assert_eq!(
-        fmt("|line#dim|{points:0 0,10 10}\n"),
-        "|line#dim| { points: 0 0, 10 10; }\n"
-    );
-}
-
-#[test]
-fn function_value() {
-    assert_eq!(
-        fmt("{layout:grid;\ncolumns:repeat(3)}\n"),
-        "{\n  layout: grid; columns: repeat(3);\n}\n"
-    );
-}
-
-#[test]
-fn bindings_and_group_expressions() {
-    // A scalar binding reads bare; a function's body is a group [SPEC 10.7].
-    assert_eq!(fmt("{my_r=5}\n"), "{\n  my_r = 5;\n}\n");
-    assert_eq!(
-        fmt("{scale(n)=(100 * 1.2 ^ n)}\n"),
-        "{\n  scale(n) = (100 * 1.2 ^ n);\n}\n"
-    );
-    // A direct group value wears its parens; a call argument sheds them (it is
-    // already inside the call's own parens).
-    assert_eq!(
-        fmt("|box#a| { padding: (8 * 2); width: gain(2 * n) }\n"),
-        "|box#a| { padding: (8 * 2); width: gain(2 * n); }\n"
-    );
+fn fmt_canonicalizes_a_stylesheet() {
+    canonicalizes(&[
+        ("{layout:grid}\n", "{\n  layout: grid;\n}\n"),
+        ("{--brand:#ff6600}\n", "{\n  --brand: #ff6600;\n}\n"),
+        ("{|box|{radius:6}}\n", "{\n  |box| { radius: 6; }\n}\n"),
+        (
+            "{.hot{stroke-width:2}}\n",
+            "{\n  .hot { stroke-width: 2; }\n}\n",
+        ),
+        ("{#hero{fill:gold}}\n", "{\n  #hero { fill: gold; }\n}\n"),
+        (
+            "{|table| |box|{padding:4 8}}\n",
+            "{\n  |table| |box| { padding: 4 8; }\n}\n",
+        ),
+        (
+            "{|table#main| |box|{fill:white}}\n",
+            "{\n  |table#main| |box| { fill: white; }\n}\n",
+        ),
+        (
+            "{|treat::box|{radius:5}}\n",
+            "{\n  |treat::box| { radius: 5; }\n}\n",
+        ),
+        // v4 values are space-separated within a group, comma between groups.
+        (
+            "|line#dim|{points:0 0,10 10}\n",
+            "|line#dim| { points: 0 0, 10 10; }\n",
+        ),
+        (
+            "{layout:grid;\ncolumns:repeat(3)}\n",
+            "{\n  layout: grid; columns: repeat(3);\n}\n",
+        ),
+        // A scalar binding reads bare; a function's body is a group [SPEC 10.7].
+        ("{my_r=5}\n", "{\n  my_r = 5;\n}\n"),
+        (
+            "{scale(n)=(100 * 1.2 ^ n)}\n",
+            "{\n  scale(n) = (100 * 1.2 ^ n);\n}\n",
+        ),
+        // A direct group value wears its parens; a call argument sheds them (it
+        // is already inside the call's own parens).
+        (
+            "|box#a| { padding: (8 * 2); width: gain(2 * n) }\n",
+            "|box#a| { padding: (8 * 2); width: gain(2 * n); }\n",
+        ),
+    ]);
     idempotent(
         "{ my_r = 5; scale(n) = (100 * 1.2 ^ n); }\n|box#a| { padding: (8 * 2); width: gain(2 * n) }\n",
     );
 }
 
 #[test]
-fn node_class_follows_the_bars() {
-    assert_eq!(fmt("|box#x| .hot.loud\n"), "|box#x| .hot.loud\n");
-    // A class on a default box (id only).
-    assert_eq!(fmt("|#x| .hot\n"), "|#x| .hot\n");
-}
-
-#[test]
-fn head_label_before_classes_and_style() {
-    assert_eq!(
-        fmt("|box#api| \"API\" .hot{fill:red}\n"),
-        "|box#api| \"API\" .hot { fill: red; }\n"
-    );
-}
-
-#[test]
-fn node_with_style_and_children() {
-    assert_eq!(
-        fmt("|group#g|{direction:column}[\n|box#a|\n|box#b|\n]\n"),
-        "|group#g| { direction: column; } [\n  |box#a|\n  |box#b|\n]\n"
-    );
-}
-
-#[test]
-fn block_declarations_group_on_one_line() {
-    // [SPEC 20]: config decls share a line in the style block, off the head.
-    assert_eq!(
-        fmt("|group#g| { cell: 1 2; direction: column; gap: 16 } [\n|box#a|\n]\n"),
-        "|group#g| { cell: 1 2; direction: column; gap: 16; } [\n  |box#a|\n]\n"
-    );
-}
-
-#[test]
-fn a_comment_breaks_a_declaration_group_and_forces_a_block() {
-    assert_eq!(
-        fmt("|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"),
-        "|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"
-    );
-}
-
-#[test]
-fn simple_link() {
-    assert_eq!(fmt("a -> b\n"), "a -> b\n");
-}
-
-#[test]
-fn link_label_trails() {
-    assert_eq!(fmt("a -> b \"x\"\n"), "a -> b \"x\"\n");
-}
-
-#[test]
-fn link_fan_and_chain() {
-    assert_eq!(fmt("a & b -> c\n"), "a & b -> c\n");
-    assert_eq!(fmt("a -> b -> c\n"), "a -> b -> c\n");
-}
-
-#[test]
-fn link_line_ops() {
-    assert_eq!(fmt("a --> b\n"), "a --> b\n");
-    assert_eq!(fmt("a ---> b\n"), "a ---> b\n");
-    assert_eq!(fmt("a ~> b\n"), "a ~> b\n");
-}
-
-#[test]
-fn link_class_and_labels_with_along() {
-    assert_eq!(
-        fmt("a -> b {along:0.3, 0.7}[ \"near a\" \"near b\" ]\n"),
-        "a -> b { along: 0.3, 0.7; } [ \"near a\" \"near b\" ]\n"
-    );
-    assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
-    assert_eq!(fmt("a -> b .c1.c2\n"), "a -> b .c1.c2\n");
-    // A head label precedes the class (the tail order, re-parseable).
-    assert_eq!(fmt("a -> b \"flows\" .loud\n"), "a -> b \"flows\" .loud\n");
-}
-
-#[test]
-fn endpoint_dot_path_and_side() {
-    assert_eq!(fmt("a.b:left -> c\n"), "a.b:left -> c\n");
+fn fmt_canonicalizes_a_link() {
+    canonicalizes(&[
+        ("a -> b\n", "a -> b\n"),
+        ("a -> b \"x\"\n", "a -> b \"x\"\n"),
+        ("a & b -> c\n", "a & b -> c\n"),
+        ("a -> b -> c\n", "a -> b -> c\n"),
+        ("a --> b\n", "a --> b\n"),
+        ("a ---> b\n", "a ---> b\n"),
+        ("a ~> b\n", "a ~> b\n"),
+        (
+            "a -> b {along:0.3, 0.7}[ \"near a\" \"near b\" ]\n",
+            "a -> b { along: 0.3, 0.7; } [ \"near a\" \"near b\" ]\n",
+        ),
+        ("a -> b .loud\n", "a -> b .loud\n"),
+        ("a -> b .c1.c2\n", "a -> b .c1.c2\n"),
+        // A head label precedes the class (the tail order, re-parseable).
+        ("a -> b \"flows\" .loud\n", "a -> b \"flows\" .loud\n"),
+        ("a.b:left -> c\n", "a.b:left -> c\n"),
+    ]);
 }
 
 #[test]

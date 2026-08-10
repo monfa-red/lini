@@ -8,7 +8,8 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::chrome;
-use super::geometry::{P, PathSeg, arc_center};
+use super::geometry::{P, PathSeg, arc_center, arc_tangent};
+use crate::layout::geom::{cross, dot};
 use crate::resolve::NodeKind;
 
 /// One crossing of a ray with a drawn path: its parameter and the crossed
@@ -136,13 +137,13 @@ const EPS: f64 = 1e-6;
 /// `a` and rejects true hits (the floating-datum bug).
 fn hit_line(o: P, d: P, a: P, b: P) -> Option<Hit> {
     let e = (b.0 - a.0, b.1 - a.1);
-    let denom = d.0 * e.1 - d.1 * e.0;
+    let denom = cross(d, e);
     if denom.abs() < 1e-12 {
         return None;
     }
     let ao = (a.0 - o.0, a.1 - o.1);
-    let t = (ao.0 * e.1 - ao.1 * e.0) / denom;
-    let s = (ao.0 * d.1 - ao.1 * d.0) / denom;
+    let t = cross(ao, e) / denom;
+    let s = cross(ao, d) / denom;
     (t > EPS && (-EPS..=1.0 + EPS).contains(&s)).then(|| Hit {
         t,
         tangent: super::geometry::unit(e),
@@ -170,8 +171,9 @@ fn arc_crossings(o: P, d: P, from: P, to: P, r: f64, large: bool, sweep: bool, o
         if w <= span + 1e-9 {
             out.push(Hit {
                 t,
-                // The circle's tangent at the hit — perpendicular to the radius.
-                tangent: super::geometry::unit((-(p.1 - c.1), p.0 - c.0)),
+                // The circle's tangent at the hit — the halo reads its
+                // crossing angle, so the un-swept orientation serves.
+                tangent: arc_tangent(p, c, true),
                 graze: w <= 1e-9 || w >= span - 1e-9,
             });
         }
@@ -181,9 +183,9 @@ fn arc_crossings(o: P, d: P, from: P, to: P, r: f64, large: bool, sweep: bool, o
 /// Both `t > eps` crossings of the ray with a circle.
 fn ray_circle(o: P, d: P, c: P, r: f64) -> Vec<f64> {
     let f = (o.0 - c.0, o.1 - c.1);
-    let a = d.0 * d.0 + d.1 * d.1;
-    let b = 2.0 * (f.0 * d.0 + f.1 * d.1);
-    let k = f.0 * f.0 + f.1 * f.1 - r * r;
+    let a = dot(d, d);
+    let b = 2.0 * dot(f, d);
+    let k = dot(f, f) - r * r;
     let disc = b * b - 4.0 * a * k;
     if disc < 0.0 || a < 1e-12 {
         return Vec::new();

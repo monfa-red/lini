@@ -37,7 +37,7 @@ use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 use metrics::{AXIS_TITLE_SIZE, LABEL_SIZE, TITLE_SIZE};
-use model::{Chart, Series, SeriesKind, Side};
+use model::{Chart, SeriesKind, Side};
 use project::{Dir, Plot};
 
 use frame::{plot_rect, title_reserve};

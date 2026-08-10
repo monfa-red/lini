@@ -79,40 +79,29 @@ fn theme_overrides_visual_var_visible_in_baked_output() {
 }
 
 #[test]
-fn theme_cannot_set_a_layout_value() {
+fn a_theme_never_changes_layout() {
     // Layout values (gap, padding, radius, …) bake from the global block and the
     // `.lini-*` classes, not `--lini-*` vars (SPEC §11.2, the "dumb core"): a
-    // `--lini-gap` theme is inert. Gap is set with `gap:` in the stylesheet.
+    // `--lini-gap` theme is inert — gap is set with `gap:` in the stylesheet —
+    // and a themeable *visual* var (`--lini-accent`) never reaches measurement
+    // either. Neither kind of var can move a box.
     let src = "{\n  direction: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
-    let themed = lini::compile_str_with(
-        src,
-        &Options {
-            theme_css: Some("--lini-gap: 60;".to_string()),
-            ..Default::default()
-        },
-    )
-    .expect("themed compile");
-    assert_eq!(
-        extract_viewbox_w(&default),
-        extract_viewbox_w(&themed),
-        "a --lini-gap theme must not change layout — gap is not a themeable var",
-    );
-}
-
-#[test]
-fn theme_visual_var_does_not_change_layout_baking() {
-    let src = "{\n  direction: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
-    let default = lini::compile_str(src).expect("default compile");
-    let themed = lini::compile_str_with(
-        src,
-        &Options {
-            theme_css: Some("--lini-accent: red;".to_string()),
-            ..Default::default()
-        },
-    )
-    .expect("themed compile");
-    assert_eq!(extract_viewbox_w(&default), extract_viewbox_w(&themed));
+    for var in ["--lini-gap: 60;", "--lini-accent: red;"] {
+        let themed = lini::compile_str_with(
+            src,
+            &Options {
+                theme_css: Some(var.to_string()),
+                ..Default::default()
+            },
+        )
+        .expect("themed compile");
+        assert_eq!(
+            extract_viewbox_w(&default),
+            extract_viewbox_w(&themed),
+            "a '{var}' theme must not change layout",
+        );
+    }
 }
 
 #[test]
@@ -208,4 +197,49 @@ fn bake_vars_flag_is_gone_without_alias() {
         .status()
         .expect("spawn lini");
     assert_eq!(status.code(), Some(3));
+}
+
+// ── The CLI contract: errors always fail; --strict promotes warnings ──
+
+#[test]
+fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
+    let bin = env!("CARGO_BIN_EXE_lini");
+    // A directory of this test's own: a fixed path under the shared temp dir
+    // races every other run on the machine (CI matrix, a second `cargo test`),
+    // so name it for the process.
+    let dir = std::env::temp_dir().join(format!("lini-strict-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("temp dir");
+    let file = dir.join("warns.lini");
+    std::fs::write(&file, "|box#cat| \"cat\"\ncta -> bird\n").unwrap();
+    let run = |args: &[&str]| {
+        let out = Command::new(bin).args(args).output().expect("spawn lini");
+        (
+            out.status.code(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        )
+    };
+    let f = file.to_str().unwrap();
+
+    // A warning alone: exit 0, message on stderr.
+    let (code, err) = run(&[f, "-o", "/dev/null"]);
+    assert_eq!(code, Some(0), "warnings don't fail a normal run: {err}");
+    assert!(err.contains("did you mean 'cat'?"), "{err}");
+
+    // --strict: the same warning is exit 1.
+    let (code, err) = run(&["--strict", f, "-o", "/dev/null"]);
+    assert_eq!(code, Some(1), "--strict promotes warnings: {err}");
+
+    // --no-warn: silent, exit 0.
+    let (code, err) = run(&["--no-warn", f, "-o", "/dev/null"]);
+    assert_eq!(code, Some(0));
+    assert!(err.is_empty(), "--no-warn silences warnings: {err}");
+
+    // A validation error fails even under --no-warn.
+    let bad = dir.join("bad.lini");
+    std::fs::write(&bad, "|box#a| { colr: red; }\n").unwrap();
+    let (code, err) = run(&["--no-warn", bad.to_str().unwrap(), "-o", "/dev/null"]);
+    assert_eq!(code, Some(1), "validation errors always fail: {err}");
+    assert!(err.contains("unknown property 'colr'"), "{err}");
+
+    std::fs::remove_dir_all(&dir).ok();
 }

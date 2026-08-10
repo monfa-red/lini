@@ -148,10 +148,11 @@ fn parse_hatch(v: &ResolvedValue) -> Option<HatchDef> {
         .and_then(ResolvedValue::as_number)
         .filter(|p| *p > 0.0)
         .unwrap_or(HATCH_PITCH);
-    let color = c.args.get(2).cloned().unwrap_or(ResolvedValue::LiveVar {
-        name: "stroke".into(),
-        raw: false,
-    });
+    let color = c
+        .args
+        .get(2)
+        .cloned()
+        .unwrap_or_else(|| ResolvedValue::live("stroke"));
     Some(HatchDef {
         angles,
         pitch,
@@ -224,8 +225,7 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
             } else {
                 // An oblique extra family has no shared tile period — drawn
                 // through the tile centre, best effort.
-                let rad = d.to_radians();
-                let (dx, dy) = (rad.sin() * p, -rad.cos() * p);
+                let (dx, dy) = crate::layout::geom::polar((0.0, 0.0), p, d.to_radians());
                 write!(
                     lines,
                     r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"/>"#,
@@ -320,10 +320,7 @@ mod tests {
     }
 
     fn hue(name: &str) -> ResolvedValue {
-        ResolvedValue::LiveVar {
-            name: name.into(),
-            raw: false,
-        }
+        ResolvedValue::live(name)
     }
 
     #[test]

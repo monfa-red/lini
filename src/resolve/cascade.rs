@@ -294,9 +294,7 @@ mod tests {
 
     fn sheet(src: &str) -> Stylesheet {
         use crate::syntax::ast::{Rule, StyleItem};
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        let lowered = crate::testutil::lowered(src);
         let rules: Vec<&Rule> = lowered
             .stylesheet
             .iter()

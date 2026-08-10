@@ -10,8 +10,9 @@
 //! A `chamfer(c)` cuts `c` back along each leg — **by arclength** on an arc.
 
 use super::Segment;
-use super::geometry::{P, PathSeg, arc_center, dist};
+use super::geometry::{P, PathSeg, arc_center, arc_tangent, dist};
 use crate::error::Error;
+use crate::layout::geom::{add, cross, dot, norm, rotate_rad, scale, sub};
 use crate::span::Span;
 
 /// A pending corner modifier — parked between its two segments.
@@ -30,32 +31,6 @@ impl Mod {
     }
 }
 
-// ── small 2-vector helpers ──
-fn sub(a: P, b: P) -> P {
-    (a.0 - b.0, a.1 - b.1)
-}
-fn add(a: P, b: P) -> P {
-    (a.0 + b.0, a.1 + b.1)
-}
-fn scale(a: P, s: f64) -> P {
-    (a.0 * s, a.1 * s)
-}
-fn dot(a: P, b: P) -> f64 {
-    a.0 * b.0 + a.1 * b.1
-}
-fn cross(a: P, b: P) -> f64 {
-    a.0 * b.1 - a.1 * b.0
-}
-fn norm(a: P) -> P {
-    let l = a.0.hypot(a.1);
-    if l > 1e-12 { (a.0 / l, a.1 / l) } else { a }
-}
-/// Rotate about the origin by `t` radians (y-down screen frame).
-fn rot(a: P, t: f64) -> P {
-    let (s, c) = t.sin_cos();
-    (a.0 * c - a.1 * s, a.0 * s + a.1 * c)
-}
-
 /// The travel (heading) direction at point `p` on a segment — the arc's tangent
 /// there, sweep-oriented (SVG sweep 1 walks the increasing angle, clockwise on a
 /// y-down screen), or the line's own direction.
@@ -68,11 +43,7 @@ fn heading(seg: &PathSeg, p: P) -> P {
             r,
             large,
             sweep,
-        } => {
-            let o = arc_center(from, to, r, large, sweep);
-            let v = sub(p, o);
-            norm(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
-        }
+        } => arc_tangent(p, arc_center(from, to, r, large, sweep), sweep),
         PathSeg::Cubic { .. } => (0.0, 0.0),
     }
 }
@@ -191,7 +162,7 @@ fn intersect(a: &Offset, b: &Offset, c: P, bi: P, span: Span) -> Result<P, Error
     };
     match (a, b) {
         (Offset::Line(n1, d1), Offset::Line(n2, d2)) => {
-            let det = n1.0 * n2.1 - n1.1 * n2.0;
+            let det = cross(*n1, *n2);
             if det.abs() < 1e-12 {
                 return Err(miss());
             }
@@ -278,8 +249,7 @@ fn fillet(
         return Err(fit_err(Mod::Fillet(r), span));
     }
     // Sweep so the arc's heading at `ta` continues the prev leg's [SPEC 15.3].
-    let v = sub(ta, centre);
-    let sweep = dot(norm((-v.1, v.0)), heading(prev, ta)) > 0.0;
+    let sweep = dot(arc_tangent(ta, centre, true), heading(prev, ta)) > 0.0;
     let mid = add(centre, scale(norm(sub(midpoint(ta, tb), centre)), r));
     Ok((
         ta,
@@ -338,7 +308,7 @@ fn back_along(seg: &PathSeg, at_end: bool, cc: f64) -> Result<P, Error> {
             // the angle by arclength/r; back off the corner the other way.
             let travel = if sweep { 1.0 } else { -1.0 };
             let d = travel * (cc / r) * if at_end { -1.0 } else { 1.0 };
-            Ok(add(o, rot(sub(c, o), d)))
+            Ok(add(o, rotate_rad(sub(c, o), d)))
         }
         PathSeg::Cubic { .. } => unreachable!(),
     }

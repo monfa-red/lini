@@ -35,17 +35,11 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
         | NodeKind::Slant
         | NodeKind::Cyl
         | NodeKind::Diamond => closed_bbox(inst, Bbox::empty(), scale),
-        NodeKind::Text => {
-            let size = font_size(inst);
-            let label = inst.label.as_deref().unwrap_or("");
-            let font = inst.font;
-            let ls = inst.attrs.number("letter-spacing").unwrap_or(0.0);
-            let lsp = inst.attrs.number("line-spacing").unwrap_or(0.0);
-            Ok(Bbox::centered(
-                text::approx_width(label, font, size, ls),
-                text::approx_height(label, size, lsp),
-            ))
-        }
+        NodeKind::Text => Ok(text::measure_with(
+            inst.label.as_deref().unwrap_or(""),
+            inst.font,
+            &inst.attrs,
+        )),
         // A label-less icon: an empty content box (the labelled case sizes the
         // same square from its laid-out label child — see `icon_square_bbox`).
         NodeKind::Icon => icon_square_bbox(inst, Bbox::empty(), scale),
@@ -191,10 +185,6 @@ pub fn gap(attrs: &AttrMap, span: Span) -> Result<(f64, f64), Error> {
 }
 
 // ───────────────────────── Internal helpers ─────────────────────────
-
-fn font_size(inst: &ResolvedInst) -> f64 {
-    inst.attrs.number("font-size").unwrap_or(0.0)
-}
 
 fn stroke_half(inst: &ResolvedInst) -> f64 {
     inst.attrs.half_stroke()

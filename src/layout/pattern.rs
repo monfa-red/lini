@@ -57,8 +57,8 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     body.attrs.remove("pattern");
     body.rotation = 0.0;
 
-    let mut bbox = Bbox::empty();
     let mut copies = Vec::with_capacity(offsets.len() + ring.len());
+    let ring_len = ring.len();
     copies.extend(ring);
     for (i, &(dx, dy)) in offsets.iter().enumerate() {
         let mut copy = if i + 1 == offsets.len() {
@@ -73,13 +73,11 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         };
         copy.cx = dx;
         copy.cy = dy;
-        bbox = if i == 0 {
-            copy.bbox.shifted(dx, dy)
-        } else {
-            bbox.union(copy.bbox.shifted(dx, dy))
-        };
         copies.push(copy);
     }
+    // The ring is chrome sized to the pitch circle, not a copy — the carrier
+    // box is the copies' own reach.
+    let bbox = carrier_bbox(&copies[ring_len..]);
 
     // The carrier: identity + position, no paint of its own (inline `none`
     // beats the type's class rule, so the union box never draws).
@@ -98,6 +96,22 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     placed.attrs.remove("path");
     placed.attrs.remove("points");
     Ok(())
+}
+
+/// A pattern carrier's bbox — its copies' union, each shifted to where it
+/// sits. Read at expansion and again whenever the copies move (a broken
+/// ancestor slides them; `drawing::ride_view`).
+pub(super) fn carrier_bbox<'a>(copies: impl IntoIterator<Item = &'a PlacedNode>) -> Bbox {
+    copies
+        .into_iter()
+        .fold(None, |acc: Option<Bbox>, c| {
+            let b = c.bbox.shifted(c.cx, c.cy);
+            Some(match acc {
+                Some(a) => a.union(b),
+                None => b,
+            })
+        })
+        .unwrap_or_else(Bbox::empty)
 }
 
 /// The copy offsets from the node's own position, in px. Grid: `(i·dx, j·dy)`,

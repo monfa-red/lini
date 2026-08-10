@@ -11,11 +11,12 @@
 //! so the `|halo|` chrome rule restyles or removes them like all chrome.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::anchors::rotated;
 use super::annotate::Ctx;
 use super::chrome;
 use super::geometry::{P, dist, unit};
 use super::outline;
+use crate::layout::geom::cross;
+use crate::layout::geom::rotate;
 use crate::ledger::consts::{DRAWING_LINK_STROKE_WIDTH, HALO_MARGIN};
 use crate::resolve::{NodeKind, ResolvedValue};
 
@@ -134,7 +135,7 @@ fn cut_chains(points: &[P], geometry: &[&PlacedNode], contacts: &[Bbox], sw: f64
             {
                 continue;
             }
-            let sin = (d.0 * tangent.1 - d.1 * tangent.0).abs();
+            let sin = cross(d, tangent).abs();
             if sin < GRAZE {
                 continue;
             }
@@ -179,14 +180,14 @@ fn node_crossings(node: &PlacedNode, o: P, d: P, out: &mut Vec<(f64, P, f64, boo
     if !drawn(node) {
         return;
     }
-    let local_o = rotated((o.0 - node.cx, o.1 - node.cy), -node.rotation);
-    let local_d = rotated(d, -node.rotation);
+    let local_o = rotate((o.0 - node.cx, o.1 - node.cy), -node.rotation);
+    let local_d = rotate(d, -node.rotation);
     let sw = node.attrs.number("stroke-width").unwrap_or(2.0);
     let mut hits = Vec::new();
     outline::crossings(node, local_o, local_d, &mut hits);
     out.extend(
         hits.into_iter()
-            .map(|h| (h.t, rotated(h.tangent, node.rotation), sw, h.graze)),
+            .map(|h| (h.t, rotate(h.tangent, node.rotation), sw, h.graze)),
     );
     // A pattern carrier's copies were its own path above; anything else walks
     // its children — a part's holes, a shaft's hidden bore.
@@ -196,7 +197,7 @@ fn node_crossings(node: &PlacedNode, o: P, d: P, out: &mut Vec<(f64, P, f64, boo
             node_crossings(c, local_o, local_d, &mut sub);
             out.extend(
                 sub.into_iter()
-                    .map(|(t, tan, gsw, g)| (t, rotated(tan, node.rotation), gsw, g)),
+                    .map(|(t, tan, gsw, g)| (t, rotate(tan, node.rotation), gsw, g)),
             );
         }
     }

@@ -11,11 +11,11 @@
 //! already-lowered file); a rule-borne `scale:` stays what it reaches the
 //! engine as — a raw multiplier.
 
-use super::nest::in_drawing_scope;
+use super::nest::{in_drawing_scope, is_drawing_body, is_page_body};
 use super::schematic::lowered_chain;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Decl, Node, Value, layout_of};
+use crate::syntax::ast::{Child, Decl, Value};
 
 /// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
@@ -57,8 +57,9 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         unit_mm: ctx.unit_mm,
         in_drawing: ctx.in_drawing,
     };
-    let opens = is_drawing(n);
-    if is_page(n) {
+    let chain = lowered_chain(n);
+    let opens = is_drawing_body(&chain, &n.style);
+    if is_page_body(&chain) {
         if let Some(d) = find(&n.style, "scale") {
             return Err(Error::at(
                 d.span,
@@ -80,7 +81,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         // A node-level ratio override inside a drawing scope [SPEC 15.1].
         stamp(&mut n.style, &ctx, n.span)?;
     }
-    ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &lowered_chain(n), &n.style);
+    ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &chain, &n.style);
     for c in &mut n.children {
         walk(c, &ctx)?;
     }
@@ -115,16 +116,18 @@ fn read_unit(style: &[Decl]) -> Result<Option<f64>, Error> {
     let Some(d) = find(style, "unit") else {
         return Ok(None);
     };
-    match single(d) {
+    let mm = match single(d) {
         Some(Value::Ident(u)) => match u.as_str() {
-            "mm" => Ok(Some(1.0)),
-            "cm" => Ok(Some(10.0)),
-            "m" => Ok(Some(1000.0)),
-            "in" => Ok(Some(25.4)),
-            _ => Err(Error::at(d.span, "'unit' is mm, cm, m, or in")),
+            "mm" => Some(1.0),
+            "cm" => Some(10.0),
+            "m" => Some(1000.0),
+            "in" => Some(25.4),
+            _ => None,
         },
-        _ => Err(Error::at(d.span, "'unit' is mm, cm, m, or in")),
-    }
+        _ => None,
+    };
+    mm.map(Some)
+        .ok_or_else(|| Error::at(d.span, "'unit' is mm, cm, m, or in"))
 }
 
 /// The root `density:` — px per mm, default 4, must be positive [SPEC 15.1].
@@ -136,14 +139,6 @@ fn read_density(user_root: &[Decl]) -> Result<f64, Error> {
         Some(Value::Number(n)) if *n > 0.0 => Ok(*n),
         _ => Err(Error::at(d.span, "'density' must be > 0")),
     }
-}
-
-fn is_page(n: &Node) -> bool {
-    n.classes.iter().any(|c| c == "lini-page")
-}
-
-fn is_drawing(n: &Node) -> bool {
-    n.classes.iter().any(|c| c == "lini-drawing") || layout_of(&n.style) == Some("drawing")
 }
 
 fn find<'a>(style: &'a [Decl], name: &str) -> Option<&'a Decl> {

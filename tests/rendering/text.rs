@@ -99,65 +99,46 @@ fn line_spacing_widens_the_tspan_leading_never_css() {
     );
 }
 
+/// The live-CSS text family [SPEC 10]: each of these properties emits
+/// verbatim where it is set — on an element it rides that box's `<g>` and
+/// inherits to its text — and none of them has a baked default.
+///
+/// `text-shadow` is the one that rewrites: lini's unitless offsets and blur
+/// gain `px`, colours pass through.
 #[test]
-fn font_style_emits_as_live_css_with_no_default() {
-    // SPEC §10: font-style is a live CSS property — it emits where set (on the
-    // box `<g>`, inherited to its text) and has no global default.
-    let svg = render_baked("|group#g| \"hi\" { font-style: italic }\n");
-    assert!(
-        svg.contains("font-style: italic"),
-        "emits where set: {}",
-        svg
-    );
-    // No baked default — a plain box never carries it.
-    assert!(
-        !render_baked("|box| \"x\"\n").contains("font-style"),
-        "no global font-style default"
-    );
+fn every_live_css_text_property_emits_where_set() {
+    for (decl, emitted) in [
+        ("font-style: italic", "font-style: italic"),
+        ("text-transform: uppercase", "text-transform: uppercase"),
+        ("text-decoration: underline", "text-decoration: underline"),
+        ("text-shadow: 1 1 2 gray", "text-shadow: 1px 1px 2px gray"),
+    ] {
+        let el = render_baked(&format!("|group#g| \"hi\" {{ {decl} }}\n"));
+        assert!(el.contains(emitted), "{decl} emits where set: {el}");
+        let property = decl.split(':').next().unwrap();
+        assert!(
+            !render_baked("|box| \"x\"\n").contains(property),
+            "no baked default for {property}"
+        );
+    }
 }
 
+/// …and set globally, each states scene-wide on the `.lini` rule, exactly
+/// like a global font-size.
 #[test]
-fn global_font_style_states_on_the_lini_rule() {
-    // SPEC §10: a global font-style applies scene-wide via the `.lini` rule,
-    // exactly like a global font-size.
-    let rule = lini_root_rule(&render_baked("{ font-style: italic }\n|box| \"hi\"\n"));
-    assert!(rule.contains("font-style: italic"), "{}", rule);
-}
-
-#[test]
-fn text_transform_is_live_css_on_an_element_and_globally() {
-    // On an element it rides the `<g>`; in the global block it states on `.lini`.
-    let el = render_baked("|box| \"hi\" { text-transform: uppercase }\n");
-    assert!(el.contains("text-transform: uppercase"), "{}", el);
-    let rule = lini_root_rule(&render_baked(
-        "{ text-transform: capitalize }\n|box| \"hi\"\n",
-    ));
-    assert!(rule.contains("text-transform: capitalize"), "{}", rule);
-    // No default — absent until set.
-    assert!(!render_baked("|box| \"x\"\n").contains("text-transform"));
-}
-
-#[test]
-fn text_decoration_is_live_css_on_an_element_and_globally() {
-    // Same live-CSS treatment as text-transform: element rides the `<g>`, global
-    // states on `.lini`, no default.
-    let el = render_baked("|box| \"hi\" { text-decoration: underline }\n");
-    assert!(el.contains("text-decoration: underline"), "{}", el);
-    let rule = lini_root_rule(&render_baked(
-        "{ text-decoration: line-through }\n|box| \"hi\"\n",
-    ));
-    assert!(rule.contains("text-decoration: line-through"), "{}", rule);
-    assert!(!render_baked("|box| \"x\"\n").contains("text-decoration"));
-}
-
-#[test]
-fn text_shadow_compiles_unitless_lengths_to_px() {
-    // SPEC §10: text-shadow is live CSS; lini's unitless offsets/blur gain `px`,
-    // colours pass through. Works on an element and globally.
-    let el = render_baked("|box| \"hi\" { text-shadow: 1 1 2 gray }\n");
-    assert!(el.contains("text-shadow: 1px 1px 2px gray"), "{}", el);
-    let rule = lini_root_rule(&render_baked("{ text-shadow: 2 2 black }\n|box| \"hi\"\n"));
-    assert!(rule.contains("text-shadow: 2px 2px black"), "{}", rule);
+fn every_live_css_text_property_states_globally_on_the_lini_rule() {
+    for (decl, emitted) in [
+        ("font-style: italic", "font-style: italic"),
+        ("text-transform: capitalize", "text-transform: capitalize"),
+        (
+            "text-decoration: line-through",
+            "text-decoration: line-through",
+        ),
+        ("text-shadow: 2 2 black", "text-shadow: 2px 2px black"),
+    ] {
+        let rule = lini_root_rule(&render_baked(&format!("{{ {decl} }}\n|box| \"hi\"\n")));
+        assert!(rule.contains(emitted), "global {decl}: {rule}");
+    }
 }
 
 #[test]
@@ -230,13 +211,7 @@ fn a_class_font_size_grows_the_text_leaf() {
     // the leaf's box — and the scene's height — grow.
     let plain = render_live("\"Grows\"\n");
     let big = render_live("{ .big { font-size: 40; } }\n\"Grows\" .big\n");
-    let h = |svg: &str| {
-        svg.split("height=\"")
-            .nth(1)
-            .and_then(|s| s.split('"').next())
-            .and_then(|s| s.parse::<f64>().ok())
-            .expect("height")
-    };
+    let h = |svg: &str| scrape(svg, "height=\"")[0].parse::<f64>().expect("height");
     assert!(
         h(&big) > h(&plain) + 10.0,
         "font-size class should grow the leaf: {} vs {}",
@@ -286,18 +261,35 @@ fn a_box_property_in_a_class_is_inert_on_text_never_an_error() {
 
 // ── max-width / text-wrap + line alignment [SPEC 5/6] ──
 
+/// `text-wrap:` [SPEC 5/6] is the escape hatch on `max-width:`. The default
+/// `wrap` breaks the label into lines and holds the cap; `nowrap` refuses
+/// rather than silently overflowing, naming both the cap and the way out.
 #[test]
-fn max_width_wraps_text_and_caps_the_auto_width() {
-    let l = lini::testing::route_sample(
-        "|box#card| \"A rather long label that should wrap\" { max-width: 160 }\n",
-        16.0,
-    );
-    let (x0, _, x1, _) = lini::testing::node_rect(&l, "card").expect("card");
+fn text_wrap_nowrap_refuses_the_cap_that_wrap_holds() {
+    const LONG: &str = "|box#card| \"A rather long label that should wrap\"";
+    let wrapped = lini::testing::route_sample(&format!("{LONG} {{ max-width: 160 }}\n"), 16.0);
+    let (x0, _, x1, _) = lini::testing::node_rect(&wrapped, "card").expect("card");
+    assert!(x1 - x0 <= 160.0 + 1e-6, "wrap holds the cap: {}", x1 - x0);
     assert!(
-        x1 - x0 <= 160.0 + 1e-6,
-        "the wrapped size is the measured size: {}",
-        x1 - x0
+        render_live(&format!("{LONG} {{ max-width: 160 }}\n")).contains("<tspan"),
+        "…by breaking the label into lines"
     );
+
+    // `nowrap` on the same label and cap: an error, not an overflow.
+    let err = lini::compile_str(&format!("{LONG} {{ max-width: 160; text-wrap: nowrap }}\n"))
+        .expect_err("nowrap cannot fit");
+    assert!(
+        err.message
+            .contains("text cannot fit 'max-width: 160' without wrapping")
+            && err.message.contains("drop 'text-wrap: nowrap'"),
+        "{}",
+        err.message
+    );
+
+    // `nowrap` under a cap the text already fits is silent — it only refuses
+    // the break it would otherwise have to make.
+    lini::compile_str("|box#card| \"tiny\" { max-width: 400; text-wrap: nowrap }\n")
+        .expect("nowrap is inert when the text fits");
 }
 
 #[test]
@@ -328,12 +320,9 @@ fn line_alignment_rides_the_holding_boxes_knob() {
     // [SPEC 6]: the first (wider) line's centre sits right of the second's.
     let svg =
         render_live("|block#t| { max-width: 120; align: start } [ \"wider line\\nshort\" ]\n");
-    let xs: Vec<f64> = svg
-        .match_indices("<tspan x=\"")
-        .map(|(i, _)| {
-            let rest = &svg[i + 10..];
-            rest[..rest.find('"').unwrap()].parse().unwrap()
-        })
+    let xs: Vec<f64> = scrape(&svg, "<tspan x=\"")
+        .iter()
+        .map(|x| x.parse().unwrap())
         .collect();
     assert_eq!(xs.len(), 2, "{svg}");
     assert!(
@@ -342,13 +331,7 @@ fn line_alignment_rides_the_holding_boxes_knob() {
     );
     // Default stays centred — both lines share one x (today's output).
     let svg = render_live("|block#t| [ \"wider line\\nshort\" ]\n");
-    let xs: Vec<&str> = svg
-        .match_indices("<tspan x=\"")
-        .map(|(i, _)| {
-            let rest = &svg[i + 10..];
-            &rest[..rest.find('"').unwrap()]
-        })
-        .collect();
+    let xs = scrape(&svg, "<tspan x=\"");
     assert!(xs.windows(2).all(|w| w[0] == w[1]), "{svg}");
 }
 

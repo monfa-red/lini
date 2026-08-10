@@ -11,18 +11,19 @@
 
 mod autopose;
 mod capsule;
-mod chrome;
 mod classes;
 mod drawing;
 mod gather;
 mod labels;
 mod labelwire;
+mod mint;
 mod nest;
 mod page;
 pub(crate) mod pose;
 mod scale;
 pub(crate) mod scene;
 pub(crate) mod schematic;
+mod synth;
 mod tables;
 mod titleblock;
 pub(crate) mod tree;
@@ -530,7 +531,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
     // marks) are generated, positioned by the layout once the page is sized;
     // a `|title-block|` child is pulled out of the flow here so the page can
     // seat it flush inside the frame's bottom-right corner.
-    let is_page = info.chain.iter().any(|n| n == "page");
+    let is_page = nest::is_page_body(&info.chain);
     let mut page_style: Option<Vec<Decl>> = None;
     if is_page {
         let mut s = node.style.clone();

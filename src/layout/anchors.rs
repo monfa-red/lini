@@ -116,15 +116,42 @@ pub fn child_role(attrs: &AttrMap, span: Span) -> Result<Role, Error> {
 /// title footnote, a schematic's sheet notes.
 pub fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Error> {
     for k in kids.iter_mut().filter(|k| is_pinned(&k.attrs)) {
-        if let Some(pin) = read_pin(&k.attrs, k.span)? {
-            let (cx, cy) = pin.target(anchor_box, k.bbox);
-            k.cx = cx;
-            k.cy = cy;
-        }
-        if let Some((dx, dy)) = translate(&k.attrs, k.span)? {
-            k.cx += dx;
-            k.cy += dy;
-        }
+        seat(k, anchor_box)?;
+        nudge(k, SHEET_SPACE)?;
+    }
+    Ok(())
+}
+
+/// Land one child flush on its `pin` anchor of `anchor_box` [SPEC 5], reporting
+/// whether it was pinned — `false` leaves it untouched for the caller's own
+/// flow to place. The one seat: a box arranger's overlay, a tree's content, an
+/// engine scope's chrome all land through here.
+pub fn seat(k: &mut PlacedNode, anchor_box: Bbox) -> Result<bool, Error> {
+    let Some(pin) = read_pin(&k.attrs, k.span)? else {
+        return Ok(false);
+    };
+    let (cx, cy) = pin.target(anchor_box, k.bbox);
+    k.cx = cx;
+    k.cy = cy;
+    Ok(true)
+}
+
+/// The nudge scale for **chrome anatomy** — sheet-space, never a view scale
+/// [SPEC 15.1]: a pinned overlay's `translate:`, and every interior a
+/// schematic or a mindmap places (a schematic's interior never rides one,
+/// [SPEC 16.6]).
+pub const SHEET_SPACE: f64 = 1.0;
+
+/// `translate:` — the post-placement nudge [SPEC 5], applied once placement is
+/// final so it shifts the child (and its subtree, via `cx`/`cy`) without
+/// reflowing siblings or growing the parent. `scale` is the units the nudge is
+/// read in: a **flow** child's translate is a position in the parent's `scale:`
+/// [SPEC 15.1], a **pinned** overlay's is chrome anatomy and rides sheet-space
+/// at `1.0`.
+pub fn nudge(k: &mut PlacedNode, scale: f64) -> Result<(), Error> {
+    if let Some((dx, dy)) = translate(&k.attrs, k.span)? {
+        k.cx += dx * scale;
+        k.cy += dy * scale;
     }
     Ok(())
 }

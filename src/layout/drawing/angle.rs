@@ -6,11 +6,13 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::Segment;
-use super::anchors::{self, Anchor, Spot, rotated};
+use super::anchors::{self, Anchor, Spot};
 use super::annotate::{Ctx, Paint};
 use super::compose::{self, Glyph};
 use super::geometry::{P, dist, n as fmt_n, reflect_point, unit};
 use crate::error::Error;
+use crate::layout::geom::rotate;
+use crate::layout::geom::{cross, dot};
 use crate::resolve::ResolvedLink;
 
 pub(super) fn lower(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
@@ -52,8 +54,8 @@ fn unary(ctx: &Ctx, w: &ResolvedLink, paint: &Paint) -> Result<Vec<PlacedNode>, 
     arc_between(
         w,
         paint,
-        (a.to_world(mid), rotated(dir, a.rot)),
-        (a.to_world(twin_mid), rotated(twin_dir, a.rot)),
+        (a.to_world(mid), rotate(dir, a.rot)),
+        (a.to_world(twin_mid), rotate(twin_dir, a.rot)),
     )
 }
 
@@ -66,7 +68,7 @@ fn arc_between(
     (p1, d1): (P, P),
     (p2, d2): (P, P),
 ) -> Result<Vec<PlacedNode>, Error> {
-    let denom = d1.0 * d2.1 - d1.1 * d2.0;
+    let denom = cross(d1, d2);
     if denom.abs() < 1e-9 {
         return Err(Error::at(
             w.span,
@@ -85,15 +87,12 @@ fn arc_between(
         }
     };
     let ((u1, l1), (u2, l2)) = (leg(p1, d1), leg(p2, d2));
-    let theta = (u1.0 * u2.0 + u1.1 * u2.1)
-        .clamp(-1.0, 1.0)
-        .acos()
-        .to_degrees();
+    let theta = dot(u1, u2).clamp(-1.0, 1.0).acos().to_degrees();
     let r = l1.min(l2).clamp(14.0, 40.0);
 
     let start = (i.0 + u1.0 * r, i.1 + u1.1 * r);
     let end = (i.0 + u2.0 * r, i.1 + u2.1 * r);
-    let sweep = u8::from(u1.0 * u2.1 - u1.1 * u2.0 > 0.0);
+    let sweep = u8::from(cross(u1, u2) > 0.0);
     let d = format!(
         "M {} {} A {} {} 0 0 {} {} {}",
         fmt_n(start.0),

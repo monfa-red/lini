@@ -37,10 +37,7 @@ impl SymbolPaint {
                 .attrs
                 .get("stroke")
                 .cloned()
-                .unwrap_or(ResolvedValue::LiveVar {
-                    name: "stroke-dark".into(),
-                    raw: false,
-                }),
+                .unwrap_or_else(|| ResolvedValue::live("stroke-dark")),
         }
     }
 }
@@ -282,16 +279,7 @@ mod tests {
         }
     }
 
-    fn compile_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        match crate::desugar::desugar(&file)
-            .and_then(|low| crate::resolve::resolve_with_theme(&low, &[]).map(|_| ()))
-        {
-            Ok(()) => panic!("expected a resolve error"),
-            Err(e) => e.message,
-        }
-    }
+    use crate::testutil::resolve_err as compile_err;
 
     const PART: &str = "{ layout: drawing; density: 1 }\n|rect#a| { width: 80; height: 40 }\n";
 

@@ -258,7 +258,7 @@ pub(super) fn arrange(
     // [SPEC 16.1]. It cannot grow the scope: the tracks already sized from the
     // un-nudged clusters, and a nudge never reshapes a box [SPEC 5].
     for &i in &anchored {
-        nudge(&mut children[i])?;
+        anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
     let mut body = Bbox::centered(total_w, total_h);
     seats.absolutize(children);
@@ -299,7 +299,7 @@ pub(super) fn arrange(
     // `place_pinned`, so every child is nudged exactly once.
     for i in 0..children.len() {
         if roles[i] == Role::Satellite {
-            nudge(&mut children[i])?;
+            anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
         }
     }
     Ok(body)
@@ -323,15 +323,4 @@ fn charge(extra: &mut [f64], sizes: &[f64], gap: f64, a: (usize, f64), b: (usize
         + (hi - lo) as f64 * gap;
     let have = sizes[lo] / 2.0 + between + sizes[hi] / 2.0 + hi_off - lo_off;
     grid::charge(&mut extra[lo..hi], have, need);
-}
-
-/// `translate:` — a post-placement shift, reshaping nothing [SPEC 5]. Always
-/// sheet-space: a schematic's interior never rides a view scale
-/// [SPEC 15.1/16.6].
-fn nudge(node: &mut PlacedNode) -> Result<(), Error> {
-    if let Some((dx, dy)) = anchors::translate(&node.attrs, node.span)? {
-        node.cx += dx;
-        node.cy += dy;
-    }
-    Ok(())
 }

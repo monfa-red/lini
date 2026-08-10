@@ -51,8 +51,7 @@ pub(super) fn mint(
     links: &mut [Link],
     declared: &HashSet<String>,
 ) -> Result<Vec<Node>, Error> {
-    let mut taken = declared.clone();
-    let mut next = 1usize;
+    let mut mint = super::mint::Mint::new("label", declared);
     let mut out = Vec::new();
     // The minted tag is a plain `|label|`, so that is the chain its authored
     // `shape:` — an element rule's — is read off.
@@ -65,7 +64,7 @@ pub(super) fn mint(
             && let Some(text) = take_first_text(w)
         {
             let shape = tag_shape(cx, &label, &[], op, w.span, AS_A_TAG)?;
-            let id = mint_id(&mut taken, &mut next);
+            let id = mint.next_id();
             let span = text.span;
             out.push(tag(&id, text, shape));
             w.chain.push(EndpointGroup {
@@ -286,18 +285,10 @@ const AS_A_TAG: &str = "a -> \"NET\"";
 /// span-seated at that text so `lini desugar` prints it right after the wire
 /// that mints it and re-parses to the same order.
 fn tag(id: &str, text: TextNode, shape: Option<&str>) -> Node {
-    let span = text.span;
-    Node {
-        id: Some(id.to_string()),
-        ty: Some("label".to_string()),
-        label: Some(text),
-        classes: Vec::new(),
-        style: shape.map(|s| vec![decl("shape", s)]).unwrap_or_default(),
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span,
-    }
+    let mut n = super::synth::labelled("label", text);
+    n.id = Some(id.to_string());
+    n.style = shape.map(|s| vec![decl("shape", s)]).unwrap_or_default();
+    n
 }
 
 fn decl(name: &str, value: &str) -> Decl {
@@ -306,19 +297,6 @@ fn decl(name: &str, value: &str) -> Decl {
         groups: vec![vec![Value::Ident(value.to_string())]],
         span: Span::empty(),
     }
-}
-
-/// The reserved `lini-label-N` mint [SPEC 21/23] — 1-based in statement order,
-/// skipping taken names, so a re-desugared scope gaining a wire never collides.
-fn mint_id(taken: &mut HashSet<String>, next: &mut usize) -> String {
-    let mut id = format!("lini-label-{next}");
-    while taken.contains(&id) {
-        *next += 1;
-        id = format!("lini-label-{next}");
-    }
-    *next += 1;
-    taken.insert(id.clone());
-    id
 }
 
 /// Take the statement's **first** text, in source order (the head label leads

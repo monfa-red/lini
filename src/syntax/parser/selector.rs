@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::error::Code;
+use crate::lexer::is_ident;
 
 impl<'a> Parser<'a> {
     // ───────────────────────── Rules & defines ─────────────────────────
@@ -140,11 +141,4 @@ impl<'a> Parser<'a> {
             }
         })
     }
-}
-
-/// A valid id / ident: starts with a letter or `_`, then ident chars.
-fn is_ident(s: &str) -> bool {
-    let mut bytes = s.bytes();
-    matches!(bytes.next(), Some(c) if c.is_ascii_alphabetic() || c == b'_')
-        && bytes.all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')
 }

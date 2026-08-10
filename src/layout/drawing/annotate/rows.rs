@@ -14,6 +14,7 @@
 use super::super::anchors::{Anchor, Spot};
 use super::super::geometry::{Frame, P, project};
 use super::*;
+use crate::layout::geom::dot;
 use crate::layout::stack::{Band, Stack};
 use crate::span::Span;
 
@@ -72,12 +73,12 @@ pub(in crate::layout::drawing) fn away(
                 ));
             }
         };
-        return Ok(dir.0 * n.0 + dir.1 * n.1 > 0.0);
+        return Ok(dot(dir, n) > 0.0);
     }
     let v = (mid.0 - centre.0, mid.1 - centre.1);
     // A tie (a right triangle's hypotenuse runs exactly through its bbox
     // centre) falls to the ISO-above side (−n) — outside the common taper.
-    Ok(v.0 * n.0 + v.1 * n.1 > 1e-9)
+    Ok(dot(v, n) > 1e-9)
 }
 
 impl Rows {

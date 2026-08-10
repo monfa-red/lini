@@ -921,23 +921,7 @@ fn quoted(s: &str) -> String {
 /// The grid column count from a `columns:` declaration — a track list where
 /// `repeat(N)` counts as N and every other entry as one. `None` if absent.
 fn count_columns(decls: &[Decl]) -> Option<usize> {
-    let d = decls.iter().find(|d| d.name == "columns")?;
-    let n: usize = d
-        .groups
-        .iter()
-        .flatten()
-        .map(|v| match v {
-            Value::Call(c) if c.name == "repeat" => c
-                .args
-                .first()
-                .and_then(|a| match a {
-                    Value::Number(x) if *x >= 1.0 => Some(*x as usize),
-                    _ => None,
-                })
-                .unwrap_or(1),
-            _ => 1,
-        })
-        .sum();
+    let n = decls.iter().find(|d| d.name == "columns")?.track_count();
     (n > 0).then_some(n)
 }
 

@@ -7,26 +7,11 @@
 
 use crate::layout::PlacedNode;
 use crate::ledger::defaults::SCH_GAP;
-use crate::resolve::Program;
 
-pub(super) fn program(src: &str) -> Program {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve")
-}
+pub(super) use crate::testutil::{layout_err, program};
 
 pub(super) fn laid(src: &str) -> Vec<PlacedNode> {
-    crate::layout::layout(&program(src)).expect("layout").nodes
-}
-
-/// The layout error a scene raises, for the placement diagnostics.
-pub(super) fn layout_err(src: &str) -> String {
-    crate::layout::layout(&program(src))
-        .err()
-        .expect("a layout error")
-        .message
-        .clone()
+    crate::testutil::laid(src).nodes
 }
 
 /// A three-pin `|component|` — the scope's canonical **anchor** [SPEC 16.1].
@@ -40,26 +25,7 @@ pub(super) fn scope(style: &str, body: &str) -> String {
 }
 
 /// A placed node by id, with its centre accumulated down the tree.
-pub(super) fn placed<'a>(nodes: &'a [PlacedNode], id: &str) -> (&'a PlacedNode, f64, f64) {
-    fn walk<'a>(
-        nodes: &'a [PlacedNode],
-        id: &str,
-        ox: f64,
-        oy: f64,
-    ) -> Option<(&'a PlacedNode, f64, f64)> {
-        for n in nodes {
-            let (x, y) = (ox + n.cx, oy + n.cy);
-            if n.id.as_deref() == Some(id) {
-                return Some((n, x, y));
-            }
-            if let Some(f) = walk(&n.children, id, x, y) {
-                return Some(f);
-            }
-        }
-        None
-    }
-    walk(nodes, id, 0.0, 0.0).unwrap_or_else(|| panic!("no placed node '{id}'"))
-}
+pub(super) use crate::testutil::placed_by_id as placed;
 
 pub(super) fn at(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
     let (_, x, y) = placed(nodes, id);

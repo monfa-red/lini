@@ -638,14 +638,7 @@ fn annotation_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String,
 /// A live-var reference formatted for CSS — `var(--lini-name)` live, its baked
 /// literal for resvg / email.
 fn live(name: &str, vars: &VarTable, opts: &Options) -> String {
-    format_value(
-        &ResolvedValue::LiveVar {
-            name: name.to_string(),
-            raw: false,
-        },
-        vars,
-        opts,
-    )
+    format_value(&ResolvedValue::live(name), vars, opts)
 }
 
 /// Two-class descendant rules (the generated mindmap garnish and scoped

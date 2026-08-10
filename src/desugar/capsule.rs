@@ -31,8 +31,7 @@ pub(super) fn hoist(
     declared: &HashSet<String>,
     in_drawing: bool,
 ) -> Result<Vec<Hoisted>, Error> {
-    let mut taken: HashSet<String> = declared.clone();
-    let mut next = 1usize;
+    let mut mint = super::mint::Mint::new("cap", declared);
     let mut out = Vec::new();
     for w in links.iter_mut() {
         for ep in w.chain.iter_mut().flat_map(|g| &mut g.endpoints) {
@@ -46,34 +45,21 @@ pub(super) fn hoist(
             }
             let minted_id = match &c.id {
                 Some(_) => None,
-                None => {
-                    let mut id = format!("lini-cap-{next}");
-                    while taken.contains(&id) {
-                        next += 1;
-                        id = format!("lini-cap-{next}");
-                    }
-                    next += 1;
-                    Some(id)
-                }
+                None => Some(mint.next_id()),
             };
             let id = c.id.clone().or_else(|| minted_id.clone()).expect("an id");
-            taken.insert(id.clone());
+            mint.reserve(id.clone());
             ep.from_capsule = Some(c.ty.clone().unwrap_or_else(|| "box".to_string()));
             ep.path.insert(0, id);
             out.push(Hoisted {
-                node: Node {
+                node: {
                     // A minted id is stamped by the caller post-lowering; an
                     // authored one rides the raw node (an authored `lini-`
                     // prefix must still hit the reserved-id check).
-                    id: c.id,
-                    ty: c.ty,
-                    label: None,
-                    classes: Vec::new(),
-                    style: Vec::new(),
-                    style_span: None,
-                    children: Vec::new(),
-                    links: Vec::new(),
-                    span: c.span,
+                    let mut n = super::synth::bare(c.span);
+                    n.id = c.id;
+                    n.ty = c.ty;
+                    n
                 },
                 minted_id,
             });

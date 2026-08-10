@@ -445,16 +445,10 @@ pub(super) fn style_attr_from(decls: &[(&str, String)]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
+    /// The shipped compile path, not a hand-rolled twin of it: these tests
+    /// judge the SVG a user gets, lint pass, theme and assets included.
     fn svg_for(src: &str) -> String {
-        let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        let mut laid = crate::layout::layout(&program).expect("layout");
-        paints::lower(&mut laid);
-        render(&laid, &Options::default())
+        crate::compile_str(src).expect("compile")
     }
 
     #[test]

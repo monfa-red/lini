@@ -23,10 +23,7 @@ struct Shadow {
 
 /// The default tint: `var(--lini-shadow-color)`.
 fn default_tint() -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: "shadow-color".into(),
-        raw: false,
-    }
+    ResolvedValue::live("shadow-color")
 }
 
 /// Parse a `shadow:` value [SPEC 8]. Forms: `N` → offset (N, N) blur N ·

@@ -4,11 +4,12 @@
 
 use super::super::ir::Bbox;
 use super::annotate::Axis;
+use crate::layout::geom::dot;
 use crate::path_data;
 
 /// The plane primitives are layout-level — the schematic engine's stacking
 /// shares them [SPEC 16]; the drawing's own conventions extend them below.
-pub use crate::layout::geom::{Frame, P, project};
+pub use crate::layout::geom::{Frame, P, project, rotate_about};
 
 /// One drawn segment. `from`/`to` chain through a subpath; an arc is circular
 /// (SVG `A r r 0 large sweep`), `sweep: true` = clockwise on screen.
@@ -143,8 +144,7 @@ pub fn bearing_dir(deg: f64) -> P {
     } else if norm == 270.0 {
         (-1.0, 0.0)
     } else {
-        let rad = deg.to_radians();
-        (rad.sin(), -rad.cos())
+        crate::layout::geom::polar((0.0, 0.0), 1.0, deg.to_radians())
     }
 }
 
@@ -156,7 +156,7 @@ pub fn dir_bearing(v: P) -> f64 {
 
 /// Reflect `p` across the line through the origin with unit direction `u`.
 pub fn reflect_point(p: P, u: P) -> P {
-    let d = p.0 * u.0 + p.1 * u.1;
+    let d = dot(p, u);
     (2.0 * d * u.0 - p.0, 2.0 * d * u.1 - p.1)
 }
 
@@ -241,12 +241,13 @@ pub fn arc_center(from: P, to: P, r: f64, large: bool, sweep: bool) -> P {
     (m.0 + perp.0 * h * sign, m.1 + perp.1 * h * sign)
 }
 
-/// Rotate `p` about `centre` by `deg` — positive reads clockwise on screen
-/// (y grows down), matching the pen's bearing convention.
-pub fn rotate_about(p: P, centre: P, deg: f64) -> P {
-    let (s, c) = deg.to_radians().sin_cos();
-    let (x, y) = (p.0 - centre.0, p.1 - centre.1);
-    (centre.0 + x * c - y * s, centre.1 + x * s + y * c)
+/// The circle's unit tangent at `p` about `centre` — SVG sweep 1 walks the
+/// increasing angle (clockwise on screen, y down), so `sweep: false` reverses
+/// it. The pen's corner headings, the edge law's tangent test and the leader
+/// raycast's crossing angle all read this one.
+pub fn arc_tangent(p: P, centre: P, sweep: bool) -> P {
+    let v = (p.0 - centre.0, p.1 - centre.1);
+    unit(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
 }
 
 /// The minor arc's midpoint — on the far side of the chord from the centre;

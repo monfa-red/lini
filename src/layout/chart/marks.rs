@@ -135,7 +135,7 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
     if let (Some(&(fx, fy)), Some(&(lx, ly))) = (poly.first(), poly.last()) {
         match plot.dir {
             Dir::Row => {
-                let bx = plot.x0 + scale.frac(scale.clamp(base)) * plot.w();
+                let bx = plot.value_at(scale, scale.clamp(base));
                 poly.push((bx, ly));
                 poly.push((bx, fy));
             }

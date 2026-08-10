@@ -100,12 +100,3 @@ fn an_asset_escaping_the_served_root_errors() {
     )
     .expect("in-root asset compiles");
 }
-
-#[test]
-fn embedded_output_is_byte_identical_across_runs() {
-    let src = std::fs::read_to_string("samples/drawing_sheet.lini").expect("read");
-    let first = render_assets(&src, None).expect("compile");
-    for _ in 0..2 {
-        assert_eq!(render_assets(&src, None).expect("recompile"), first);
-    }
-}

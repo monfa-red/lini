@@ -74,8 +74,5 @@ fn bubble_title(b: &Bubble, fmt: format::Format) -> String {
 
 /// The label tint for text centred on a coloured bubble — the light accent-text role.
 fn on_fill() -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: "accent-text".into(),
-        raw: false,
-    }
+    ResolvedValue::live("accent-text")
 }

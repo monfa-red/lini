@@ -19,29 +19,39 @@ pub(super) fn legend_reserve(entries: usize, gap: f64) -> f64 {
 /// an outlined swatch, a flat one a flat swatch).
 pub(super) type LegendEntry = (String, ResolvedValue, Option<ResolvedValue>);
 
-/// The legend entries — one per series that carries a label (no label → no entry,
-/// [SPEC 14.6]). The swatch wears the series' fill and edge ([`swatch_edge`]).
+/// One legend entry for a labelled, painted thing — a series or a pie slice
+/// [SPEC 14.6]. No label → no entry. The swatch mirrors what the thing draws: its
+/// fill, and its explicit `stroke:` edge — or, when the shape is always drawn with
+/// a deep edge (`deep_edge`, an `|area|`), that fallback edge.
+pub(super) fn entry(
+    label: &Option<String>,
+    fill: &ResolvedValue,
+    outline: &Option<(ResolvedValue, f64)>,
+    deep_edge: bool,
+) -> Option<LegendEntry> {
+    let explicit = outline.as_ref().map(|(c, _)| c.clone());
+    let edge = if deep_edge {
+        Some(explicit.unwrap_or_else(|| palette::deepen(fill)))
+    } else {
+        explicit
+    };
+    label.clone().map(|l| (l, fill.clone(), edge))
+}
+
+/// The legend entries — one per series that carries a label ([`entry`]).
 pub(super) fn legend_entries(chart: &Chart) -> Vec<LegendEntry> {
     chart
         .series
         .iter()
         .filter_map(|s| {
-            s.label
-                .clone()
-                .map(|l| (l, s.color.clone(), swatch_edge(s)))
+            entry(
+                &s.label,
+                &s.color,
+                &s.outline,
+                matches!(s.kind, SeriesKind::Area),
+            )
         })
         .collect()
-}
-
-/// The edge a series' legend swatch should wear, mirroring what it draws [SPEC 14.6]:
-/// a bar / slice its (default-deep or explicit) outline, an area its always-drawn deep
-/// edge, a line / dots usually nothing.
-fn swatch_edge(s: &Series) -> Option<ResolvedValue> {
-    let explicit = s.outline.as_ref().map(|(c, _)| c.clone());
-    match s.kind {
-        SeriesKind::Area => Some(explicit.unwrap_or_else(|| palette::deepen(&s.color))),
-        _ => explicit,
-    }
 }
 
 /// A centred row of swatch + label entries at vertical `cy`. Shared by chart and pie.

@@ -22,6 +22,8 @@ mod serve;
 mod span;
 mod suggest;
 mod syntax;
+#[cfg(test)]
+mod testutil;
 mod theme;
 mod validate;
 
@@ -291,8 +293,128 @@ pub mod testing {
     use crate::Options;
     use crate::layout;
     use crate::resolve::ResolvedValue;
+    use std::path::{Path, PathBuf};
 
     pub use crate::layout::LaidOut;
+    pub use crate::layout::ir::PlacedNode;
+
+    /// The showroom sheets [SPEC 19] plus the routing-oracle fixtures — the one
+    /// corpus every sweep walks, sorted so failures report in a stable order.
+    ///
+    /// Two directories, one policy. `samples/` is the showroom (also the
+    /// conformance glob's snapshot set); `tests/fixtures/routing/` holds the
+    /// three `links_*` scenes that exist only to feed the router's oracles —
+    /// they carry no snapshot (a snapshot would pin one router's coordinates
+    /// and churn every phase, see `tests/conformance.rs`) but must still parse,
+    /// resolve, format, desugar and route like any other sheet.
+    ///
+    /// The single skip: icon-bearing sheets when the `icons` feature is off,
+    /// since `|icon|` is then an error by construction. Nothing else is
+    /// skipped — an untracked scratch file in `samples/` is the author's
+    /// problem, not a hole in the sweep.
+    pub fn samples() -> Vec<PathBuf> {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut paths: Vec<PathBuf> = [root.join("samples"), root.join("tests/fixtures/routing")]
+            .iter()
+            .flat_map(|dir| {
+                std::fs::read_dir(dir)
+                    .unwrap_or_else(|e| panic!("read {}: {e}", dir.display()))
+                    .filter_map(|e| e.ok().map(|e| e.path()))
+            })
+            .filter(|p| p.extension().is_some_and(|x| x == "lini"))
+            .filter(|p| {
+                cfg!(feature = "icons")
+                    || !std::fs::read_to_string(p)
+                        .unwrap_or_default()
+                        .contains("|icon|")
+            })
+            .collect();
+        paths.sort();
+        paths
+    }
+
+    /// Read one sweep entry, naming the file if it cannot be read.
+    pub fn read_sample(path: &Path) -> String {
+        std::fs::read_to_string(path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
+    }
+
+    /// The options every sweep compiles under: samples resolve their image
+    /// assets against `samples/` [SPEC 7].
+    pub fn sample_opts() -> Options {
+        Options {
+            base_dir: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("samples")),
+            ..Default::default()
+        }
+    }
+
+    /// A placed node with its **world** centre — `cx`/`cy` summed down the tree.
+    pub type Placed<'a> = (&'a PlacedNode, f64, f64);
+
+    /// A predicate over placed nodes, for the two walks below.
+    pub type Pred<'a> = dyn Fn(&PlacedNode) -> bool + 'a;
+
+    /// The first node satisfying `pred`, depth-first, self before children.
+    ///
+    /// Every placement assertion in the crate looks a node up the same way — by
+    /// id, by type, by class — and needs its world position; this is that walk,
+    /// written once. [`all_placed`] is the collecting twin.
+    pub fn find_placed<'a>(nodes: &'a [PlacedNode], pred: &Pred<'_>) -> Option<Placed<'a>> {
+        fn walk<'a>(
+            nodes: &'a [PlacedNode],
+            pred: &Pred<'_>,
+            ox: f64,
+            oy: f64,
+        ) -> Option<Placed<'a>> {
+            for n in nodes {
+                let (x, y) = (ox + n.cx, oy + n.cy);
+                if pred(n) {
+                    return Some((n, x, y));
+                }
+                if let Some(hit) = walk(&n.children, pred, x, y) {
+                    return Some(hit);
+                }
+            }
+            None
+        }
+        walk(nodes, pred, 0.0, 0.0)
+    }
+
+    /// Every node satisfying `pred`, depth-first, each with its world centre.
+    /// A match's own children are still searched — a classed box may hold one.
+    pub fn all_placed<'a>(nodes: &'a [PlacedNode], pred: &Pred<'_>) -> Vec<Placed<'a>> {
+        fn walk<'a>(
+            nodes: &'a [PlacedNode],
+            pred: &Pred<'_>,
+            ox: f64,
+            oy: f64,
+            out: &mut Vec<Placed<'a>>,
+        ) {
+            for n in nodes {
+                let (x, y) = (ox + n.cx, oy + n.cy);
+                if pred(n) {
+                    out.push((n, x, y));
+                }
+                walk(&n.children, pred, x, y, out);
+            }
+        }
+        let mut out = Vec::new();
+        walk(nodes, pred, 0.0, 0.0, &mut out);
+        out
+    }
+
+    /// The placed node carrying `id`, with its world centre.
+    #[track_caller]
+    pub fn placed_by_id<'a>(nodes: &'a [PlacedNode], id: &str) -> Placed<'a> {
+        find_placed(nodes, &|n| n.id.as_deref() == Some(id))
+            .unwrap_or_else(|| panic!("no placed node '{id}'"))
+    }
+
+    /// The first placed node whose type chain carries `ty`, with its world centre.
+    #[track_caller]
+    pub fn placed_by_type<'a>(nodes: &'a [PlacedNode], ty: &str) -> Placed<'a> {
+        find_placed(nodes, &|n| n.type_chain.iter().any(|t| t == ty))
+            .unwrap_or_else(|| panic!("no placed '{ty}' node"))
+    }
 
     /// A node's absolute rect by full dot-path, for geometric assertions.
     pub fn node_rect(laid: &LaidOut, path: &str) -> Option<(f64, f64, f64, f64)> {
@@ -403,6 +525,24 @@ pub mod testing {
         layout::validate_routing(laid)
     }
 
+    /// Law breaches: everything a report flags above counted output (`Info`
+    /// crossings) and honest strays (`Impossible`, counted by [`strays`]).
+    /// The one predicate every law assertion in the suite judges by.
+    pub fn breaches(report: Vec<crate::Violation>) -> Vec<crate::Violation> {
+        report
+            .into_iter()
+            .filter(|v| v.severity != crate::Severity::Info && v.rule != crate::Rule::Impossible)
+            .collect()
+    }
+
+    /// Honest strays: links the router reported rather than drew.
+    pub fn strays(report: &[crate::Violation]) -> usize {
+        report
+            .iter()
+            .filter(|v| v.rule == crate::Rule::Impossible)
+            .count()
+    }
+
     /// Lay out a source string (with options) — the probe hook for geometric
     /// assertions on a full scene.
     pub fn layout_sample(src: &str, opts: &Options) -> LaidOut {
@@ -457,6 +597,66 @@ pub mod testing {
         let mut out = Vec::new();
         walk(&laid.nodes, 0.0, 0.0, &mut out);
         out
+    }
+
+    /// The annotation-packing oracle [SPEC 15.6]: pairs of dimension values
+    /// whose painted boxes overlap. A row stands `clearance` off everything
+    /// painted, so no dim value may land on another annotation's text —
+    /// another row's, a callout's, an angle's. An empty result means the
+    /// packer cleared every one.
+    pub fn annotation_text_overlaps(laid: &LaidOut) -> Vec<String> {
+        let boxes: Vec<crate::layout::ir::Bbox> = all_placed(&laid.nodes, &|n| {
+            n.type_chain.iter().any(|t| t == "dim-text")
+        })
+        .into_iter()
+        .map(|(n, x, y)| {
+            crate::layout::ir::Bbox::extent_of(std::slice::from_ref(n), |_| true)
+                .shifted(x - n.cx, y - n.cy)
+        })
+        .collect();
+        let mut out = Vec::new();
+        for (i, a) in boxes.iter().enumerate() {
+            for b in &boxes[i + 1..] {
+                if a.inflate(-0.5).overlaps(b.inflate(-0.5)) {
+                    out.push(format!("annotation texts overlap: {a:?} vs {b:?}"));
+                }
+            }
+        }
+        out
+    }
+
+    /// The carried-stack oracle [SPEC 15.6/15.9]: carried annotation boxes
+    /// that cross the geometry their statement annotates. What a statement
+    /// paints below its text is part of its own painted band, so it must
+    /// clear the drawn geometry like the text does. The count of carried
+    /// boxes judged rides along, so a sweep can assert it saw any.
+    pub fn carried_over_geometry(laid: &LaidOut) -> (Vec<String>, usize) {
+        use crate::layout::ir::{Bbox, PlacedNode};
+        fn walk(nodes: &[PlacedNode], out: &mut Vec<String>, seen: &mut usize) {
+            for n in nodes {
+                let carried: Vec<Bbox> = n
+                    .children
+                    .iter()
+                    .filter(|c| c.type_chain.iter().any(|t| t == "carried"))
+                    .map(|c| c.bbox.shifted(c.cx, c.cy))
+                    .collect();
+                if !carried.is_empty() {
+                    let geo = crate::layout::drawing::annotate::drawn_geometry(&n.children);
+                    for b in &carried {
+                        *seen += 1;
+                        if b.overlaps(geo) {
+                            out.push(format!(
+                                "a carried annotation {b:?} crosses the drawn geometry {geo:?}"
+                            ));
+                        }
+                    }
+                }
+                walk(&n.children, out, seen);
+            }
+        }
+        let (mut out, mut seen) = (Vec::new(), 0);
+        walk(&laid.nodes, &mut out, &mut seen);
+        (out, seen)
     }
 
     /// Drawn links that answer to `declared_edges`: what the corridor

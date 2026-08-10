@@ -5,6 +5,8 @@
 //! the 0.21 comma-law target ([`Shape::List`] reads across comma-groups) —
 //! Stage M1 flips the readers to it.
 
+use crate::error::{Code, Error};
+use crate::span::Span;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -62,6 +64,32 @@ pub enum Kind {
     /// Positional / mixed forms validated by the property's own reader
     /// (`at: V | X Y`, `tol: t | +u -l | fit`, `sheet: a4 landscape`).
     Any,
+}
+
+impl Kind {
+    /// The migration spelling shown when a pre-0.21 space-separated list is
+    /// rejected [SPEC 2]. Empty for the kinds whose items are legitimately
+    /// space runs (`data:` / `points:` `x y` pairs [SPEC 14.3]) — which is the
+    /// tell that a list of them never rejects one.
+    pub fn list_example(&self) -> &'static str {
+        match self {
+            Kind::Str => "\"a\", \"b\"",
+            Kind::Ident => "start, center, end",
+            Kind::Track => "80, 140, auto",
+            _ => "",
+        }
+    }
+}
+
+/// The pre-0.21 space-separated list rejection [SPEC 2] — one message and one
+/// code for every reader that meets a space run where commas belong, with the
+/// kind's own migration spelling ([`Kind::list_example`]).
+pub fn legacy_list_error(name: &str, example: &str, span: Span) -> Error {
+    Error::at(
+        span,
+        format!("'{name}' takes comma-separated values — '{name}: {example}'"),
+    )
+    .code(Code::LEGACY_LIST)
 }
 
 /// Where a property's default lives — a reference, not the value; defaults
@@ -138,6 +166,16 @@ const fn row(
 }
 
 impl Property {
+    /// The layouts that honour this property — its [`Owner::Layout`] rows. A
+    /// placement prop's legal hosts are exactly these, so the validation pass
+    /// reads them here rather than restating the list.
+    pub fn layout_owners(&self) -> impl Iterator<Item = &'static str> {
+        self.owners.iter().filter_map(|o| match o {
+            Owner::Layout(l) => Some(*l),
+            _ => None,
+        })
+    }
+
     /// Mark valid on a bare text leaf [SPEC 3].
     const fn text(mut self) -> Self {
         self.text = true;

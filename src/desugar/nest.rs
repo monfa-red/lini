@@ -54,6 +54,14 @@ pub(super) fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
     chain.iter().any(|t| t == "drawing") || layout_of(style) == Some("drawing")
 }
 
+/// Whether this container is **itself** a `|page|` [SPEC 15.8] — the sheet
+/// whose furniture and density fold key off it. One reading for both stages:
+/// an already-lowered node states its type as a `.lini-*` class, so the scale
+/// fold passes its lowered chain where the main walk passes the authored one.
+pub(super) fn is_page_body(chain: &[String]) -> bool {
+    chain.iter().any(|t| t == "page")
+}
+
 /// Whether this container is **itself** a schematic [SPEC 16] — desugar's twin
 /// of `layout::schematic::is_schematic`, and the only container-level reading
 /// desugar makes: [`Nest::schematic`] is this answer plus the enclosing one, so

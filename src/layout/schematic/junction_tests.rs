@@ -219,15 +219,3 @@ fn a_natural_fan_neither_erases_nor_moves_the_orthogonal_dots() {
         + "u1.c - u2.a\nu1.c - u2.b\n";
     assert!(dots(&routed(&pair)).is_empty());
 }
-
-#[test]
-fn the_dots_are_deterministic() {
-    let src = sheet(
-        &(anchor("u1", "") + &anchor("u2", "") + "|R#r1|\nu1.c - u2.a\nu1.c - u2.b\nu1.c - r1\n"),
-    );
-    let once = dots(&routed(&src));
-    assert_eq!(once.len(), 2);
-    for _ in 0..3 {
-        assert_eq!(once, dots(&routed(&src)));
-    }
-}

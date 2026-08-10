@@ -10,56 +10,26 @@ fn line_missing_points_error_uses_pipe_sigil() {
     );
 }
 
+/// Each primitive's SVG element [SPEC 7]: the shape a type lowers to, one
+/// row per type.
 #[test]
-fn hex_emits_polygon() {
-    assert!(render_live("|hex| { width: 60; height: 60; }\n").contains("<polygon"));
-}
-
-#[test]
-fn diamond_emits_polygon() {
-    assert!(render_live("|diamond| { width: 60; height: 60; }\n").contains("<polygon"));
-}
-
-#[test]
-fn slant_emits_polygon_with_skew() {
-    assert!(render_live("|slant| { width: 80; height: 40; skew: 20; }\n").contains("<polygon"));
-}
-
-#[test]
-fn oval_emits_ellipse() {
-    assert!(render_live("|oval| { width: 80; height: 40; }\n").contains("<ellipse"));
-}
-
-#[test]
-fn cyl_emits_ellipse_and_path() {
-    let svg = render_live("|cyl| { width: 60; height: 80; }\n");
-    assert!(svg.contains("<ellipse"), "{}", svg);
-    assert!(svg.contains("<path"), "{}", svg);
-}
-
-#[test]
-fn poly_emits_polygon_with_user_points() {
-    assert!(render_live("|poly| { points: 0 0, 20 0, 10 20; }\n").contains("<polygon"));
-}
-
-#[test]
-fn hero_renders_in_both_modes() {
-    let src = std::fs::read_to_string("samples/hero.lini").expect("read");
-    let live = lini::compile_str(&src).expect("live compile");
-    let baked = lini::compile_str_with(
-        &src,
-        &Options {
-            static_mode: true,
-            ..Default::default()
-        },
-    )
-    .expect("baked compile");
-    assert!(live.contains("var(--lini-"));
-    assert!(!baked.contains("@layer lini.defaults"));
-    assert!(live.starts_with("<svg"));
-    assert!(baked.starts_with("<svg"));
-    assert!(live.contains("lini-link"));
-    assert!(baked.contains("lini-link"));
+fn every_primitive_emits_its_element() {
+    for (src, wants) in [
+        ("|hex| { width: 60; height: 60; }\n", &["<polygon"][..]),
+        ("|diamond| { width: 60; height: 60; }\n", &["<polygon"]),
+        (
+            "|slant| { width: 80; height: 40; skew: 20; }\n",
+            &["<polygon"],
+        ),
+        ("|oval| { width: 80; height: 40; }\n", &["<ellipse"]),
+        ("|cyl| { width: 60; height: 80; }\n", &["<ellipse", "<path"]),
+        ("|poly| { points: 0 0, 20 0, 10 20; }\n", &["<polygon"]),
+    ] {
+        let svg = render_live(src);
+        for want in wants {
+            assert!(svg.contains(want), "{src:?} must emit {want:?}: {svg}");
+        }
+    }
 }
 
 // ───────────────────────────── icons (SPEC §7) ─────────────────────────────
@@ -196,65 +166,49 @@ fn icon_masks_an_inherited_dash() {
     assert!(rule.contains("stroke-dasharray: none"), "{rule}");
 }
 
+/// The whole `fit:` family on one glyph [SPEC 7]. A 64px `|sign|` holding
+/// Phosphor's shield (own bounds ≈176×184, centred at y=140 in the 256 grid):
+///
+/// - `auto` maps the whole grid — the authored margin — at scale(0.25);
+/// - `contain` measures the glyph and fits it uniformly, 64/184 = 0.3478,
+///   recentred on the glyph rather than the grid;
+/// - `cover` takes the larger ratio, 64/176 = 0.3636, so it overflows the
+///   long axis;
+/// - `stretch` fits each axis independently → a two-value scale.
+///
+/// The counter-scaled stroke follows the fit, so the on-screen weight is
+/// constant: `|sign|`'s 2 bakes to 2/0.25 = 8 under auto and 2/0.3478 = 5.75
+/// under contain — both draw 2px.
 #[cfg(feature = "icons")]
 #[test]
-fn icon_fit_auto_keeps_the_grid_framing() {
-    // `fit: auto` maps the whole 256 grid to the box — Phosphor's authored margin —
-    // so a 64px sign is the plain scale(0.25) translate(-128 -128).
-    let svg = render_live("|sign#x| { symbol: shield; fit: auto }\n");
+fn icon_fit_scales_the_glyph_and_holds_the_stroke_weight() {
+    for (fit, transform, stroke) in [
+        ("auto", "scale(0.25) translate(-128 -128)", Some("8")),
+        (
+            "contain",
+            "scale(0.3478) translate(-128 -140)",
+            Some("5.75"),
+        ),
+        ("cover", "scale(0.3636) translate(-128 -140)", None),
+        ("stretch", "scale(0.3636 0.3478) translate(-128 -140)", None),
+    ] {
+        let svg = render_live(&format!("|sign#x| {{ symbol: shield; fit: {fit} }}\n"));
+        assert!(
+            svg.contains(&format!(r#"transform="{transform}""#)),
+            "fit: {fit}: {svg}"
+        );
+        if let Some(w) = stroke {
+            assert!(
+                svg.contains(&format!(r#"stroke-width="{w}""#)),
+                "fit: {fit} counter-scales the stroke: {svg}"
+            );
+        }
+    }
+    // `contain` genuinely enlarges past auto's plain grid mapping.
     assert!(
-        svg.contains(r#"transform="scale(0.25) translate(-128 -128)""#),
-        "{svg}"
+        !render_live("|sign#x| { symbol: shield; fit: contain }\n").contains("scale(0.25)"),
+        "contain enlarges"
     );
-}
-
-#[cfg(feature = "icons")]
-#[test]
-fn icon_fit_contain_fills_and_recentres_on_the_glyph() {
-    // `contain` measures the shield's own bounds (≈176×184, centred at y=140) and
-    // scales it uniformly to fit the 64px box (64/184 = 0.3478) — larger than
-    // auto's 0.25, and centred on the glyph, not the grid.
-    let svg = render_live("|sign#x| { symbol: shield; fit: contain }\n");
-    assert!(
-        svg.contains(r#"transform="scale(0.3478) translate(-128 -140)""#),
-        "{svg}"
-    );
-    assert!(!svg.contains("scale(0.25)"), "contain enlarges: {svg}");
-}
-
-#[cfg(feature = "icons")]
-#[test]
-fn icon_fit_cover_uses_the_larger_scale() {
-    // `cover` scales until the box is covered — the max ratio (64/176 = 0.3636) —
-    // so it exceeds `contain` and the glyph overflows on the long axis.
-    let svg = render_live("|sign#x| { symbol: shield; fit: cover }\n");
-    assert!(
-        svg.contains(r#"transform="scale(0.3636) translate(-128 -140)""#),
-        "{svg}"
-    );
-}
-
-#[cfg(feature = "icons")]
-#[test]
-fn icon_fit_stretch_is_non_uniform() {
-    // `stretch` fits each axis independently → a two-value scale.
-    let svg = render_live("|sign#x| { symbol: shield; fit: stretch }\n");
-    assert!(
-        svg.contains(r#"transform="scale(0.3636 0.3478) translate(-128 -140)""#),
-        "{svg}"
-    );
-}
-
-#[cfg(feature = "icons")]
-#[test]
-fn icon_fit_holds_the_stroke_weight() {
-    // The counter-scaled stroke follows the fit scale, so the on-screen weight is
-    // constant: a |sign|'s 2 bakes auto 2 / 0.25 = 8, contain 2 / 0.3478 = 5.75 —
-    // both draw 2px.
-    let auto = render_live("|sign#x| { symbol: shield; fit: auto }\n");
-    let contain = render_live("|sign#x| { symbol: shield; fit: contain }\n");
-    assert!(auto.contains(r#"stroke-width="8""#), "{auto}");
-    assert!(contain.contains(r#"stroke-width="5.75""#), "{contain}");
 }
 
 #[cfg(feature = "icons")]

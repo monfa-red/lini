@@ -5,6 +5,33 @@
 
 use lini::desugar_source;
 
+/// The first lowered `path:` value in a desugared source — a schematic
+/// symbol's linework, as the glyph pass wrote it.
+fn lowered_path(out: &str) -> String {
+    let at = out.find("path: \"").expect("a lowered symbol path");
+    let rest = &out[at + 7..];
+    rest[..rest.find('"').expect("closing quote")].to_string()
+}
+
+/// Every `(x, y)` in a path `d`, in order — the command letters parse away.
+fn points(d: &str) -> Vec<(f64, f64)> {
+    let n: Vec<f64> = d
+        .split_whitespace()
+        .filter_map(|t| t.parse().ok())
+        .collect();
+    n.chunks_exact(2).map(|c| (c[0], c[1])).collect()
+}
+
+/// A path's `(width, height)`.
+fn extent(d: &str) -> (f64, f64) {
+    let pts = points(d);
+    let (xs, ys): (Vec<f64>, Vec<f64>) = pts.iter().copied().unzip();
+    let span = |v: &[f64]| {
+        v.iter().copied().fold(f64::MIN, f64::max) - v.iter().copied().fold(f64::MAX, f64::min)
+    };
+    (span(&xs), span(&ys))
+}
+
 #[test]
 fn a_plain_box_wears_its_lini_class_and_explicit_label() {
     let out = desugar_source("|box#cat| \"cat\"\n").unwrap();
@@ -121,15 +148,10 @@ fn every_sample_is_a_byte_identical_desugar_fixed_point() {
     // sample, re-desugaring the lowered text reproduces it byte for byte — the
     // guard that every generated node/link is idempotently detected and
     // span-seated so `lini desugar` output is stable.
-    let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/samples");
     let mut swept = 0;
-    for entry in std::fs::read_dir(dir).expect("samples dir") {
-        let path = entry.expect("entry").path();
-        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
-            continue;
-        }
+    for path in lini::testing::samples() {
         let name = path.file_name().unwrap().to_string_lossy().into_owned();
-        let src = std::fs::read_to_string(&path).expect("read sample");
+        let src = lini::testing::read_sample(&path);
         let once = desugar_source(&src).unwrap_or_else(|e| panic!("{name}: desugar failed: {e}"));
         let twice =
             desugar_source(&once).unwrap_or_else(|e| panic!("{name}: re-desugar failed: {e}"));
@@ -373,38 +395,6 @@ fn a_bilateral_tree_splits_the_first_level_and_fans_both_sides() {
 }
 
 #[test]
-fn a_bilateral_tree_is_a_desugar_fixed_point() {
-    let src = "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\"\n    |topic#c| \"C\" { side: right }\n  ]\n]\n";
-    let once = desugar_source(src).unwrap();
-    let twice = desugar_source(&once).unwrap();
-    assert_eq!(
-        once, twice,
-        "re-desugaring the lowered bilateral tree changes it"
-    );
-}
-
-#[test]
-fn a_tree_is_a_desugar_fixed_point() {
-    let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n";
-    let once = desugar_source(src).unwrap();
-    let twice = desugar_source(&once).unwrap();
-    assert_eq!(once, twice, "re-desugaring the lowered tree changes it");
-}
-
-#[test]
-fn a_root_tree_is_a_byte_fixed_point() {
-    // The generated root fan's span seats past the instances, so fmt's
-    // phase split prints identically on first lowering and re-lowering.
-    let src = "{ layout: tree; }\n|topic#r| \"R\" [\n  |topic#a| \"A\"\n  |topic#b| \"B\"\n]\n";
-    let once = desugar_source(src).unwrap();
-    let twice = desugar_source(&once).unwrap();
-    assert_eq!(
-        once, twice,
-        "re-desugaring the lowered root tree changes it"
-    );
-}
-
-#[test]
 fn a_mindmap_seats_its_scene_and_lowers_the_preset() {
     // The |mindmap| preset [SPEC 8]: the node is the visible root topic; its
     // scene becomes the generated tree scope (`layout: tree; direction:
@@ -488,14 +478,6 @@ fn the_palette_walk_skips_red_and_grey_and_wraps_past_nine() {
 }
 
 #[test]
-fn a_mindmap_is_a_desugar_fixed_point() {
-    let src = "|mindmap#m| \"M\" [\n  |topic#a| \"A\" [ |topic| \"A1\" ]\n  |topic#b| \"B\" { side: left }\n  |topic| \"C\"\n]\n";
-    let once = desugar_source(src).unwrap();
-    let twice = desugar_source(&once).unwrap();
-    assert_eq!(once, twice, "re-desugaring the lowered mindmap changes it");
-}
-
-#[test]
 fn a_mindmap_hoists_its_own_routing_to_the_scope() {
     // `|mindmap| { routing: orthogonal }` must govern the WHOLE tree — the
     // root's arms live in the generated scope, not the root card's body, so a
@@ -572,13 +554,27 @@ fn minting_skips_taken_names() {
     assert!(out.contains("x -> lini-cap-2"), "{out}");
 }
 
+/// The lowered form is a fixed point, byte for byte — re-lowering it changes
+/// nothing. One row per sugar the desugar pass mints something for: a capsule
+/// endpoint, a tree's generated fan, a mindmap's arms. (The schematic family
+/// has its own table below; the whole showroom is swept by
+/// `every_sample_is_a_byte_identical_desugar_fixed_point`.)
 #[test]
-fn a_capsule_statement_is_a_byte_fixed_point() {
+fn every_sugar_lowers_to_a_byte_fixed_point() {
     for src in [
+        // Capsule endpoints [SPEC 9].
         "cat -> |cyl#db|\n",
         "a -> |box| -> c\n",
         "a & b -> |cyl#store| \"s\"\n",
         "|group#g| [\n  a -> |cyl#db|\n]\n",
+        // Trees [SPEC 12] — nested, bilateral, and the root form whose
+        // generated fan seats its span past the instances, so fmt's phase
+        // split prints identically on first lowering and re-lowering.
+        "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n",
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\"\n    |topic#c| \"C\" { side: right }\n  ]\n]\n",
+        "{ layout: tree; }\n|topic#r| \"R\" [\n  |topic#a| \"A\"\n  |topic#b| \"B\"\n]\n",
+        // A mindmap's own arms.
+        "|mindmap#m| \"M\" [\n  |topic#a| \"A\" [ |topic| \"A1\" ]\n  |topic#b| \"B\" { side: left }\n  |topic| \"C\"\n]\n",
     ] {
         let once = desugar_source(src).unwrap();
         let twice = desugar_source(&once).unwrap();
@@ -742,11 +738,17 @@ fn a_symbol_part_lowers_its_glyph_ahead_of_authored_text() {
 #[test]
 fn a_power_flag_define_reads_its_symbol_through_the_chain() {
     // [SPEC 16.4]: a power net is a one-line define with intrinsic text.
-    let out = desugar_source("{ |vm::label| { symbol: power } [ \"VM\" ] }\n|vm#v1|\n").unwrap();
-    assert!(
-        out.contains("M 8 14 L 8 0 M 2 6 L 8 0 L 14 6"),
-        "the power glyph lowered: {out}"
+    let through_the_chain =
+        desugar_source("{ |vm::label| { symbol: power } [ \"VM\" ] }\n|vm#v1|\n").unwrap();
+    let stated_directly = desugar_source("|label#v1| { symbol: power } [ \"VM\" ]\n").unwrap();
+    // The define chain reaches the same glyph the direct spelling lowers —
+    // the geometry itself is pinned by the conformance snapshots, not here.
+    assert_eq!(
+        lowered_path(&through_the_chain),
+        lowered_path(&stated_directly),
+        "the chain lowered a different glyph:\n{through_the_chain}"
     );
+    assert!(!lowered_path(&through_the_chain).is_empty());
 }
 
 #[test]
@@ -961,12 +963,19 @@ fn a_pose_re_lays_a_symbol_and_its_ports() {
     // The two leading moves are the glyph's own box, which every fragment
     // carries so the linework and any solid detail lay out as one rectangle
     // ([`crate::desugar::schematic`]); they turn with the rest.
+    let upright = lowered_path(&desugar_source("|R#r1| \"1k\"\n").unwrap());
     let out = desugar_source("|R#r1| \"1k\" { rotate: 90 }\n").unwrap();
-    assert!(
-        out.contains(
-            r#"path: "M 12 0 M 0 64 M 6 0 L 6 16 M 12 16 L 12 48 L 0 48 L 0 16 Z M 6 48 L 6 64""#
-        ),
-        "{out}"
+    let turned = lowered_path(&out);
+    assert_eq!(extent(&upright), (64.0, 12.0), "the resistor lies down");
+    assert_eq!(
+        extent(&turned),
+        (12.0, 64.0),
+        "…and stands up turned: {out}"
+    );
+    assert_eq!(
+        points(&turned).len(),
+        points(&upright).len(),
+        "the same linework, turned — not redrawn: {out}"
     );
     assert!(
         out.contains("|block#p1| .lini-block { pin: center; translate: 0 -32; }"),
@@ -978,8 +987,26 @@ fn a_pose_re_lays_a_symbol_and_its_ports() {
     );
     // A label's symbol turns the same way — the gnd's connection point (its
     // stem, at the top) swings to the bottom.
+    let upright_d = lowered_path(&desugar_source("|gnd#g1|\n").unwrap());
+    let upright = points(&upright_d);
     let out = desugar_source("|gnd#g1| { rotate: 180 }\n").unwrap();
-    assert!(out.contains(r#"M 8 15 L 8 10"#), "{out}");
+    let turned_d = lowered_path(&out);
+    let turned = points(&turned_d);
+    let (w, h) = extent(&upright_d);
+    assert_eq!(
+        extent(&turned_d),
+        (w, h),
+        "a half turn keeps the box: {out}"
+    );
+    for (x, y) in &upright {
+        let mirrored = (w - x, h - y);
+        assert!(
+            turned
+                .iter()
+                .any(|p| (p.0 - mirrored.0).abs() < 1e-9 && (p.1 - mirrored.1).abs() < 1e-9),
+            "{mirrored:?} missing — the half turn is not a point reflection: {out}"
+        );
+    }
 }
 
 #[test]

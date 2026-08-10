@@ -150,13 +150,7 @@ pub fn palette_vars() -> Vec<(String, ResolvedValue)> {
         }
     }
     for (alias, target) in ALIASES {
-        out.push((
-            alias.to_string(),
-            ResolvedValue::LiveVar {
-                name: (*target).into(),
-                raw: false,
-            },
-        ));
+        out.push((alias.to_string(), ResolvedValue::live(*target)));
     }
     out
 }

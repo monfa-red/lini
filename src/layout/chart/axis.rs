@@ -11,7 +11,7 @@ use super::metrics::{AXIS_TITLE_SIZE, LABEL_SIZE};
 use super::model::{Chart, Grid, Side, ValueAxis};
 use super::project::{Dir, Plot};
 use super::scale::{self, Scale};
-use super::tint::{live, muted};
+use super::tint::muted;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::resolve::ResolvedValue;
@@ -20,7 +20,7 @@ use crate::resolve::ResolvedValue;
 /// plot **perpendicular** to its own axis, so the direction only decides which screen
 /// axis each one runs along.
 pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
-    let value_horizontal = plot.dir == Dir::Row;
+    let value_horizontal = plot.dir.value_horizontal();
     for axis in &chart.values {
         if let Some(color) = value_grid(axis) {
             for &t in axis.scale.ticks() {
@@ -85,7 +85,7 @@ fn value_labels(plot: &Plot, axis: &ValueAxis, chart: &Chart, out: &mut Vec<Plac
         out.push(match (plot.dir, &axis.side) {
             (Dir::Row, _) => prim::text(
                 title,
-                (plot.x0 + plot.x1) / 2.0,
+                plot.center().0,
                 edge_row(plot, top, LABEL_SIZE * 1.4 + AXIS_TITLE_SIZE),
                 AXIS_TITLE_SIZE,
                 Some(muted()),
@@ -154,7 +154,7 @@ fn domain_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         } else {
             prim::text(
                 t,
-                (plot.x0 + plot.x1) / 2.0,
+                plot.center().0,
                 plot.y1 + LABEL_SIZE * 1.4 + super::annot::x_band_row(chart) + AXIS_TITLE_SIZE,
                 AXIS_TITLE_SIZE,
                 Some(muted()),
@@ -196,7 +196,7 @@ fn value_grid(axis: &ValueAxis) -> Option<ResolvedValue> {
     match &axis.grid {
         Grid::Color(c) => Some(c.clone()),
         Grid::Off => None,
-        Grid::Default => axis.primary.then(|| live("grid")),
+        Grid::Default => axis.primary.then(|| ResolvedValue::live("grid")),
     }
 }
 
@@ -207,6 +207,8 @@ fn x_grid(grid: &Grid, scale: &Scale) -> Option<ResolvedValue> {
     match grid {
         Grid::Color(c) => Some(c.clone()),
         Grid::Off => None,
-        Grid::Default => (!matches!(scale, Scale::Band { .. })).then(|| live("grid")),
+        Grid::Default => {
+            (!matches!(scale, Scale::Band { .. })).then(|| ResolvedValue::live("grid"))
+        }
     }
 }

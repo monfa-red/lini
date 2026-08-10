@@ -291,6 +291,24 @@ impl Decl {
             _ => None,
         }
     }
+
+    /// The tracks a `columns:` / `rows:` value declares [SPEC 12]: each token is
+    /// one track, `repeat(N)` is N. The one count — the table sugar sizes its
+    /// grid by it and the formatter aligns its cell rows by it, so a `repeat()`
+    /// can never mean two different widths.
+    pub(crate) fn track_count(&self) -> usize {
+        self.groups
+            .iter()
+            .flatten()
+            .map(|v| match v {
+                Value::Call(c) if c.name == "repeat" => match c.args.first() {
+                    Some(Value::Number(n)) if *n >= 1.0 => *n as usize,
+                    _ => 1,
+                },
+                _ => 1,
+            })
+            .sum()
+    }
 }
 
 /// The ident `name` is set to in a declaration list, **last-wins** — the

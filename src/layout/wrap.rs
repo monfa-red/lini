@@ -7,7 +7,7 @@
 //! a non-text in-flow child wider than the cap is an error, as is a `width:`
 //! floor above it and `nowrap` text that cannot fit ([SPEC 21]).
 
-use super::ir::{Bbox, PlacedNode};
+use super::ir::PlacedNode;
 use super::{anchors, primitives, text};
 use crate::error::Error;
 use crate::resolve::{NodeKind, ResolvedInst, ResolvedValue};
@@ -70,14 +70,9 @@ pub(super) fn apply_max_width(
             continue;
         };
         let font = crate::font::Font::of(&child.attrs);
-        let size = child.attrs.number("font-size").unwrap_or(15.0);
-        let ls = child.attrs.number("letter-spacing").unwrap_or(0.0);
-        let lsp = child.attrs.number("line-spacing").unwrap_or(0.0);
+        let (size, ls, _) = text::metrics(&child.attrs);
         let wrapped = text::wrap(&label, font, size, ls, avail).join("\n");
-        child.bbox = Bbox::centered(
-            text::approx_width(&wrapped, font, size, ls),
-            text::approx_height(&wrapped, size, lsp),
-        );
+        child.bbox = text::measure_with(&wrapped, font, &child.attrs);
         child.label = Some(wrapped);
     }
     Ok(())

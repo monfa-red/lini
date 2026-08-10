@@ -1,23 +1,7 @@
 use super::*;
 use crate::resolve::{MarkerKind, NodeKind};
 
-fn rv4(src: &str) -> Program {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    resolve(&lowered, &[]).expect("resolve")
-}
-
-fn rv4_err(src: &str) -> String {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    // The error may surface in desugar (unknown type, cycle) or in resolve.
-    let result = crate::desugar::desugar(&file).and_then(|f| resolve(&f, &[]));
-    match result {
-        Err(e) => e.message,
-        Ok(_) => panic!("expected an error resolving {src:?}"),
-    }
-}
+use crate::testutil::{program as rv4, resolve_err as rv4_err};
 
 fn num(p: &Program, node: usize, attr: &str) -> Option<f64> {
     p.scene.nodes[node].attrs.number(attr)

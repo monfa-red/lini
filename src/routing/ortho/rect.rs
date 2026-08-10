@@ -1,5 +1,7 @@
 //! Axis-aligned rectangle — the one geometric primitive the router shares.
 
+use crate::ast::Side;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
     pub x0: f64,
@@ -21,6 +23,20 @@ impl Rect {
         self.y1 - self.y0
     }
 
+    pub fn centre(&self) -> (f64, f64) {
+        ((self.x0 + self.x1) / 2.0, (self.y0 + self.y1) / 2.0)
+    }
+
+    /// A side's span on **its own** ordinate axis — the `y` range of a vertical
+    /// side, the `x` range of a horizontal one. The axis every port ordinate,
+    /// window, and corner margin is measured along.
+    pub fn side_span(&self, side: Side) -> (f64, f64) {
+        match side {
+            Side::Left | Side::Right => (self.y0, self.y1),
+            Side::Top | Side::Bottom => (self.x0, self.x1),
+        }
+    }
+
     /// Grow by `d` on every side (the keep-out construction).
     pub fn inflate(&self, d: f64) -> Rect {
         Rect::new(self.x0 - d, self.y0 - d, self.x1 + d, self.y1 + d)
@@ -36,6 +52,23 @@ impl Rect {
         );
         (r.w() > 0.0 && r.h() > 0.0).then_some(r)
     }
+}
+
+/// The lawful **corner margin** on a side of length `len` at clearance `c`
+/// (ROUTING.md Contact): the full clearance, relaxing to half the side where
+/// the side is too short to hold one at each end.
+pub(crate) fn port_margin(len: f64, c: f64) -> f64 {
+    c.min(len / 2.0)
+}
+
+/// The lawful **port window** on a side: its span minus a [`port_margin`] at
+/// each end, collapsing to the side's centre point when the side is too short.
+/// The one window every stage reads — a graph entry, a natural port, and the
+/// law checker's scarcity excuse.
+pub(crate) fn port_window(rect: Rect, side: Side, c: f64) -> (f64, f64) {
+    let (lo, hi) = rect.side_span(side);
+    let m = port_margin(hi - lo, c);
+    (lo + m, hi - m)
 }
 
 /// Distance between two axis-aligned boxes (as `(x0, y0, x1, y1)`);

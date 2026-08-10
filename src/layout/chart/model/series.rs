@@ -16,7 +16,7 @@ pub(super) fn read_bubble(
         return Err(needs());
     };
     let value = inst.attrs.number("value").ok_or_else(needs)?;
-    let color = fill_color(&inst.attrs).unwrap_or_else(|| live(palette::hue(index)));
+    let color = fill_color(&inst.attrs).unwrap_or_else(|| ResolvedValue::live(palette::hue(index)));
     Ok(Bubble {
         at: (x, y),
         value,
@@ -99,7 +99,7 @@ pub(super) fn read_series(
             SeriesKind::Dots => "-ink",
             SeriesKind::Bars | SeriesKind::Area => "-soft",
         };
-        live(&format!("{}{}", palette::hue(index), suffix))
+        ResolvedValue::live(format!("{}{}", palette::hue(index), suffix))
     });
     let dot_w = inst.attrs.number("width").unwrap_or(7.0);
     let dot_h = inst.attrs.number("height").unwrap_or(dot_w);
@@ -251,9 +251,12 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<(Data, bool), Err
             }
             // A longer space run is the pre-0.21 value list.
             ResolvedValue::Tuple(_) => {
-                return Err(Error::at(
+                // One sentence for every legacy space run; the chart keeps its
+                // own code, so a `data:` diagnostic still filters as chart data.
+                return Err(crate::ledger::properties::legacy_list_error(
+                    "data",
+                    "9, 15, 24",
                     inst.span,
-                    "'data' takes comma-separated values — 'data: 9, 15, 24'",
                 )
                 .code(Code::CHART_DATA));
             }

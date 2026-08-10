@@ -4,16 +4,7 @@ fn svg(src: &str) -> String {
 }
 
 /// The layout-phase error message for a chart that resolves but won't lay out.
-fn layout_err(src: &str) -> String {
-    let toks = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    crate::layout::layout(&program)
-        .err()
-        .expect("expected a layout error")
-        .to_string()
-}
+use crate::testutil::layout_err;
 
 #[test]
 fn bars_chart_lowers_to_axis_bars_legend_and_title() {
@@ -31,18 +22,43 @@ fn bars_chart_lowers_to_axis_bars_legend_and_title() {
     assert!(s.contains(">T</text>"), "chart title text: {s}");
 }
 
+/// Each series type's SVG element [SPEC 14]: the mark a series lowers to,
+/// one row per type, column and radial alike.
 #[test]
-fn a_line_series_draws_a_polyline() {
-    let s = svg("|chart| { categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 3, 6, 4 }\n]\n");
-    assert!(s.contains("<polyline"), "polyline: {s}");
-}
-
-#[test]
-fn a_dots_series_over_points_draws_ellipses() {
-    let s = svg(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |dots| { data: 1 5, 2 3, 3 8 }\n]\n",
-    );
-    assert!(s.contains("<ellipse"), "dots render as ellipses: {s}");
+fn every_series_draws_its_element() {
+    for (what, src, wants) in [
+        (
+            "line",
+            "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 3, 6, 4 }\n]\n",
+            &["<polyline"][..],
+        ),
+        (
+            "dots over points",
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |dots| { data: 1 5, 2 3, 3 8 }\n]\n",
+            &["<ellipse"],
+        ),
+        (
+            "area",
+            "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |area| { data: 3, 6, 4 }\n]\n",
+            &["<polygon"],
+        ),
+        // Radial: the radar loop closes and the spokes wear their category labels.
+        (
+            "radial line",
+            "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 5 }\n  |line| { data: 5, 3, 4 }\n]\n",
+            &["<polyline", ">a</text>"],
+        ),
+        (
+            "radial bars",
+            "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 10 }\n  |bars| { data: 8, 5, 9 }\n]\n",
+            &["<polygon"],
+        ),
+    ] {
+        let s = svg(src);
+        for want in wants {
+            assert!(s.contains(want), "a {what} series must draw {want:?}: {s}");
+        }
+    }
 }
 
 #[test]
@@ -143,38 +159,6 @@ fn a_dual_axis_chart_binds_series_by_id() {
 }
 
 #[test]
-fn an_unknown_axis_id_errors_with_a_suggestion() {
-    let e = layout_err(
-        "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |line| { data: 1; axis: nope }\n]\n",
-    );
-    assert!(e.contains("axis 'nope' not found"), "{e}");
-    assert!(e.contains("'v'"), "suggests the known id: {e}");
-}
-
-#[test]
-fn empty_chart_errors() {
-    assert!(layout_err("|chart| \"T\"\n").contains("at least one series"));
-}
-
-#[test]
-fn data_count_must_match_categories() {
-    let e = layout_err("|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 1, 2, 3 }\n]\n");
-    assert!(e.contains("3 values but the chart has 2 categories"), "{e}");
-}
-
-#[test]
-fn data_and_fn_together_error() {
-    let e = layout_err("|chart| { categories: \"a\" } [\n  |bars| { data: 1; fn: (2) }\n]\n");
-    assert!(e.contains("not both"), "{e}");
-}
-
-#[test]
-fn a_non_series_child_is_rejected() {
-    let e = layout_err("|chart| [\n  |box| \"x\"\n]\n");
-    assert!(e.contains("series"), "{e}");
-}
-
-#[test]
 fn a_fn_series_samples_a_curve_over_the_x_domain() {
     let s = svg(
         "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x*x); samples: 12 }\n]\n",
@@ -187,10 +171,29 @@ fn a_fn_series_samples_a_curve_over_the_x_domain() {
     );
 }
 
+/// `baseline:` on an `|area|` [SPEC 14.2]: the fill closes on that value
+/// rather than zero, so raising the baseline lifts the polygon's foot.
 #[test]
-fn an_area_series_fills_a_polygon() {
-    let s = svg("|chart| { categories: \"a\", \"b\", \"c\" } [\n  |area| { data: 3, 6, 4 }\n]\n");
-    assert!(s.contains("<polygon"), "area fill: {s}");
+fn an_area_baseline_lifts_the_fill_foot() {
+    let foot = |src: &str| {
+        let s = svg(src);
+        let at = s.find("<polygon points=\"").expect("the area fill");
+        let pts = &s[at + 17..];
+        let pts = &pts[..pts.find('"').unwrap()];
+        pts.split_whitespace()
+            .filter_map(|t| t.split(',').nth(1))
+            .filter_map(|y| y.parse::<f64>().ok())
+            .fold(f64::MIN, f64::max)
+    };
+    let zero =
+        foot("|chart| { categories: \"a\", \"b\", \"c\" } [\n  |area| { data: 4, 8, 6 }\n]\n");
+    let raised = foot(
+        "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |area| { data: 4, 8, 6; baseline: 2 }\n]\n",
+    );
+    assert!(
+        raised < zero - 1.0,
+        "baseline: 2 lifts the foot off zero: {raised} vs {zero}"
+    );
 }
 
 #[test]
@@ -200,14 +203,6 @@ fn a_log_axis_draws_decade_ticks() {
     );
     assert!(s.contains(">100</text>"), "decade tick: {s}");
     assert!(s.contains(">1000</text>"), "decade tick: {s}");
-}
-
-#[test]
-fn a_log_axis_over_a_non_positive_domain_errors() {
-    let e = layout_err(
-        "|chart| { categories: \"a\" } [\n  |axis| { side: left; scale: log; range: -1 10 }\n  |bars| { data: 5 }\n]\n",
-    );
-    assert!(e.contains("domain above 0"), "{e}");
 }
 
 #[test]
@@ -226,15 +221,6 @@ fn a_smooth_curve_resamples_densely() {
         "smooth resamples densely, got {} points",
         pts.split(' ').count()
     );
-}
-
-#[test]
-fn a_fn_list_without_bands_reports_the_mismatch() {
-    let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: (1), (2) }\n]\n",
-    );
-    assert!(e.contains("2 formulas"), "{e}");
-    assert!(e.contains("0 bands"), "{e}");
 }
 
 #[test]
@@ -272,15 +258,6 @@ fn a_segmented_fn_draws_one_polyline_across_the_bands() {
 }
 
 #[test]
-fn a_fn_list_length_must_match_the_band_count() {
-    let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { range: 0 1 }\n  |line| { fn: (1), (2), (3) }\n]\n",
-    );
-    assert!(e.contains("3 formulas"), "{e}");
-    assert!(e.contains("1 bands"), "{e}");
-}
-
-#[test]
 fn a_mark_draws_a_reference_line_with_its_label() {
     let s = svg(
         "|chart| { categories: \"a\", \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5, 8 }\n  |mark| \"max\" { at: 6; axis: v; stroke: --red }\n]\n",
@@ -311,22 +288,6 @@ fn marker_none_suppresses_the_point_dot() {
 }
 
 #[test]
-fn a_mark_needs_an_axis() {
-    let e = layout_err(
-        "|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 3 }\n]\n",
-    );
-    assert!(e.contains("needs 'axis:'"), "{e}");
-}
-
-#[test]
-fn a_mark_at_takes_one_or_two_values() {
-    let e = layout_err(
-        "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 1 2 3; axis: v }\n]\n",
-    );
-    assert!(e.contains("one value"), "{e}");
-}
-
-#[test]
 fn stacked_bars_fit_the_per_category_sum() {
     let s = svg(
         "|chart| { categories: \"a\", \"b\"; bars: stacked } [\n  |bars| { data: 3, 4 }\n  |bars| { data: 5, 6 }\n]\n",
@@ -345,31 +306,6 @@ fn overlay_bars_are_translucent() {
         "|chart| { categories: \"a\", \"b\"; bars: overlay } [\n  |bars| { data: 3, 4 }\n  |bars| { data: 7, 6 }\n]\n",
     );
     assert!(s.contains("opacity"), "overlay bars carry an opacity: {s}");
-}
-
-#[test]
-fn a_radial_line_draws_a_closed_radar_with_spoke_labels() {
-    let s = svg(
-        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 5 }\n  |line| { data: 5, 3, 4 }\n]\n",
-    );
-    assert!(s.contains("<polyline"), "the radar loop: {s}");
-    assert!(s.contains(">a</text>"), "a spoke (category) label: {s}");
-}
-
-#[test]
-fn radial_bars_draw_wedge_polygons() {
-    let s = svg(
-        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 10 }\n  |bars| { data: 8, 5, 9 }\n]\n",
-    );
-    assert!(s.contains("<polygon"), "wedge polygons: {s}");
-}
-
-#[test]
-fn a_side_on_a_radial_axis_errors() {
-    let e = layout_err(
-        "|chart| { direction: radial; categories: \"a\", \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3, 4 }\n]\n",
-    );
-    assert!(e.contains("radial"), "{e}");
 }
 
 #[test]
@@ -394,14 +330,6 @@ fn a_row_line_projects_through_the_same_builder() {
 }
 
 #[test]
-fn an_unknown_direction_errors() {
-    let e = layout_err(
-        "|chart| { direction: sideways; categories: \"a\" } [\n  |bars| { data: 5 }\n]\n",
-    );
-    assert!(e.contains("column, row, or radial"), "{e}");
-}
-
-#[test]
 fn a_pie_draws_slice_wedges_and_a_legend() {
     let s = svg("|pie| \"T\" [\n  |slice| \"a\" { value: 3 }\n  |slice| \"b\" { value: 1 }\n]\n");
     assert!(s.contains("<polygon"), "slice wedges: {s}");
@@ -417,35 +345,6 @@ fn a_pie_draws_slice_wedges_and_a_legend() {
 }
 
 #[test]
-fn a_non_slice_child_of_a_pie_errors() {
-    let e = layout_err("|pie| [\n  |bars| { data: 1 }\n]\n");
-    assert!(e.contains("'|slice|' only"), "{e}");
-}
-
-#[test]
-fn an_empty_pie_errors() {
-    assert!(layout_err("|pie| \"T\"\n").contains("at least one '|slice|'"));
-}
-
-#[test]
-fn a_negative_slice_value_errors() {
-    let e = layout_err("|pie| [\n  |slice| { value: -1 }\n]\n");
-    assert!(e.contains("≥ 0"), "{e}");
-}
-
-#[test]
-fn a_pie_summing_to_zero_errors() {
-    let e = layout_err("|pie| [\n  |slice| { value: 0 }\n  |slice| { value: 0 }\n]\n");
-    assert!(e.contains("sum to zero"), "{e}");
-}
-
-#[test]
-fn a_hole_out_of_range_errors() {
-    let e = layout_err("|pie| { hole: 1.5 } [\n  |slice| { value: 1 }\n]\n");
-    assert!(e.contains("fraction 0..1"), "{e}");
-}
-
-#[test]
 fn bubbles_render_as_ovals_with_a_title_floor() {
     let s = svg(
         "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2; value: 4 }\n  |bubble| \"B\" { at: 3 4; value: 16 }\n]\n",
@@ -455,14 +354,6 @@ fn bubbles_render_as_ovals_with_a_title_floor() {
         s.contains("<title>B: 16</title>"),
         "the bubble <title> floor: {s}"
     );
-}
-
-#[test]
-fn a_bubble_needs_at_and_value() {
-    let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2 }\n]\n",
-    );
-    assert!(e.contains("needs 'at:' (x y) and 'value:'"), "{e}");
 }
 
 #[test]
@@ -530,15 +421,6 @@ fn a_series_tooltip_overrides_the_chart_default() {
 }
 
 #[test]
-fn an_arrow_marker_on_a_series_errors() {
-    let e = layout_err(
-        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: arrow }\n]\n",
-    );
-    assert!(e.contains("no centred form"), "{e}");
-    assert!(e.contains("dot, circle, or diamond"), "{e}");
-}
-
-#[test]
 fn a_circle_marker_is_bigger_than_a_dot() {
     // A line vertex `circle` is a hover-sized point; `dot` stays small.
     let c =
@@ -582,32 +464,6 @@ fn data_text_is_normal_weight_chrome_is_semibold() {
     assert!(
         s.contains("font-size: 11px; font-weight: normal\">a</text>"),
         "axis tick normal: {s}"
-    );
-}
-
-#[test]
-fn labels_count_must_match_the_data() {
-    let e = layout_err(
-        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; labels: \"only\" }\n]\n",
-    );
-    assert!(e.contains("1 entries but the series has 2"), "{e}");
-}
-
-#[test]
-fn labels_on_a_fn_series_error() {
-    let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); labels: \"a\", \"b\" }\n]\n",
-    );
-    assert!(e.contains("needs explicit 'data'"), "{e}");
-}
-
-#[test]
-fn a_legacy_space_data_list_errors_with_the_comma_spelling() {
-    // The 0.21 comma law [SPEC 2/20]: `data: 9 15 24` is the pre-law spelling.
-    let e = layout_err("|chart| [\n  |bars| { data: 9 15 24 }\n]\n");
-    assert!(
-        e.contains("'data' takes comma-separated values — 'data: 9, 15, 24'"),
-        "{e}"
     );
 }
 
@@ -659,18 +515,6 @@ fn row_bands_and_marks_flip_with_the_direction() {
     );
     assert!(s.contains(">target<"), "the mark label draws: {s}");
     assert!(s.contains(">hot<"), "the band tick draws: {s}");
-}
-
-#[test]
-fn radial_bands_and_marks_error() {
-    // The flip is never silently lossy [SPEC 14.7/20].
-    let e = layout_err(
-        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 1, 2, 3 }\n  |mark| \"x\" { at: 2 }\n]\n",
-    );
-    assert!(
-        e.contains("a radial chart draws no bands / marks yet — remove it or change 'direction'"),
-        "{e}"
-    );
 }
 
 #[test]
@@ -745,4 +589,151 @@ fn a_bands_old_span_points_at_range() {
         e.contains("a band's extent is 'range: a b'"),
         "the migration pointer: {e}"
     );
+}
+
+// ── Every chart diagnostic, one row per refusal [SPEC 14/17] ──
+
+/// The chart engine's whole refusal surface, in one table: a source the
+/// engine must reject and the substrings its message must carry. Following
+/// `dim_errors_speak_spec` — a diagnostic is a contract with the author, so
+/// each row pins the words, not just the failure.
+#[test]
+fn chart_errors_speak_spec() {
+    for (src, wants) in [
+        ("|chart| \"T\"\n", &["at least one series"][..]),
+        (
+            "|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 1, 2, 3 }\n]\n",
+            &["3 values but the chart has 2 categories"],
+        ),
+        (
+            "|chart| { categories: \"a\" } [\n  |bars| { data: 1; fn: (2) }\n]\n",
+            &["not both"],
+        ),
+        ("|chart| [\n  |box| \"x\"\n]\n", &["series"]),
+        (
+            "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |line| { data: 1; axis: nope }\n]\n",
+            &["axis 'nope' not found", "'v'"],
+        ),
+        (
+            "|chart| { categories: \"a\" } [\n  |axis| { side: left; scale: log; range: -1 10 }\n  |bars| { data: 5 }\n]\n",
+            &["domain above 0"],
+        ),
+        (
+            "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: (1), (2) }\n]\n",
+            &["2 formulas", "0 bands"],
+        ),
+        (
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { range: 0 1 }\n  |line| { fn: (1), (2), (3) }\n]\n",
+            &["3 formulas", "1 bands"],
+        ),
+        (
+            "|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 3 }\n]\n",
+            &["needs 'axis:'"],
+        ),
+        (
+            "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 1 2 3; axis: v }\n]\n",
+            &["one value"],
+        ),
+        (
+            "|chart| { direction: radial; categories: \"a\", \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3, 4 }\n]\n",
+            &["radial"],
+        ),
+        (
+            "|chart| { direction: sideways; categories: \"a\" } [\n  |bars| { data: 5 }\n]\n",
+            &["column, row, or radial"],
+        ),
+        (
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2 }\n]\n",
+            &["needs 'at:' (x y) and 'value:'"],
+        ),
+        (
+            "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: arrow }\n]\n",
+            &["no centred form", "dot, circle, or diamond"],
+        ),
+        (
+            "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; labels: \"only\" }\n]\n",
+            &["1 entries but the series has 2"],
+        ),
+        (
+            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); labels: \"a\", \"b\" }\n]\n",
+            &["needs explicit 'data'"],
+        ),
+        // The 0.21 comma law [SPEC 2/20]: `data: 9 15 24` is the pre-law spelling.
+        (
+            "|chart| [\n  |bars| { data: 9 15 24 }\n]\n",
+            &["'data' takes comma-separated values — 'data: 9, 15, 24'"],
+        ),
+        // The radial flip is never silently lossy [SPEC 14.7/20].
+        (
+            "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 1, 2, 3 }\n  |mark| \"x\" { at: 2 }\n]\n",
+            &["a radial chart draws no bands / marks yet — remove it or change 'direction'"],
+        ),
+        // `format:` [SPEC 14.4/16] — a date preset needs a time axis, and a
+        // misspelling names the usage.
+        (
+            "|chart| [\n|axis| { side: left; format: month }\n|bars| { data: 1, 2 }\n]\n",
+            &["a date preset reads a time axis"],
+        ),
+        (
+            "|chart| { format: decimals } [ |bars| { data: 1 } ]\n",
+            &["'format' takes auto"],
+        ),
+        // Per-datum paint lists [SPEC 14.6]: one paint per datum, on a
+        // per-datum shape, over explicit data.
+        (
+            "|chart| [\n|bars| { data: 9, 15, 24; fill: auto, --red }\n]\n",
+            &["'fill' lists 2 paints but the series has 3 data points"],
+        ),
+        (
+            "|chart| [\n|line| { data: 9, 15; stroke: red, blue }\n]\n",
+            &["one shape with one paint"],
+        ),
+        (
+            "|chart| [\n|bars| { fn: (x); fill: auto, --red }\n]\n",
+            &["needs explicit 'data'"],
+        ),
+        // Time axes [SPEC 14.3/14.4].
+        (
+            "|chart| [\n|axis| { side: bottom; step: 5 }\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n]\n",
+            &["steps by calendar"],
+        ),
+        (
+            "|chart| [\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n|dots| { data: 3 4, 5 6 }\n]\n",
+            &["mixes dates and numbers"],
+        ),
+        (
+            "|chart| [\n|line| { data: \"2026-13-01\" 1, \"2026-06-01\" 2 }\n]\n",
+            &["'2026-13-01' is not a date"],
+        ),
+        (
+            "|chart| [\n|axis| { side: left; scale: time }\n|bars| { data: 1, 2 }\n]\n",
+            &["a value axis is numeric"],
+        ),
+    ] {
+        let e = layout_err(src);
+        for want in wants {
+            assert!(e.contains(want), "{src:?}\n  wanted {want:?}, got {e:?}");
+        }
+    }
+}
+
+/// The pie's own refusals [SPEC 14.6] — the same table, one scope over.
+#[test]
+fn pie_errors_speak_spec() {
+    for (src, want) in [
+        ("|pie| \"T\"\n", "at least one '|slice|'"),
+        ("|pie| [\n  |bars| { data: 1 }\n]\n", "'|slice|' only"),
+        ("|pie| [\n  |slice| { value: -1 }\n]\n", "≥ 0"),
+        (
+            "|pie| [\n  |slice| { value: 0 }\n  |slice| { value: 0 }\n]\n",
+            "sum to zero",
+        ),
+        (
+            "|pie| { hole: 1.5 } [\n  |slice| { value: 1 }\n]\n",
+            "fraction 0..1",
+        ),
+    ] {
+        let e = layout_err(src);
+        assert!(e.contains(want), "{src:?}\n  wanted {want:?}, got {e:?}");
+    }
 }

@@ -249,17 +249,10 @@ fn enclosing_bbox(children: &[PlacedNode], wires: &[RoutedLink]) -> Bbox {
             });
         }
         for t in &w.texts {
-            let size = t.attrs.number("font-size").unwrap_or(0.0);
-            let (hw, hh) = (
-                prim::text_width(&t.content, size, crate::font::Font::of(&t.attrs)) / 2.0,
-                crate::layout::approx_height(&t.content, size, 0.0) / 2.0,
+            ext = ext.union(
+                crate::layout::text::measure(&t.content, &t.attrs)
+                    .shifted(t.position.0, t.position.1),
             );
-            ext = ext.union(Bbox {
-                min_x: t.position.0 - hw,
-                min_y: t.position.1 - hh,
-                max_x: t.position.0 + hw,
-                max_y: t.position.1 + hh,
-            });
         }
     }
     let w = 2.0 * ext.min_x.abs().max(ext.max_x.abs());
@@ -279,11 +272,14 @@ pub(super) struct Apparatus {
 impl Apparatus {
     fn of(attrs: &AttrMap) -> Self {
         Self {
-            fill: attrs.get("fill").cloned().unwrap_or_else(|| live("fill")),
+            fill: attrs
+                .get("fill")
+                .cloned()
+                .unwrap_or_else(|| ResolvedValue::live("fill")),
             stroke: attrs
                 .get("stroke")
                 .cloned()
-                .unwrap_or_else(|| live("stroke")),
+                .unwrap_or_else(|| ResolvedValue::live("stroke")),
             width: attrs.number("stroke-width").unwrap_or(2.0),
         }
     }
@@ -292,15 +288,6 @@ impl Apparatus {
 /// Activation bars are drawn unless `activation: none` [SPEC 13].
 fn activations_on(attrs: &AttrMap) -> bool {
     !matches!(attrs.get("activation"), Some(ResolvedValue::Ident(s)) if s == "none")
-}
-
-/// A `--name` role variable as a live value — palette colours stay themeable. The one
-/// place the engine names a role var, shared by the lifelines, bars, and messages.
-pub(super) fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.to_string(),
-        raw: false,
-    }
 }
 
 /// A participant is any drawn box that is not a frame / separator / note type [SPEC 13].
@@ -397,10 +384,7 @@ fn place_notes(
             }
             // `translate: x y` nudges a note off its placement, so it can be positioned by
             // hand [SPEC 5] — the one post-placement mechanism, reused here.
-            if let Ok(Some((dx, dy))) = super::anchors::translate(&n.attrs, n.span) {
-                n.cx += dx;
-                n.cy += dy;
-            }
+            let _ = super::anchors::nudge(&mut n, super::anchors::SHEET_SPACE);
             // The silhouette was folded by the generic arranger — the core
             // |note| look [SPEC 8]; this engine only places the card.
             Some(n)
@@ -416,16 +400,7 @@ mod tests {
     }
 
     /// The layout-phase error message for a sequence that resolves but won't lay out.
-    fn layout_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        crate::layout::layout(&program)
-            .err()
-            .expect("expected a layout error")
-            .to_string()
-    }
+    use crate::testutil::layout_err;
 
     #[test]
     fn root_sequence_draws_participant_headers_and_lifelines() {
@@ -452,12 +427,7 @@ mod tests {
     #[test]
     fn participants_sit_in_a_row_left_to_right() {
         // Declaration order = left-to-right; distinct x centres prove the row layout.
-        let src = "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\n";
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        let laid = crate::layout::layout(&program).expect("layout");
+        let laid = crate::testutil::laid("|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\n");
         let seq = &laid.nodes[0];
         let xs: Vec<f64> = seq
             .children
@@ -526,12 +496,7 @@ mod tests {
     /// Activation bars are the anonymous `Block` rects on the lifelines — distinct from
     /// the id'd participant headers and the `Line` lifelines / arrows.
     fn bar_count(src: &str) -> usize {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        let laid = crate::layout::layout(&program).expect("layout");
-        laid.nodes[0]
+        crate::testutil::laid(src).nodes[0]
             .children
             .iter()
             .filter(|c| c.kind == crate::resolve::NodeKind::Block && c.id.is_none())
@@ -638,39 +603,15 @@ mod tests {
     fn an_over_note_spans_its_lifelines() {
         // [SPEC 13]: `place: over a c` is a box spanning those lifelines and
         // any between — not a centred card.
-        let l = {
-            let toks = crate::lexer::lex(
-                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|box#c| \"C\"\n|note| \"wide\" { place: over a c }\na -> c \"x\"\n",
-            )
-            .expect("lex");
-            let file = crate::syntax::parser::parse(
-                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|box#c| \"C\"\n|note| \"wide\" { place: over a c }\na -> c \"x\"\n",
-                &toks,
-            )
-            .expect("parse");
-            let lowered = crate::desugar::desugar(&file).expect("desugar");
-            let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-            crate::layout::layout(&program).expect("layout")
+        let l = crate::testutil::laid(
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|box#c| \"C\"\n|note| \"wide\" { place: over a c }\na -> c \"x\"\n",
+        );
+        let find = |pred: &crate::testutil::Pred<'_>| {
+            crate::testutil::find_placed(&l.nodes, pred).map(|(n, x, _)| (n, x))
         };
-        fn find<'a>(
-            nodes: &'a [crate::layout::PlacedNode],
-            pred: &dyn Fn(&crate::layout::PlacedNode) -> bool,
-            off: f64,
-        ) -> Option<(&'a crate::layout::PlacedNode, f64)> {
-            for n in nodes {
-                if pred(n) {
-                    return Some((n, off + n.cx));
-                }
-                if let Some(hit) = find(&n.children, pred, off + n.cx) {
-                    return Some(hit);
-                }
-            }
-            None
-        }
-        let (note, _) = find(&l.nodes, &|n| n.type_chain.iter().any(|t| t == "note"), 0.0)
-            .expect("the note node");
-        let (_, ax) = find(&l.nodes, &|n| n.id.as_deref() == Some("a"), 0.0).expect("a");
-        let (_, cx) = find(&l.nodes, &|n| n.id.as_deref() == Some("c"), 0.0).expect("c");
+        let (note, _) = find(&|n| n.type_chain.iter().any(|t| t == "note")).expect("the note node");
+        let (_, ax) = find(&|n| n.id.as_deref() == Some("a")).expect("a");
+        let (_, cx) = find(&|n| n.id.as_deref() == Some("c")).expect("c");
         assert!(
             note.bbox.w() >= (cx - ax).abs(),
             "the note spans a→c: note {} vs span {}",
@@ -681,43 +622,35 @@ mod tests {
 
     // ── Structural errors [SPEC 21] ──
 
+    /// Every structural refusal the sequence engine owns, one row per
+    /// diagnostic — a message is a contract with the author [SPEC 13/21].
     #[test]
-    fn a_frame_outside_a_sequence_errors() {
-        assert!(layout_err("|loop| [\n  |box#a|\n]\n").contains("belongs in a 'layout: sequence'"));
-    }
-
-    #[test]
-    fn an_else_outside_an_alt_errors() {
-        assert!(
-            layout_err("{ layout: sequence }\n|box#a| \"A\"\n|else| \"x\"\n")
-                .contains("separates an '|alt|'")
-        );
-    }
-
-    #[test]
-    fn a_note_without_placement_errors() {
-        assert!(
-            layout_err("{ layout: sequence }\n|box#a| \"A\"\n|note| \"hi\"\n")
-                .contains("needs 'place:'")
-        );
-    }
-
-    #[test]
-    fn a_malformed_place_names_the_shape() {
-        // A mode then its lifelines [SPEC 13/20]: `left` takes exactly one.
-        assert!(
-            layout_err(
-                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"hi\" { place: left a b }\na -> b \"x\"\n"
-            )
-            .contains("'place' is a mode then its lifelines")
-        );
-    }
-
-    #[test]
-    fn a_sequence_property_off_a_sequence_errors() {
-        assert!(
-            layout_err("|box#a| { activation: none }\n")
-                .contains("valid only in a 'layout: sequence'")
-        );
+    fn sequence_errors_speak_spec() {
+        for (src, want) in [
+            (
+                "|loop| [\n  |box#a|\n]\n",
+                "belongs in a 'layout: sequence'",
+            ),
+            (
+                "{ layout: sequence }\n|box#a| \"A\"\n|else| \"x\"\n",
+                "separates an '|alt|'",
+            ),
+            (
+                "{ layout: sequence }\n|box#a| \"A\"\n|note| \"hi\"\n",
+                "needs 'place:'",
+            ),
+            // A mode then its lifelines [SPEC 13/20]: `left` takes exactly one.
+            (
+                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"hi\" { place: left a b }\na -> b \"x\"\n",
+                "'place' is a mode then its lifelines",
+            ),
+            (
+                "|box#a| { activation: none }\n",
+                "valid only in a 'layout: sequence'",
+            ),
+        ] {
+            let e = layout_err(src);
+            assert!(e.contains(want), "{src:?}\n  wanted {want:?}, got {e:?}");
+        }
     }
 }

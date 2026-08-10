@@ -64,6 +64,53 @@ fn effective_font(
     (font, size)
 }
 
+/// The multi-line block layout [SPEC 5/6] — the baseline step (leading plus
+/// `line-spacing`), the first baseline (the block centred on `y`, then the
+/// cap-height half-shift), and each line's `x` under `line-align`. **One**
+/// computation: the `<text>` tspans and the outlined glyph runs place their
+/// lines identically.
+struct Block {
+    spacing: f64,
+    top: f64,
+    line_x: Box<dyn Fn(&str) -> f64>,
+}
+
+/// `size` is the caller's: the `<text>` path deliberately measures at the
+/// **attrs'** `font-size` (what layout saw), the outlined path at the
+/// cascade-resolved one.
+fn block_layout(
+    content: &str,
+    attrs: &AttrMap,
+    font: Font,
+    size: f64,
+    ls: f64,
+    pos: (f64, f64),
+) -> Block {
+    let (x, y) = pos;
+    let lines = content.split('\n').count();
+    let spacing = size * TEXT_LEADING + attrs.number("line-spacing").unwrap_or(0.0);
+    let top = y - spacing * (lines as f64 - 1.0) / 2.0 + font.cap_height_em() / 2.0 * size;
+    let line_x: Box<dyn Fn(&str) -> f64> = match attrs.get("line-align") {
+        Some(ResolvedValue::Ident(a)) if a == "start" || a == "end" => {
+            let mfont = Font::of(attrs);
+            let block = approx_width(content, mfont, size, ls);
+            if a == "start" {
+                let left = x - block / 2.0;
+                Box::new(move |line| left + approx_width(line, mfont, size, ls) / 2.0)
+            } else {
+                let right = x + block / 2.0;
+                Box::new(move |line| right - approx_width(line, mfont, size, ls) / 2.0)
+            }
+        }
+        _ => Box::new(move |_| x),
+    };
+    Block {
+        spacing,
+        top,
+        line_x,
+    }
+}
+
 /// Emit a `<text class="{class}">` centred on `(x, y)` — `text-anchor:
 /// middle` comes from the class rule, the vertical centring from the baked
 /// cap-height `dy`. `style` is the caller's precomputed paint/font `style=`
@@ -139,23 +186,18 @@ pub(crate) fn emit(
     // its own centre — computed through the one measurement API. (The attrs
     // read shadows the cascade-resolved size on purpose: it is what the
     // measurement saw, byte-stable with the historic emission.)
-    let size = attrs.number("font-size").unwrap_or(0.0);
-    let spacing = size * TEXT_LEADING + attrs.number("line-spacing").unwrap_or(0.0);
-    let top = y - spacing * (lines.len() as f64 - 1.0) / 2.0 + font.cap_height_em() / 2.0 * size;
-    let line_x: Box<dyn Fn(&str) -> f64> = match attrs.get("line-align") {
-        Some(ResolvedValue::Ident(a)) if a == "start" || a == "end" => {
-            let font = crate::font::Font::of(attrs);
-            let block = approx_width(content, font, size, ls);
-            if a == "start" {
-                let left = x - block / 2.0;
-                Box::new(move |line| left + approx_width(line, font, size, ls) / 2.0)
-            } else {
-                let right = x + block / 2.0;
-                Box::new(move |line| right - approx_width(line, font, size, ls) / 2.0)
-            }
-        }
-        _ => Box::new(move |_| x),
-    };
+    let Block {
+        spacing,
+        top,
+        line_x,
+    } = block_layout(
+        content,
+        attrs,
+        font,
+        attrs.number("font-size").unwrap_or(0.0),
+        ls,
+        pos,
+    );
     write!(
         out,
         r#"{indent}<text class="{class}" x="{xs}" y="{ys}"{style}{xform}>"#
@@ -277,24 +319,11 @@ fn emit_outlined(
     .unwrap();
 
     let lines: Vec<&str> = content.split('\n').collect();
-    let spacing = size * TEXT_LEADING + attrs.number("line-spacing").unwrap_or(0.0);
-    // First baseline: block centred on y, then the cap-height half-shift —
-    // the same values the <text> path encodes as tspan tops and the em dy.
-    let top = y - spacing * (lines.len() as f64 - 1.0) / 2.0 + font.cap_height_em() / 2.0 * size;
-    let line_x: Box<dyn Fn(&str) -> f64> = match attrs.get("line-align") {
-        Some(ResolvedValue::Ident(a)) if a == "start" || a == "end" => {
-            let mfont = Font::of(attrs);
-            let block = approx_width(content, mfont, size, ls);
-            if a == "start" {
-                let left = x - block / 2.0;
-                Box::new(move |line| left + approx_width(line, mfont, size, ls) / 2.0)
-            } else {
-                let right = x + block / 2.0;
-                Box::new(move |line| right - approx_width(line, mfont, size, ls) / 2.0)
-            }
-        }
-        _ => Box::new(move |_| x),
-    };
+    let Block {
+        spacing,
+        top,
+        line_x,
+    } = block_layout(content, attrs, font, size, ls, pos);
 
     let scale = size / font.face().upem as f64;
     let skew = if oblique { " skewX(-12)" } else { "" };

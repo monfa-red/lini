@@ -252,47 +252,6 @@ fn a_near_miss_of_a_previously_created_name_warns() {
     );
 }
 
-// ── The CLI contract: errors always fail; --strict promotes warnings ──
-
-#[test]
-fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
-    use std::process::Command;
-    let bin = env!("CARGO_BIN_EXE_lini");
-    let dir = std::env::temp_dir().join("lini-strict-test");
-    std::fs::create_dir_all(&dir).unwrap();
-    let file = dir.join("warns.lini");
-    std::fs::write(&file, "|box#cat| \"cat\"\ncta -> bird\n").unwrap();
-    let run = |args: &[&str]| {
-        let out = Command::new(bin).args(args).output().expect("spawn lini");
-        (
-            out.status.code(),
-            String::from_utf8_lossy(&out.stderr).into_owned(),
-        )
-    };
-    let f = file.to_str().unwrap();
-
-    // A warning alone: exit 0, message on stderr.
-    let (code, err) = run(&[f, "-o", "/dev/null"]);
-    assert_eq!(code, Some(0), "warnings don't fail a normal run: {err}");
-    assert!(err.contains("did you mean 'cat'?"), "{err}");
-
-    // --strict: the same warning is exit 1.
-    let (code, err) = run(&["--strict", f, "-o", "/dev/null"]);
-    assert_eq!(code, Some(1), "--strict promotes warnings: {err}");
-
-    // --no-warn: silent, exit 0.
-    let (code, err) = run(&["--no-warn", f, "-o", "/dev/null"]);
-    assert_eq!(code, Some(0));
-    assert!(err.is_empty(), "--no-warn silences warnings: {err}");
-
-    // A validation error fails even under --no-warn.
-    let bad = dir.join("bad.lini");
-    std::fs::write(&bad, "|box#a| { colr: red; }\n").unwrap();
-    let (code, err) = run(&["--no-warn", bad.to_str().unwrap(), "-o", "/dev/null"]);
-    assert_eq!(code, Some(1), "validation errors always fail: {err}");
-    assert!(err.contains("unknown property 'colr'"), "{err}");
-}
-
 // ── Tree structure errors [SPEC 12/20] — hard compile errors on the nested AST ──
 
 fn tree_err(src: &str) -> String {
@@ -388,16 +347,6 @@ fn scoped_topic_ids_stay_legal_across_sealed_bodies() {
     assert!(
         lini::check(src).is_ok(),
         "scoped duplicate ids should compile"
-    );
-}
-
-#[test]
-fn an_authored_id_may_not_begin_lini() {
-    // The `lini-` prefix is reserved for generated names, mirroring the
-    // `.lini-*` class reservation [SPEC 21/23].
-    insta::assert_snapshot!(
-        lini::check("|box#lini-foo|\n").expect_err("reserved id prefix").message,
-        @"an id may not begin 'lini-' — the prefix is reserved for generated names"
     );
 }
 

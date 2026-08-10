@@ -148,11 +148,8 @@ fn flatten_arc(from: Point, to: Point, center: Point, radius: f64, out: &mut Vec
     let steps = ((radius * angle.abs() / FLATTEN_STEP).ceil() as usize).max(1);
     for i in 1..steps {
         let a = angle * i as f64 / steps as f64;
-        let (cos, sin) = (a.cos(), a.sin());
-        out.push((
-            center.0 + v0.0 * cos - v0.1 * sin,
-            center.1 + v0.0 * sin + v0.1 * cos,
-        ));
+        let (dx, dy) = crate::layout::geom::rotate_rad(v0, a);
+        out.push((center.0 + dx, center.1 + dy));
     }
     out.push(to);
 }

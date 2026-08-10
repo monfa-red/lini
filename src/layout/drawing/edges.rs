@@ -12,7 +12,8 @@
 //! every line.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, unit};
+use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, arc_tangent, unit};
+use crate::layout::geom::dot;
 use crate::resolve::ResolvedValue;
 
 /// Positional agreement finer than any drafting feature (px).
@@ -43,7 +44,7 @@ pub(super) fn spans(subs: &[Subpath], axis: MirrorAxis) -> Vec<(P, P)> {
                 continue; // a stitched gap (a break cut) is no joint
             }
             let (a, b) = (dir_at_end(prev), dir_at_start(next));
-            if a.0 * b.0 + a.1 * b.1 >= TANGENT_DOT {
+            if dot(a, b) >= TANGENT_DOT {
                 continue; // tangent — a fillet, a smooth arc join
             }
             let o = off(next.from());
@@ -135,13 +136,6 @@ fn dir_at_start(seg: &PathSeg) -> P {
             unit(first_nonzero(&[(c1, from), (c2, from), (to, from)]))
         }
     }
-}
-
-/// The circle's unit tangent at `p` about `c` — SVG sweep 1 walks the
-/// increasing angle (clockwise on screen, y down).
-fn arc_tangent(p: P, c: P, sweep: bool) -> P {
-    let v = (p.0 - c.0, p.1 - c.1);
-    unit(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
 }
 
 fn first_nonzero(pairs: &[(P, P)]) -> P {

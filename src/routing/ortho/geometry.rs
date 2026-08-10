@@ -37,8 +37,8 @@ fn chan_of(graph: &ChannelGraph, cell: usize, axis: Axis) -> usize {
 fn centre_along(graph: &ChannelGraph, cell: usize, axis: Axis) -> f64 {
     let r = graph.cells[cell].rect;
     match axis {
-        Axis::H => (r.x0 + r.x1) / 2.0,
-        Axis::V => (r.y0 + r.y1) / 2.0,
+        Axis::H => r.centre().0,
+        Axis::V => r.centre().1,
     }
 }
 
@@ -292,8 +292,7 @@ fn simplify(pts: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
 /// the trim leaves nothing — coincident or overlapping bodies (self-loops,
 /// containment), where no between-bodies segment exists.
 pub fn stray_segment(a: Rect, b: Rect) -> Option<((f64, f64), (f64, f64))> {
-    let centre = |r: Rect| ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0);
-    let (ca, cb) = (centre(a), centre(b));
+    let (ca, cb) = (a.centre(), b.centre());
     let d = (cb.0 - ca.0, cb.1 - ca.1);
     if d == (0.0, 0.0) {
         return None;
@@ -405,7 +404,7 @@ mod tests {
         let p = route_between(a, b, &[wall.inflate(C)]);
         orthogonal(&p);
         let is_port_of = |p: (f64, f64), r: Rect| {
-            let (cx, cy) = ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0);
+            let (cx, cy) = r.centre();
             [(r.x1, cy), (cx, r.y1), (r.x0, cy), (cx, r.y0)].contains(&p)
         };
         assert!(
@@ -427,9 +426,7 @@ mod tests {
         // Hand-built U: down the left flank, bounce in the top-left cell,
         // back down — three runs plus the jog between the legs.
         let graph = ChannelGraph::build(BOUNDS, &[Rect::new(80.0, 40.0, 120.0, 100.0)], false);
-        let mid = |c: &super::super::graph::Cell| {
-            ((c.rect.x0 + c.rect.x1) / 2.0, (c.rect.y0 + c.rect.y1) / 2.0)
-        };
+        let mid = |c: &super::super::graph::Cell| c.rect.centre();
         let cell_at = |x: f64, y: f64| {
             graph
                 .cells

@@ -31,10 +31,7 @@ pub(crate) fn fold(note: &mut PlacedNode) {
         .attrs
         .get("stroke")
         .cloned()
-        .unwrap_or_else(|| ResolvedValue::LiveVar {
-            name: "stroke".to_string(),
-            raw: false,
-        });
+        .unwrap_or_else(|| ResolvedValue::live("stroke"));
     let flap = format!(
         "M {} {t} L {rg} {} L {} {} Z",
         rg - fold,

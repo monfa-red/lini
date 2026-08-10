@@ -3,11 +3,13 @@
 //! shared by every leader-shaped dispatch in `leaders`.
 
 use super::super::super::ir::{Bbox, PlacedNode};
-use super::super::anchors::{Anchor, rotated};
+use super::super::anchors::Anchor;
 use super::super::annotate::Ctx;
 use super::super::geometry::{P, dist, unit};
 use super::super::outline;
 use super::super::symbols::CarriedStack;
+use crate::layout::geom::dot;
+use crate::layout::geom::rotate;
 use crate::ledger::consts::{NOTE_LANDING, NOTE_OFFSET};
 
 /// A leader's drawn skeleton: tip → elbow → landing, plus where its text
@@ -44,11 +46,7 @@ pub(super) fn leader_line(
             // from the datum — an edge authored material-on-the-left reports
             // `outward` into the part.
             let n = anchor.outward()?;
-            Some(if n.0 * aim.0 + n.1 * aim.1 < 0.0 {
-                (-n.0, -n.1)
-            } else {
-                n
-            })
+            Some(if dot(n, aim) < 0.0 { (-n.0, -n.1) } else { n })
         })
         .unwrap_or_else(|| {
             let len = dist(aim, (0.0, 0.0));
@@ -73,7 +71,7 @@ pub(super) fn leader_line(
         .unwrap_or_else(|| {
             let d = unit((aim.0 - elbow.0, aim.1 - elbow.1));
             let o = anchor.to_local(elbow);
-            match outline::raycast(anchor.node, o, rotated(d, -anchor.rot)) {
+            match outline::raycast(anchor.node, o, rotate(d, -anchor.rot)) {
                 Some(t) => (elbow.0 + d.0 * t, elbow.1 + d.1 * t),
                 None => aim,
             }

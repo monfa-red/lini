@@ -202,8 +202,9 @@ impl<'a> Parser<'a> {
     }
 }
 
-/// A valid hex colour run (no `#`): 3, 4, 6, or 8 hex digits.
-fn is_hex_color(s: &str) -> bool {
+/// A valid hex colour run (no `#`): 3, 4, 6, or 8 hex digits [SPEC 10.1] —
+/// the one reading, shared with the theme-file value parser.
+pub(crate) fn is_hex_color(s: &str) -> bool {
     matches!(s.len(), 3 | 4 | 6 | 8) && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 

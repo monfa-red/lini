@@ -456,10 +456,7 @@ pub(in crate::layout) fn layout_frame(
         .attrs
         .get("fill")
         .cloned()
-        .unwrap_or(ResolvedValue::LiveVar {
-            name: "bg".into(),
-            raw: false,
-        });
+        .unwrap_or_else(|| ResolvedValue::live("bg"));
     // The frame anatomy shares the datum box's height [SPEC 15.7/15.9]; the
     // symbol compartment is square at it (the characteristic glyphs are
     // grid-square).
@@ -553,10 +550,7 @@ pub(in crate::layout) fn layout_datum(inst: &ResolvedInst) -> Result<PlacedNode,
         .attrs
         .get("fill")
         .cloned()
-        .unwrap_or(ResolvedValue::LiveVar {
-            name: "bg".into(),
-            raw: false,
-        });
+        .unwrap_or_else(|| ResolvedValue::live("bg"));
     let children = vec![
         prim::rect(0.0, 0.0, w, h, fill, 1.0),
         symbols::datum_frame_box((0.0, 0.0), w, h, paint.stroke.clone(), paint.sw),
@@ -573,16 +567,7 @@ mod tests {
 
     const PART: &str = "{ layout: drawing; density: 1 }\n|rect#a| { width: 80; height: 40 }\na:bottom >- \"A\"\na:right >- \"B\"\n";
 
-    fn compile_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
-        match crate::desugar::desugar(&file)
-            .and_then(|low| crate::resolve::resolve_with_theme(&low, &[]).map(|_| ()))
-        {
-            Ok(()) => panic!("expected a resolve error"),
-            Err(e) => e.message,
-        }
-    }
+    use crate::testutil::resolve_err as compile_err;
 
     /// Every drafting glyph under `n`, as its registry symbol name.
     fn glyphs(n: &PlacedNode) -> Vec<String> {

@@ -17,7 +17,7 @@ mod decl;
 mod links;
 mod nodes;
 mod selector;
-mod values;
+pub(crate) mod values;
 
 #[cfg(test)]
 mod tests;

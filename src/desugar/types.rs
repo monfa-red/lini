@@ -298,6 +298,37 @@ mod tests {
         );
     }
 
+    /// The depth bound [SPEC 3]: the deepest chain the builder accepts still
+    /// builds, and one link further is refused by name with the limit spelled
+    /// out. Without the bound a pathological chain is only slow, so nothing
+    /// else in the suite would ever notice it.
+    #[test]
+    fn a_define_chain_bottoms_out_at_the_max_inheritance_depth() {
+        // `|t0::box|` already sits two hops over the `block` primitive
+        // (`box` is itself a template), so `n` user defines walk n + 2 deep.
+        let chain_of = |n: usize| {
+            let mut src = String::from("{\n  |t0::box| { }\n");
+            for i in 1..n {
+                src.push_str(&format!("  |t{i}::t{}| {{ }}\n", i - 1));
+            }
+            src.push_str("}\n");
+            src
+        };
+        let deepest = MAX_INHERITANCE_DEPTH - 1;
+        assert_eq!(
+            chain(&chain_of(deepest), &format!("t{}", deepest - 1)).len(),
+            deepest + 1,
+            "box plus every define in the chain"
+        );
+        let e = build_err(&chain_of(deepest + 1));
+        assert!(
+            e.contains(&format!(
+                "exceeds max inheritance depth ({MAX_INHERITANCE_DEPTH})"
+            )),
+            "the limit is named: {e}"
+        );
+    }
+
     #[test]
     fn cycle_and_shadow_error() {
         assert!(build_err("{ |a::b| { }\n|b::a| { } }\n").contains("cycle"));

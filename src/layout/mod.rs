@@ -4,7 +4,7 @@ pub(crate) mod chart;
 pub(crate) mod drawing;
 mod flex;
 mod frame;
-mod geom;
+pub(crate) mod geom;
 mod grid;
 pub(crate) mod ir;
 mod note;
@@ -15,7 +15,7 @@ mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim
 pub(crate) mod schematic;
 pub(crate) mod sequence;
 mod stack;
-mod text;
+pub(crate) mod text;
 pub(crate) mod tree;
 mod values;
 mod wrap;

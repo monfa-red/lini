@@ -8,7 +8,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, escape_xml, format_value, num};
 use super::wavy;
 use crate::Options;
-use crate::layout::{LaidOut, RoutedLink, RoutedText, Stray, approx_height, approx_width};
+use crate::layout::{LaidOut, RoutedLink, RoutedText, Stray};
 use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, VarTable};
 use std::fmt::Write;
@@ -30,7 +30,7 @@ const LABEL_CUT_PAD_V: f64 = 0.15;
 /// wire's mask covers.
 type Rect = (f64, f64, f64, f64);
 
-/// The link's corner-radius cap (ROUTING Model step 7) — **the** one corner-
+/// The link's corner-radius cap (ROUTING Model step 6) — **the** one corner-
 /// rounding authority: the link's resolved `corner-radius` [SPEC 17], and at
 /// `auto` (the property's default, and anything not a number) the
 /// clearance-derived value the pass has always used. A schematic wire bends
@@ -261,7 +261,7 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 /// The path `d` with every interior corner rounded into a quarter arc —
 /// radius from the fillet pass ([`fillet_targets`]), kept feasible on the
 /// *drawn* (marker-shortened) legs by the shared formatter, so an arc never
-/// eats a neighbouring arc or a marker pull-back (ROUTING Model step 7).
+/// eats a neighbouring arc or a marker pull-back (ROUTING Model step 6).
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     super::rounding::path_d(pts, targets)
 }
@@ -319,7 +319,7 @@ struct Corner {
 }
 
 /// Per-link, per-interior-corner fillet radius targets (ROUTING Model
-/// step 7): corners nested on one diagonal — same turn quadrant, each
+/// step 6): corners nested on one diagonal — same turn quadrant, each
 /// vertex offset outward from an inner corner on **both** axes — round
 /// **concentrically**: the innermost keeps the base cap and each corner
 /// outward grows by the mean of its two axis offsets. Equal offsets (one
@@ -444,12 +444,10 @@ fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
 /// rect other wires test against. One computation, so a label cuts every
 /// wire identically.
 pub(super) fn cut_rect(t: &RoutedText) -> Rect {
-    let size = t.attrs.number("font-size").unwrap_or(0.0);
-    let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
-    let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
-    let font = crate::font::Font::of(&t.attrs);
-    let cw = approx_width(&t.content, font, size, ls) + size * LABEL_CUT_PAD_H * 2.0;
-    let ch = approx_height(&t.content, size, lsp) + size * LABEL_CUT_PAD_V * 2.0;
+    let size = crate::layout::text::metrics(&t.attrs).0;
+    let box_ = crate::layout::text::measure(&t.content, &t.attrs);
+    let cw = box_.w() + size * LABEL_CUT_PAD_H * 2.0;
+    let ch = box_.h() + size * LABEL_CUT_PAD_V * 2.0;
     let (cx, cy) = t.position;
     (cx - cw / 2.0, cy - ch / 2.0, cw, ch)
 }

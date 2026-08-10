@@ -189,7 +189,7 @@ fn chrome_group(ty: &str, chrome: Vec<Value>, at: &Node) -> Node {
     // parent's tail as their span — the printer sorts a body by span, and a
     // parent-headed span would hoist the chrome above the parent's `[ ]`.
     let tail = crate::span::Span::new(at.span.end, at.span.end);
-    super::chrome::node(
+    super::synth::styled(
         ty,
         vec![Decl {
             name: "chrome".into(),

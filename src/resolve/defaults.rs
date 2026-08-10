@@ -6,32 +6,42 @@
 
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
 
+// ── Palette value constructors — the one spelling, shared with `crate::theme`'s
+// built-in palettes so a hand-written theme and the defaults are built alike.
+
+pub(crate) fn ident(s: &str) -> ResolvedValue {
+    ResolvedValue::Ident(s.into())
+}
+
+pub(crate) fn hex(s: &str) -> ResolvedValue {
+    ResolvedValue::Hex(s.into())
+}
+
+pub(crate) fn rgba(r: f64, g: f64, b: f64, a: f64) -> ResolvedValue {
+    ResolvedValue::Call(ResolvedCall {
+        name: "rgba".into(),
+        args: vec![
+            ResolvedValue::Number(r),
+            ResolvedValue::Number(g),
+            ResolvedValue::Number(b),
+            ResolvedValue::Number(a),
+        ],
+    })
+}
+
+/// A `light-dark(LIGHT, DARK)` colour: the UA paints the arm matching the
+/// element's `color-scheme`, so one SVG carries both palettes [SPEC 10.1].
+pub(crate) fn light_dark(l: ResolvedValue, d: ResolvedValue) -> ResolvedValue {
+    ResolvedValue::Call(ResolvedCall {
+        name: "light-dark".into(),
+        args: vec![l, d],
+    })
+}
+
 /// The built-in visual `--lini-*` variables [SPEC 10.1], stored without the
 /// `--lini-` prefix. They stay live at runtime; layout values are not vars.
 pub fn built_in_defaults() -> VarTable {
     let mut t = VarTable::new();
-    let ident = |s: &str| ResolvedValue::Ident(s.into());
-    let hex = |s: &str| ResolvedValue::Hex(s.into());
-    let rgba = |r: f64, g: f64, b: f64, a: f64| {
-        ResolvedValue::Call(ResolvedCall {
-            name: "rgba".into(),
-            args: vec![
-                ResolvedValue::Number(r),
-                ResolvedValue::Number(g),
-                ResolvedValue::Number(b),
-                ResolvedValue::Number(a),
-            ],
-        })
-    };
-    // A `light-dark(LIGHT, DARK)` colour: the UA paints the arm matching the
-    // element's `color-scheme`, so one SVG carries both palettes [SPEC 10.1].
-    let light_dark = |l: ResolvedValue, d: ResolvedValue| {
-        ResolvedValue::Call(ResolvedCall {
-            name: "light-dark".into(),
-            args: vec![l, d],
-        })
-    };
-
     // Visual vars — live at runtime, each colour a light-dark() pair [SPEC 10.1].
     t.set("bg", light_dark(ident("white"), hex("1b1b1f")));
     t.set("fg", light_dark(ident("black"), hex("e8e8ea")));
@@ -109,13 +119,7 @@ pub fn built_in_defaults() -> VarTable {
     t.set("font-weight", ResolvedValue::Number(500.0));
     t.set("caption-font-weight", ResolvedValue::Number(400.0));
     t.set("link-font-weight", ResolvedValue::Number(400.0));
-    t.set(
-        "text-color",
-        ResolvedValue::LiveVar {
-            name: "fg".into(),
-            raw: false,
-        },
-    );
+    t.set("text-color", ResolvedValue::live("fg"));
     t.set(
         "shadow-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.2), rgba(0.0, 0.0, 0.0, 0.5)),

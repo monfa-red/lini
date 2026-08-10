@@ -200,6 +200,11 @@ fn layout_card(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
 }
 
 /// Recursive union of a placed subtree's card boxes, in the container's frame.
+///
+/// **Not** [`Bbox::extent_of`]: this walk is deliberately naive — it ignores a
+/// card's own `rotate:` and descends through a `clip:`. Switching it to the
+/// rotation-aware walk moves every turned tree's cluster box, so the two stay
+/// apart until that behaviour change is chosen on purpose.
 fn union_all(nodes: &[PlacedNode]) -> Bbox {
     fn go(nodes: &[PlacedNode], ox: f64, oy: f64, acc: &mut Bbox) {
         for n in nodes {
@@ -501,11 +506,7 @@ fn place_content(
         Axis::Row => cluster.min_x,
     };
     for mut c in content {
-        if let Some(pin) = super::anchors::read_pin(&c.attrs, c.span)? {
-            let (cx, cy) = pin.target(cluster, c.bbox);
-            c.cx = cx;
-            c.cy = cy;
-        } else {
+        if !super::anchors::seat(&mut c, cluster)? {
             match axis {
                 Axis::Column => {
                     c.cx = (cluster.min_x + cluster.max_x) / 2.0;
@@ -521,10 +522,7 @@ fn place_content(
                 }
             }
         }
-        if let Some((dx, dy)) = super::anchors::translate(&c.attrs, c.span)? {
-            c.cx += dx;
-            c.cy += dy;
-        }
+        super::anchors::nudge(&mut c, super::anchors::SHEET_SPACE)?;
         children.push(c);
     }
     Ok(())

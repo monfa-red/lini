@@ -1,12 +1,6 @@
 use super::*;
 
-fn lay_out(src: &str) -> LaidOut {
-    let tokens = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    layout(&program).expect("layout")
-}
+use crate::testutil::laid as lay_out;
 
 // ── Sizing [SPEC 5] ──
 
@@ -125,11 +119,7 @@ fn column_layout_stacks_vertically() {
 }
 
 fn lay_out_err(src: &str) -> Error {
-    let tokens = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    match layout(&program) {
+    match crate::testutil::try_laid(src) {
         Ok(_) => panic!("expected a layout error"),
         Err(e) => e,
     }
@@ -333,16 +323,7 @@ fn grid_cell_pins_placement() {
 
 /// The `|title-block|` node inside a laid-out page.
 fn find_title_block(nodes: &[PlacedNode]) -> &PlacedNode {
-    fn walk(nodes: &[PlacedNode]) -> Option<&PlacedNode> {
-        nodes.iter().find_map(|n| {
-            if n.type_chain.iter().any(|t| t == "title-block") {
-                Some(n)
-            } else {
-                walk(&n.children)
-            }
-        })
-    }
-    walk(nodes).expect("a title block")
+    crate::testutil::placed_by_type(nodes, "title-block").0
 }
 
 #[test]
@@ -433,11 +414,9 @@ fn a_span_past_the_columns_errors() {
     // [SPEC 21]'s grid-out-of-range row, the span form — this looped forever
     // before it errored (the auto-flow cursor could never seat the child).
     let src = "{ layout: grid; columns: 60, auto; }\n|block#a| { span: 3 1 } [ \"A\" ]\n|block#b| [ \"B\" ]\n";
-    let tokens = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    let err = layout(&program).err().expect("an out-of-range span errors");
+    let err = crate::testutil::try_laid(src)
+        .err()
+        .expect("an out-of-range span errors");
     assert_eq!(err.message, "span: 3 _ exceeds columns=2");
 }
 
@@ -538,11 +517,7 @@ fn grid_rows_track_list_is_a_floor_implicit_rows_overflow() {
 #[test]
 fn grid_without_columns_is_an_error() {
     let src = "{ layout: grid; }\n|box#a|\n|box#b|\n";
-    let tokens = crate::lexer::lex(src).expect("lex");
-    let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
-    let lowered = crate::desugar::desugar(&file).expect("desugar");
-    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-    assert!(layout(&program).is_err());
+    assert!(crate::testutil::try_laid(src).is_err());
 }
 
 // ── Gutters [SPEC 11] ──

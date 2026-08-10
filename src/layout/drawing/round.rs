@@ -7,7 +7,7 @@
 //! `leaders::measured*`.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::anchors::{self, Anchor, Spot, rotated};
+use super::anchors::{self, Anchor, Spot};
 use super::annotate::stack_side;
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
@@ -18,6 +18,7 @@ use super::symbols::CarriedStack;
 use super::{Segment, leaders};
 use crate::ast::Side;
 use crate::error::Error;
+use crate::layout::geom::rotate;
 use crate::ledger::consts::ARROW_LEN;
 use crate::resolve::{ResolvedLink, ResolvedText};
 
@@ -117,7 +118,7 @@ pub(super) fn lower(
         // to the opposite side — ⌀-read, stacked — on anything else.
         Spot::Side(side) => {
             if let Some(d) = a.round_diameter() {
-                let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotated(side.outward(), a.rot));
+                let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotate(side.outward(), a.rot));
                 let text = compose(Glyph::Dia, d / ctx.scale)?;
                 return Ok(diametral(
                     centre_of(&a),
@@ -150,7 +151,7 @@ pub(super) fn lower(
             let Some(d) = a.round_diameter() else {
                 return Err(no_axis());
             };
-            let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotated(*diag, a.rot));
+            let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotate(*diag, a.rot));
             let text = compose(Glyph::Dia, d / ctx.scale)?;
             Ok(diametral(
                 centre_of(&a),

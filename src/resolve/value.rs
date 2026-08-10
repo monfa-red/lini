@@ -11,7 +11,7 @@
 //! these are visual vars only [SPEC 10.2], never layout numbers.
 
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
-use crate::error::{Code, Error};
+use crate::error::Error;
 use crate::expr::{self, Env, Expr, FuncTable, Value as ExprValue};
 use crate::ledger::properties;
 use crate::span::Span;
@@ -119,7 +119,7 @@ pub fn resolve_property(
 /// (strings, keywords, tracks). Number lists pass through: their readers decide,
 /// since `data:` / `points:` items are legitimately `x y` pairs [SPEC 14.3].
 fn apply_comma_law(name: &str, value: ResolvedValue, span: Span) -> Result<ResolvedValue, Error> {
-    use properties::{Kind, Shape};
+    use properties::Shape;
     let Some(Shape::List(kind)) = properties::get(name).map(|p| &p.shape) else {
         return Ok(value);
     };
@@ -127,20 +127,9 @@ fn apply_comma_law(name: &str, value: ResolvedValue, span: Span) -> Result<Resol
         ResolvedValue::List(items) => items,
         one => vec![one],
     };
-    let example = match kind {
-        Kind::Str => Some("\"a\", \"b\""),
-        Kind::Ident => Some("start, center, end"),
-        Kind::Track => Some("80, 140, auto"),
-        _ => None,
-    };
-    if let Some(example) = example
-        && items.iter().any(|i| matches!(i, ResolvedValue::Tuple(_)))
-    {
-        return Err(Error::at(
-            span,
-            format!("'{name}' takes comma-separated values — '{name}: {example}'"),
-        )
-        .code(Code::LEGACY_LIST));
+    let example = kind.list_example();
+    if !example.is_empty() && items.iter().any(|i| matches!(i, ResolvedValue::Tuple(_))) {
+        return Err(properties::legacy_list_error(name, example, span));
     }
     Ok(ResolvedValue::List(items))
 }
@@ -278,10 +267,7 @@ fn resolve_scalar(
         Value::Hex(h) => ResolvedValue::Hex(h.clone()),
         Value::Ident(s) => ResolvedValue::Ident(s.clone()),
         // `--name` → a live `var(--lini-name)`; visual-only [SPEC 10.2].
-        Value::Var(name) => ResolvedValue::LiveVar {
-            name: name.clone(),
-            raw: false,
-        },
+        Value::Var(name) => ResolvedValue::live(name.clone()),
         // A colour / track builder stays a typed Call; any other call is compute.
         Value::Call(c) if properties::is_builder_call(&c.name) => {
             resolve_call(c, span, vars, funcs)?

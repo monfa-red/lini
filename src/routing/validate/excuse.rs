@@ -7,11 +7,10 @@
 //! order as a longest-path reach over the contention edges.
 
 use super::{EPS, landing, seg_box};
-use crate::ast::Side;
 use crate::layout::ir::RoutedLink;
 use crate::routing::ortho::cost::min_pitch;
 use crate::routing::ortho::graph::{Axis, ChannelGraph};
-use crate::routing::ortho::rect::Rect;
+use crate::routing::ortho::rect::{Rect, port_window};
 use crate::routing::ortho::scene::SceneIndex;
 
 /// Law 1's one excuse, judged on the output alone: the drawn compression is
@@ -282,16 +281,4 @@ fn channel_of(graph: &ChannelGraph, axis: Axis, ext: (f64, f64), ordinate: f64) 
         .find(|i| covers(i))
         .or(candidates.first())
         .copied()
-}
-
-/// The lawful port window along `side`: the side minus a `clearance` corner
-/// margin at each end, the margin relaxing to half the side on sides too
-/// short for it.
-fn port_window(rect: Rect, side: Side, c: f64) -> (f64, f64) {
-    let (lo, hi) = match side {
-        Side::Left | Side::Right => (rect.y0, rect.y1),
-        _ => (rect.x0, rect.x1),
-    };
-    let m = c.min((hi - lo) / 2.0);
-    (lo + m, hi - m)
 }

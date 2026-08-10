@@ -65,17 +65,11 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 }
 
 fn bare_node(ty: &str, classes: Vec<String>, style: Vec<Decl>, children: Vec<Child>) -> Node {
-    Node {
-        id: None,
-        ty: Some(ty.into()),
-        label: None,
-        classes,
-        style,
-        style_span: None,
-        children,
-        links: Vec::new(),
-        span: Span::empty(),
-    }
+    let mut n = super::synth::node(ty, Span::empty());
+    n.classes = classes;
+    n.style = style;
+    n.children = children;
+    n
 }
 
 fn text(s: &str) -> Child {
