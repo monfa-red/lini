@@ -374,8 +374,10 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         // The ISO 7200 title block [SPEC 15.8]: a |table| the page seats flush
         // inside its frame's bottom-right corner — compact, thin-ruled, sharp.
+        // Sharp corners: the chain reaches this through `|table|` → `|group|`,
+        // whose 8 would round the block [SPEC 8].
         "title-block" => vec![
-            n("font-size", 15.0),
+            n("font-size", 11.0),
             n("stroke-width", 1.0),
             n("radius", 0.0),
         ],
@@ -786,6 +788,18 @@ mod tests {
         assert!(g.iter().any(|d| d.name == "stroke-style"));
         assert_eq!(num(&g, "stroke-width"), Some(1.0));
         assert!(template_bundle("oval").is_empty());
+    }
+
+    #[test]
+    fn the_title_block_is_small_thin_and_square() {
+        // [SPEC 8]: `font-size: 11; stroke-width: 1` — the ISO 7200 block reads
+        // a step below body text. Its `radius: 0` is not dead: the chain runs
+        // `|table|` → `|group|`, whose 8 would round it.
+        let tb = template_bundle("title-block");
+        assert_eq!(num(&tb, "font-size"), Some(11.0));
+        assert_eq!(num(&tb, "stroke-width"), Some(1.0));
+        assert_eq!(num(&tb, "radius"), Some(0.0));
+        assert_eq!(num(&template_bundle("group"), "radius"), Some(8.0));
     }
 
     #[test]

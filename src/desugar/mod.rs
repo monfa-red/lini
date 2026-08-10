@@ -33,13 +33,11 @@ use crate::ledger::defaults::root_defaults;
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, Value,
+    Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, Value, layout_of,
 };
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 pub(crate) use nest::{Nest, STATEMENT_ENGINES};
-use nest::{
-    is_drawing_body, is_schematic_body, root_layout, seals_drawing_scope, seals_schematic_scope,
-};
+use nest::{in_drawing_scope, is_drawing_body, is_schematic_body, seals_schematic_scope};
 use std::collections::{BTreeSet, HashMap};
 use tables::{
     column_count, distribute_cell_alignment, header_node, wrap_body_cells, wrap_header_row,
@@ -95,15 +93,9 @@ impl Lower<'_> {
             .unwrap_or_default()
     }
     fn chain_ident(&self, chain: &[String], style: &[Decl], name: &str) -> Option<String> {
-        match self
-            .chain_decl(chain, style, name)?
-            .groups
-            .first()?
-            .first()?
-        {
-            Value::Ident(s) => Some(s.clone()),
-            _ => None,
-        }
+        self.chain_decl(chain, style, name)?
+            .ident()
+            .map(str::to_string)
     }
     fn chain_number(&self, chain: &[String], style: &[Decl], name: &str) -> Option<f64> {
         match self
@@ -204,8 +196,8 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    messages inside any root-sequence frame, since a frame opens no scope and its
     //    endpoints resolve against the scene's participants [SPEC 13]. ──
     let root_nest = Nest {
-        drawing: root_layout(&user_root) == Some("drawing"),
-        schematic: root_layout(&user_root) == Some("schematic"),
+        drawing: layout_of(&user_root) == Some("drawing"),
+        schematic: layout_of(&user_root) == Some("schematic"),
     };
     let cx = Lower {
         types: &types,
@@ -252,7 +244,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     // Display refs [SPEC 16.2]: parts read their id as the drawn ref;
     // anonymous ones mint prefix + N, per scope.
-    schematic::mint_refs(&cx, &mut instances);
+    schematic::mint_refs(&cx, &mut instances)?;
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
     if !root_nest.drawing {
@@ -308,8 +300,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut stylesheet: Vec<StyleItem> = Vec::new();
     // The scene defaults, plus any root-engine defaults (a root `{ layout: sequence }` gets
     // the sequence `gap`), then the user's own decls on top.
-    let mut layout_defaults =
-        crate::ledger::defaults::root_layout_defaults(root_layout(&user_root));
+    let mut layout_defaults = crate::ledger::defaults::root_layout_defaults(layout_of(&user_root));
     // A file whose drawn content is only `|page|` sheets hugs them — the
     // paper is the margin, so the root's padding defaults to 0 [SPEC 15.8];
     // the user's own padding still wins.
@@ -336,7 +327,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let synthesizes_shapes = ["chart", "pie", "sequence"]
         .iter()
         .any(|t| present.contains(*t))
-        || root_layout(&user_root) == Some("sequence");
+        || layout_of(&user_root) == Some("sequence");
     for r in class_defs(&present, &element_rules, &extra_order, synthesizes_shapes) {
         stylesheet.push(StyleItem::Rule(r));
     }
@@ -451,7 +442,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
     // that reads its own body's statements stops them dead.
     let is_schematic = is_schematic_body(cx, &scope_chain, &node.style);
     let child_nest = Nest {
-        drawing: is_drawing || (nest.drawing && !seals_drawing_scope(&info.chain, &node.style)),
+        drawing: in_drawing_scope(is_drawing, nest.drawing, &info.chain, &node.style),
         schematic: is_schematic
             || (nest.schematic && !seals_schematic_scope(cx, &scope_chain, &node.style)),
     };
@@ -719,7 +710,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
 
     // Display refs [SPEC 16.2], per scope — after the gather, so a capsule
     // part reads its declaration.
-    schematic::mint_refs(cx, &mut children);
+    schematic::mint_refs(cx, &mut children)?;
     // The body's links, rewritten by the gather (capsules hoisted, label wires
     // minted), each lowering as before: head label folded into the label list,
     // auto-`along:` filled.

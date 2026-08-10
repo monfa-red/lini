@@ -17,7 +17,7 @@ pub(crate) use chain::chains;
 use family::{LABEL_SYMBOLS, variant_names};
 pub(crate) use family::{
     PartNode, Role, SchKind, part_glyph, part_pin_ids, role, sch_kind, schematic_type,
-    terminal_facing, terminal_ids,
+    terminal_facing, terminal_ids, walk_pins,
 };
 pub(super) use pins::{
     assemble_component, authored_side, expand_connector_pins, pin_sides, pins_of,
@@ -398,7 +398,7 @@ fn tag_flag(shape: &str) -> Node {
 /// minted refs never become ids, so wiring one stays an unknown endpoint.
 /// Idempotent — a part already carrying its readout is skipped, so re-desugar
 /// (and hand-mixed lowered sources) never double-mint.
-pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) {
+pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) -> Result<(), Error> {
     let taken: std::collections::HashSet<String> = children
         .iter()
         .filter_map(|c| match c {
@@ -441,10 +441,10 @@ pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) {
             }
         };
         let readout = readout(&text, anchor, dx, dy);
-        if let Ok(child) = lowered_chrome(cx, &readout, "lini-ref") {
-            part.children.push(child);
-        }
+        part.children
+            .push(lowered_chrome(cx, &readout, "lini-ref")?);
     }
+    Ok(())
 }
 
 fn has_ref(part: &Node) -> bool {

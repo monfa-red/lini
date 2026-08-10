@@ -162,12 +162,26 @@ pub fn auto(n: f64) -> String {
     }
 }
 
+/// The decade `n`'s leading digit lands in **once rounded to `sig` significant
+/// digits** — `log10().floor()` reads the decade before rounding, and rounding
+/// carries out of it (9.99 at two digits is 10, not 10.0). Every reading that
+/// counts digits has to count them in the decade the printed number is in.
+fn rounded_exp(n: f64, sig: i32) -> i32 {
+    let exp = n.abs().log10().floor() as i32;
+    let round_to = 10f64.powi(sig - 1);
+    let mant = n.abs() / 10f64.powi(exp);
+    if (mant * round_to).round() / round_to >= 10.0 {
+        exp + 1
+    } else {
+        exp
+    }
+}
+
 fn significant(n: f64, s: u8) -> String {
     if n == 0.0 || !n.is_finite() {
         return auto(n);
     }
-    let exp = n.abs().log10().floor() as i32;
-    let dec = s as i32 - 1 - exp;
+    let dec = s as i32 - 1 - rounded_exp(n, s as i32);
     if dec < 0 {
         // Rounding above the decimal point: snap to the significant place.
         let scale = 10f64.powi(-dec);
@@ -182,13 +196,10 @@ fn exponential(n: f64, d: u8, eng: bool) -> String {
         return format!("{}e0", no_neg_zero(format!("{:.*}", d as usize, 0.0)));
     }
     let round_to = 10f64.powi(d as i32);
-    let mut exp = n.abs().log10().floor() as i32;
+    // The mantissa carries a rounded 9.99 into the next band (10.0 at d = 1) —
+    // the same carry the significant reading counts by.
+    let mut exp = rounded_exp(n, d as i32 + 1);
     let mut mant = n / 10f64.powi(exp);
-    // Mantissa rounding may carry past the band's top (9.99 → 10.0 at d = 1).
-    if (mant.abs() * round_to).round() / round_to >= 10.0 {
-        exp += 1;
-        mant /= 10.0;
-    }
     if eng {
         let down = exp.rem_euclid(3);
         exp -= down;
@@ -320,6 +331,12 @@ mod tests {
         assert_eq!(render(999.9, Format::Significant(3)), "1000");
         assert_eq!(render(0.0, Format::Significant(3)), "0");
         assert_eq!(render(-1234.0, Format::Significant(2)), "-1200");
+        // A carrying mantissa keeps the digit count: 9.99 at two digits is 10,
+        // not 10.0 (the decade the *rounded* number sits in is the one to count
+        // from) — the same carry `scientific` reads.
+        assert_eq!(render(9.99, Format::Significant(2)), "10");
+        assert_eq!(render(0.0999, Format::Significant(2)), "0.10");
+        assert_eq!(render(-9.96, Format::Significant(3)), "-9.96");
     }
 
     #[test]

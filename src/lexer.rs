@@ -93,7 +93,10 @@ impl<'a> Lexer<'a> {
         Lexer {
             src,
             bytes: src.as_bytes(),
-            i: 0,
+            // A leading BOM is ignored [SPEC 2]. Skipped here rather than at the
+            // file reader so every entry point is covered (`compile_str` takes a
+            // `&str`); spans stay true source-byte offsets.
+            i: if src.starts_with(BOM) { BOM.len() } else { 0 },
             paren_depth: 0,
             expr_mode,
             tokens: Vec::new(),
@@ -244,9 +247,10 @@ impl<'a> Lexer<'a> {
                 d if d.is_ascii_digit() => self.lex_number()?,
                 c if is_ident_start(c) => self.lex_ident(),
                 _ => {
+                    let ch = self.current_char();
                     return Err(Error::at(
-                        Span::new(self.i, self.i + 1),
-                        format!("unexpected character {:?}", c as char),
+                        Span::new(self.i, self.i + ch.len_utf8()),
+                        format!("unexpected character {ch:?}"),
                     )
                     .code(Code::UNEXPECTED_CHAR));
                 }
@@ -257,6 +261,13 @@ impl<'a> Lexer<'a> {
 
     fn peek(&self, n: usize) -> Option<u8> {
         self.bytes.get(self.i + n).copied()
+    }
+
+    /// The whole character at the cursor — the source is UTF-8, so a byte is not
+    /// a char: decoding is how a string keeps `é` intact and how an error names
+    /// and spans the character it rejects, rather than one of its bytes.
+    fn current_char(&self) -> char {
+        self.src[self.i..].chars().next().expect("non-empty utf-8")
     }
 
     fn push_punct(&mut self, kind: TokKind, len: usize) {
@@ -332,7 +343,7 @@ impl<'a> Lexer<'a> {
                 self.i += 1;
                 continue;
             }
-            let ch = self.src[self.i..].chars().next().expect("non-empty utf-8");
+            let ch = self.current_char();
             value.push(ch);
             self.i += ch.len_utf8();
         }
@@ -397,9 +408,10 @@ impl<'a> Lexer<'a> {
                 saw_digit = true;
             }
         }
-        // Scientific notation is expression-only [SPEC 10.7]: `1e6`, `1.5e-2`. Back
-        // off if no exponent digits follow (so a stray `e` stays an ident).
-        if self.expr_mode && self.i < self.bytes.len() && matches!(self.bytes[self.i], b'e' | b'E')
+        // Scientific notation is math-only [SPEC 10.7]: `1e6`, `1.5e-2` — inside a
+        // value's parens (a call's own parens count) or a bare expression. Back off
+        // if no exponent digits follow (so a stray `e` stays an ident).
+        if self.in_math() && self.i < self.bytes.len() && matches!(self.bytes[self.i], b'e' | b'E')
         {
             let save = self.i;
             self.i += 1;
@@ -640,6 +652,9 @@ fn is_link_line_start(c: u8) -> bool {
     matches!(c, b'-' | b'~')
 }
 
+/// The UTF-8 byte-order mark, ignored when it opens a source [SPEC 2].
+const BOM: &str = "\u{feff}";
+
 fn is_ident_start(c: u8) -> bool {
     c.is_ascii_alphabetic() || c == b'_'
 }
@@ -827,6 +842,57 @@ mod tests {
             kinds("a .5"),
             vec![TokKind::Ident("a".into()), TokKind::Number(0.5)]
         );
+    }
+
+    #[test]
+    fn scientific_notation_lexes_wherever_math_does() {
+        // [SPEC 10.7]: `1e6` is an atom of an expression, and **a call's own
+        // parens count** — so it needs no inner group inside an argument.
+        assert_eq!(
+            kinds("(1e6)"),
+            vec![TokKind::LParen, TokKind::Number(1e6), TokKind::RParen]
+        );
+        assert_eq!(
+            kinds("max(1e2, 5)"),
+            vec![
+                TokKind::Ident("max".into()),
+                TokKind::LParen,
+                TokKind::Number(100.0),
+                TokKind::Comma,
+                TokKind::Number(5.0),
+                TokKind::RParen,
+            ]
+        );
+        assert_eq!(kinds("(1.32e-6)")[1], TokKind::Number(1.32e-6));
+        // Outside a group there is no exponent: the `e` stays an ident.
+        assert_eq!(
+            kinds("1e6"),
+            vec![TokKind::Number(1.0), TokKind::Ident("e6".into())]
+        );
+    }
+
+    #[test]
+    fn a_leading_bom_is_ignored() {
+        // [SPEC 2]: UTF-8, BOM ignored — and the spans stay source-byte offsets.
+        let toks = lex("\u{feff}|box|").expect("lex ok");
+        assert_eq!(toks[0].kind, TokKind::Pipe);
+        assert_eq!(toks[0].span.start, 3);
+        assert_eq!(
+            kinds("\u{feff}a -> b")[1],
+            kinds("a -> b")[1].clone(),
+            "the BOM changes nothing after it"
+        );
+        // A BOM elsewhere is still an unexpected character.
+        assert!(lex("a \u{feff} b").is_err());
+    }
+
+    #[test]
+    fn an_unexpected_character_is_named_and_spanned_whole() {
+        // Not a byte: a multi-byte char reports itself, not its first byte, and
+        // the span covers all of it (a split span would panic a slicing reader).
+        let err = lex("|box#é|").expect_err("é is not an ident char");
+        assert!(err.message.contains("'é'"), "{err:?}");
+        assert_eq!(err.span.end - err.span.start, 2);
     }
 
     #[test]

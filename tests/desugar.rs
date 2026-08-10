@@ -166,6 +166,27 @@ fn the_scale_fold_is_idempotent() {
 }
 
 #[test]
+fn an_explicit_layout_drawing_opens_a_scope_it_does_not_seal() {
+    // [SPEC 15.1]: the `layout:` that *opens* a drawing scope is the very decl
+    // the seal reads, so it must not seal the scope against its own children —
+    // `|group| { layout: drawing }` folds a child's `scale:` exactly as
+    // `|drawing|` does.
+    let explicit =
+        desugar_source("|group#v| { layout: drawing } [ |rect#r| { scale: 2; width: 4 } ]\n")
+            .unwrap();
+    assert!(
+        explicit.contains("px-per-unit: 8"),
+        "2 × mm × 4: {explicit}"
+    );
+    let typed = desugar_source("|drawing#v| [ |rect#r| { scale: 2; width: 4 } ]\n").unwrap();
+    assert!(typed.contains("px-per-unit: 8"), "{typed}");
+    // A child that owns a layout of its own still seals the inherited scope.
+    let sealed =
+        desugar_source("|drawing#v| [ |row#r| [ |rect#q| { scale: 2; width: 4 } ] ]\n").unwrap();
+    assert!(!sealed.contains("px-per-unit: 8"), "{sealed}");
+}
+
+#[test]
 fn a_page_folds_the_density_alone_and_rejects_its_own_scale() {
     let out = desugar_source("|page#p| { sheet: a5 }\n").unwrap();
     assert!(out.contains("px-per-unit: 4"), "paper mm × density: {out}");
@@ -175,6 +196,40 @@ fn a_page_folds_the_density_alone_and_rejects_its_own_scale() {
         err.to_string().contains("a '|page|' carries no 'scale:'"),
         "{err}"
     );
+}
+
+#[test]
+fn desugar_runs_the_same_gates_the_compiler_does() {
+    // [SPEC 20]: the lowered form re-renders identically, so what `lini desugar`
+    // accepts is what `lini build` accepts — a two-root tree fails both, with
+    // the same error, rather than lowering happily and failing at compile.
+    let src = "{ layout: tree }\n|topic#a|\n|topic#b|\n";
+    let desugared = desugar_source(src).expect_err("two roots");
+    let compiled = lini::check(src).expect_err("two roots");
+    assert!(
+        desugared.to_string().contains("a tree has one root"),
+        "{desugared}"
+    );
+    assert_eq!(desugared.to_string(), compiled.to_string());
+}
+
+#[test]
+fn a_repeated_declaration_is_read_last_wins_everywhere() {
+    // [SPEC 4]: a later declaration overrides an earlier one, and the lowered
+    // form keeps no sugar — the second `sheet:` sizes the page and neither
+    // survives as a declaration.
+    let out = desugar_source("|page#p| { sheet: a3; sheet: a5 }\n").unwrap();
+    assert!(out.contains("width: 148; height: 210;"), "{out}");
+    assert!(!out.contains("sheet:"), "the sugar is gone: {out}");
+    // A losing value is still read, so a typo is never silently overridden.
+    assert!(lini::check("|page#p| { sheet: zz; sheet: a5 }\n").is_err());
+    // And the gates read the same winner desugar lowered by: a root that ends
+    // in `layout: tree` **is** a tree, so `|topic|` belongs in it.
+    lini::check("{ layout: flow; layout: tree }\n|topic#a| [ |topic#b| ]\n")
+        .expect("the last layout wins");
+    let err = lini::check("{ layout: tree; layout: flow }\n|topic#a|\n")
+        .expect_err("a flow root takes no topic");
+    assert!(err.to_string().contains("builds a tree"), "{err}");
 }
 
 #[test]
@@ -941,6 +996,24 @@ fn a_turn_never_reaches_the_paint() {
     assert!(out.contains(".lini-pose-90"), "{out}");
     assert!(out.contains(".lini-pose-270"), "{out}");
     assert!(out.contains(".lini-pose-180"), "{out}");
+}
+
+#[test]
+fn a_pin_behind_a_wrapper_still_counts_as_a_pin() {
+    // [SPEC 16.1/16.2]: one pin walk. A `|component|`'s pins are found *through*
+    // whatever wraps them, so the pose chooser and the engine agree on a part's
+    // arity — two wrapped pins make U1 a two-pin satellite that turns to face
+    // its anchor, exactly as two direct ones do.
+    let wrapped = desugar_source(
+        "{ layout: schematic }\n|component#U0| { cell: 1 1 } [ |pin#x| ]\n|component#U1| [ |row| [ |pin#a|; |pin#b| ] ]\nU0.x - U1.a\n",
+    )
+    .unwrap();
+    assert!(wrapped.contains(".lini-pose-180"), "{wrapped}");
+    let direct = desugar_source(
+        "{ layout: schematic }\n|component#U0| { cell: 1 1 } [ |pin#x| ]\n|component#U1| [ |pin#a|; |pin#b| ]\nU0.x - U1.a\n",
+    )
+    .unwrap();
+    assert!(direct.contains(".lini-pose-180"), "{direct}");
 }
 
 #[test]

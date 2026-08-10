@@ -281,6 +281,46 @@ pub struct Decl {
     pub span: Span,
 }
 
+impl Decl {
+    /// The declaration's value read as a **single ident** — what every
+    /// keyword-valued property is (`layout: tree`, `side: left`, `unit: mm`).
+    /// `None` when the value is not a lone bare word.
+    pub(crate) fn ident(&self) -> Option<&str> {
+        match self.groups.first().and_then(|g| g.first()) {
+            Some(Value::Ident(s)) => Some(s),
+            _ => None,
+        }
+    }
+}
+
+/// The ident `name` is set to in a declaration list, **last-wins** — the
+/// cascade's within-block law [SPEC 4], stated once so no reader can disagree
+/// with the lowering about which value a block actually declares.
+pub(crate) fn ident_of<'a>(decls: &'a [Decl], name: &str) -> Option<&'a str> {
+    decls.iter().rev().find(|d| d.name == name)?.ident()
+}
+
+/// The `layout:` a block declares — the reading that decides which engine a
+/// scope runs. Last-wins like every declaration: desugar lowers `{ layout:
+/// flow; layout: tree }` as a tree, so every gate that judges its output must
+/// read the same one.
+pub(crate) fn layout_of(decls: &[Decl]) -> Option<&str> {
+    ident_of(decls, "layout")
+}
+
+/// [`ident_of`] over a stylesheet's **root** configuration declarations — the
+/// same last-wins law where the block is the file's `{ }` [SPEC 4].
+pub(crate) fn root_ident<'a>(stylesheet: &'a [StyleItem], name: &str) -> Option<&'a str> {
+    stylesheet
+        .iter()
+        .rev()
+        .find_map(|it| match it {
+            StyleItem::RootDecl(d) if d.name == name => Some(d),
+            _ => None,
+        })?
+        .ident()
+}
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),

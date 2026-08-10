@@ -9,7 +9,7 @@
 //! ([`seals_drawing_scope`], [`seals_schematic_scope`]).
 
 use super::Lower;
-use crate::syntax::ast::{Decl, Value};
+use crate::syntax::ast::{Decl, layout_of};
 
 /// The **scopes a lowering child is nested in** — the two whose laws reach
 /// past the container that opens them, so each one has to be carried down the
@@ -51,7 +51,7 @@ impl Nest {
 /// Whether this container is **itself** a drawing scope, detected as frames are — by type chain (`|drawing|` or a
 /// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
 pub(super) fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
-    chain.iter().any(|t| t == "drawing") || root_layout(style) == Some("drawing")
+    chain.iter().any(|t| t == "drawing") || layout_of(style) == Some("drawing")
 }
 
 /// Whether this container is **itself** a schematic [SPEC 16] — desugar's twin
@@ -104,6 +104,23 @@ pub(super) fn seals_drawing_scope(chain: &[String], style: &[Decl]) -> bool {
         .any(|d| d.name == "layout" || d.name == "direction")
 }
 
+/// Whether a node's **body** sits in a drawing scope [SPEC 15.1] — the law, in
+/// one place, for every walk that carries the scope down: it holds if the node
+/// opens a scope of its own, or inherits one it does not seal.
+///
+/// `opens` beats the seal, and must: the `layout: drawing` that opens the scope
+/// is the very declaration [`seals_drawing_scope`] reads, so an `opens && seals`
+/// node that cleared the flag would seal itself and leave its own features
+/// outside the scope they belong to.
+pub(super) fn in_drawing_scope(
+    opens: bool,
+    inherited: bool,
+    chain: &[String],
+    style: &[Decl],
+) -> bool {
+    opens || (inherited && !seals_drawing_scope(chain, style))
+}
+
 /// Whether a node **seals** an enclosing schematic scope [SPEC 16] — the twin
 /// above, one grain narrower, and narrower for a reason worth stating.
 ///
@@ -128,20 +145,4 @@ pub(super) fn seals_schematic_scope(cx: &Lower, chain: &[String], style: &[Decl]
         // stamps `layout: tree` on its scope *after* this body lowers
         // [SPEC 8] — so the one engine that arrives late is sealed by its type.
         || chain.iter().any(|t| t == "mindmap")
-}
-
-/// The `layout:` ident set on a block, if any — picks the root-engine defaults
-/// and answers the two `_body` readings above for an explicit declaration.
-pub(super) fn root_layout(user_root: &[Decl]) -> Option<&str> {
-    user_root
-        .iter()
-        .rev()
-        .find(|d| d.name == "layout")
-        .and_then(|d| match d.groups.as_slice() {
-            [group] => match group.as_slice() {
-                [Value::Ident(s)] => Some(s.as_str()),
-                _ => None,
-            },
-            _ => None,
-        })
 }

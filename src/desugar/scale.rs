@@ -11,10 +11,11 @@
 //! already-lowered file); a rule-borne `scale:` stays what it reaches the
 //! engine as — a raw multiplier.
 
-use super::seals_drawing_scope;
+use super::nest::in_drawing_scope;
+use super::schematic::lowered_chain;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Decl, Node, Value};
+use crate::syntax::ast::{Child, Decl, Node, Value, layout_of};
 
 /// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
@@ -56,6 +57,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         unit_mm: ctx.unit_mm,
         in_drawing: ctx.in_drawing,
     };
+    let opens = is_drawing(n);
     if is_page(n) {
         if let Some(d) = find(&n.style, "scale") {
             return Err(Error::at(
@@ -69,19 +71,16 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         // Paper is millimetres: px-per-unit is the density alone.
         n.style.retain(|d| d.name != PX_PER_UNIT);
         n.style.push(number_decl(ctx.density, n.span));
-    } else if is_drawing(n) {
+    } else if opens {
         if let Some(u) = read_unit(&n.style)? {
             ctx.unit_mm = u;
         }
-        ctx.in_drawing = true;
         stamp(&mut n.style, &ctx, n.span)?;
     } else if ctx.in_drawing && find(&n.style, "scale").is_some() {
         // A node-level ratio override inside a drawing scope [SPEC 15.1].
         stamp(&mut n.style, &ctx, n.span)?;
     }
-    if ctx.in_drawing && seals(n) {
-        ctx.in_drawing = false;
-    }
+    ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &lowered_chain(n), &n.style);
     for c in &mut n.children {
         walk(c, &ctx)?;
     }
@@ -144,20 +143,7 @@ fn is_page(n: &Node) -> bool {
 }
 
 fn is_drawing(n: &Node) -> bool {
-    n.classes.iter().any(|c| c == "lini-drawing")
-        || find(&n.style, "layout")
-            .is_some_and(|d| matches!(single(d), Some(Value::Ident(s)) if s == "drawing"))
-}
-
-/// The lowered twin of [`seals_drawing_scope`]: chain names ride the worn
-/// `.lini-*` classes after lowering.
-fn seals(n: &Node) -> bool {
-    let chain: Vec<String> = n
-        .classes
-        .iter()
-        .filter_map(|c| c.strip_prefix("lini-").map(str::to_string))
-        .collect();
-    seals_drawing_scope(&chain, &n.style)
+    n.classes.iter().any(|c| c == "lini-drawing") || layout_of(&n.style) == Some("drawing")
 }
 
 fn find<'a>(style: &'a [Decl], name: &str) -> Option<&'a Decl> {

@@ -8,7 +8,7 @@ fn fmt(src: &str) -> String {
 fn reparses(src: &str) {
     let out = fmt(src);
     let toks = crate::lexer::lex(&out).expect("lex fmt output");
-    crate::syntax::parser::parse(src, &toks).expect("parse fmt output");
+    crate::syntax::parser::parse(&out, &toks).expect("parse fmt output");
 }
 
 /// The core invariant: a second pass changes nothing.
@@ -132,8 +132,6 @@ fn bindings_and_group_expressions() {
 #[test]
 fn node_class_follows_the_bars() {
     assert_eq!(fmt("|box#x| .hot.loud\n"), "|box#x| .hot.loud\n");
-    // A spaced class chain normalizes to glued.
-    assert_eq!(fmt("|box#x| .hot .loud\n"), "|box#x| .hot.loud\n");
     // A class on a default box (id only).
     assert_eq!(fmt("|#x| .hot\n"), "|#x| .hot\n");
 }
@@ -201,8 +199,7 @@ fn link_class_and_labels_with_along() {
         "a -> b { along: 0.3, 0.7; } [ \"near a\" \"near b\" ]\n"
     );
     assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
-    // A spaced link-class chain normalizes to glued, like a node's.
-    assert_eq!(fmt("a -> b .c1 .c2\n"), "a -> b .c1.c2\n");
+    assert_eq!(fmt("a -> b .c1.c2\n"), "a -> b .c1.c2\n");
     // A head label precedes the class (the tail order, re-parseable).
     assert_eq!(fmt("a -> b \"flows\" .loud\n"), "a -> b \"flows\" .loud\n");
 }
@@ -390,4 +387,17 @@ fn a_text_only_label_block_stays_inline() {
     let src = "a -> b [ \"x\" \"y\" ]\n";
     assert_eq!(fmt(src), "a -> b [ \"x\" \"y\" ]\n");
     idempotent(src);
+}
+
+#[test]
+fn a_comment_inside_a_link_label_block_survives() {
+    // [SPEC 20]: comments are preserved everywhere — a link's `[ ]` is a body
+    // like a node's, so it breaks multi-line to keep the note…
+    let src = "a -> b [\n  // why\n  \"x\"\n  \"y\"\n]\n";
+    assert_eq!(fmt(src), src);
+    idempotent(src);
+    // …and a lone label does not contract to the head label and swallow it.
+    let one = "a -> b [\n  // why\n  \"x\"\n]\n";
+    assert_eq!(fmt(one), one);
+    idempotent(one);
 }

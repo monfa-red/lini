@@ -7,7 +7,7 @@ use super::super::Lower;
 use super::super::pose::{Pose, Side};
 use super::{
     bare_node, id, lowered, lowered_chain, lowered_chrome, n, pair, readout, style_number, text,
-    trim_number,
+    trim_number, walk_pins,
 };
 use crate::error::{Code, Error};
 use crate::ledger::consts;
@@ -137,13 +137,25 @@ pub(in crate::desugar) fn assemble_component(
 
 /// Every pin a `|component|` carries, in the order [`super::super::lower_node`]
 /// builds them: the `pins: N` connector's generated ones lead, then the
-/// authored `|pin|` children. Read on the **authored** tree — the pose
-/// chooser's view of a part it has not lowered yet.
+/// authored `|pin|` descendants. Read on the **authored** tree — the pose
+/// chooser's view of a part it has not lowered yet — through
+/// [`super::walk_pins`], the one descent the lowered readers use, so the two
+/// never count a part's pins differently.
 pub(in crate::desugar) fn pins_of(cx: &Lower, node: &Node, chain: &[String]) -> Vec<Node> {
     let mut out = expand_connector_pins(cx, chain, &node.style);
-    out.extend(node.children.iter().filter_map(|c| match c {
-        Child::Box(b) if cx.authored_chain(b).iter().any(|t| t == "pin") => Some(b.clone()),
-        _ => None,
+    let mut found: Vec<&Child> = Vec::new();
+    walk_pins(
+        &node.children,
+        &|c: &Child| matches!(c, Child::Box(b) if cx.authored_chain(b).iter().any(|t| t == "pin")),
+        &|c: &Child| match c {
+            Child::Box(b) => b.children.as_slice(),
+            Child::Text(_) => &[],
+        },
+        &mut found,
+    );
+    out.extend(found.into_iter().filter_map(|c| match c {
+        Child::Box(b) => Some(b.clone()),
+        Child::Text(_) => None,
     }));
     out
 }

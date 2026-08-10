@@ -24,6 +24,7 @@ use crate::span::Span;
 use crate::suggest;
 use crate::syntax::ast::{
     Child, Decl, Define, File, LabelItem, Link, Node, Rule, SelUnit, StyleItem, TextNode, Value,
+    layout_of, root_ident,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -116,13 +117,7 @@ impl<'a> Ctx<'a> {
         let rules_set_layout = file.stylesheet.iter().any(
             |it| matches!(it, StyleItem::Rule(r) if r.decls.iter().any(|d| d.name == "layout")),
         );
-        let root_layout = file
-            .stylesheet
-            .iter()
-            .find_map(|it| match it {
-                StyleItem::RootDecl(d) if d.name == "layout" => decl_ident(d),
-                _ => None,
-            })
+        let root_layout = root_ident(&file.stylesheet, "layout")
             .unwrap_or("flow")
             .to_string();
         Self {
@@ -564,8 +559,8 @@ impl<'a> Ctx<'a> {
     /// stylesheet rule can inject one — the nearest layout default in its
     /// define/template chain; else `flow`. `None` when it can't be known.
     fn static_layout(&self, n: &Node, info: Option<&types::TypeInfo>) -> Option<String> {
-        if let Some(l) = n.style.iter().find(|d| d.name == "layout") {
-            return decl_ident(l).map(str::to_string);
+        if n.style.iter().any(|d| d.name == "layout") {
+            return layout_of(&n.style).map(str::to_string);
         }
         if self.rules_set_layout {
             return None;
@@ -573,9 +568,9 @@ impl<'a> Ctx<'a> {
         let info = info?;
         for name in info.chain.iter().rev() {
             if let Some(style) = self.define_styles.get(name.as_str())
-                && let Some(l) = style.iter().find(|d| d.name == "layout")
+                && style.iter().any(|d| d.name == "layout")
             {
-                return decl_ident(l).map(str::to_string);
+                return layout_of(style).map(str::to_string);
             }
             if let Some(l) = container_layout(name) {
                 return Some(l.to_string());
@@ -793,13 +788,6 @@ fn with_worn_types(chain: &[String], classes: &[String]) -> Vec<String> {
         }
     }
     out
-}
-
-fn decl_ident(d: &Decl) -> Option<&str> {
-    match d.groups.first().and_then(|g| g.first()) {
-        Some(Value::Ident(s)) => Some(s),
-        _ => None,
-    }
 }
 
 fn single_value(d: &Decl) -> Option<&Value> {

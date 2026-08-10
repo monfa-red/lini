@@ -109,6 +109,30 @@ fn class_in_the_bars_errors() {
 }
 
 #[test]
+fn a_spaced_class_chain_errors() {
+    // [SPEC 3/21]: the first `.` is spaced off the identity, the rest of the
+    // chain glues. Spaced, the same spelling is a rule's descendant selector —
+    // so an instance, a link, and a text leaf all reject it rather than glue it
+    // silently behind the reading a stylesheet gives it.
+    for src in [
+        "|box#a| .hot .loud\n",
+        "a -> b .hot .loud\n",
+        "\"x\" .a .b\n",
+    ] {
+        assert!(
+            parse_err(src).contains("classes glue into a chain"),
+            "{src}"
+        );
+    }
+    // Glued is the chain; a single class needs no glue.
+    assert_eq!(
+        instance(&parse_ok("|box#a| .hot.loud\n"), 0).classes,
+        ["hot", "loud"]
+    );
+    parse_ok("|box#a| .hot\n");
+}
+
+#[test]
 fn empty_bars_error() {
     for src in ["| |\n", "||\n"] {
         assert!(parse_err(src).contains("needs a type or an '#id'"), "{src}");

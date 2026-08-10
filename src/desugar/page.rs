@@ -34,12 +34,34 @@ const SIZES: &[(&str, f64, f64, bool)] = &[
 /// The `|page|` bundle's default sheet — A4, ISO portrait.
 pub(super) const DEFAULT: (f64, f64) = A4;
 
-/// Expand a `sheet:` declaration in place to `width` / `height` [SPEC 15.8].
+/// Expand the `sheet:` declaration in place to `width` / `height` [SPEC 15.8].
+/// Every one written is read (a malformed size is an error wherever it sits),
+/// but the **last** is the one that expands and none survives: the cascade is
+/// last-wins [SPEC 4], and the lowered form may not still carry the sugar.
 pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
-    let Some(at) = style.iter().position(|d| d.name == "sheet") else {
+    let mut winner: Option<(usize, Span, f64, f64)> = None;
+    for (at, d) in style.iter().enumerate() {
+        if d.name != "sheet" {
+            continue;
+        }
+        let (span, w, h) = sheet_dims(d)?;
+        winner = Some((at, span, w, h));
+    }
+    let Some((at, span, w, h)) = winner else {
         return Ok(());
     };
-    let d = &style[at];
+    let decl = |name: &str, v: f64| Decl {
+        name: name.into(),
+        groups: vec![vec![Value::Number(v)]],
+        span,
+    };
+    style.splice(at..=at, [decl("width", w), decl("height", h)]);
+    style.retain(|d| d.name != "sheet");
+    Ok(())
+}
+
+/// One `sheet:` value as `(span, width, height)` millimetres [SPEC 15.8].
+fn sheet_dims(d: &Decl) -> Result<(Span, f64, f64), Error> {
     let (span, values) = (d.span, d.groups.first().cloned().unwrap_or_default());
     let bad = |got: &str| {
         let mut msg =
@@ -87,13 +109,7 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
         None => default_landscape,
     };
     let (w, h) = if landscape { (ph, pw) } else { (pw, ph) };
-    let decl = |name: &str, v: f64| Decl {
-        name: name.into(),
-        groups: vec![vec![Value::Number(v)]],
-        span,
-    };
-    style.splice(at..=at, [decl("width", w), decl("height", h)]);
-    Ok(())
+    Ok((span, w, h))
 }
 
 /// The page's flow `direction` defaults by orientation [SPEC 15.8]:

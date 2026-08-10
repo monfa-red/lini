@@ -50,6 +50,10 @@ pub use grammar::{vscode_grammar, zed_highlights};
 /// identically and is a fixed point of desugar.
 pub fn desugar_source(src: &str) -> Result<String, Error> {
     let file = parse_stage(src)?;
+    // The same gate the compiler runs ahead of the lowering [SPEC 12/21]: what
+    // `lini desugar` prints must re-render identically, so a file it accepts is
+    // a file `lini build` accepts.
+    desugar::tree::validate(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
     let lowered = desugar::desugar(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
     Ok(fmt::print_file(&lowered))
 }

@@ -27,7 +27,7 @@ use crate::ledger::defaults::{
 use crate::span::Span;
 use crate::syntax::ast::{
     Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, Rule, SelUnit, Selector,
-    StyleItem, Value,
+    StyleItem, Value, ident_of, layout_of, root_ident,
 };
 use std::collections::BTreeSet;
 
@@ -63,13 +63,7 @@ enum Dir {
 }
 
 fn dir_of(style: &[Decl]) -> Dir {
-    dir_from(
-        style
-            .iter()
-            .rev()
-            .find(|d| d.name == "direction")
-            .and_then(decl_ident),
-    )
+    dir_from(ident_of(style, "direction"))
 }
 
 fn dir_from(ident: Option<&str>) -> Dir {
@@ -115,7 +109,7 @@ pub(crate) fn validate(file: &File) -> Result<(), Error> {
     let Ok(types) = Types::build(file) else {
         return Ok(());
     };
-    let root_tree = matches!(root_layout(&file.stylesheet), Some(l) if l == "tree");
+    let root_tree = matches!(root_ident(&file.stylesheet, "layout"), Some(l) if l == "tree");
     if root_tree {
         check_root_count(&file.instances, Span::empty())?;
     }
@@ -192,13 +186,7 @@ fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error
 /// `side:` on a deeper bilateral topic, or any `side:` under `row`/`column`
 /// errors.
 fn check_side(n: &Node, c: TreeCtx) -> Result<(), Error> {
-    let Some(val) = n
-        .style
-        .iter()
-        .rev()
-        .find(|d| d.name == "side")
-        .and_then(decl_ident)
-    else {
+    let Some(val) = ident_of(&n.style, "side") else {
         return Ok(());
     };
     match c.dir {
@@ -282,12 +270,7 @@ fn is_mindmap_ast(n: &Node, types: &Types) -> bool {
 /// A stand-alone mindmap's growth for `side:` validation — its inline
 /// `direction:` if authored, else the preset's `bilateral` [SPEC 8].
 fn mindmap_dir_of(style: &[Decl]) -> Dir {
-    match style
-        .iter()
-        .rev()
-        .find(|d| d.name == "direction")
-        .and_then(decl_ident)
-    {
+    match ident_of(style, "direction") {
         Some("row") => Dir::Row,
         Some("column") => Dir::Column,
         _ => Dir::Bilateral,
@@ -734,12 +717,7 @@ pub(crate) fn mindmap_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> 
 /// `direction:` hoist (moved to the generated tree scope instead of steering
 /// the root card's own content).
 fn take_ident(style: &mut Vec<Decl>, name: &str) -> Option<String> {
-    let val = style
-        .iter()
-        .rev()
-        .find(|d| d.name == name)
-        .and_then(decl_ident)
-        .map(str::to_string);
+    let val = ident_of(style, name).map(str::to_string);
     if val.is_some() {
         style.retain(|d| d.name != name);
     }
@@ -802,28 +780,9 @@ pub(crate) fn ensure_gap(style: &mut Vec<Decl>) {
 }
 
 fn is_tree_style(style: &[Decl]) -> bool {
-    style
-        .iter()
-        .any(|d| d.name == "layout" && decl_ident(d) == Some("tree"))
-}
-
-fn decl_ident(d: &Decl) -> Option<&str> {
-    match d.groups.first().and_then(|g| g.first()) {
-        Some(Value::Ident(s)) => Some(s),
-        _ => None,
-    }
-}
-
-fn root_layout(stylesheet: &[StyleItem]) -> Option<&str> {
-    stylesheet.iter().find_map(|it| match it {
-        StyleItem::RootDecl(d) if d.name == "layout" => decl_ident(d),
-        _ => None,
-    })
+    layout_of(style) == Some("tree")
 }
 
 fn root_direction(stylesheet: &[StyleItem]) -> Dir {
-    dir_from(stylesheet.iter().rev().find_map(|it| match it {
-        StyleItem::RootDecl(d) if d.name == "direction" => decl_ident(d),
-        _ => None,
-    }))
+    dir_from(root_ident(stylesheet, "direction"))
 }

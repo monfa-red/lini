@@ -92,16 +92,16 @@ impl Emitter<'_> {
         if phased(&file.instances, &file.links) {
             if !file.instances.is_empty() {
                 self.section_break(phases);
-                self.emit_ordered(&file.instances, &[], 0);
+                self.emit_ordered(body_items(&file.instances, &[]), 0);
                 phases += 1;
             }
             if !file.links.is_empty() {
                 self.section_break(phases);
-                self.emit_ordered(&[], &file.links, 0);
+                self.emit_ordered(body_items(&[], &file.links), 0);
             }
         } else {
             self.section_break(phases);
-            self.emit_ordered(&file.instances, &file.links, 0);
+            self.emit_ordered(body_items(&file.instances, &file.links), 0);
         }
         self.emit_trivia_before(src_len, 0);
         if self.out.is_empty() {
@@ -216,7 +216,7 @@ impl Emitter<'_> {
             let end = def.style_span.map_or(def.span.end, |s| s.end);
             self.emit_style_block(&def.style, end, depth, false);
         }
-        self.emit_body(&def.children, &def.links, def.span.end, depth);
+        self.emit_body(body_items(&def.children, &def.links), def.span.end, depth);
         self.out.push('\n');
     }
 
@@ -255,41 +255,25 @@ impl Emitter<'_> {
 
     // ───────── Instances ─────────
 
-    /// Emit a scope's children and internal links **interleaved in source order**
-    /// [SPEC 3] — by span, so the formatter is faithful to a `layout: sequence`
-    /// (where that order is time) and the trivia cursor advances monotonically.
-    /// One emitter per item kind, shared by the file and every `[ ]` body.
-    fn emit_ordered(&mut self, children: &[Child], links: &[Link], depth: usize) {
-        enum Item<'a> {
-            Child(&'a Child),
-            Link(&'a Link),
-        }
-        let mut items: Vec<Item> = Vec::with_capacity(children.len() + links.len());
-        items.extend(children.iter().map(Item::Child));
-        items.extend(links.iter().map(Item::Link));
-        items.sort_by_key(|it| match it {
-            Item::Child(c) => c.span().start,
-            Item::Link(w) => w.span.start,
-        });
+    /// Emit a scope's items **interleaved in source order** [SPEC 3] — by span, so
+    /// the formatter is faithful to a `layout: sequence` (where that order is time)
+    /// and the trivia cursor advances monotonically. One emitter per item kind,
+    /// shared by the file, every node `[ ]` body, and a link's label block.
+    fn emit_ordered(&mut self, mut items: Vec<BodyItem>, depth: usize) {
+        items.sort_by_key(|it| it.span().start);
         for it in items {
-            let (start, end) = match &it {
-                Item::Child(c) => {
-                    let s = c.span();
-                    (s.start, s.end)
-                }
-                Item::Link(w) => (w.span.start, w.span.end),
-            };
-            self.emit_trivia_before(start, depth);
+            let span = it.span();
+            self.emit_trivia_before(span.start, depth);
             match it {
-                Item::Child(Child::Box(n)) => self.emit_node(n, depth),
-                Item::Child(Child::Text(t)) => {
+                BodyItem::Box(n) => self.emit_node(n, depth),
+                BodyItem::Text(t) => {
                     self.indent(depth);
                     self.emit_text_node(t, depth);
                 }
-                Item::Link(w) => self.emit_link(w, depth),
+                BodyItem::Link(w) => self.emit_link(w, depth),
             }
             self.out.push('\n');
-            self.cursor = end;
+            self.cursor = span.end;
         }
     }
 
@@ -316,46 +300,53 @@ impl Emitter<'_> {
         self.emit_content(node, &node.children, depth);
     }
 
-    /// A node's `[ ]` content: a `|table|`'s aligned cells, an inline text `[ ]`,
-    /// or the multi-line `[ ]` body. `body` is the children after the head label.
+    /// A node's `[ ]` content: a `|table|`'s aligned cells, else the shared
+    /// bracket body. `body` is the children after the head label.
     fn emit_content(&mut self, node: &Node, body: &[Child], depth: usize) {
         if body.is_empty() && node.links.is_empty() {
             return;
         }
         let end = node.span.end;
-        if node.links.is_empty() {
-            if let Some(cols) = self.table_cols(body, &node.style) {
-                self.out.push_str(" [\n");
-                self.emit_aligned_cells(body, cols, depth + 1);
-                self.emit_trivia_before(end.saturating_sub(1), depth + 1);
-                self.indent(depth);
-                self.out.push(']');
-                return;
-            }
-            let text_only = !body.is_empty()
-                && body
-                    .iter()
-                    .all(|c| matches!(c, Child::Text(t) if is_plain_text(t)));
-            if text_only
-                && !self.has_trivia_between(self.cursor, end)
-                && self.try_inline_text(body, end)
-            {
-                return;
-            }
+        if node.links.is_empty()
+            && let Some(cols) = self.table_cols(body, &node.style)
+        {
+            self.out.push_str(" [\n");
+            self.emit_aligned_cells(body, cols, depth + 1);
+            self.emit_trivia_before(end.saturating_sub(1), depth + 1);
+            self.indent(depth);
+            self.out.push(']');
+            return;
         }
-        self.emit_body(body, &node.links, end, depth);
+        self.emit_bracket(body_items(body, &node.links), end, depth);
+    }
+
+    /// A `[ ]` list: inline `[ "a" "b" ]` when every item is a plain text leaf, no
+    /// comment or blank line sits inside, and it fits the budget; else the
+    /// multi-line body. Shared by a node's content and a link's labels [SPEC 20].
+    fn emit_bracket(&mut self, items: Vec<BodyItem>, end: usize, depth: usize) {
+        let text_only = !items.is_empty()
+            && items
+                .iter()
+                .all(|it| matches!(it, BodyItem::Text(t) if is_plain_text(t)));
+        if text_only
+            && !self.has_trivia_between(self.cursor, end)
+            && self.try_inline_text(&items, end)
+        {
+            return;
+        }
+        self.emit_body(items, end, depth);
     }
 
     /// `[ "a" "b" ]` on one line, when it fits (desugar's explicit text form).
-    fn try_inline_text(&mut self, children: &[Child], end: usize) -> bool {
+    fn try_inline_text(&mut self, items: &[BodyItem], end: usize) -> bool {
         let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
         let saved = self.out.len();
         self.out.push_str(" [ ");
-        for (i, c) in children.iter().enumerate() {
+        for (i, it) in items.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
             }
-            if let Child::Text(t) = c {
+            if let BodyItem::Text(t) = it {
                 self.emit_text_node(t, 0);
             }
         }
@@ -369,13 +360,13 @@ impl Emitter<'_> {
         }
     }
 
-    /// The multi-line `[ children … links … ]` body.
-    fn emit_body(&mut self, children: &[Child], links: &[Link], end: usize, depth: usize) {
-        if children.is_empty() && links.is_empty() && !self.has_comment_in(self.cursor, end) {
+    /// The multi-line `[ items … ]` body.
+    fn emit_body(&mut self, items: Vec<BodyItem>, end: usize, depth: usize) {
+        if items.is_empty() && !self.has_comment_in(self.cursor, end) {
             return;
         }
         self.out.push_str(" [\n");
-        self.emit_ordered(children, links, depth + 1);
+        self.emit_ordered(items, depth + 1);
         self.emit_trivia_before(end.saturating_sub(1), depth + 1);
         self.indent(depth);
         self.out.push(']');
@@ -601,8 +592,14 @@ impl Emitter<'_> {
         let texts: Vec<&TextNode> = w.label.iter().chain(w.label_texts()).collect();
         let has_nodes = w.label_nodes().next().is_some();
         let styled = texts.iter().any(|t| !t.style.is_empty());
-        let head_label =
-            (self.terse && !has_nodes && texts.len() == 1 && !styled).then(|| texts[0]);
+        // Contracting a `[ "x" ]` to the head label would swallow a comment
+        // written inside the brackets, so a commented statement keeps them.
+        let head_label = (self.terse
+            && !has_nodes
+            && texts.len() == 1
+            && !styled
+            && !self.has_comment_in(self.cursor, w.span.end))
+        .then(|| texts[0]);
         if let Some(label) = head_label {
             self.out.push(' ');
             self.emit_text_node(label, depth);
@@ -618,37 +615,18 @@ impl Emitter<'_> {
         if head_label.is_some() || (texts.is_empty() && !has_nodes) {
             return;
         }
-        if has_nodes {
-            // A `[ ]` holding a node goes multi-line, like a node body — the
-            // head label folds in ahead of the items, source order kept.
-            self.out.push_str(" [\n");
-            if let Some(label) = &w.label {
-                self.indent(depth + 1);
-                self.emit_text_node(label, depth + 1);
-                self.out.push('\n');
-            }
-            for item in &w.labels {
-                match item {
-                    LabelItem::Text(t) => {
-                        self.indent(depth + 1);
-                        self.emit_text_node(t, depth + 1);
-                    }
-                    LabelItem::Node(n) => self.emit_node(n, depth + 1),
-                }
-                self.out.push('\n');
-            }
-            self.indent(depth);
-            self.out.push(']');
-        } else {
-            self.out.push_str(" [ ");
-            for (i, label) in texts.iter().enumerate() {
-                if i > 0 {
-                    self.out.push(' ');
-                }
-                self.emit_text_node(label, depth);
-            }
-            self.out.push_str(" ]");
-        }
+        // The `[ ]` labels are a body like any other — the head label folds in
+        // ahead of the items (its span sorts it first), source order kept.
+        let items = w
+            .label
+            .iter()
+            .map(BodyItem::Text)
+            .chain(w.labels.iter().map(|it| match it {
+                LabelItem::Text(t) => BodyItem::Text(t),
+                LabelItem::Node(n) => BodyItem::Box(n),
+            }))
+            .collect();
+        self.emit_bracket(items, w.span.end, depth);
     }
 
     /// A text leaf `"…"` with its optional worn classes and `{ }` style block
@@ -829,6 +807,36 @@ impl Emitter<'_> {
         }
         self.cursor = until;
     }
+}
+
+/// One item of a body emitted in source order: a box, a text leaf, or a link.
+/// A scope's children + internal links and a link's `[ ]` labels both flatten
+/// into this, so one emitter serves every `[ ]` [SPEC 20].
+#[derive(Clone, Copy)]
+enum BodyItem<'a> {
+    Box(&'a Node),
+    Text(&'a TextNode),
+    Link(&'a Link),
+}
+
+impl BodyItem<'_> {
+    fn span(&self) -> Span {
+        match self {
+            BodyItem::Box(n) => n.span,
+            BodyItem::Text(t) => t.span,
+            BodyItem::Link(w) => w.span,
+        }
+    }
+}
+
+fn body_items<'a>(children: &'a [Child], links: &'a [Link]) -> Vec<BodyItem<'a>> {
+    let mut items = Vec::with_capacity(children.len() + links.len());
+    items.extend(children.iter().map(|c| match c {
+        Child::Box(n) => BodyItem::Box(n),
+        Child::Text(t) => BodyItem::Text(t),
+    }));
+    items.extend(links.iter().map(BodyItem::Link));
+    items
 }
 
 // ─────────────────────────── Spans & token helpers ───────────────────────────

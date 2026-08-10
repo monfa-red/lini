@@ -147,8 +147,15 @@ pub(crate) fn terminal_ids<P: PartNode>(part: &P) -> Vec<Option<String>> {
     match sch_kind(part.type_chain()) {
         Some(SchKind::Component) => {
             let mut out = Vec::new();
-            walk_pins(part.kids(), &mut out);
-            out
+            walk_pins(
+                part.kids(),
+                &|n: &P| n.type_chain().iter().any(|t| t == "pin"),
+                &|n: &P| n.kids(),
+                &mut out,
+            );
+            out.iter()
+                .map(|p| p.node_id().map(str::to_string))
+                .collect()
         }
         Some(_) => part_pin_ids(part.type_chain(), symbol_of(part).as_deref())
             .iter()
@@ -158,12 +165,27 @@ pub(crate) fn terminal_ids<P: PartNode>(part: &P) -> Vec<Option<String>> {
     }
 }
 
-fn walk_pins<P: PartNode>(nodes: &[P], out: &mut Vec<Option<String>>) {
+/// **The pin descent**, in pin order: every `|pin|` under these nodes, found
+/// *through* whatever wraps it — the anonymous rails desugar builds, an authored
+/// `|row|`, any container a body puts its pins in.
+///
+/// Written once because two trees read it — the authored AST (desugar's pose
+/// chooser and arity) and the lowered [`PartNode`] (resolve and layout) — and a
+/// shallower copy on either side breaks the invariant both cite: the chooser
+/// would count no pins where layout counts two, calling a part an anchor that
+/// the engine seats as a satellite. Each caller supplies only its own reading of
+/// "this is a pin" and "these are its children".
+pub(crate) fn walk_pins<'a, T>(
+    nodes: &'a [T],
+    is_pin: &dyn Fn(&T) -> bool,
+    kids: &dyn Fn(&'a T) -> &'a [T],
+    out: &mut Vec<&'a T>,
+) {
     for n in nodes {
-        if n.type_chain().iter().any(|t| t == "pin") {
-            out.push(n.node_id().map(str::to_string));
+        if is_pin(n) {
+            out.push(n);
         }
-        walk_pins(n.kids(), out);
+        walk_pins(kids(n), is_pin, kids, out);
     }
 }
 

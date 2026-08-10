@@ -15,7 +15,7 @@
 use crate::ast::ChainOp;
 use crate::desugar::scene::{auto_created_ids, declared_ids};
 use crate::error::Diagnostic;
-use crate::syntax::ast::{Child, File, Link};
+use crate::syntax::ast::{Child, File, Link, layout_of, root_ident};
 use std::collections::HashMap;
 
 pub fn lint(file: &File) -> Vec<Diagnostic> {
@@ -89,7 +89,7 @@ fn lint_auto_create_shadows(file: &File, out: &mut Vec<Diagnostic>) {
         collect_paths(c, &mut Vec::new(), &mut id_paths);
     }
     let root_opaque =
-        matches!(root_layout(&file.stylesheet), Some(l) if l == "drawing" || l == "tree");
+        matches!(root_ident(&file.stylesheet, "layout"), Some(l) if l == "drawing" || l == "tree");
     shadow_scope(
         &file.instances,
         &file.links,
@@ -210,35 +210,14 @@ fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
     n.ty.as_deref() == Some("drawing")
         // A lowered instance (`lini desugar` output) wears its type as a class.
         || n.classes.iter().any(|c| c == "lini-drawing")
-        || n.style
-            .iter()
-            .any(|d| d.name == "layout" && decl_ident(d) == Some("drawing"))
+        || layout_of(&n.style) == Some("drawing")
 }
 
 /// A scope whose bare link endpoints the shadow/auto-create lint must not judge
 /// pre-desugar: a drawing (never auto-creates) or a tree (its links resolve
 /// against the flattened topics, not this nested view) [SPEC 12/15].
 fn is_opaque_node(n: &crate::syntax::ast::Node) -> bool {
-    is_drawing_node(n)
-        || n.style
-            .iter()
-            .any(|d| d.name == "layout" && decl_ident(d) == Some("tree"))
-}
-
-fn root_layout(stylesheet: &[crate::syntax::ast::StyleItem]) -> Option<String> {
-    stylesheet.iter().find_map(|it| match it {
-        crate::syntax::ast::StyleItem::RootDecl(d) if d.name == "layout" => {
-            decl_ident(d).map(str::to_string)
-        }
-        _ => None,
-    })
-}
-
-fn decl_ident(d: &crate::syntax::ast::Decl) -> Option<&str> {
-    match d.groups.first().and_then(|g| g.first()) {
-        Some(crate::syntax::ast::Value::Ident(s)) => Some(s),
-        _ => None,
-    }
+    is_drawing_node(n) || layout_of(&n.style) == Some("tree")
 }
 
 /// Every node id mapped to its full dot-paths, over the whole parsed tree.

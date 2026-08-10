@@ -70,7 +70,15 @@ impl<'a> Parser<'a> {
     /// never reaches here; what does is the worn-class chain, written `.hot.loud`.
     pub(super) fn parse_classes(&mut self) -> Result<Vec<String>, Error> {
         let mut classes = Vec::new();
-        while self.eat(&TokKind::Dot) {
+        while matches!(self.kind(), Some(TokKind::Dot)) {
+            // Only the first `.` is spaced off the head; the rest of the chain
+            // glues [SPEC 3/21]. A spaced second dot is a rule's descendant
+            // spelling — one syntax, so a node may not silently read it as a
+            // chain where a selector reads two units.
+            if !classes.is_empty() && !self.glued_at(0) {
+                return Err(self.err("classes glue into a chain — write '.hot.loud', no space"));
+            }
+            self.pos += 1;
             classes.push(self.expect_ident()?.0);
         }
         Ok(classes)
