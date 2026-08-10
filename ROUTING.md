@@ -18,7 +18,7 @@ diagram can never route two different ways.
 | Strategy | Status | Shape |
 |---|---|---|
 | `orthogonal` | the default — specified below | horizontal/vertical runs, corners rounded at render time |
-| `natural` | specified below — replaces the alpha.1 corridor-first build | direct smooth curves: straight stubs, one spline, gentle dodges — crossings free |
+| `natural` | specified below | direct smooth curves: straight stubs, one spline, gentle dodges — crossings free |
 | `straight` | built — sequence messages | one segment between caller-supplied anchors |
 
 Every strategy consumes the same input (the placed scene, the expanded link
@@ -34,7 +34,10 @@ avoiding nothing.
 anchors its caller supplies (plus the rectangular self-hook), trimmed to the
 endpoint bodies. It avoids nothing; markers and labels ride it like any wire.
 A `layout: sequence` scope routes its messages through `straight` — sequence
-layout owns *where* (column x, row y), the strategy owns the wire.
+layout owns *where* (column x, row y), the strategy owns the wire. A
+user-selected `routing: straight` scope has no caller-supplied anchors: the
+segment runs body centre to body centre, trimmed to both boundaries. It
+produces no strays and no report.
 
 ## The natural strategy
 
@@ -279,8 +282,11 @@ Six steps. Each decides once; none revisits an earlier step's answer.
 
 6. **Geometry.** Routes lower to polylines: corners are run intersections,
    collinear points merge, each end segment stays straight for at least its
-   marker. Corners round at render time with radius
-   `min(clearance, half the shorter adjacent leg)`, two refinements intact:
+   marker. Corners round at render time: each corner wants the link's
+   **`corner-radius`** (SPEC 17 — default `auto`, the clearance; `0` squares
+   every corner) and is capped by the legs it owns — a terminal leg serves its
+   one corner whole, a leg shared by two corners splits in proportion to their
+   desires. Two refinements intact:
    corners nested on one diagonal round **concentrically** — the innermost
    takes the base radius and each outward radius grows by exactly its track
    offset, so wires turning together hold their gap through the arc — and
