@@ -363,6 +363,18 @@ mod tests {
         a.c:top - b.d:top\n]\n";
 
     #[test]
+    fn a_projection_line_never_breaks_the_pages_only_physical_size() {
+        // The generated `|projection|` chrome lands as a top-level sibling of
+        // the page; a pages-only sheet still prints true-scale mm
+        // [SPEC 15.8/18] — chrome is not drawn content.
+        let l = laid(TWO_VIEWS);
+        assert!(
+            l.physical.is_some(),
+            "pages-only with a projection line stays physical"
+        );
+    }
+
+    #[test]
     fn a_projection_link_lowers_to_one_straight_line_on_the_aligned_anchors() {
         let l = laid(TWO_VIEWS);
         let proj = projection_lines(&l);

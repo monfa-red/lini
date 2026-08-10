@@ -151,6 +151,10 @@ fn projection_line(w: &crate::resolve::ResolvedLink, a: (f64, f64), b: (f64, f64
         ResolvedValue::Tuple(vec![ResolvedValue::Number(p.0), ResolvedValue::Number(p.1)])
     };
     attrs.insert("points", ResolvedValue::List(vec![point(a), point(b)]));
+    // Generated chrome, like every SPEC 15.7 producer's — what lets a
+    // pages-only sheet stay pages-only (its physical mm size, its hugging
+    // padding) with projection lines drawn across it.
+    attrs.insert("chrome", ResolvedValue::Ident("projection".into()));
     let half = attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
     let bbox = Bbox {
         min_x: a.0.min(b.0),

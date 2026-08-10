@@ -128,10 +128,16 @@ pub(super) fn finish(
 /// The px-per-mm of a **pages-only** scene [SPEC 15.8] — every drawn
 /// top-level node a `|page|` — else `None`. The predicate the physical-size
 /// emission and the hug-the-canvas padding default share. The value is the
-/// desugar-folded density stamp [SPEC 15.1].
+/// desugar-folded density stamp [SPEC 15.1]. Generated chrome (a sheet's
+/// `|projection|` lines land as top-level siblings) is not drawn content and
+/// never breaks the predicate.
 fn pages_only(nodes: &[PlacedNode]) -> Option<f64> {
-    if nodes.is_empty() || !nodes.iter().all(|n| page::is_page(&n.type_chain)) {
-        return None;
-    }
-    Some(nodes[0].attrs.number("px-per-unit").unwrap_or(4.0))
+    let mut pages = nodes
+        .iter()
+        .filter(|n| !drawing::chrome::is_chrome(&n.attrs))
+        .peekable();
+    let first = pages.peek()?.attrs.number("px-per-unit").unwrap_or(4.0);
+    pages
+        .all(|n| page::is_page(&n.type_chain))
+        .then_some(first)
 }
