@@ -115,7 +115,7 @@ impl Seats {
         // never moves a part.
         let mut packers: Vec<Stack> = children.iter().map(|_| Stack::default()).collect();
         for (i, c) in children.iter().enumerate() {
-            packers[i].obstruct(c.bbox);
+            packers[i].obstruct(drawn(c));
         }
         for chain in chains(&satellite, &edges(children, links, scope)) {
             let ends = placed_ends(&chain, roles);
@@ -165,7 +165,7 @@ impl Seats {
         let mut along = frame.u(pin.at) + lead * self.seat;
         if lead != 0.0 {
             let wall = {
-                let (lo, hi) = project(anchor.bbox, frame.u);
+                let (lo, hi) = project(drawn(anchor), frame.u);
                 if lead > 0.0 { hi } else { lo }
             };
             for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {

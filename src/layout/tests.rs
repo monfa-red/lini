@@ -429,6 +429,94 @@ fn grid_cell_fills_its_track_under_stretch() {
 }
 
 #[test]
+fn a_span_past_the_columns_errors() {
+    // [SPEC 21]'s grid-out-of-range row, the span form — this looped forever
+    // before it errored (the auto-flow cursor could never seat the child).
+    let src = "{ layout: grid; columns: 60, auto; }\n|block#a| { span: 3 1 } [ \"A\" ]\n|block#b| [ \"B\" ]\n";
+    let tokens = crate::lexer::lex(src).expect("lex");
+    let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
+    let lowered = crate::desugar::desugar(&file).expect("desugar");
+    let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
+    let err = layout(&program).err().expect("an out-of-range span errors");
+    assert_eq!(err.message, "span: 3 _ exceeds columns=2");
+}
+
+#[test]
+fn a_spanning_child_grows_its_auto_tracks() {
+    // [SPEC 5]'s no-spill law: the spanning child's width is charged to the
+    // auto tracks it covers, so the container holds it.
+    let l = lay_out(
+        "|box#g| { layout: grid; columns: auto, auto; gap: 10 } [\n\
+         |box#wide| { span: 2; width: 400; height: 30 }\n\
+         |box#a| { width: 40; height: 40 }\n\
+         |box#b| { width: 40; height: 40 }\n]\n",
+    );
+    let g = &l.nodes[0];
+    assert!(
+        g.bbox.w() >= 400.0,
+        "the container holds its spanning child: w={}",
+        g.bbox.w()
+    );
+}
+
+#[test]
+fn an_explicit_grid_size_gives_slack_and_anchors_pins() {
+    // [SPEC 12]: slack comes from an explicit width; [SPEC 5]: a pin anchors
+    // to the drawn box — both read the same container box.
+    let l = lay_out(
+        "|box#g| { layout: grid; columns: auto, auto; width: 400; align: start; padding: 0 } [\n\
+         |box#a| { width: 40; height: 40 }\n\
+         |box#b| { width: 40; height: 40 }\n\
+         |badge#tag| \"hi\" { pin: right; translate: 0 0 }\n]\n",
+    );
+    let g = &l.nodes[0];
+    let a = &g.children[0];
+    assert!(
+        a.cx + a.bbox.min_x < g.bbox.min_x + 60.0,
+        "align: start packs the cells left in the 400 slack: a at {}",
+        a.cx + a.bbox.min_x
+    );
+    let tag = g
+        .children
+        .iter()
+        .find(|c| c.type_chain.iter().any(|t| t == "badge"))
+        .expect("the pinned badge");
+    assert!(
+        (tag.cx + tag.bbox.max_x - (g.bbox.max_x)).abs() < 3.0,
+        "pin: right rides the drawn 400 box, not the packed content: tag right {} vs box right {}",
+        tag.cx + tag.bbox.max_x,
+        g.bbox.max_x
+    );
+}
+
+#[test]
+fn evenly_without_slack_keeps_the_authored_gap() {
+    // [SPEC 12]: evenly is a no-op unless the container is larger than its
+    // packed children — it must never shrink the authored gap.
+    let l = lay_out(
+        "|row#r| { justify: evenly; gap: 20 } [\n\
+         |box#a| { width: 40; height: 40 }\n\
+         |box#b| { width: 40; height: 40 }\n]\n",
+    );
+    let r = &l.nodes[0];
+    let (a, b) = (&r.children[0], &r.children[1]);
+    let gap = (b.cx + b.bbox.min_x) - (a.cx + a.bbox.max_x);
+    assert!((gap - 20.0).abs() < 0.01, "the authored gap stands: {gap}");
+}
+
+#[test]
+fn a_tree_scope_honours_its_size_floor() {
+    // [SPEC 17]'s matrix: tree width/height are "✓ a floor".
+    let l = lay_out(
+        "|box#t| { layout: tree; width: 600; height: 400 } [\n\
+         |topic#r| \"r\" [ |topic| \"a\" ]\n]\n",
+    );
+    let t = &l.nodes[0];
+    assert!(t.bbox.w() >= 600.0, "width floor: {}", t.bbox.w());
+    assert!(t.bbox.h() >= 400.0, "height floor: {}", t.bbox.h());
+}
+
+#[test]
 fn grid_rows_track_list_is_a_floor_implicit_rows_overflow() {
     // [SPEC 12/18]: a declared `rows` track list sizes the first rows; extra
     // children flow into implicit auto rows (CSS grid) rather than erroring.

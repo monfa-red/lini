@@ -84,7 +84,11 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    let (children, bbox) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    let (children, body) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    // Border-box, `width`/`height` a floor over the placed cluster [SPEC 5/17] —
+    // the one sizing mechanism every closed container runs through. A tree's
+    // interior is sheet-space, so it sizes at scale 1 [SPEC 15.1].
+    let bbox = primitives::closed_bbox(inst, body, 1.0)?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -92,19 +96,25 @@ pub(super) fn layout_node(
 /// container. The router routes its branch links after (they are ordinary
 /// wires) — the caller wires that up like any scene.
 pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
-    arrange(
+    let (children, body) = arrange(
         &program.scene.attrs,
         &program.scene.nodes,
         "",
         program,
         Span::empty(),
-    )
+    )?;
+    let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
+    Ok((
+        children,
+        body.expand(pad.top, pad.right, pad.bottom, pad.left),
+    ))
 }
 
 /// The tree arrangement shared by the node and root entries: flatten the nested
 /// topics into cards (each sized from its own content only), place the
 /// generations, re-nest, and seat the scope's non-topic content around the
-/// finished cluster. Returns the placed children and the padded bbox.
+/// finished cluster. Returns the placed children and the **content** bbox;
+/// each caller sizes its own box around it.
 fn arrange(
     attrs: &AttrMap,
     inst_children: &[ResolvedInst],
@@ -151,10 +161,16 @@ fn arrange(
     let cluster = union_all(&children);
     place_content(&mut children, content, cluster, content_axis, sibling)?;
 
-    let pad = primitives::padding(attrs, span)?;
+    // Centre the placed cluster on the container's origin — the `|drawing|`
+    // precedent: the box the caller sizes (and the rect it draws) is then the
+    // cluster's own, and a `width` floor grows around it [SPEC 5].
     let body = union_all(&children);
-    let bbox = body.expand(pad.top, pad.right, pad.bottom, pad.left);
-    Ok((children, bbox))
+    let (sx, sy) = body.center();
+    for c in children.iter_mut() {
+        c.cx -= sx;
+        c.cy -= sy;
+    }
+    Ok((children, body.shifted(-sx, -sy)))
 }
 
 /// Recursively push each topic's card (pre-order), sizing the card from its

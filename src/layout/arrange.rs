@@ -106,7 +106,8 @@ pub(super) fn lay_out_container_children(
                 flex::lay_out_flex(axis, &mut flow_children, container_attrs, span, avail)?
             }
             LayoutMode::Grid => {
-                let (bbox, rects) = grid::lay_out_grid(&mut flow_children, container_attrs, span)?;
+                let (bbox, rects) =
+                    grid::lay_out_grid(&mut flow_children, container_attrs, span, avail)?;
                 gutters = rects;
                 bbox
             }

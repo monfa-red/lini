@@ -84,15 +84,31 @@ fn slots(
     columns: Option<usize>,
 ) -> Result<Vec<Slot>, Error> {
     let mut out: Vec<Option<Slot>> = Vec::with_capacity(riders.len());
-    let mut taken: Vec<(usize, usize)> = Vec::new();
+    let mut taken: Vec<(usize, (usize, usize))> = Vec::new();
     for &i in riders {
         let placed = grid::read_cell(&children[i].attrs, children[i].span)
             .map_err(|e| e.code(Code::SCHEMATIC_TRACKS))?;
-        if let Some((col, row)) = placed {
-            taken.push((col, row));
+        if let Some(cell) = placed {
+            // Two anchors on one ordinal would stack, and a wire between two
+            // parts sharing a point cannot route [SPEC 16.1/21]. Name both.
+            if let Some(&(who, _)) = taken.iter().find(|(_, c)| *c == cell) {
+                return Err(Error::at(
+                    children[i].span,
+                    format!(
+                        "cell {} {} already holds '{}' — give '{}' its own ordinal",
+                        cell.0,
+                        cell.1,
+                        part_name(&children[who]),
+                        part_name(&children[i]),
+                    ),
+                )
+                .code(Code::SCHEMATIC_TRACKS));
+            }
+            taken.push((i, cell));
         }
         out.push(placed.map(|(col, row)| Slot { col, row }));
     }
+    let taken: Vec<(usize, usize)> = taken.into_iter().map(|(_, c)| c).collect();
     let (mut col, mut row) = (1usize, 1usize);
     for slot in out.iter_mut() {
         if slot.is_some() {
@@ -108,6 +124,17 @@ fn slots(
         .into_iter()
         .map(|s| s.expect("every slot filled"))
         .collect())
+}
+
+/// How an error names a part: its reference designator [SPEC 16.2] — the id an
+/// author reads it by — else its written type.
+fn part_name(node: &PlacedNode) -> String {
+    node.id
+        .clone()
+        .or_else(|| {
+            crate::desugar::schematic::schematic_type(&node.type_chain).map(|t| format!("|{t}|"))
+        })
+        .unwrap_or_else(|| "a part".to_string())
 }
 
 /// The flow cursor's next slot: one column on, wrapping to the next row at the
@@ -282,9 +309,10 @@ pub(super) fn arrange(
 /// the pin-to-pin distance the tracks currently offer is the two half tracks,
 /// everything between them, their gaps (charges included, so a second chain
 /// asks only for what the first left short) and the two landings' own offsets
-/// from their cell centres. Any shortfall spreads evenly over the gaps in
-/// between. Anchors sharing a track ask nothing of it — there is no gap between
-/// a track and itself; the chain then sizes the other axis alone.
+/// from their cell centres. The shortfall spreads over the gaps in between —
+/// [`grid::charge`], the same spreader a grid's spanning cell runs through.
+/// Anchors sharing a track ask nothing of it — there is no gap between a track
+/// and itself; the chain then sizes the other axis alone.
 fn charge(extra: &mut [f64], sizes: &[f64], gap: f64, a: (usize, f64), b: (usize, f64), need: f64) {
     let ((lo, lo_off), (hi, hi_off)) = if a.0 <= b.0 { (a, b) } else { (b, a) };
     if lo == hi {
@@ -294,14 +322,7 @@ fn charge(extra: &mut [f64], sizes: &[f64], gap: f64, a: (usize, f64), b: (usize
         + extra[lo..hi].iter().sum::<f64>()
         + (hi - lo) as f64 * gap;
     let have = sizes[lo] / 2.0 + between + sizes[hi] / 2.0 + hi_off - lo_off;
-    let short = need - have;
-    if short <= 0.0 {
-        return;
-    }
-    let per = short / (hi - lo) as f64;
-    for e in &mut extra[lo..hi] {
-        *e += per;
-    }
+    grid::charge(&mut extra[lo..hi], have, need);
 }
 
 /// `translate:` — a post-placement shift, reshaping nothing [SPEC 5]. Always

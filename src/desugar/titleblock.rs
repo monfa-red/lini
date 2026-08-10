@@ -24,7 +24,8 @@ const FIELDS: &[(&str, &str)] = &[
     ("status", "Status"),
 ];
 
-/// The grid's column count — the title spans them all.
+/// The generated grid's column count when the block declares none — the title
+/// spans whatever the grid actually has.
 const COLUMNS: usize = 3;
 
 /// Whether a `|title-block|`'s style carries any ISO 7200 field.
@@ -34,14 +35,17 @@ pub(super) fn has_fields(style: &[Decl]) -> bool {
 
 /// Expand a field-carrying `|title-block|` [SPEC 15.8]: return one `|cell|` per
 /// **present** field (a caption over its value; the title spanning), and set
-/// the grid's `columns:`. The field decls are consumed from `style`.
+/// the grid's `columns:`. The field decls are consumed from `style`. The title
+/// spans **the grid the block actually has** — an authored `columns:` sets the
+/// count, and the span must follow it or exceed the track list [SPEC 21].
 pub(super) fn expand_fields(style: &mut Vec<Decl>, span: Span) -> Vec<Node> {
+    let cols = super::tables::column_count(style, &[]).unwrap_or(COLUMNS);
     let cells: Vec<Node> = FIELDS
         .iter()
         .filter_map(|(key, cap)| {
             field_value(style, key).map(|v| {
-                let cols = (*key == "title").then_some(COLUMNS);
-                field_cell(cap, &v, cols, span)
+                let span_cols = (*key == "title").then_some(cols);
+                field_cell(cap, &v, span_cols, span)
             })
         })
         .collect();
@@ -209,6 +213,26 @@ mod tests {
         assert!(field_of(cs[0]).is_some(), "the title cell leads");
         assert!(field_of(cs[1]).is_some(), "the Rev cell second");
         assert!(field_of(cs[2]).is_none(), "the authored cell follows");
+    }
+
+    #[test]
+    fn the_title_spans_the_authored_column_count() {
+        // An authored `columns:` sets the grid; the title's span follows it —
+        // a hard-coded 3 over a 2-track list exceeded the grid [SPEC 21].
+        let tb = title_block(
+            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { title: \"T\"; columns: 60, auto } [ \"Scale\" \"1:1\" ]\n]\n",
+        );
+        let title = cells(&tb)[0];
+        let span = title
+            .style
+            .iter()
+            .find(|d| d.name == "span")
+            .expect("the title spans");
+        assert!(
+            matches!(span.groups[0][0], crate::syntax::ast::Value::Number(n) if n == 2.0),
+            "the span follows the authored track list: {:?}",
+            span.groups[0]
+        );
     }
 
     #[test]

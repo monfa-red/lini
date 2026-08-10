@@ -9,7 +9,10 @@ use crate::syntax::ast::TextNode;
 /// else a bundle default in its chain (`entity` carries `columns: auto, auto`). `None`
 /// when undeterminable — the auto-header and title-span then no-op.
 pub(super) fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
-    if let Some(d) = style.iter().find(|d| d.name == "columns") {
+    // The **last** `columns:` wins, as it does in the cascade the grid engine
+    // reads [SPEC 4] — a repeated declaration must not leave the sugar counting
+    // one list while the layout sizes another.
+    if let Some(d) = style.iter().rev().find(|d| d.name == "columns") {
         let n = count_tracks(d);
         if n > 0 {
             return Some(n);

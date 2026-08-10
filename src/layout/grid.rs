@@ -26,11 +26,15 @@ enum Track {
 
 /// Lay out a grid; returns the content bbox plus the interior gutter rects the
 /// container fills with its `gap-fill` (span-aware, per-axis). Empty when
-/// `gap-fill` is unset.
+/// `gap-fill` is unset. `avail` is the container's content-area `(width,
+/// height)` when it is explicitly sized — the grid's only source of slack
+/// beyond its tracks [SPEC 12], and the box a pinned overlay anchors to
+/// [SPEC 5].
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
     span: Span,
+    avail: (Option<f64>, Option<f64>),
 ) -> Result<(Bbox, Vec<Gutter>), Error> {
     let (gap_y, gap_x) = primitives::gap(attrs, span)?;
 
@@ -56,6 +60,14 @@ pub fn lay_out_grid(
     let mut placements: Vec<Placement> = Vec::with_capacity(children.len());
     for (i, child) in children.iter().enumerate() {
         let (cs, rs) = read_span(&child.attrs, child.span)?;
+        // A span wider than the whole track list can never be placed — say so
+        // [SPEC 21], rather than letting the auto-flow scan hunt forever.
+        if cs > cols {
+            return Err(Error::at(
+                child.span,
+                format!("span: {} _ exceeds columns={}", cs, cols),
+            ));
+        }
         let pinned = read_cell(&child.attrs, child.span)?;
         let (col, row) = match pinned {
             Some((c, r)) => (c - 1, r - 1),
@@ -111,13 +123,25 @@ pub fn lay_out_grid(
 
     let mut row_tracks = row_tracks.unwrap_or_default();
     row_tracks.resize(rows, Track::Auto);
-    let col_sizes = track_sizes(&col_tracks, &placements, children, Axis::Col);
-    let row_sizes = track_sizes(&row_tracks, &placements, children, Axis::Row);
+    let col_sizes = track_sizes(&col_tracks, &placements, children, Axis::Col, gap_x);
+    let row_sizes = track_sizes(&row_tracks, &placements, children, Axis::Row, gap_y);
 
     let col_off = cumulative(&col_sizes, gap_x);
     let row_off = cumulative(&row_sizes, gap_y);
     let total_w = (col_off[cols] - gap_x).max(0.0);
     let total_h = (row_off[rows] - gap_y).max(0.0);
+
+    // An explicit container size is the grid's slack [SPEC 12]: the box is the
+    // larger of the packed tracks and the declared content area, and the track
+    // block packs inside it — by the same knob that packs a cell in its track,
+    // read off the alignment every column agrees on. `block_*` is the block
+    // centre's offset from the box centre; without slack it is zero and every
+    // cell (and gutter) lands exactly where it did.
+    let extent_w = avail.0.map_or(total_w, |a| a.max(total_w));
+    let extent_h = avail.1.map_or(total_h, |a| a.max(total_h));
+    let block_x = pack(block_align(attrs, "align", cols), 0.0, extent_w, total_w) - extent_w / 2.0;
+    let block_y =
+        pack(block_align(attrs, "justify", cols), 0.0, extent_h, total_h) - extent_h / 2.0;
 
     for p in &placements {
         let (x0, x1) = (col_off[p.col], col_off[p.col + p.colspan] - gap_x);
@@ -162,8 +186,8 @@ pub fn lay_out_grid(
         // column then share an axis, the projection-sheet arrangement
         // [SPEC 15.8].
         let (cw, ch) = (child.bbox.w(), child.bbox.h());
-        let cell_cx = pack(col_h, x0, x1, cw) - total_w / 2.0;
-        let cell_cy = pack(col_v, y0, y1, ch) - total_h / 2.0;
+        let cell_cx = pack(col_h, x0, x1, cw) - total_w / 2.0 + block_x;
+        let cell_cy = pack(col_v, y0, y1, ch) - total_h / 2.0 + block_y;
         let off_x = if col_h == Some("origin") {
             child.origin.0
         } else {
@@ -186,7 +210,7 @@ pub fn lay_out_grid(
         }
     }
 
-    let gutters = if has_gap_fill(attrs) {
+    let mut gutters = if has_gap_fill(attrs) {
         interior_gutters(
             &col_off,
             &row_off,
@@ -197,7 +221,14 @@ pub fn lay_out_grid(
     } else {
         Vec::new()
     };
-    Ok((Bbox::centered(total_w, total_h), gutters))
+    // The gutters ride the track block, so they take its offset too.
+    if (block_x, block_y) != (0.0, 0.0) {
+        for g in &mut gutters {
+            g.0 += block_x;
+            g.1 += block_y;
+        }
+    }
+    Ok((Bbox::centered(extent_w, extent_h), gutters))
 }
 
 // ───────────────────────── Track lists ─────────────────────────
@@ -251,12 +282,17 @@ enum Axis {
     Row,
 }
 
-/// Fixed tracks take their size; auto tracks the max single-span child extent.
+/// Fixed tracks take their size; auto tracks the max single-span child extent,
+/// and then every **spanning** child charges what its run still lacks to the
+/// auto tracks it covers — so a spanning cell never spills its container
+/// [SPEC 5]. Narrower spans settle first (CSS grid's order), and a run of
+/// fixed tracks takes nothing: an author who sized the tracks owns the result.
 fn track_sizes(
     tracks: &[Track],
     placements: &[Placement],
     children: &[PlacedNode],
     axis: Axis,
+    gap: f64,
 ) -> Vec<f64> {
     let mut sizes: Vec<f64> = tracks
         .iter()
@@ -265,16 +301,53 @@ fn track_sizes(
             Track::Auto => 0.0,
         })
         .collect();
+    let measure = |p: &Placement| match axis {
+        Axis::Col => (p.col, p.colspan, children[p.child_index].bbox.w()),
+        Axis::Row => (p.row, p.rowspan, children[p.child_index].bbox.h()),
+    };
     for p in placements {
-        let (idx, span_n, extent) = match axis {
-            Axis::Col => (p.col, p.colspan, children[p.child_index].bbox.w()),
-            Axis::Row => (p.row, p.rowspan, children[p.child_index].bbox.h()),
-        };
+        let (idx, span_n, extent) = measure(p);
         if span_n == 1 && idx < sizes.len() && matches!(tracks[idx], Track::Auto) {
             sizes[idx] = sizes[idx].max(extent);
         }
     }
+    let mut spanning: Vec<(usize, usize, f64)> = placements
+        .iter()
+        .map(measure)
+        .filter(|&(idx, span_n, _)| span_n > 1 && idx < sizes.len())
+        .collect();
+    spanning.sort_by_key(|&(_, span_n, _)| span_n);
+    for (idx, span_n, extent) in spanning {
+        let run = idx..(idx + span_n).min(sizes.len());
+        let have = sizes[run.clone()].iter().sum::<f64>() + gap * (run.len() - 1) as f64;
+        let auto = sizes[run.clone()]
+            .iter_mut()
+            .zip(&tracks[run])
+            .filter(|(_, t)| matches!(t, Track::Auto))
+            .map(|(s, _)| s);
+        charge(auto, have, extent);
+    }
     sizes
+}
+
+/// Spread what a **spanning** child still lacks over the slots that may grow
+/// for it, evenly [SPEC 12/16.1]: `have` is what its run already offers, `need`
+/// what it asks. Nothing to charge — no shortfall, or no growable slot — leaves
+/// every slot alone. The grid charges the auto tracks a cell covers; the
+/// schematic charges the gaps a two-ended chain spans ([`super::schematic`]).
+pub(super) fn charge<'a>(slots: impl IntoIterator<Item = &'a mut f64>, have: f64, need: f64) {
+    let short = need - have;
+    if short <= 0.0 {
+        return;
+    }
+    let slots: Vec<&mut f64> = slots.into_iter().collect();
+    if slots.is_empty() {
+        return;
+    }
+    let per = short / slots.len() as f64;
+    for s in slots {
+        *s += per;
+    }
 }
 
 /// Track offsets: the cumulative start of each track plus one entry past the
@@ -323,6 +396,17 @@ fn track_align<'a>(attrs: &'a AttrMap, name: &str, c: usize) -> Option<&'a str> 
         }
         _ => None,
     }
+}
+
+/// The one alignment the **whole track block** answers to when an explicit
+/// container size leaves slack around it [SPEC 12]: the keyword every column
+/// shares. Columns that disagree speak only for themselves, so the block
+/// centres.
+fn block_align<'a>(attrs: &'a AttrMap, name: &str, cols: usize) -> Option<&'a str> {
+    (0..cols)
+        .map(|c| track_align(attrs, name, c))
+        .reduce(|a, b| if a == b { a } else { None })
+        .flatten()
 }
 
 /// The centre of a `size`-wide box packed in the track `[lo, hi]` per an alignment

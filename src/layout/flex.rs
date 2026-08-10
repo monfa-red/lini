@@ -125,10 +125,13 @@ pub fn lay_out_flex(
         Main::Start => (0.0, gap),
         Main::Center | Main::Stretch => (remaining / 2.0, gap),
         Main::End => (remaining, gap),
+        // Equal shares of the **slack**, one before each child and one after
+        // [SPEC 12]: the authored gap is the floor between them, so an
+        // auto-sized container — which has no slack — spaces exactly as it
+        // packed, instead of shrinking its own gap to spread it.
         Main::Evenly => {
-            let bodies = children.iter().map(|c| len(c, main_dim)).sum::<f64>();
-            let eg = (main_extent - bodies) / (n + 1.0);
-            (eg, eg)
+            let share = remaining / (n + 1.0);
+            (share, gap + share)
         }
     };
 

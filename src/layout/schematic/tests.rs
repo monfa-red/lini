@@ -503,3 +503,12 @@ fn a_turned_components_pins_are_placed_on_the_sides_they_landed_on() {
     );
     assert!(c_y > body_y, "the right rail swung to the bottom: {c_y}");
 }
+
+#[test]
+fn a_schematic_scope_honours_its_size_floor() {
+    // [SPEC 17]'s matrix: schematic width/height are "✓ a floor".
+    let nodes = laid(&scope(" { width: 600; height: 400 }", "  |R#r1| \"1k\"\n"));
+    let (_, _, w, h) = body(&nodes, "s");
+    assert!(w >= 600.0, "width floor: {w}");
+    assert!(h >= 400.0, "height floor: {h}");
+}

@@ -303,3 +303,17 @@ fn a_pinned_child_is_an_overlay_on_the_finished_sheet() {
         "the overlay claimed no cell"
     );
 }
+
+#[test]
+fn a_second_part_on_a_taken_cell_errors() {
+    // [SPEC 16.1/21]: two explicit `cell:`s on one ordinal used to stack the
+    // parts silently and stray every wire off the buried one.
+    let err = super::tests::layout_err(&scope(
+        "",
+        "  |R#r1| \"1k\" { cell: 1 1 }\n  |R#r2| \"2k\" { cell: 1 1 }\n",
+    ));
+    assert_eq!(
+        err,
+        "cell 1 1 already holds 'r1' — give 'r2' its own ordinal"
+    );
+}

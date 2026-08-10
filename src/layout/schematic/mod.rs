@@ -102,7 +102,11 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    let (children, bbox) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    let (children, body) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    // Border-box, `width`/`height` a floor over the placed sheet [SPEC 5/17] —
+    // the one sizing mechanism, the same a `|drawing|` node runs through. A
+    // schematic's interior is sheet-space, so it sizes at scale 1 [SPEC 16.6].
+    let bbox = primitives::closed_bbox(inst, body, 1.0)?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -110,19 +114,25 @@ pub(super) fn layout_node(
 /// schematic scope. Its wires are ordinary routed links — the caller routes
 /// them after, like any scene.
 pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
-    arrange(
+    let (children, body) = arrange(
         &program.scene.attrs,
         &program.scene.nodes,
         "",
         program,
         Span::empty(),
-    )
+    )?;
+    let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
+    Ok((
+        children,
+        body.expand(pad.top, pad.right, pad.bottom, pad.left),
+    ))
 }
 
 /// The placement shared by the node and root entries: lay every child out on
 /// its own, then seat them on the scope's anchor track grid [SPEC 16.1] —
 /// [`place::arrange`] owns the roles, the tracks and the seats. Returns the
-/// placed children and the padded bbox.
+/// placed children and the **content** bbox; each caller sizes its own box
+/// around it.
 fn arrange(
     attrs: &AttrMap,
     inst_children: &[ResolvedInst],
@@ -142,11 +152,18 @@ fn arrange(
     let links: Vec<&crate::resolve::ResolvedLink> =
         program.links.iter().filter(|w| w.scope == path).collect();
     let body = place::arrange(&mut children, attrs, span, &links, path)?;
-    let pad = primitives::padding(attrs, span)?;
-    Ok((
-        children,
-        body.expand(pad.top, pad.right, pad.bottom, pad.left),
-    ))
+    // Centre the placed sheet on the scope's origin — the tracks already sit
+    // there, but a spanning chain or a flowed-out satellite can hang the body
+    // off to one side. The box the caller sizes (and the rect it draws) is then
+    // the sheet's own, and a `width` floor grows around it [SPEC 5].
+    let (sx, sy) = body.center();
+    if (sx, sy) != (0.0, 0.0) {
+        for c in children.iter_mut() {
+            c.cx -= sx;
+            c.cy -= sy;
+        }
+    }
+    Ok((children, body.shifted(-sx, -sy)))
 }
 
 #[cfg(test)]

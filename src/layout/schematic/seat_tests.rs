@@ -437,3 +437,22 @@ fn two_ends_on_one_anchor_grow_off_it_instead_of_spanning_it() {
         seat_warnings(&three)
     );
 }
+
+#[test]
+fn a_chain_clears_the_anchors_readouts() {
+    // [SPEC 16.1]: the leg runs as far as it needs to stand clear of the part
+    // it hangs from — the part's **ink**, ref/value readouts included, not its
+    // box (a long value text used to sit under the chain).
+    let nodes = laid(&scope(
+        "",
+        "  |R#r1| \"10.0kOhm-1%-0603-THICKFILM\" { cell: 1 1 }\n  |gnd#g1|\n  r1.p2 - g1\n",
+    ));
+    let (rx, ry, rw, rh) = cell(&nodes, "r1");
+    let (gx, gy, gw, gh) = cell(&nodes, "g1");
+    let clear_x = (gx - rx).abs() * 2.0 >= gw + rw - 0.01;
+    let clear_y = (gy - ry).abs() * 2.0 >= gh + rh - 0.01;
+    assert!(
+        clear_x || clear_y,
+        "the chain stands clear of the readouts: r=({rx},{ry},{rw},{rh}) g=({gx},{gy},{gw},{gh})"
+    );
+}
