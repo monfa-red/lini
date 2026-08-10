@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/drawing_turned.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-471.5 -275.6956 943 569.3912" width="943" height="569.3912" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-470.5 -272.6956 941 564.3912" width="941" height="564.3912" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -63,9 +64,9 @@ input_file: samples/drawing_turned.lini
     <path id="lg0400-106" d="M285 188L164 308L916 1067L1036 947L285 188ZM916 188L164 947L285 1067L1036 308L916 188Z"/>
     <path id="lg0400-390" d="M185 -180L54 -107L1015 1612L1146 1539L185 -180ZM602 -32Q445 -32 326.5 59Q208 150 141.5 313.5Q75 477 75 697L75 735Q75 961 138.5 1124.5Q202 1288 319.5 1376Q437 1464 598 1464Q755 1464 873.5 1373.5Q992 1283 1058.5 1119Q1125 955 1125 735L1125 697Q1125 471 1062 308Q999 145 881.5 56.5Q764 -32 602 -32ZM596 134Q766 134 856.5 277.5Q947 421 947 690L947 746Q947 1021 863 1159.5Q779 1298 604 1298Q435 1298 344 1154Q253 1010 253 742L253 686Q253 409 337 271.5Q421 134 596 134Z"/>
   </defs>
-  <rect class="lini-canvas" x="-471.5" y="-275.6956" width="943" height="569.3912"/>
+  <rect class="lini-canvas" x="-470.5" y="-272.6956" width="941" height="564.3912"/>
   <g class="lini-scene">
-    <g class="lini-node lini-drawing lini-block" data-id="tiebar-view" transform="translate(0,-189.6956)">
+    <g class="lini-node lini-drawing lini-block" data-id="tiebar-view" transform="translate(0,-187.6956)">
       <rect x="-260.5" y="-65" width="521" height="130" rx="0" ry="0"/>
       <g class="lini-node lini-sketch" data-id="bar" transform="translate(214,9.5)">
         <path d="M -228 -30 L 37.5 -30 L 42 -25.5 L 42 0 L 42 25.5 L 37.5 30 L -228 30 M -240 30 L -330 30 L -445.5 30 L -450 25.5 L -450 0 L -450 -25.5 L -445.5 -30 L -330 -30 L -240 -30" fill-rule="evenodd"/>
@@ -170,7 +171,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-18" transform="translate(-130 -34.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-25" transform="translate(-122.8 -34.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,77)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,78)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-56" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
@@ -263,7 +264,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-54" transform="translate(145.3047 -42.3996) scale(0.006 -0.006)"/>
         <use href="#lg0400-23" transform="translate(152.5047 -42.3996) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,64.6956)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,65.6956)">
         <rect x="-46.8" y="-6" width="93.6" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-55" transform="translate(-46.8 4.296) scale(0.006 -0.006)"/>
@@ -281,7 +282,7 @@ input_file: samples/drawing_turned.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-drawing lini-block" data-id="barrel-view" transform="translate(0,167.6956)">
+    <g class="lini-node lini-drawing lini-block" data-id="barrel-view" transform="translate(0,165.6956)">
       <rect x="-450.5" y="-87" width="901" height="174" rx="0" ry="0"/>
       <g class="lini-node lini-sketch" data-id="body" transform="translate(99,-9.5)">
         <path d="M 192 -50 L 344 -50 L 347 -47 L 347 0 L 347 47 L 344 50 L 192 50 M 180 50 L -283 50 L -283 45 L -303 45 L -303 37 L -317 37 L -317 45 L -345 45 L -345 42 L -409 42 L -482 42 L -485 39 L -485 0 L -485 -39 L -482 -42 L -409 -42 L -345 -42 L -345 -45 L -317 -45 L -317 -37 L -303 -37 L -303 -45 L -283 -45 L -283 -50 L 180 -50" fill-rule="evenodd"/>
@@ -554,7 +555,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-41" transform="translate(141.4 -73.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-52" transform="translate(148.6 -73.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,99)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,100)">
         <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-38" transform="translate(-21.6 4.296) scale(0.006 -0.006)"/>

@@ -52,7 +52,8 @@ fn stub_tip(nodes: &[PlacedNode], part: &str, pin: &str) -> (f64, f64) {
         .iter()
         .find(|c| c.type_chain.iter().any(|t| t == "pin-stub"))
         .expect("a pin draws a stub");
-    let b = stub.bbox;
+    // The wire meets the ink: the lead's true endpoint, not its paint bbox.
+    let b = stub.bbox.inflate(-stub.attrs.half_stroke());
     let (sx, sy) = (px + stub.cx, py + stub.cy);
     let (dx, dy) = (sx - px, sy - py);
     if dx.abs() >= dy.abs() {
@@ -73,7 +74,8 @@ fn tag_edge(nodes: &[PlacedNode], id: &str, side: &str) -> (f64, f64) {
         .iter()
         .find(|c| c.type_chain.iter().any(|t| t == "sch-tag-line"))
         .expect("a symbol label draws its glyph");
-    let b = sym.bbox;
+    // The wire meets the ink: the glyph's drawn edge, not its paint bbox.
+    let b = sym.bbox.inflate(-sym.attrs.half_stroke());
     let (cx, cy) = (lx + sym.cx, ly + sym.cy);
     match side {
         "left" => (cx + b.min_x, cy + (b.min_y + b.max_y) / 2.0),

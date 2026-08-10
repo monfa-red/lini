@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/desugar.lini
 ---
@@ -41,7 +42,7 @@ input_file: samples/desugar.lini
           <use href="#lg0500-47" transform="translate(0 5.37) scale(0.0075 -0.0075)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-38.2,-61.5)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-39.2,-62.5)">
         <rect x="-10.8" y="-6" width="21.6" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-37" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
@@ -49,7 +50,7 @@ input_file: samples/desugar.lini
           <use href="#lg0400-45" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
         </g>
       </g>
-      <g class="lini-node lini-badge lini-block" transform="translate(42.4,-46)">
+      <g class="lini-node lini-badge lini-block" transform="translate(43.4,-47)">
         <g filter="url(#lini-shadow-1)">
           <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
         </g>

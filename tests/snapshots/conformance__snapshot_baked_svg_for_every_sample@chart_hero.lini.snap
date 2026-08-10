@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/chart_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-388.5 -411 777 822" width="777" height="822" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-387.5 -410 775 820" width="775" height="820" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -104,12 +105,12 @@ input_file: samples/chart_hero.lini
     <path id="lg0600-93" d="M323 -447Q155 -447 34 -346L162 -149Q240 -213 315 -213Q372 -213 407.5 -185.5Q443 -158 467 -94L563 169L610 169L702 527L873 1050L1146 1050L699 -143Q639 -304 550 -375.5Q461 -447 323 -447ZM528 -90L99 1050L374 1050L552 527L623 264L693 264L528 -90Z"/>
     <path id="lg0600-681" d="M385 778Q299 826 249.5 909.5Q200 993 200 1097Q200 1203 249.5 1286Q299 1369 385 1417Q471 1465 579 1465Q687 1465 772.5 1417Q858 1369 907.5 1286Q957 1203 957 1097Q957 993 907.5 909.5Q858 826 772.5 778Q687 730 579 730Q471 730 385 778ZM694.5 978.5Q739 1025 739 1097Q739 1171 694.5 1217Q650 1263 579.5 1263Q509 1263 463.5 1217Q418 1171 418 1097Q418 1025 463.5 978.5Q509 932 579.5 932Q650 932 694.5 978.5Z"/>
   </defs>
-  <rect class="lini-canvas" x="-388.5" y="-411" width="777" height="822"/>
+  <rect class="lini-canvas" x="-387.5" y="-410" width="775" height="820"/>
   <g class="lini-scene">
     <g class="lini-node lini-block" transform="translate(0,0)">
       <rect x="-367.5" y="-390" width="735" height="780" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-187.5,-265)">
-        <rect x="-174" y="-119" width="348" height="238" rx="0" ry="0"/>
+        <rect x="-175" y="-120" width="350" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="80.9" x2="163" y2="80.9"/>
         </g>
@@ -234,7 +235,7 @@ input_file: samples/chart_hero.lini
         </g>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,-265)">
-        <rect x="-174" y="-119" width="348" height="238" rx="0" ry="0"/>
+        <rect x="-175" y="-120" width="350" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="80.9" x2="163" y2="80.9"/>
         </g>
@@ -409,7 +410,7 @@ input_file: samples/chart_hero.lini
         </g>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-187.5,0)">
-        <rect x="-174" y="-119" width="348" height="238" rx="0" ry="0"/>
+        <rect x="-175" y="-120" width="350" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <polyline points="0,-20.7 21.8671,-8.075 21.8671,17.175 0,29.8 -21.8671,17.175 -21.8671,-8.075 0,-20.7"/>
         </g>
@@ -545,7 +546,7 @@ input_file: samples/chart_hero.lini
         </g>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,0)">
-        <rect x="-169" y="-119" width="338" height="238" rx="0" ry="0"/>
+        <rect x="-170" y="-120" width="340" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-102.925,1.2)">
           <rect x="-37.275" y="-86.4" width="74.55" height="172.8" rx="0" ry="0"/>
         </g>
@@ -670,7 +671,7 @@ input_file: samples/chart_hero.lini
         </g>
       </g>
       <g class="lini-node lini-pie lini-block" transform="translate(-187.5,265)">
-        <rect x="-174" y="-119" width="348" height="238" rx="0" ry="0"/>
+        <rect x="-175" y="-120" width="350" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Ads: 40 (40%)</title>
           <polygon points="0,-85.2 8.6621,-84.781 17.2434,-83.528 25.6636,-81.4526 33.8443,-78.5742 41.7089,-74.9197 49.1841,-70.5232 56.2001,-65.4258 62.6914,-59.675 68.5973,-53.3246 73.8628,-46.4338 78.4386,-39.067 82.2821,-31.293 85.3573,-23.1843 87.6356,-14.8166 89.0956,-6.2682 89.7238,2.3813 89.5142,11.051 88.4689,19.66 86.5976,28.128 83.9177,36.3758 80.4543,44.3264 76.2397,51.9057 71.3133,59.0428 65.7211,65.6712 59.5153,71.7288 52.7537,77.1593 0,4.55"/>
@@ -742,7 +743,7 @@ input_file: samples/chart_hero.lini
         </g>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,265)">
-        <rect x="-174" y="-119" width="348" height="238" rx="0" ry="0"/>
+        <rect x="-175" y="-120" width="350" height="240" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="83.2" x2="163" y2="83.2"/>
         </g>

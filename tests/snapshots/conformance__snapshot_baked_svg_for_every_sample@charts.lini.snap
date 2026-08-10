@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/charts.lini
 ---
@@ -105,7 +106,7 @@ input_file: samples/charts.lini
   <rect class="lini-canvas" x="-392" y="-800" width="784" height="1600"/>
   <g class="lini-scene">
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-670)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
       </g>
@@ -206,7 +207,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-670)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
       </g>
@@ -346,7 +347,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-426)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
       </g>
@@ -458,7 +459,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-426)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-block" style="fill: #cb8b00; stroke-width: 0; opacity: 0.15" transform="translate(123.4333,-9.85)">
         <rect x="-44.5667" y="-65.35" width="89.1333" height="130.7" rx="0" ry="0"/>
       </g>
@@ -620,7 +621,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-182)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
       </g>
@@ -791,7 +792,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-182)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
       </g>
@@ -911,7 +912,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,62)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
       </g>
@@ -975,7 +976,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,62)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="73.2" x2="168" y2="73.2"/>
       </g>
@@ -1080,7 +1081,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,336)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="73.2" x2="168" y2="73.2"/>
       </g>
@@ -1209,7 +1210,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-pie lini-block" transform="translate(192,336)">
-      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <rect x="-140" y="-140" width="280" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
         <title>Search: 45 (45%)</title>
         <polygon points="0,-105.2 10.6834,-104.6788 21.2654,-103.1201 31.6454,-100.5387 41.7247,-96.9592 51.4078,-92.4154 60.6026,-86.9507 69.2218,-80.6169 77.1835,-73.4742 84.4121,-65.5903 90.8389,-57.0403 96.4029,-47.9052 101.0512,-38.2719 104.7397,-28.2319 107.4334,-17.8805 109.1066,-7.3161 109.7436,3.3611 109.3381,14.0495 107.8941,24.6478 105.4253,35.0551 101.9552,45.1727 97.5167,54.9044 92.1519,64.1578 85.9118,72.8451 78.8557,80.8837 71.0506,88.1973 62.5707,94.7163 53.4965,100.379 43.9141,105.1314 33.9146,108.9285 0,4.55"/>
@@ -1290,7 +1291,7 @@ input_file: samples/charts.lini
       </g>
     </g>
     <g class="lini-node lini-pie lini-block" transform="translate(-192,640)">
-      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <rect x="-140" y="-140" width="280" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
         <title>Ads: 40 (40%)</title>
         <polygon points="0,-105.2 10.5924,-104.6876 21.0859,-103.1554 31.3825,-100.6175 41.3862,-97.0977 51.0034,-92.6288 60.1444,-87.2526 68.7238,-81.0193 76.6616,-73.987 83.8837,-66.2214 90.3225,-57.7951 95.918,-48.7867 100.6179,-39.2803 104.3785,-29.3646 107.1644,-19.1323 108.9498,-8.6789 109.718,1.898 109.4617,12.4997 108.1834,23.0272 105.8951,33.3821 102.618,43.4679 98.3829,53.1903 93.2291,62.4585 87.2049,71.1861 80.3665,79.2915 72.7777,86.6991 64.5094,93.3396 32.2547,48.9448 36.3889,45.6245 40.1832,41.9207 43.6025,37.868 46.6146,33.5043 49.1914,28.8701 51.309,24.0089 52.9475,18.9661 54.0917,13.7886 54.7309,8.5249 54.859,3.224 54.4749,-2.0645 53.5822,-7.2912 52.1892,-12.4073 50.309,-17.3651 47.959,-22.1183 45.1612,-26.6226 41.9418,-30.8357 38.3308,-34.7185 34.3619,-38.2346 30.0722,-41.3513 25.5017,-44.0394 20.6931,-46.2738 15.6913,-48.0337 10.543,-49.3027 5.2962,-50.0688 0,-50.325"/>

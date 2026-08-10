@@ -75,7 +75,10 @@ impl SceneIndex {
     /// no pin, stub, number or port node is ever a scene node of its own. Ink
     /// outside the connection frame — the ref / value readouts — stays an
     /// obstacle through the part's `overflow`, on the same terms the generic
-    /// walk collects any node's poking descendants.
+    /// walk collects any node's poking descendants. **Pin anatomy never
+    /// overflows**: the frame's side runs through the stub's tip, so the only
+    /// ink a stub or its number can poke past it is stroke-cap dust — and the
+    /// wire lands on (and covers) the lead by construction.
     fn fold(&mut self, n: &PlacedNode, path: &str, i: usize, ox: f64, oy: f64) {
         let frame = self.nodes[i].rect;
         let own = abs_rect(n, ox, oy);
@@ -90,7 +93,11 @@ impl SceneIndex {
             if c.id.is_some() {
                 self.by_path.insert(cpath.clone(), i);
             }
-            if !inside(frame, rect) && !inside(own, rect) {
+            let pin_anatomy = c
+                .type_chain
+                .iter()
+                .any(|t| t == "pin-stub" || t == "pin-number");
+            if !pin_anatomy && !inside(frame, rect) && !inside(own, rect) {
                 self.nodes[i].overflow.push(rect);
             }
             self.fold(c, &cpath, i, cx, cy);

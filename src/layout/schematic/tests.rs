@@ -127,11 +127,9 @@ pub(super) fn tip(nodes: &[PlacedNode], pin: &str, out_right: bool) -> f64 {
         .find(|c| c.type_chain.iter().any(|t| t == "pin-stub"))
         .expect("every pin wears a stub");
     let x = px + stub.cx;
-    if out_right {
-        x + stub.bbox.max_x
-    } else {
-        x + stub.bbox.min_x
-    }
+    // The wire meets the ink: the lead's true endpoint, not its paint bbox.
+    let b = stub.bbox.inflate(-stub.attrs.half_stroke());
+    if out_right { x + b.max_x } else { x + b.min_x }
 }
 
 /// The pose a placed part wears, in degrees — desugar leaves it on the chain

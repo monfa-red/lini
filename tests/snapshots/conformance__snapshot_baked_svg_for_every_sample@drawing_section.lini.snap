@@ -92,7 +92,7 @@ input_file: samples/drawing_section.lini
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" data-id="sheet" transform="translate(0,0)">
       <rect x="-840" y="-594" width="1680" height="1188" rx="0" ry="0"/>
-      <g class="lini-node lini-drawing lini-block" data-id="front" transform="translate(-338.7,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="front" transform="translate(-335.7,0)">
         <rect x="-206.6" y="-173" width="413.2" height="346" rx="0" ry="0"/>
         <g class="lini-node lini-oval" data-id="od" style="fill: none; stroke: black" transform="translate(0,0)">
           <ellipse cx="0" cy="0" rx="160" ry="160"/>
@@ -185,7 +185,7 @@ input_file: samples/drawing_section.lini
           <use href="#lg0400-23" transform="translate(-199.4 4.296) scale(0.006 -0.006)"/>
           <use href="#lg0400-24" transform="translate(-192.2 4.296) scale(0.006 -0.006)"/>
         </g>
-        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,185)">
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,186)">
           <rect x="-43.2" y="-6" width="86.4" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0400-39" transform="translate(-43.2 4.296) scale(0.006 -0.006)"/>
@@ -202,7 +202,7 @@ input_file: samples/drawing_section.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(64.1,0.5)">
+      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(65.1,0.5)">
         <rect x="-180.2" y="-101" width="360.4" height="202" rx="0" ry="0"/>
         <g class="lini-node lini-steel lini-sketch" data-id="wall" transform="translate(19.2,-0.5)">
           <path d="M -160 -32 L -68 -32 L -68 32 L -160 32 Z M 160 -32 L 68 -32 L 68 32 L 160 32 Z" fill-rule="evenodd"/>
@@ -275,7 +275,7 @@ input_file: samples/drawing_section.lini
           <use href="#lg0400-24" transform="translate(-173 3.796) scale(0.006 -0.006)"/>
         </g>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,114)">
-          <rect x="-31.4" y="-5" width="62.8" height="10" rx="0" ry="0"/>
+          <rect x="-32.4" y="-6" width="64.8" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0500-37" transform="translate(-40.5 5.37) scale(0.0075 -0.0075)"/>
             <use href="#lg0500-17" transform="translate(-31.5 5.37) scale(0.0075 -0.0075)"/>
@@ -288,7 +288,7 @@ input_file: samples/drawing_section.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(350.3,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(349.3,0)">
         <rect x="-90" y="-90" width="180" height="180" rx="0" ry="0"/>
         <g class="lini-node lini-block" clip-path="url(#lini-clip-1)" transform="translate(0,0)">
           <rect x="-90" y="-90" width="180" height="180" rx="0" ry="0"/>
@@ -327,7 +327,7 @@ input_file: samples/drawing_section.lini
           <ellipse cx="0" cy="0" rx="89" ry="89"/>
         </g>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,103)">
-          <rect x="-24.2" y="-5" width="48.4" height="10" rx="0" ry="0"/>
+          <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0500-39" transform="translate(-31.5 5.37) scale(0.0075 -0.0075)"/>
             <use href="#lg0500-12" transform="translate(-13.5 5.37) scale(0.0075 -0.0075)"/>
@@ -338,7 +338,7 @@ input_file: samples/drawing_section.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="bush" transform="translate(520.8,-10)">
+      <g class="lini-node lini-drawing lini-block" data-id="bush" transform="translate(517.8,-10)">
         <rect x="-64.5" y="-59" width="129" height="118" rx="0" ry="0"/>
         <g class="lini-node lini-steel lini-sketch" data-id="body" transform="translate(0,10)">
           <path d="M -60 -48 L 60 -48 L 60 -19.67 L -60 -19.67 Z M -60 48 L 60 48 L 60 19.67 L -60 19.67 Z" fill-rule="evenodd"/>
@@ -371,7 +371,7 @@ input_file: samples/drawing_section.lini
           <use href="#lg0400-106" transform="translate(31.6 -48.704) scale(0.006 -0.006)"/>
           <use href="#lg0400-22" transform="translate(38.8 -48.704) scale(0.006 -0.006)"/>
         </g>
-        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,71)">
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,72)">
           <rect x="-39.6" y="-6" width="79.2" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0400-56" transform="translate(-39.6 4.296) scale(0.006 -0.006)"/>

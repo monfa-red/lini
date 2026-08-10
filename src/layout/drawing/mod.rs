@@ -184,14 +184,35 @@ pub(in crate::layout) fn sheet_node<T: SheetView>(n: &T) -> bool {
 /// are round — `width:` (required) is the diameter — and every other shape
 /// sizes as a leaf: a part's features never grow it, they overhang.
 /// Half a node's stroke width — the paint reach either side of its drawn
-/// geometry.
+/// geometry ([`crate::resolve::AttrMap::half_stroke`]: an unpainted
+/// `stroke: none` reaches nothing).
 pub(in crate::layout) fn half_stroke(attrs: &crate::resolve::AttrMap) -> f64 {
-    attrs.number("stroke-width").unwrap_or(0.0) / 2.0
+    attrs.half_stroke()
 }
 
 /// A placed node's drawn shape, stroke excluded — the box anchors, default
-/// outlines, and pinned placement read [SPEC 15.1].
+/// outlines, and pinned placement read [SPEC 15.1]. A nested `|drawing|` is
+/// one rigid body whose geometry bbox is its **parts' union** [SPEC 15.8] —
+/// the container itself paints nothing, so each part's own painted stroke is
+/// excluded where it lies, never approximated by the container's.
 fn geometry_box(n: &super::ir::PlacedNode) -> Bbox {
+    if crate::resolve::is_drawing(&n.attrs) {
+        let mut parts: Option<Bbox> = None;
+        for c in n
+            .children
+            .iter()
+            .filter(|c| is_geometry(c) && !chrome::is_chrome(&c.attrs))
+        {
+            let g = geometry_box(c).shifted(c.cx, c.cy);
+            parts = Some(match parts {
+                Some(b) => b.union(g),
+                None => g,
+            });
+        }
+        if let Some(b) = parts {
+            return b;
+        }
+    }
     n.bbox.inflate(-half_stroke(&n.attrs))
 }
 

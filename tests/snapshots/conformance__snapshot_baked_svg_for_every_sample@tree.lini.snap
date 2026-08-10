@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/tree.lini
 ---
@@ -58,7 +59,7 @@ input_file: samples/tree.lini
   <rect class="lini-canvas" x="-380.5" y="-383.5" width="761" height="767"/>
   <g class="lini-scene">
     <g class="lini-node lini-column lini-block" transform="translate(-276,-284)">
-      <rect x="-275" y="-144" width="550" height="288" rx="0" ry="0"/>
+      <rect x="-276" y="-145" width="552" height="290" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="ceo" transform="translate(276,0)">
         <rect x="-27.5" y="-15.5" width="55" height="31" rx="8" ry="8"/>
         <g class="lini-text">
@@ -151,7 +152,7 @@ input_file: samples/tree.lini
       </g>
     </g>
     <g class="lini-node lini-column lini-block" transform="translate(-79,-9.5)">
-      <rect x="-271.5" y="-56" width="543" height="112" rx="0" ry="0"/>
+      <rect x="-272.5" y="-57" width="545" height="114" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="request" transform="translate(0,57)">
         <rect x="-45.5" y="-15.5" width="91" height="31" rx="8" ry="8"/>
         <g class="lini-text">
@@ -212,7 +213,7 @@ input_file: samples/tree.lini
       </g>
     </g>
     <g class="lini-node lini-column lini-block" transform="translate(4.5,266)">
-      <rect x="-359.5" y="-96.5" width="719" height="193" rx="0" ry="0"/>
+      <rect x="-360.5" y="-97.5" width="721" height="195" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="plan" transform="translate(0,0)">
         <rect x="-41" y="-15.5" width="82" height="31" rx="8" ry="8"/>
         <g class="lini-text">

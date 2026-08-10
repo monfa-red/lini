@@ -229,17 +229,16 @@ fn seat_glyph(
 
 /// A zero-size pin node seated on a glyph port — the wirable terminal
 /// (`c24.p1`); Phase 4 reads the registry port for the fixed ordinate.
+///
+/// Seated `pin: center` with a **centre-relative** offset: the glyph linework
+/// is in flow and centres in the part's box, and the box's centre is invariant
+/// under the glyph stroke's symmetric bbox inflation — a corner anchor is not,
+/// and skewed every port by the half-stroke.
 fn port_node(pin_id: &str, port: (f64, f64)) -> Node {
     let mut node = bare_node(
         "block",
         Vec::new(),
-        vec![
-            decl(
-                "pin",
-                vec![Value::Ident("top".into()), Value::Ident("left".into())],
-            ),
-            pair("translate", port.0, port.1),
-        ],
+        vec![id("pin", "center"), pair("translate", port.0, port.1)],
         Vec::new(),
     );
     node.id = Some(pin_id.into());
@@ -290,9 +289,17 @@ pub(super) fn symbol_body(
         ("lini-sch-line", "lini-sch-solid"),
     )?;
     if wired {
+        let (pw, ph) = if pose.swaps_axes() {
+            (glyph.height, glyph.width)
+        } else {
+            (glyph.width, glyph.height)
+        };
         for (pid, port) in pin_ids.iter().zip(glyph.ports) {
             let port = pose.point(*port, glyph.width, glyph.height);
-            children.push(lowered(cx, &port_node(pid, port))?);
+            children.push(lowered(
+                cx,
+                &port_node(pid, (port.0 - pw / 2.0, port.1 - ph / 2.0)),
+            )?);
         }
     }
     Ok(())

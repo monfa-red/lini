@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/links.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-202.5 -427 405 854" width="405" height="854" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-201.5 -422 403 844" width="403" height="844" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -79,9 +80,9 @@ input_file: samples/links.lini
     <path id="lg0700-87" d="M645 -33Q450 -33 321.5 46.5Q193 126 146 276L399 360Q422 287 486 247Q550 207 641 207Q705 207 740.5 229Q776 251 776 291L776 295Q776 332 746 353Q716 374 625 399L474 442Q342 480 271.5 557.5Q201 635 201 750L201 752Q201 904 315 995Q429 1086 621 1086Q790 1086 898.5 1019.5Q1007 953 1048 825L795 740Q757 850 605 850Q544 850 510.5 829.5Q477 809 477 771L477 770Q477 737 503.5 717Q530 697 600 677L751 635Q908 592 980.5 510.5Q1053 429 1053 298L1053 294Q1053 146 941.5 56.5Q830 -33 645 -33Z"/>
     <path id="lg0700-88" d="M782 -34Q572 -34 458 82.5Q344 199 344 413L344 1326L646 1326L646 433Q646 334 687 285Q728 236 811 236Q897 236 974 306L1118 84Q980 -34 782 -34ZM96 824L96 1052L1056 1052L1056 824L96 824Z"/>
   </defs>
-  <rect class="lini-canvas" x="-202.5" y="-427" width="405" height="854"/>
+  <rect class="lini-canvas" x="-201.5" y="-422" width="403" height="844"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-393)">
+    <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-389)">
       <rect x="-129.6" y="-9" width="259.2" height="18" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lg0700-49" transform="translate(-129.6 6.444) scale(0.009 -0.009)"/>
@@ -107,7 +108,7 @@ input_file: samples/links.lini
         <use href="#lg0700-87" transform="translate(118.8 6.444) scale(0.009 -0.009)"/>
       </g>
     </g>
-    <g class="lini-node lini-group lini-block" data-id="ends" transform="translate(0,-303.5)">
+    <g class="lini-node lini-group lini-block" data-id="ends" transform="translate(0,-300.5)">
       <rect x="-101" y="-43" width="202" height="86" rx="8" ry="8"/>
       <g class="lini-node lini-line" style="stroke: #0085b3" transform="translate(0,-22)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
@@ -122,7 +123,7 @@ input_file: samples/links.lini
         <line x1="-80" y1="0" x2="76" y2="0"/>
         <polygon class="lini-marker lini-marker-diamond" points="80,0 75.5,4.5 71,0 75.5,-4.5" style="fill: #6e62cc"/>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-74.8,-56)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-75.8,-57)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-81" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
@@ -135,7 +136,7 @@ input_file: samples/links.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-group lini-block" data-id="cardinality" transform="translate(0,-147.5)">
+    <g class="lini-node lini-group lini-block" data-id="cardinality" transform="translate(0,-144.5)">
       <rect x="-101" y="-76" width="202" height="152" rx="8" ry="8"/>
       <g class="lini-node lini-line" style="stroke: #0085b3" transform="translate(0,-55)">
         <line x1="-80" y1="0" x2="80" y2="0"/>
@@ -167,7 +168,7 @@ input_file: samples/links.lini
         <circle class="lini-marker lini-marker-open" cx="64.7" cy="0" r="3.6"/>
         <path class="lini-marker lini-marker-open" d="M 68.3 0 L 71 0"/>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-49.6,-89)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-50.6,-90)">
         <rect x="-50.4" y="-6" width="100.8" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-41" transform="translate(-50.4 4.296) scale(0.006 -0.006)"/>
@@ -186,7 +187,7 @@ input_file: samples/links.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="rel" transform="translate(0,-4.5)">
+    <g class="lini-node lini-row lini-block" data-id="rel" transform="translate(0,-2.5)">
       <rect x="-135" y="-29.5" width="270" height="59" rx="0" ry="0"/>
       <g class="lini-node lini-box lini-block" data-id="author" transform="translate(-87,1)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
@@ -208,7 +209,7 @@ input_file: samples/links.lini
           <use href="#lg0500-79" transform="translate(9 5.37) scale(0.0075 -0.0075)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-11.6,-42.5)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-12.6,-43.5)">
         <rect x="-122.4" y="-6" width="244.8" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-71" transform="translate(-122.4 4.296) scale(0.006 -0.006)"/>
@@ -263,7 +264,7 @@ input_file: samples/links.lini
             <use href="#lg0500-88" transform="translate(4.5 5.37) scale(0.0075 -0.0075)"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-23.9,-87)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-24.9,-88)">
           <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0400-43" transform="translate(-21.6 4.296) scale(0.006 -0.006)"/>
@@ -292,7 +293,7 @@ input_file: samples/links.lini
             <use href="#lg0500-88" transform="translate(4.5 5.37) scale(0.0075 -0.0075)"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-20.3,-87)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-21.3,-88)">
           <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0400-47" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
@@ -306,7 +307,7 @@ input_file: samples/links.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="chains" transform="translate(0,278.5)">
+    <g class="lini-node lini-row lini-block" data-id="chains" transform="translate(0,276.5)">
       <rect x="-173" y="-28.5" width="346" height="57" rx="0" ry="0"/>
       <g class="lini-node lini-box lini-block" data-id="relay" transform="translate(-129.5,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
@@ -335,7 +336,7 @@ input_file: samples/links.lini
           <use href="#lg0500-79" transform="translate(9 5.37) scale(0.0075 -0.0075)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-82,-41.5)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-83,-42.5)">
         <rect x="-90" y="-6" width="180" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-71" transform="translate(-90 4.296) scale(0.006 -0.006)"/>
@@ -362,7 +363,7 @@ input_file: samples/links.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="hops" transform="translate(0,373.5)">
+    <g class="lini-node lini-row lini-block" data-id="hops" transform="translate(0,369.5)">
       <rect x="-177.5" y="-28.5" width="355" height="57" rx="0" ry="0"/>
       <g class="lini-node lini-box lini-block" data-id="tap" transform="translate(-143,0)">
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
@@ -410,19 +411,19 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rel.author" data-to="rel.book">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-41" y="-5.5" width="100" height="4"><rect class="lini-cut-bg" x="-41" y="-5.5" width="100" height="4"/><rect class="lini-cut" x="-14.1" y="-10.65" width="46.2" height="14.3"/></mask>
-      <path d="M -39 -3.5 L 38.6 -3.5" mask="url(#lini-label-cut-1)"/>
-      <path class="lini-marker lini-marker-open" d="M -33.2 -8 L -33.2 1"/>
-      <path class="lini-marker lini-marker-open" d="M 57.5 1.45 L 48.5 -3.5 L 57.5 -8.45 M 57.5 -3.5 L 48.5 -3.5"/>
-      <circle class="lini-marker lini-marker-open" cx="42.2" cy="-3.5" r="3.6"/>
-      <path class="lini-marker lini-marker-open" d="M 45.8 -3.5 L 48.5 -3.5"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-41" y="-3.5" width="100" height="4"><rect class="lini-cut-bg" x="-41" y="-3.5" width="100" height="4"/><rect class="lini-cut" x="-14.1" y="-8.65" width="46.2" height="14.3"/></mask>
+      <path d="M -39 -1.5 L 38.6 -1.5" mask="url(#lini-label-cut-1)"/>
+      <path class="lini-marker lini-marker-open" d="M -33.2 -6 L -33.2 3"/>
+      <path class="lini-marker lini-marker-open" d="M 57.5 3.45 L 48.5 -1.5 L 57.5 -6.45 M 57.5 -1.5 L 48.5 -1.5"/>
+      <circle class="lini-marker lini-marker-open" cx="42.2" cy="-1.5" r="3.6"/>
+      <path class="lini-marker lini-marker-open" d="M 45.8 -1.5 L 48.5 -1.5"/>
       <g class="lini-link-label">
-        <use href="#lg0400-91" transform="translate(-10.8 0.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(-4.2 0.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-77" transform="translate(2.4 0.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-88" transform="translate(9 0.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-73" transform="translate(15.6 0.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-87" transform="translate(22.2 0.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-91" transform="translate(-10.8 2.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-86" transform="translate(-4.2 2.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-77" transform="translate(2.4 2.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-88" transform="translate(9 2.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-73" transform="translate(15.6 2.438) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-87" transform="translate(22.2 2.438) scale(0.0055 -0.0055)"/>
       </g>
     </g>
     <g class="lini-link" data-from="rooms.garden.inlet" data-to="rooms.garden.outlet">
@@ -450,21 +451,21 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="chains.relay" data-to="chains.hub">
-      <path d="M -86 278.5 L -33.5 278.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-29.5,278.5 -38.5,283 -38.5,274"/>
+      <path d="M -86 276.5 L -33.5 276.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-29.5,276.5 -38.5,281 -38.5,272"/>
     </g>
     <g class="lini-link" data-from="chains.hub" data-to="chains.sink">
-      <path d="M 39 278.5 L 91.5 278.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="95.5,278.5 86.5,283 86.5,274"/>
+      <path d="M 39 276.5 L 91.5 276.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="95.5,276.5 86.5,281 86.5,272"/>
     </g>
     <g class="lini-link" data-from="hops.tap" data-to="hops.probe">
-      <path d="M -105 373.5 L -52.5 373.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-109,373.5 -100,369 -100,378"/>
+      <path d="M -105 369.5 L -52.5 369.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-109,369.5 -100,365 -100,374"/>
     </g>
     <g class="lini-link" data-from="hops.probe" data-to="hops.gauge">
-      <path d="M 38 373.5 L 87 373.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="34,373.5 43,369 43,378"/>
-      <polygon class="lini-marker lini-marker-arrow" points="91,373.5 82,378 82,369"/>
+      <path d="M 38 369.5 L 87 369.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="34,369.5 43,365 43,374"/>
+      <polygon class="lini-marker lini-marker-arrow" points="91,369.5 82,374 82,365"/>
     </g>
   </g>
 </svg>

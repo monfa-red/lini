@@ -493,7 +493,9 @@ stroke included.
 2. **Source order = render order;** later draws on top, with pinned children above
    the in-flow ones. `layer: N` overrides; ties break by source order.
 3. **Strokes count** toward the bbox — `width: 100 height: 50 stroke-width: 4` →
-   104×54.
+   104×54. Only *painted* strokes: `stroke: none` paints nothing and counts
+   nothing, whatever `stroke-width` says — so a bare `|block|` (which keeps
+   `stroke-width: 2` invisibly, [SPEC 7](#7-nodes)) truly sizes to its content.
 4. **`|path|`** is the only center-origin exception — `path:` uses native top-left
    coordinates.
 5. **Rotation** applies last as an SVG transform; the rotated bounding rectangle

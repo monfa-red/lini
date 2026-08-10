@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/drawing_annotations.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-413.8096 -351 827.6191 720" width="827.6191" height="720" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-412.8096 -349 825.6191 717" width="825.6191" height="717" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -83,9 +84,9 @@ input_file: samples/drawing_annotations.lini
     <path id="lg0500-56" d="M486 0L486 1328L714 1328L714 0L486 0ZM98 1218L98 1432L1102 1432L1102 1218L98 1218Z"/>
     <path id="lg0500-57" d="M353 28.5Q247 90 188 199.5Q129 309 129 453L129 1432L355 1432L355 463Q355 333 420.5 257Q486 181 600 181Q715 181 780 257Q845 333 845 463L845 1432L1071 1432L1071 453Q1071 309 1012 199.5Q953 90 847.5 28.5Q742 -33 600.5 -33Q459 -33 353 28.5Z"/>
   </defs>
-  <rect class="lini-canvas" x="-413.8096" y="-351" width="827.6191" height="720"/>
+  <rect class="lini-canvas" x="-412.8096" y="-349" width="825.6191" height="717"/>
   <g class="lini-scene">
-    <g class="lini-node lini-drawing lini-block" data-id="plate-view" transform="translate(0,-158)">
+    <g class="lini-node lini-drawing lini-block" data-id="plate-view" transform="translate(0,-157)">
       <rect x="-392.8096" y="-172" width="785.6191" height="344" rx="0" ry="0"/>
       <g class="lini-node lini-rect lini-box lini-block" data-id="plate" transform="translate(-3.6,-11)">
         <rect x="-300" y="-140" width="600" height="280" rx="0" ry="0"/>
@@ -330,7 +331,7 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-20" transform="translate(378.4096 -101.0269) scale(0.006 -0.006)"/>
         <use href="#lg0400-681" transform="translate(385.6096 -101.0269) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,184)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,185)">
         <rect x="-39.6" y="-6" width="79.2" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-39" transform="translate(-39.6 4.296) scale(0.006 -0.006)"/>
@@ -346,7 +347,7 @@ input_file: samples/drawing_annotations.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-drawing lini-block" data-id="bracket-view" transform="translate(0,201)">
+    <g class="lini-node lini-drawing lini-block" data-id="bracket-view" transform="translate(0,200)">
       <rect x="-244.15" y="-129" width="488.3" height="258" rx="0" ry="0"/>
       <g class="lini-node lini-sketch" data-id="bracket" transform="translate(54.85,2.5)">
         <path d="M -120 90 L 102 90 A 18 18 0 0 0 120 72 L 120 -90 Z" fill-rule="evenodd"/>
@@ -499,7 +500,7 @@ input_file: samples/drawing_annotations.lini
         <line x1="-202.5" y1="-47.5" x2="-121.029" y2="88.285"/>
         <polygon class="lini-marker lini-marker-arrow" points="-120,90 -125.6595,86.3985 -120.5145,83.3116" style="fill: #484848"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,141)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,142)">
         <rect x="-46.8" y="-6" width="93.6" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-39" transform="translate(-46.8 4.296) scale(0.006 -0.006)"/>

@@ -108,9 +108,10 @@ fn emit_shape(
     opts: &Options,
 ) {
     let indent = "  ".repeat(depth);
-    // Default matches the `stroke-width` layout var [SPEC 10.3] so the drawn
-    // shape stays inside the bbox the layout reserved.
-    let thickness = n.attrs.number("stroke-width").unwrap_or(0.0);
+    // The layout's own inflation, doubled [SPEC 10.3] — one shared reading
+    // (`AttrMap::half_stroke`), so the drawn shape stays inside the bbox the
+    // layout reserved and an unpainted `stroke: none` costs no size.
+    let thickness = n.attrs.half_stroke() * 2.0;
 
     match n.kind {
         NodeKind::Block => emit_rect(out, n, &indent, thickness),

@@ -117,6 +117,12 @@ impl Pose {
         self.0 != 0
     }
 
+    /// Whether this pose swaps the box's axes — a quarter or three-quarter
+    /// turn (a half turn keeps them).
+    pub(crate) fn swaps_axes(self) -> bool {
+        self.0 % 2 == 1
+    }
+
     /// The pose `deg` names — any multiple of 90, normalized clockwise.
     pub(super) fn from_degrees(deg: f64, span: Span) -> Result<Pose, Error> {
         let quarters = deg / 90.0;

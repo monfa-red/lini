@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/sketch.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-310 -64.5 620 129" width="620" height="129" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-309 -63.5 618 127" width="618" height="127" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -26,18 +27,18 @@ input_file: samples/sketch.lini
     <path id="lg0500-83" d="M340 36Q228 105 165 228Q102 351 102 512L102 537Q102 698 165 821Q228 944 340 1012.5Q452 1081 600 1081Q748 1081 860 1012.5Q972 944 1035 821Q1098 698 1098 537L1098 512Q1098 351 1035 228Q972 105 860 36Q748 -33 600 -33Q452 -33 340 36ZM800.5 261.5Q874 355 874 515L874 534Q874 695 800.5 788Q727 881 600.5 881Q474 881 400 788Q326 695 326 534L326 515Q326 355 400 261.5Q474 168 600.5 168Q727 168 800.5 261.5Z"/>
     <path id="lg0500-86" d="M346 77L346 1049L537 1049L537 824L548 824Q596 948 683 1014.5Q770 1081 884 1081Q965 1081 1026.5 1049.5Q1088 1018 1146 948L998 777Q952 831 906.5 853.5Q861 876 802 876Q688 876 624.5 788.5Q561 701 561 544L561 77L346 77ZM108 0L108 173L901 173L901 0L108 0ZM128 875L128 1049L448 1049L448 875L128 875Z"/>
   </defs>
-  <rect class="lini-canvas" x="-310" y="-64.5" width="620" height="129"/>
+  <rect class="lini-canvas" x="-309" y="-63.5" width="618" height="127"/>
   <g class="lini-scene">
-    <g class="lini-node lini-sketch" data-id="plate" transform="translate(-289,-15)">
+    <g class="lini-node lini-sketch" data-id="plate" transform="translate(-288,-15)">
       <path d="M 0 0 L 52 0 L 60 8 L 60 30 L 8 30 A 8 8 0 0 1 0 22 Z M 14 15 A 6 6 0 0 1 26 15 A 6 6 0 0 1 14 15 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="pin" transform="translate(-139,0)">
+    <g class="lini-node lini-sketch" data-id="pin" transform="translate(-138,0)">
       <path d="M -40 0 L -40 -8 L -10 -8 L -10 -5 L 40 -5 L 40 0 L 40 5 L -10 5 L -10 8 L -40 8 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="clip" transform="translate(-29,0)">
+    <g class="lini-node lini-sketch" data-id="clip" transform="translate(-28,0)">
       <path d="M -20 -6 L -8 -6 L -8 6 L -20 6 Z M 20 -6 L 8 -6 L 8 6 L 20 6 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="hook" style="fill: none; stroke-width: 3" transform="translate(41.5,-14)">
+    <g class="lini-node lini-sketch" data-id="hook" style="fill: none; stroke-width: 3" transform="translate(42.5,-14)">
       <path d="M 0 0 L 0 20 A 10 10 0 0 0 20 20 L 20 10 C 20 2 30 -2 38 -2" fill-rule="evenodd"/>
     </g>
     <g class="lini-node lini-column lini-block" transform="translate(209.5,0)">

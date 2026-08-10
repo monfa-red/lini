@@ -194,6 +194,19 @@ impl AttrMap {
     pub fn number(&self, name: &str) -> Option<f64> {
         self.get(name).and_then(ResolvedValue::as_number)
     }
+
+    /// Half the painted stroke's reach either side of the drawn geometry — the
+    /// one number layout inflates a bbox by and render deflates it by, so the
+    /// two can never disagree. `stroke: none` paints nothing and counts
+    /// nothing, whatever `stroke-width` says: a `|block|` keeps `stroke-width:
+    /// 2` invisibly [SPEC 7], and a bare block sizes to its content exactly
+    /// [SPEC 5].
+    pub fn half_stroke(&self) -> f64 {
+        if matches!(self.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "none") {
+            return 0.0;
+        }
+        self.number("stroke-width").unwrap_or(0.0) / 2.0
+    }
 }
 
 /// Whether resolved `attrs` set `layout: drawing` [SPEC 15] — the one check for

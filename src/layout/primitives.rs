@@ -197,7 +197,7 @@ fn font_size(inst: &ResolvedInst) -> f64 {
 }
 
 fn stroke_half(inst: &ResolvedInst) -> f64 {
-    inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0
+    inst.attrs.half_stroke()
 }
 
 fn require_points(inst: &ResolvedInst, name: &str, min: usize) -> Result<Vec<(f64, f64)>, Error> {

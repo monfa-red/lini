@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/chart_advanced.lini
 ---
@@ -127,7 +128,7 @@ input_file: samples/chart_advanced.lini
   <rect class="lini-canvas" x="-452" y="-810" width="918.4" height="1620"/>
   <g class="lini-scene">
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-680)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-130.4" y1="88.6" x2="168" y2="88.6"/>
       </g>
@@ -322,7 +323,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(252,-680)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-163.4" y1="-38.6" x2="168" y2="-38.6"/>
       </g>
@@ -402,7 +403,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-436)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-143.6" y1="70.9" x2="150.2" y2="70.9"/>
       </g>
@@ -577,7 +578,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(252,-436)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-143.6" y1="55.5" x2="123.8" y2="55.5"/>
       </g>
@@ -760,7 +761,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,-192)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-117.9137,-6.5)">
         <rect x="-45.4863" y="-68.7" width="90.9725" height="137.4" rx="0" ry="0"/>
       </g>
@@ -874,7 +875,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(252,-192)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-110.425,1.2)">
         <rect x="-39.775" y="-61" width="79.55" height="122" rx="0" ry="0"/>
       </g>
@@ -997,7 +998,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,52)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-150.2" y1="88.6" x2="168" y2="88.6"/>
       </g>
@@ -1094,7 +1095,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(252,52)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-180" y="-110" width="360" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
       </g>
@@ -1239,7 +1240,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,336)">
-      <rect x="-239" y="-149" width="478" height="298" rx="0" ry="0"/>
+      <rect x="-240" y="-150" width="480" height="300" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-216.8" y1="67.6" x2="228" y2="67.6"/>
       </g>
@@ -1475,7 +1476,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(252,336)">
-      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <rect x="-140" y="-140" width="280" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <polyline points="0,-14.6 18.2127,-1.3677 11.2561,20.0427 -11.2561,20.0427 -18.2127,-1.3677 0,-14.6"/>
       </g>
@@ -1604,7 +1605,7 @@ input_file: samples/chart_advanced.lini
       </g>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-192,650)">
-      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <rect x="-140" y="-140" width="280" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <polyline points="0,-7.52 16.3559,0.3566 20.3955,18.0551 9.0768,32.2483 -9.0768,32.2483 -20.3955,18.0551 -16.3559,0.3566 0,-7.52"/>
       </g>

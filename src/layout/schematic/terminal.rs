@@ -52,11 +52,15 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
         return Terminal { at, facing };
     }
     // No node to read — a `|label|`'s connection point is its symbol's, and
-    // the symbol is drawn by its one `|path|` child.
+    // the symbol is drawn by its one `|path|` child. The wire meets the
+    // **ink**: the paint bbox is deflated by the glyph's painted half-stroke,
+    // or the landing floats a half-stroke off the drawing.
     let body = ["sch-tag-line", "sch-line"]
         .iter()
         .find_map(|k| child_wearing(part, k))
-        .map_or(part.bbox, |c| c.bbox.shifted(c.cx, c.cy));
+        .map_or(part.bbox, |c| {
+            c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy)
+        });
     Terminal {
         at: facing.map_or(body.center(), |s| edge_midpoint(body, s)),
         facing,
@@ -65,13 +69,18 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
 
 /// A component pin's connection point: the far end of its stub, on the side
 /// the stub points. The stub's `pin:` is written in the **landed** frame
-/// [SPEC 16.1], so a posed part needs no turn here.
+/// [SPEC 16.1], so a posed part needs no turn here. The stub's paint bbox
+/// overshoots its butt-capped line by the half-stroke on every side — deflate
+/// it, so the wire lands on the lead's true endpoint, not past its paint.
 fn stub_tip(stub: &PlacedNode, pin_at: (f64, f64)) -> Terminal {
     let side = ident(&stub.attrs, "pin")
         .as_deref()
         .and_then(Side::parse)
         .unwrap_or(Side::Left);
-    let box_ = stub.bbox.shifted(pin_at.0 + stub.cx, pin_at.1 + stub.cy);
+    let box_ = stub
+        .bbox
+        .inflate(-stub.attrs.half_stroke())
+        .shifted(pin_at.0 + stub.cx, pin_at.1 + stub.cy);
     Terminal {
         at: edge_midpoint(box_, side),
         facing: Some(side),

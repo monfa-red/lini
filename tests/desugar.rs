@@ -914,11 +914,11 @@ fn a_pose_re_lays_a_symbol_and_its_ports() {
         "{out}"
     );
     assert!(
-        out.contains("|block#p1| .lini-block { pin: top left; translate: 6 0; }"),
+        out.contains("|block#p1| .lini-block { pin: center; translate: 0 -32; }"),
         "{out}"
     );
     assert!(
-        out.contains("|block#p2| .lini-block { pin: top left; translate: 6 64; }"),
+        out.contains("|block#p2| .lini-block { pin: center; translate: 0 32; }"),
         "{out}"
     );
     // A label's symbol turns the same way — the gnd's connection point (its
@@ -949,7 +949,7 @@ fn a_pose_off_the_chain_is_consumed_too() {
     // and the class rule it came from is neutralized on the instance.
     let out = desugar_source("{ |vert::R| { rotate: 90 } }\n|vert#r1|\n").unwrap();
     assert!(out.contains(".lini-pose-90"), "{out}");
-    assert!(out.contains("translate: 6 64"), "the ports turned: {out}");
+    assert!(out.contains("translate: 0 32"), "the ports turned: {out}");
     assert!(
         out.contains("|block#r1| .lini-vert.lini-R.lini-block.lini-pose-90 { rotate: 0; }"),
         "the class's turn is cancelled on the instance: {out}"
