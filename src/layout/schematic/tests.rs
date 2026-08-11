@@ -242,16 +242,25 @@ fn placement_does_not_cascade_into_a_nested_scope() {
     // children — they stack, while it rides the schematic's tracks as an
     // anchor. It is no part, so it seats nowhere *and* it does not inherit its
     // children's pin arity: a column holding a two-pin `|R|` is not a jumper.
+    // Ids distinct from `anchor`'s own pins (a / b / c), which are declared
+    // first and would otherwise be what the lookups find.
     let nodes = laid(&scope(
         "",
-        &(anchor("u1", "") + "  |column#c| [\n    |box#a| \"a\"\n    |R#b| \"1k\"\n  ]\n"),
+        &(anchor("u1", "") + "  |column#col| [\n    |box#top| \"a\"\n    |R#low| \"1k\"\n  ]\n"),
     ));
-    let ((ax, ay), (bx, by)) = (at(&nodes, "a"), at(&nodes, "b"));
+    let ((ax, ay), (bx, by)) = (at(&nodes, "top"), at(&nodes, "low"));
     assert!(close(ax, bx), "the column stacks: {ax} vs {bx}");
     assert!(by > ay, "in declaration order: {ay} vs {by}");
-    let ((ux, uy), (cx, cy)) = (at(&nodes, "u1"), at(&nodes, "c"));
+    let ((ux, _), (cx, _)) = (at(&nodes, "u1"), at(&nodes, "col"));
     assert!(cx > ux, "the column rides the scope's track row");
-    assert!(close(uy, cy), "beside the anchor, not below it");
+    // Beside the anchor, not below it: the two clusters share the row, so
+    // their drawn extents overlap along y. (Their box centres need not line
+    // up — a track seats clusters, and the anchor's carries pin stubs.)
+    let (u, c) = (ink(&nodes, "u1"), ink(&nodes, "col"));
+    assert!(
+        u.min_y < c.max_y && c.min_y < u.max_y,
+        "same row: {u:?} vs {c:?}"
+    );
 }
 
 #[test]

@@ -315,8 +315,8 @@ Today text is measured as monospace (0.6em/char) but the SVG only *names* a
 system stack — a proportional override measures wrong, and resvg renders with
 whatever font it finds. v1 fixes both with two bundled families and real metrics.
 
-- **Two bundled families** (both SIL OFL 1.1): **Google Sans Code** (mono) and
-  **Google Sans** (proportional) — four **static** roman weights each
+- **Two bundled families** (both SIL OFL 1.1): **Google Sans** (proportional,
+  the default) and **Google Sans Code** (mono) — four **static** roman weights each
   (Regular/Medium/SemiBold/Bold = 400/500/600/700). No variable fonts: the
   3-axis Google Sans VF is 4.6MB and needs axis-pinning; the statics are exact
   instances and the pure-Rust subsetter works on them directly.

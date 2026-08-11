@@ -577,9 +577,10 @@ exactly.
 compile-resolved `font-weight`, read from the bundled metrics tables
 ([SPEC 6](#6-paint-stroke--text)); no kerning or shaping (≈ 1 % of a line, the
 documented tolerance — [SPEC 24](#24-deferred)). **Metrics follow the kind, not
-the name**: a mono `font-family` — the bundled default, a known-mono name, or any
-name containing "mono" — measures on the mono table (exactly **0.6 em per glyph**,
-at every weight), every other family on the proportional table. An unknown glyph
+the name**: a mono `font-family` — a known-mono name, or any name containing
+"mono" — measures on the mono table (exactly **0.6 em per glyph**, at every
+weight), every other family, the bundled default included, on the proportional
+table. An unknown glyph
 falls back to a fixed advance (wide for the CJK ranges). Vertical centering is
 **cap-height optical centering**, from the same tables.
 
@@ -625,8 +626,8 @@ that one text node. Body text defaults to `font-size` 15, `font-weight` `500`.
 annotation text stays the sheet convention, 12 — [SPEC 15.1](#151-the-container-the-datum--the-scale).)
 
 **Two bundled families** (both SIL OFL 1.1) carry the metrics ([SPEC 5](#5-the-box-model)):
-**Google Sans Code**, the mono default, and **Google Sans**, the proportional one
-declaration away (`font-family: "Google Sans"`) — four static roman weights each.
+**Google Sans**, the proportional default, and **Google Sans Code**, the mono one
+declaration away (`font-family: "Google Sans Code"`) — four static roman weights each.
 A `font-family` **override changes only the emitted name**: measurement stays by
 kind (mono vs proportional), so a runtime CSS restyle keeps the compiled layout
 box. **`font-weight`** takes `normal | medium | semibold | bold | 400 | 500 | 600 |
@@ -1243,7 +1244,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-grid          light-dark(rgba(0,0,0,.1), rgba(255,255,255,.14))  the chart gridline tint
 --lini-tip-bg        light-dark(#333, #e8e8ea)          the chart tooltip card's surface ([SPEC 14.8](#148-tooltips))
 --lini-tip-fg        light-dark(white, #1a1a1f)         …and its text
---lini-font-family   "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
+--lini-font-family   "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
 --lini-font-weight         500
 --lini-caption-font-weight 400
 --lini-link-font-weight    400
@@ -1258,10 +1259,10 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 ```
 
 `--lini-bg` paints the scene background (the canvas rect), so the diagram is
-self-contained in either mode. The default stack leads with the bundled mono
-**Google Sans Code** ([SPEC 6](#6-paint-stroke--text)); its fixed advance is what
-the mono metrics table measures, so a diagram measures identically in every output
-mode ([SPEC 18](#18-svg-output)).
+self-contained in either mode. The default stack leads with the bundled
+proportional **Google Sans** ([SPEC 6](#6-paint-stroke--text)); its advances are
+what the proportional metrics table measures, so a diagram measures identically
+in every output mode ([SPEC 18](#18-svg-output)).
 
 **Dark/light is automatic.** The compiler emits `color-scheme: light dark` on `.lini`,
 so `light-dark()` follows the viewer's OS (`prefers-color-scheme`) — no script, no

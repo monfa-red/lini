@@ -1,11 +1,12 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/sketch.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-309 -63.5 618 127" width="618" height="127" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-298.065 -63.5 596.13 127" width="596.13" height="127" class="lini">
   <style>
-    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
+    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-path { stroke-dasharray: none; }
@@ -16,32 +17,32 @@ input_file: samples/sketch.lini
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
   </style>
   <defs>
-    <path id="lg0500-0" d="…"/>
-    <path id="lg0500-71" d="…"/>
-    <path id="lg0500-72" d="…"/>
-    <path id="lg0500-73" d="…"/>
-    <path id="lg0500-74" d="…"/>
-    <path id="lg0500-80" d="…"/>
-    <path id="lg0500-82" d="…"/>
-    <path id="lg0500-83" d="…"/>
-    <path id="lg0500-86" d="…"/>
+    <path id="lg1500-0" d="…"/>
+    <path id="lg1500-203" d="…"/>
+    <path id="lg1500-209" d="…"/>
+    <path id="lg1500-213" d="…"/>
+    <path id="lg1500-232" d="…"/>
+    <path id="lg1500-259" d="…"/>
+    <path id="lg1500-265" d="…"/>
+    <path id="lg1500-271" d="…"/>
+    <path id="lg1500-299" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-309" y="-63.5" width="618" height="127"/>
+  <rect class="lini-canvas" x="-298.065" y="-63.5" width="596.13" height="127"/>
   <g class="lini-scene">
-    <g class="lini-node lini-sketch" data-id="plate" transform="translate(-288,-15)">
+    <g class="lini-node lini-sketch" data-id="plate" transform="translate(-277.065,-15)">
       <path d="M 0 0 L 52 0 L 60 8 L 60 30 L 8 30 A 8 8 0 0 1 0 22 Z M 14 15 A 6 6 0 0 1 26 15 A 6 6 0 0 1 14 15 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="pin" transform="translate(-138,0)">
+    <g class="lini-node lini-sketch" data-id="pin" transform="translate(-127.065,0)">
       <path d="M -40 0 L -40 -8 L -10 -8 L -10 -5 L 40 -5 L 40 0 L 40 5 L -10 5 L -10 8 L -40 8 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="clip" transform="translate(-28,0)">
+    <g class="lini-node lini-sketch" data-id="clip" transform="translate(-17.065,0)">
       <path d="M -20 -6 L -8 -6 L -8 6 L -20 6 Z M 20 -6 L 8 -6 L 8 6 L 20 6 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="hook" style="fill: none; stroke-width: 3" transform="translate(42.5,-14)">
+    <g class="lini-node lini-sketch" data-id="hook" style="fill: none; stroke-width: 3" transform="translate(53.435,-14)">
       <path d="M 0 0 L 0 20 A 10 10 0 0 0 20 20 L 20 10 C 20 2 30 -2 38 -2" fill-rule="evenodd"/>
     </g>
     <g class="lini-node lini-column lini-block" transform="translate(209.5,0)">
-      <rect x="-79.5" y="-43.5" width="159" height="87" rx="0" ry="0"/>
+      <rect x="-68.565" y="-43.5" width="137.13" height="87" rx="0" ry="0"/>
       <g class="lini-node lini-centerline lini-line" data-id="axis" transform="translate(-45,-43)">
         <line x1="0" y1="0" x2="90" y2="0"/>
       </g>
@@ -49,23 +50,23 @@ input_file: samples/sketch.lini
         <line x1="0" y1="0" x2="90" y2="0"/>
       </g>
       <g class="lini-node lini-note lini-path" data-id="memo" style="stroke-width: 2" transform="translate(0,15)">
-        <path d="M -79.5 -28.5 L 64.5 -28.5 L 79.5 -13.5 L 79.5 28.5 L -79.5 28.5 Z"/>
+        <path d="M -68.565 -28.5 L 53.565 -28.5 L 68.565 -13.5 L 68.565 28.5 L -68.565 28.5 Z"/>
         <g class="lini-node lini-path" style="fill: #444; stroke: none; stroke-width: 0" transform="translate(0,0)">
-          <path d="M 64.5 -28.5 L 79.5 -13.5 L 64.5 -13.5 Z"/>
+          <path d="M 53.565 -28.5 L 68.565 -13.5 L 53.565 -13.5 Z"/>
         </g>
         <g class="lini-text">
-          <use href="#lg0500-74" transform="translate(-58.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-83" transform="translate(-49.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-80" transform="translate(-40.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-72" transform="translate(-31.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-73" transform="translate(-22.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-72" transform="translate(-13.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-71" transform="translate(4.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-83" transform="translate(13.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-86" transform="translate(22.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-82" transform="translate(31.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-73" transform="translate(40.5 5.37) scale(0.0075 -0.0075)"/>
-          <use href="#lg0500-86" transform="translate(49.5 5.37) scale(0.0075 -0.0075)"/>
+          <use href="#lg1500-232" transform="translate(-47.565 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-271" transform="translate(-41.91 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-259" transform="translate(-32.865 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-209" transform="translate(-29.37 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-213" transform="translate(-20.16 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-209" transform="translate(-11.58 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-203" transform="translate(1.125 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-271" transform="translate(9.42 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-299" transform="translate(18.465 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-265" transform="translate(24.39 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-213" transform="translate(33.06 5.37) scale(0.015 -0.015)"/>
+          <use href="#lg1500-299" transform="translate(41.64 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
     </g>

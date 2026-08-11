@@ -150,10 +150,10 @@ fn static_output_outlines_text_to_glyph_uses() {
     )
     .expect("compile");
     assert!(!svg.contains("<text"), "no live text under --static: {svg}");
-    // lg0500: unweighted text renders at the medium default
+    // lg1500: the proportional face (1) at the medium default weight
     // (`--lini-font-weight: 500`), and the outlines follow.
     assert!(
-        svg.contains("<use href=\"#lg0500-") && svg.contains("<path id=\"lg0500-"),
+        svg.contains("<use href=\"#lg1500-") && svg.contains("<path id=\"lg1500-"),
         "glyph defs + uses: {svg}"
     );
 }
@@ -173,13 +173,13 @@ fn embed_font_inlines_used_faces_under_scoped_names() {
     )
     .expect("compile");
     assert!(
-        svg.contains("@font-face { font-family: \"Lini Sans Code\"; font-weight: 500;"),
+        svg.contains("@font-face { font-family: \"Lini Sans\"; font-weight: 500;"),
         "{}",
         &svg[..800]
     );
     assert!(svg.contains("src: url(data:font/ttf;base64,"), "base64 src");
     assert!(
-        svg.contains("--lini-font-family: \"Lini Sans Code\", \"Google Sans Code\","),
+        svg.contains("--lini-font-family: \"Lini Sans\", \"Google Sans\","),
         "the stack leads with the scoped name"
     );
     // Text stays live `<text>` — embedding never outlines.

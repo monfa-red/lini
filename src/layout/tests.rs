@@ -29,9 +29,9 @@ fn stroke_width_counts_toward_the_bbox() {
 
 #[test]
 fn label_auto_sizes_to_content_plus_padding() {
-    // text ~18 + 2×20 padding + 2 stroke → ~60.
+    // text ~12 + 2×20 padding + 2 stroke → ~54.
     let n = &lay_out("|box| \"hi\"\n").nodes[0];
-    assert!(n.bbox.w() > 55.0 && n.bbox.w() < 65.0, "w={}", n.bbox.w());
+    assert!(n.bbox.w() > 50.0 && n.bbox.w() < 60.0, "w={}", n.bbox.w());
 }
 
 #[test]
@@ -85,7 +85,8 @@ fn oval_uses_width_height() {
 #[test]
 fn text_sizes_to_its_glyphs_without_padding() {
     let n = &lay_out("\"hi\"\n").nodes[0];
-    assert!((n.bbox.w() - 18.0).abs() < 0.5, "w={}", n.bbox.w()); // 2 × 15 × 0.6
+    // 'h' + 'i' at 15 px on the proportional default — glyph advances, no padding.
+    assert!((n.bbox.w() - 12.21).abs() < 0.5, "w={}", n.bbox.w());
     assert!((n.bbox.h() - 15.0).abs() < 0.5, "h={}", n.bbox.h());
 }
 

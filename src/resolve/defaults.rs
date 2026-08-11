@@ -104,18 +104,17 @@ pub fn built_in_defaults() -> VarTable {
         "footer-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
     );
-    // The stack leads with the bundled mono family [SPEC 6/17]: an installed
-    // or hosted Google Sans Code engages (matching the compiled metrics
-    // exactly), and the system monos behind it share the 0.6 em advance.
+    // The stack leads with the bundled proportional family [SPEC 6/17]: an
+    // installed or hosted Google Sans engages (matching the compiled metrics
+    // exactly), and the system UI sans behind it read at the same rhythm.
     t.set("font-family",
         ResolvedValue::RawCss(
-            "\"Google Sans Code\", ui-monospace, \"SF Mono\", \"Cascadia Code\", \"JetBrains Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
+            "\"Google Sans\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
                 .into(),
         ),
     );
-    // Node text sits at medium — the mono face reads a touch stronger without
-    // shouting (advances are weight-invariant, so layout is untouched);
-    // captions and link labels stay regular, stated numerically.
+    // Node text sits at medium — a touch stronger without shouting; captions
+    // and link labels stay regular, stated numerically.
     t.set("font-weight", ResolvedValue::Number(500.0));
     t.set("caption-font-weight", ResolvedValue::Number(400.0));
     t.set("link-font-weight", ResolvedValue::Number(400.0));

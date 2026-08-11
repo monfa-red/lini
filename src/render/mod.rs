@@ -489,10 +489,10 @@ mod tests {
                 .and_then(|s| s.parse::<f64>().ok())
                 .expect("the mask width")
         };
-        let mono = width(&svg_for(scene));
-        let prop = width(&svg_for(&format!(
-            "{{ font-family: \"Google Sans\" }}\n{scene}"
-        )));
+        // Named both ways round, so the assertion holds whichever family is
+        // the default of the day.
+        let at = |family: &str| width(&svg_for(&format!("{{ font-family: {family} }}\n{scene}")));
+        let (prop, mono) = (at("\"Google Sans\""), at("\"Google Sans Code\""));
         assert!(
             prop < mono,
             "the proportional face measures narrower: {prop} vs {mono}"

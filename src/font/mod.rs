@@ -1,5 +1,5 @@
 //! The bundled font model [SPEC 5/6, ROADMAP 3.7]: two families — Google Sans
-//! Code (the mono default) and Google Sans (proportional) — × four static
+//! (the proportional default) and Google Sans Code (mono) — × four static
 //! weights {400, 500, 600, 700}. Metrics ride generated tables (`metrics.rs`,
 //! `cargo xtask extract-fonts`) that are **always compiled in** — layout never
 //! varies by build flags; only the subset TTF *bytes* (for `--embed-font` /
@@ -31,18 +31,18 @@ pub struct Face {
     pub advances: &'static [u16],
 }
 
-/// Which metrics table measures a family [SPEC 5].
+/// Which metrics table measures a family [SPEC 5]. The default is the
+/// proportional one — the bundled default family is Google Sans.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Kind {
-    #[default]
     Mono,
+    #[default]
     Prop,
 }
 
 /// A resolved measurement font: the kind and the weight index into the four
 /// statics (0..=3 ↔ 400/500/600/700). The default — no `font-family`, no
-/// `font-weight` — is mono regular, whose advances are exactly the historic
-/// flat 0.6 em estimate.
+/// `font-weight` — is the bundled proportional family at medium.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Font {
     pub kind: Kind,
@@ -89,13 +89,13 @@ fn is_mono_name(family: &str) -> bool {
 
 impl Kind {
     /// The measurement kind of a `font-family` value — the first family in a
-    /// stack decides. No value ⇒ the mono default.
+    /// stack decides. No value ⇒ the proportional default.
     pub fn of_family(value: Option<&ResolvedValue>) -> Kind {
         let name = match value {
             Some(ResolvedValue::String(s))
             | Some(ResolvedValue::Ident(s))
             | Some(ResolvedValue::RawCss(s)) => s,
-            _ => return Kind::Mono,
+            _ => return Kind::default(),
         };
         let first = name.split(',').next().unwrap_or(name);
         if is_mono_name(first) {
@@ -107,7 +107,7 @@ impl Kind {
 }
 
 impl Font {
-    /// The default measurement font — mono regular, the flat 0.6 em table.
+    /// Mono regular — the flat 0.6 em table.
     #[allow(dead_code)] // exercised by unit tests; the lib target sees no use yet
     pub const MONO_REGULAR: Font = Font {
         kind: Kind::Mono,
@@ -285,17 +285,22 @@ mod tests {
         assert_eq!(kind("ui-monospace, SF Mono"), Kind::Mono);
         assert_eq!(kind("Google Sans"), Kind::Prop);
         assert_eq!(kind("Inter, system-ui"), Kind::Prop);
-        assert_eq!(Kind::of_family(None), Kind::Mono);
+        // No family reads as the bundled default — proportional.
+        assert_eq!(Kind::of_family(None), Kind::Prop);
     }
 
     #[test]
     fn advances_fall_back_for_unknown_glyphs() {
-        let mono = Font::default();
+        let mono = Font::MONO_REGULAR;
         // The diameter sign measures as its substitute — 0.6 em in mono.
         assert!((mono.advance_em('⌀') - 0.6).abs() < 1e-12);
         // CJK is wide, other unknowns keep the flat estimate.
         assert!((mono.advance_em('你') - 1.0).abs() < 1e-12);
         assert!((mono.advance_em('Ж') - 0.6).abs() < 1e-12);
+        // The fallback is the font's, not the table's: an uncovered glyph on
+        // the proportional face reads the same flat estimate.
+        let prop = Font::default();
+        assert!((prop.advance_em('你') - 1.0).abs() < 1e-12);
     }
 
     #[test]

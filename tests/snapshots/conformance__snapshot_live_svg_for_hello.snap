@@ -1,11 +1,12 @@
 ---
 source: tests/conformance.rs
+assertion_line: 86
 expression: svg
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -48.5 127 97" width="127" height="97" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-57.665 -48.5 115.33 97" width="115.33" height="97" class="lini">
   <style>
     @layer lini.defaults {
-      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
+      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
       .lini[data-theme="dark"], [data-theme="dark"] .lini { color-scheme: dark; }
       .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
     }
@@ -16,10 +17,10 @@ expression: svg
     .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-63.5" y="-48.5" width="127" height="97"/>
+  <rect class="lini-canvas" x="-57.665" y="-48.5" width="115.33" height="97"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
-      <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
+      <rect x="-36.665" y="-27.5" width="73.33" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0" dy="0.358em">hello</text>
     </g>
   </g>

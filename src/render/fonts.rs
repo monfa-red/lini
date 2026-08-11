@@ -285,11 +285,17 @@ mod enabled {
 
         #[test]
         fn glyph_starts_mirror_measurement() {
-            let f = Font::default();
-            let starts = glyph_starts("abc", f, 10.0, 0.0, 0.0);
-            // 3 × 6 px wide, centred on 0 → starts at -9, -3, 3.
+            // On the mono face the arithmetic is checkable by hand: a flat
+            // 0.6 em advance, 3 × 6 px wide at size 10, centred on 0.
+            let starts = glyph_starts("abc", Font::MONO_REGULAR, 10.0, 0.0, 0.0);
             let xs: Vec<f64> = starts.iter().map(|&(_, x)| x).collect();
             assert_eq!(xs, [-9.0, -3.0, 3.0]);
+            // …and the proportional face steps by its own advances, still
+            // starting half the measured run left of centre.
+            let f = Font::default();
+            let starts = glyph_starts("abc", f, 10.0, 0.0, 0.0);
+            let run: f64 = "abc".chars().map(|c| f.advance_em(c) * 10.0).sum();
+            assert!((starts[0].1 + run / 2.0).abs() < 1e-9, "{starts:?}");
         }
     }
 }

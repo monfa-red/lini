@@ -269,7 +269,7 @@ OKLCH under the hood, so the ramp is perceptually even; pick any colour the same
 
 Geometry is always baked, so a theme only ever changes colour. `--theme light|dark|high-contrast` pins one palette at export; `lini theme NAME` prints it as an editable `--lini-*` file; `--static` flattens to literals and outlines text to paths for non-browser renderers and email.
 
-Text is **Google Sans Code** (SIL OFL), the bundled mono family Lini also measures with — real per-glyph metrics, so boxes hug their text exactly. `font-family: "Google Sans"` swaps to the bundled proportional face. SVGs carry font *names* by default; `--embed-font` inlines the used weights for browsers, `--static` outlines them for anything else.
+Text is **Google Sans** (SIL OFL), the bundled proportional family Lini also measures with — real per-glyph metrics, so boxes hug their text exactly. `font-family: "Google Sans Code"` swaps to the bundled mono face. SVGs carry font *names* by default; `--embed-font` inlines the used weights for browsers, `--static` outlines them for anything else.
 
 ---
 

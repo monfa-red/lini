@@ -29,11 +29,19 @@ fn a_column_tree_drops_generations_and_centres_the_parent() {
     // Children sit one generation below the root (larger y).
     assert!(by > ay && cy > ay, "children below root: {ay} vs {by}/{cy}");
     assert!((by - cy).abs() < 1e-6, "siblings share a generation line");
-    // The parent is centred over its two children.
+    // The parent is centred over its subtree's **span** [SPEC 12] — the
+    // children's outer edges, not the midpoint of their centres: on a
+    // proportional face two siblings rarely measure the same width.
+    let edge = |id: &str, x: f64| {
+        let t = topic(&nodes, id);
+        (x + t.bbox.min_x, x + t.bbox.max_x)
+    };
+    let (bl, br) = edge("b", bx);
+    let (cl, cr) = edge("c", cx);
+    let span = (bl.min(cl) + br.max(cr)) / 2.0;
     assert!(
-        (ax - (bx + cx) / 2.0).abs() < 1e-6,
-        "parent {ax} centred over children midpoint {}",
-        (bx + cx) / 2.0
+        (ax - span).abs() < 1e-6,
+        "parent {ax} centred over the subtree span {span}"
     );
     // Siblings are separated horizontally.
     assert!(cx > bx, "b left of c: {bx} vs {cx}");
