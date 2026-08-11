@@ -864,7 +864,7 @@
         "title-block"
       ],
       "defaults": {
-        "font-size": "13",
+        "font-size": "14",
         "font-weight": "semibold",
         "stroke-width": "1",
         "radius": "0"
@@ -878,7 +878,7 @@
         "field"
       ],
       "defaults": {
-        "font-size": "11",
+        "font-size": "12",
         "font-weight": "normal",
         "color": "--footer-color"
       }
@@ -906,7 +906,7 @@
         "zone"
       ],
       "defaults": {
-        "font-size": "9",
+        "font-size": "11",
         "color": "--stroke-light"
       }
     },

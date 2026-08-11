@@ -84,6 +84,14 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
             groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],
             span,
         },
+        // The caption labels the value, so the two read as one stacked pair —
+        // the block's own `|block|` gap of 20 would set them adrift, the
+        // caption riding the cell's top edge and the value its bottom.
+        Decl {
+            name: "gap".into(),
+            groups: vec![vec![Value::Number(4.0)]],
+            span,
+        },
         // The internal `field` marker [SPEC 15.8]: the grid names this cell when
         // an authored `cell:` lands on its slot ([SPEC 21]'s overlap row).
         Decl {
