@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/drawing_annotations.lini
 ---
@@ -15,7 +16,7 @@ input_file: samples/drawing_annotations.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: #484848; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: #484848; stroke-width: 1; }
-    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: 400; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-halo { stroke: black; }

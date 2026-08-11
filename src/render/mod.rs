@@ -434,13 +434,16 @@ fn eff_layer(n: &PlacedNode) -> f64 {
         })
 }
 
-/// ` style="…"` from prop declarations, or empty.
+/// ` style="…"` from prop declarations, or empty. The body is **XML-escaped**:
+/// a CSS value may legally carry a quote — a `font-family` name with a space
+/// is quoted (`"Google Sans"`) — and an unescaped one would close the
+/// attribute, dropping the declaration [SPEC 18].
 pub(super) fn style_attr_from(decls: &[(&str, String)]) -> String {
     if decls.is_empty() {
         return String::new();
     }
     let body: Vec<String> = decls.iter().map(|(p, v)| format!("{}: {}", p, v)).collect();
-    format!(r#" style="{}""#, body.join("; "))
+    format!(r#" style="{}""#, escape_xml(&body.join("; ")))
 }
 
 #[cfg(test)]
@@ -449,6 +452,51 @@ mod tests {
     /// judge the SVG a user gets, lint pass, theme and assets included.
     fn svg_for(src: &str) -> String {
         crate::compile_str(src).expect("compile")
+    }
+
+    #[test]
+    fn a_quoted_font_family_survives_its_style_attribute() {
+        // A family name with a space is a quoted CSS string [SPEC 2/6]; emitted
+        // raw it would close the `style="…"` attribute at its own first quote
+        // and the declaration would be dropped — the box measures proportional
+        // while the glyphs stay mono.
+        let svg = svg_for("|box#a| \"Hamburgefonstiv\" { font-family: \"Google Sans\" }\n");
+        assert!(
+            svg.contains(r#"style="font-family: &quot;Google Sans&quot;""#),
+            "the quotes escape: {svg}"
+        );
+        assert!(
+            !svg.contains(r#"style="font-family: "Google Sans"""#),
+            "never raw: {svg}"
+        );
+    }
+
+    #[test]
+    fn a_scopes_font_family_reaches_a_link_labels_measurement() {
+        // The measured text props inherit onto a link the way they inherit onto
+        // a node [SPEC 4/6]: otherwise a scope's family restyles every label
+        // through native CSS while layout still measures the default face. The
+        // label's knockout mask is that measurement, made visible.
+        let scene = "|box#a| { width: 60; height: 40 }\n\
+                     |box#b| { width: 60; height: 40 }\n\
+                     a -> b \"Hamburgefonstiv\"\n";
+        let width = |svg: &str| {
+            let at = svg.find(r#"<rect class="lini-cut""#).expect("a label mask");
+            svg[at..]
+                .split(r#"width=""#)
+                .nth(1)
+                .and_then(|s| s.split('"').next())
+                .and_then(|s| s.parse::<f64>().ok())
+                .expect("the mask width")
+        };
+        let mono = width(&svg_for(scene));
+        let prop = width(&svg_for(&format!(
+            "{{ font-family: \"Google Sans\" }}\n{scene}"
+        )));
+        assert!(
+            prop < mono,
+            "the proportional face measures narrower: {prop} vs {mono}"
+        );
     }
 
     #[test]

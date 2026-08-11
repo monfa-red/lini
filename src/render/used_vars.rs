@@ -42,8 +42,10 @@ pub fn referenced(laid: &LaidOut, ruleset: &RuleSet) -> BTreeSet<String> {
     for (_, attrs) in &laid.sheet.class_rules {
         walk_attrs(attrs, &mut names);
     }
-    walk_attrs(&laid.sheet.link_defaults, &mut names);
-    walk_attrs(&laid.sheet.dim_defaults, &mut names);
+    // The link and dimension tiers reach the output only as their `.lini-link` /
+    // chrome rules, which the ruleset scan above already covers — and those
+    // rules are emitted only when the scene draws that layer. Walking the
+    // inputs unconditionally would keep a var a link-less scene never names.
     walk_attrs(&laid.sheet.root_text, &mut names);
     if let Some(fill) = &laid.canvas_fill {
         collect_live(fill, &mut names);

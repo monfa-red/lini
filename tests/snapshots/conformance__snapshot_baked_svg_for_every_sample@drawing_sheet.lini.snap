@@ -16,7 +16,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: 400; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-gutter { stroke: none; }
     .lini .lini-cut-bg { fill: white; stroke: none; }

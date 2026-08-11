@@ -141,6 +141,11 @@ pub struct Property {
     pub inherit: Inherit,
     pub text: bool,
     pub baked: bool,
+    /// Selects the **measurement face** [SPEC 5] — the family picks the metrics
+    /// table, the weight the static within it. Live CSS all the same (both are
+    /// emitted, unlike the baked spacings), so the two markers are distinct;
+    /// [`Property::measures`] is their union.
+    pub face: bool,
     pub gate: Gate,
     pub deferred: bool,
 }
@@ -160,6 +165,7 @@ const fn row(
         inherit,
         text: false,
         baked: false,
+        face: false,
         gate: Gate::Lenient,
         deferred: false,
     }
@@ -185,6 +191,17 @@ impl Property {
     const fn baked(mut self) -> Self {
         self.baked = true;
         self
+    }
+    /// Mark a prop that selects the measurement face [SPEC 5].
+    const fn face(mut self) -> Self {
+        self.face = true;
+        self
+    }
+
+    /// Whether compile-time measurement reads this property — a baked spacing
+    /// that compiles into glyph positions, or one that picks the face.
+    pub fn measures(&self) -> bool {
+        self.baked || self.face
     }
     /// Mark a hard out-of-scope gate [SPEC 17/21].
     const fn hard(mut self) -> Self {
@@ -238,12 +255,16 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // ── Text [SPEC 6] — the `Inherit::Text` rows, in the channel's order.
     //    (`text-shadow` rides the Universal Text table in SPEC 17.) ──
-    row("font-family", UNIVERSAL, One(Kind::Any), Engine, Text).text(),
+    row("font-family", UNIVERSAL, One(Kind::Any), Engine, Text)
+        .text()
+        .face(),
     row("font-size", UNIVERSAL, One(Kind::Number), Bundles, Text)
         .text()
         .baked(),
     // `normal|medium|semibold|bold` or `400|500|600|700` [SPEC 6] — ident or number.
-    row("font-weight", UNIVERSAL, One(Kind::Any), Bundles, Text).text(),
+    row("font-weight", UNIVERSAL, One(Kind::Any), Bundles, Text)
+        .text()
+        .face(),
     row("font-style", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
     row("text-transform", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
     row("text-decoration", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
@@ -924,6 +945,17 @@ pub fn inherited_text() -> impl Iterator<Item = &'static str> {
         .iter()
         .filter(|p| p.inherit == Inherit::Text)
         .map(|p| p.name)
+}
+
+/// The text properties compile-time **measurement** reads [SPEC 5/6] — the
+/// family (which picks the metrics table), the weight, and the baked spacings.
+/// The rest of the text channel is live CSS: it reaches a glyph through native
+/// inheritance and never through a measured box. A consumer that resolves its
+/// own text context — a link, whose labels are measured but whose ladder is not
+/// a node's [SPEC 9] — inherits exactly these, so measurement and render can
+/// never disagree about which face laid the text out.
+pub fn measured_text() -> impl Iterator<Item = &'static str> {
+    PROPERTIES.iter().filter(|p| p.measures()).map(|p| p.name)
 }
 
 /// The scene-config properties a link takes from its scope [SPEC 9].

@@ -178,7 +178,10 @@ pub(super) fn build_shape_rules(
     );
     // Annotation text reads at the caption size [SPEC 15.6/17]: stated once
     // here, so no dimension / leader / callout leaf inlines it (only a `tol:`
-    // deviation or a restyled link overrides).
+    // deviation or a restyled link overrides). Its **weight** is the link
+    // label's — a dimension is a link [SPEC 15.6] — so it names the same var
+    // that role's rule does rather than restating the literal: one weight, one
+    // home, and a theme retuning link text reaches a drawing's annotations too.
     emit_generated_default(
         rules,
         laid,
@@ -189,7 +192,7 @@ pub(super) fn build_shape_rules(
                 "font-size".into(),
                 format!("{}px", num(crate::ledger::consts::DRAWING_LINK_FONT_SIZE)),
             ),
-            ("font-weight".into(), "normal".into()),
+            ("font-weight".into(), live("link-font-weight", vars, opts)),
         ],
     );
     if present.contains("text") {

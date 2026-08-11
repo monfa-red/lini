@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/cards.lini
 ---
@@ -354,10 +355,10 @@ input_file: samples/cards.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="plans.starter" data-to="plans.team">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-193.4865" y="103.2" width="187.285" height="20"><rect class="lini-cut-bg" x="-193.4865" y="103.2" width="187.285" height="20"/><rect class="lini-cut" x="-116.344" y="114.05" width="33" height="14.3"/></mask>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-193.4865" y="103.2" width="187.285" height="20"><rect class="lini-cut-bg" x="-193.4865" y="103.2" width="187.285" height="20"/><rect class="lini-cut" x="-115.981" y="114.05" width="32.274" height="14.3"/></mask>
       <path d="M -191.4865 105.2 L -191.4865 105.2 A 16 16 0 0 0 -175.4865 121.2 L -20.7015 121.2 A 12.5 12.5 0 0 0 -8.2015 108.7 L -8.2015 108.7" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-8.2015,104.7 -3.7015,113.7 -12.7015,113.7"/>
-      <g class="lini-link-label">
+      <g class="lini-link-label" style="font-family: &quot;Google Sans&quot;">
         <use href="#lg1400-233" transform="translate(-112.681 125.138) scale(0.011 -0.011)"/>
         <use href="#lg1400-299" transform="translate(-106.136 125.138) scale(0.011 -0.011)"/>
         <use href="#lg1400-271" transform="translate(-102.066 125.138) scale(0.011 -0.011)"/>
@@ -365,10 +366,10 @@ input_file: samples/cards.lini
       </g>
     </g>
     <g class="lini-link" data-from="plans.team" data-to="plans.scale">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="5.7985" y="103.2" width="187.4865" height="20"><rect class="lini-cut-bg" x="5.7985" y="103.2" width="187.4865" height="20"/><rect class="lini-cut" x="69.8417" y="114.05" width="59.4" height="14.3"/></mask>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="5.7985" y="103.2" width="187.4865" height="20"><rect class="lini-cut-bg" x="5.7985" y="103.2" width="187.4865" height="20"/><rect class="lini-cut" x="75.8752" y="114.05" width="47.333" height="14.3"/></mask>
       <path d="M 7.7985 105.2 L 7.7985 105.2 A 16 16 0 0 0 23.7985 121.2 L 178.785 121.2 A 12.5 12.5 0 0 0 191.285 108.7 L 191.285 108.7" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="191.285,104.7 195.785,113.7 186.785,113.7"/>
-      <g class="lini-link-label">
+      <g class="lini-link-label" style="font-family: &quot;Google Sans&quot;">
         <use href="#lg1400-303" transform="translate(79.1752 125.138) scale(0.011 -0.011)"/>
         <use href="#lg1400-203" transform="translate(84.3562 125.138) scale(0.011 -0.011)"/>
         <use href="#lg1400-177" transform="translate(90.2962 125.138) scale(0.011 -0.011)"/>

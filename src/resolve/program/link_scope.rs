@@ -198,6 +198,23 @@ pub(super) fn link_scope(
     owner: links::Owner,
 ) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
     let mut base = baked.every.clone();
+    // A link's labels are measured, so the text props measurement reads must
+    // reach it the way they reach a node — down the tree, nearest ancestor
+    // wins [SPEC 4/6]. Without this a scope's `font-family:` restyles every
+    // label through native CSS inheritance while layout still measures the
+    // default face, and the box no longer fits the glyphs. Seated first, so
+    // the two chrome seats below (the derived size, the normal weight) win the
+    // pair the link's own dress owns.
+    for prop in properties::measured_text() {
+        let nearest = chain
+            .iter()
+            .rev()
+            .find_map(|s| s.attrs.get(prop))
+            .or_else(|| root_attrs.get(prop));
+        if let Some(v) = nearest {
+            base.push((prop.to_string(), v.clone()));
+        }
+    }
     // A link label's size derives from the scope's **inherited** body size
     // [SPEC 6/9] — 11 at the default 15 — so one `font-size:` scales the whole
     // scene. Base-layer seat: any authored `font-size` (`|-|`, a class, the
@@ -212,6 +229,17 @@ pub(super) fn link_scope(
     base.push((
         "font-size".to_string(),
         ResolvedValue::Number(inherited * consts::LINK_FONT_AT_ROOT / consts::ROOT_FONT_SIZE),
+    ));
+    // …and a label reads at the **link weight** [SPEC 9] — stated as the very
+    // var the `.lini-link-label` rule renders, so the two can only ever agree:
+    // measurement reads it as regular and the class-diff sees its own value,
+    // inlining nothing. The same base-layer seat as the size, and for the same
+    // reason — it pins the pair the label's dress owns, so a scope's heavier
+    // body weight never measures a label the rule then draws light, while
+    // `|-| { font-weight: … }` still wins both.
+    base.push((
+        "font-weight".to_string(),
+        ResolvedValue::live("link-font-weight"),
     ));
     // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
     // a drawing's links thin to 1. A **scope default**, not a rule — it rides

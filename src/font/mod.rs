@@ -195,6 +195,10 @@ impl Font {
 /// or `400 | 500 | 600 | 700`. **No value reads as medium** — mirroring the
 /// `--lini-font-weight: 500` default the `.lini` rule renders unweighted text
 /// at (`resolve/defaults.rs`); an unrecognized value reads as regular.
+///
+/// A **live var** lands in that last arm deliberately: the one role that seats
+/// one is a link label, whose `--lini-link-font-weight` is 400 — so measuring
+/// it regular is what the `.lini-link-label` rule draws [SPEC 9].
 fn weight_index(value: Option<&ResolvedValue>) -> usize {
     match value {
         None => 1,
