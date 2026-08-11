@@ -1,18 +1,17 @@
 //! The `|page|` sheet at layout [SPEC 15.8]. Desugar generated the ISO 5457
 //! furniture as pinned chrome children (`|frame|` / `|zone|` / `|tick|`) and
 //! marked the `|title-block|`; once the sheet is sized, `finish` gives the
-//! furniture its geometry — the frame at the margins (a 20 mm filing edge on
-//! the left, 10 mm elsewhere), the zone dividers and labels in the margin
-//! band (the divisions derive from the children desugar counted, so the two
-//! always agree), the four centring marks — and seats any title block flush
-//! inside the frame's bottom-right corner. The content area is the frame
+//! furniture its geometry — the frame at the margins, the zone dividers and
+//! labels in the margin band (the divisions derive from the children desugar
+//! counted, so the two always agree), the four centring marks — and seats any
+//! title block flush inside the frame's bottom-right corner. The content area is the frame
 //! inset by 5 mm: `padded_attrs` folds that into the page's padding for the
 //! arrange pass (`padding:` adds, per the spec).
 
 use super::ir::{Bbox, PlacedNode};
 use super::primitives;
 use crate::error::Error;
-use crate::ledger::consts::{SHEET_FILING, SHEET_MARGIN};
+use crate::ledger::consts::SHEET_MARGIN;
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
@@ -30,15 +29,16 @@ pub(super) fn is_page(type_chain: &[String]) -> bool {
 /// page's px-per-mm scale [SPEC 15.8].
 pub(super) fn padded_attrs(attrs: &AttrMap, scale: f64, span: Span) -> Result<AttrMap, Error> {
     let pad = primitives::padding(attrs, span)?;
+    let inset = (SHEET_MARGIN + CONTENT_CLEAR) * scale;
     let mut out = attrs.clone();
     let n = ResolvedValue::Number;
     out.insert(
         "padding",
         ResolvedValue::Tuple(vec![
-            n(pad.top + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.right + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.bottom + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.left + (SHEET_FILING + CONTENT_CLEAR) * scale),
+            n(pad.top + inset),
+            n(pad.right + inset),
+            n(pad.bottom + inset),
+            n(pad.left + inset),
         ]),
     );
     Ok(out)
@@ -80,7 +80,7 @@ fn marker(attrs: &AttrMap) -> Option<Marker<'_>> {
 pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
     let (w, h) = (sheet.w(), sheet.h());
     let (x0, y0, x1, y1) = (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
-    let (fx0, fy0) = (x0 + SHEET_FILING * s, y0 + SHEET_MARGIN * s);
+    let (fx0, fy0) = (x0 + SHEET_MARGIN * s, y0 + SHEET_MARGIN * s);
     let (fx1, fy1) = (x1 - SHEET_MARGIN * s, y1 - SHEET_MARGIN * s);
 
     // The zone divisions come from what desugar generated — labels per edge.
@@ -139,12 +139,8 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                         ((x, fy1), (x, y1))
                     }
                     "left" => {
-                        // The reference band is the 10 mm margin on every
-                        // side — the filing margin's extra 10 mm stays truly
-                        // empty [SPEC 15.8], so the letters read alike all
-                        // round.
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((fx0 - SHEET_MARGIN * s, y), (fx0, y))
+                        ((x0, y), (fx0, y))
                     }
                     _ => {
                         let y = y0 + (i as f64) * h / rows as f64;
@@ -157,10 +153,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 let (a, b) = match edge {
                     "top" => ((0.0, y0), (0.0, fy0 + MARK_INTO * s)),
                     "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1)),
-                    // The left mark starts at its reference band, not the
-                    // trimmed edge — the filing strip stays truly empty,
-                    // matching the dividers [SPEC 15.8].
-                    "left" => ((fx0 - SHEET_MARGIN * s, 0.0), (fx0 + MARK_INTO * s, 0.0)),
+                    "left" => ((x0, 0.0), (fx0 + MARK_INTO * s, 0.0)),
                     _ => ((fx1 - MARK_INTO * s, 0.0), (x1, 0.0)),
                 };
                 set_line(c, a, b);
@@ -169,10 +162,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 let (cx, cy) = match edge {
                     "top" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y0 + fy0) / 2.0),
                     "bottom" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y1 + fy1) / 2.0),
-                    "left" => (
-                        fx0 - SHEET_MARGIN * s / 2.0,
-                        y0 + (i as f64 + 0.5) * h / rows as f64,
-                    ),
+                    "left" => ((x0 + fx0) / 2.0, y0 + (i as f64 + 0.5) * h / rows as f64),
                     _ => ((x1 + fx1) / 2.0, y0 + (i as f64 + 0.5) * h / rows as f64),
                 };
                 c.cx = cx;
@@ -236,10 +226,10 @@ mod tests {
             .iter()
             .find(|c| c.type_chain.iter().any(|t| t == "frame"))
             .expect("the frame");
-        // Margins ×4 px/mm: filing 80 left, 40 elsewhere; half-stroke inflates.
+        // Margins ×4 px/mm: 40 on every side; half-stroke inflates.
         let s = 4.0;
-        assert!((frame.cx - (SHEET_FILING - SHEET_MARGIN) * s / 2.0).abs() < 1e-9);
-        assert!((frame.bbox.w() - (840.0 - (SHEET_FILING + SHEET_MARGIN) * s + 2.0)).abs() < 1e-9);
+        assert!(frame.cx.abs() < 1e-9);
+        assert!((frame.bbox.w() - (840.0 - 2.0 * SHEET_MARGIN * s + 2.0)).abs() < 1e-9);
         let zone = |edge: &str| {
             p.children
                 .iter()
@@ -290,23 +280,25 @@ mod tests {
     }
 
     #[test]
-    fn the_left_reference_band_matches_the_other_sides() {
-        // The letters sit in the innermost 10 mm of the 20 mm filing margin —
-        // the extra 10 mm stays truly empty, so the band reads alike all
-        // round [SPEC 15.8].
+    fn the_reference_band_reads_alike_on_every_side() {
+        // Each letter is centred in the margin between the frame and the
+        // trimmed edge, so the two side bands mirror [SPEC 15.8].
         let l = laid("|page#p| { sheet: a4 }\n\"x\"\n");
         let p = by_id(&l.nodes, "p");
         let s = 4.0;
-        let fx0 = -p.bbox.w() / 2.0 + SHEET_FILING * s;
-        let left_zone = p
-            .children
-            .iter()
-            .find(|c| matches!(marker(&c.attrs), Some(Marker::Zone(e, _)) if e == "left"))
-            .expect("a left zone label");
+        let zone = |edge: &'static str| {
+            p.children
+                .iter()
+                .find(|c| matches!(marker(&c.attrs), Some(Marker::Zone(e, _)) if e == edge))
+                .unwrap_or_else(|| panic!("a {edge} zone label"))
+                .cx
+        };
+        let band = p.bbox.w() / 2.0 - SHEET_MARGIN * s / 2.0;
         assert!(
-            (left_zone.cx - (fx0 - SHEET_MARGIN * s / 2.0)).abs() < 1e-9,
-            "letter centred in the 10 mm band beside the frame: {}",
-            left_zone.cx
+            (zone("left") + band).abs() < 1e-9 && (zone("right") - band).abs() < 1e-9,
+            "letters centred in their bands: {} / {}",
+            zone("left"),
+            zone("right")
         );
     }
 
@@ -401,15 +393,13 @@ mod tests {
 
     #[test]
     fn page_content_flows_inside_the_frame_and_chrome_stays_out_of_flow() {
-        // One box: it centres in the content area, which is shifted right by
-        // the filing margin's asymmetry — never overlapping the band.
+        // One box: it centres in the content area — the frame inset by 5 mm on
+        // every side, so the sheet's centre is the content's.
         let l = laid("|page#p| { sheet: a4 } [ |box#card| \"hi\" ]\n");
         let card = by_id(&l.nodes, "card");
-        let s = 4.0;
-        let expect = ((SHEET_FILING + CONTENT_CLEAR) - (SHEET_MARGIN + CONTENT_CLEAR)) * s / 2.0;
         assert!(
-            (card.cx - expect).abs() < 1e-9,
-            "content centre rides the asymmetric inset: {} vs {expect}",
+            card.cx.abs() < 1e-9,
+            "content centres on the sheet: {}",
             card.cx
         );
     }

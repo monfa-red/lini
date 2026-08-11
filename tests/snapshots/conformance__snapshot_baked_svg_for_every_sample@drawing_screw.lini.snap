@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/drawing_screw.lini
 ---
@@ -111,7 +112,7 @@ input_file: samples/drawing_screw.lini
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" data-id="screw" transform="translate(0,0)">
       <rect x="-840" y="-594" width="1680" height="1188" rx="0" ry="0"/>
-      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-163,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-183,0)">
         <rect x="-234.5" y="-67" width="469" height="134" rx="0" ry="0"/>
         <g class="lini-node lini-sketch" data-id="body" transform="translate(70,-0.5)">
           <path d="M -300 0 L -300 -16 L -101.879 -16 A 20 20 0 0 0 -98.291 -16.325 A 120 120 0 0 1 -23.974 -6.039 A 20 20 0 0 0 -15.176 -4 L 156 -4 L 160 0 L 160 24 L 160 -24 L 160 0 L 156 4 L -15.176 4 A 20 20 0 0 0 -23.974 6.039 A 120 120 0 0 1 -98.291 16.325 A 20 20 0 0 0 -101.879 16 L -300 16 Z" fill-rule="evenodd"/>
@@ -264,7 +265,7 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(152.5,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(132.5,0)">
         <rect x="-61" y="-115" width="122" height="230" rx="0" ry="0"/>
         <g class="lini-node lini-steel lini-sketch" data-id="flight" transform="translate(0,-10.5)">
           <path d="M -60 -60 L 60 -60 L 60 60 L -60 60 Z M -10 -92 L 10 -92 L 10 -60 L -10 -60 Z" fill-rule="evenodd"/>
@@ -305,7 +306,7 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(335.5,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(315.5,0)">
         <rect x="-102" y="-112" width="204" height="224" rx="0" ry="0"/>
         <g class="lini-node lini-block" clip-path="url(#lini-clip-1)" transform="translate(0,10)">
           <rect x="-102" y="-102" width="204" height="204" rx="0" ry="0"/>
@@ -495,8 +496,8 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">
-        <rect x="-780" y="-554" width="1560" height="1108" rx="0" ry="0"/>
+      <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(0,0)">
+        <rect x="-800" y="-554" width="1600" height="1108" rx="0" ry="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
         <line x1="-630" y1="-594" x2="-630" y2="-554"/>
@@ -535,16 +536,16 @@ input_file: samples/drawing_screw.lini
         <line x1="630" y1="554" x2="630" y2="594"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-800" y1="-396" x2="-760" y2="-396"/>
+        <line x1="-840" y1="-396" x2="-800" y2="-396"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-800" y1="-198" x2="-760" y2="-198"/>
+        <line x1="-840" y1="-198" x2="-800" y2="-198"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-800" y1="198" x2="-760" y2="198"/>
+        <line x1="-840" y1="198" x2="-800" y2="198"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-800" y1="396" x2="-760" y2="396"/>
+        <line x1="-840" y1="396" x2="-800" y2="396"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
         <line x1="800" y1="-396" x2="840" y2="-396"/>
@@ -565,7 +566,7 @@ input_file: samples/drawing_screw.lini
         <line x1="0" y1="534" x2="0" y2="594"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-800" y1="0" x2="-740" y2="0"/>
+        <line x1="-840" y1="0" x2="-780" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
         <line x1="780" y1="0" x2="840" y2="0"/>
@@ -666,37 +667,37 @@ input_file: samples/drawing_screw.lini
           <use href="#lg0500-28" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,-495)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,-495)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-37" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,-297)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,-297)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-38" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,-99)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,-99)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-39" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,99)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,99)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,297)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,297)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-41" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-780,495)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-820,495)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0500-42" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>

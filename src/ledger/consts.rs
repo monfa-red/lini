@@ -103,10 +103,9 @@ pub(crate) const DODGE_ROUNDS: usize = 6;
 /// The note dog-ear [SPEC 8]: fold size as a height fraction, capped.
 pub(crate) const NOTE_FOLD_FRAC: f64 = 0.34;
 pub(crate) const NOTE_FOLD_MAX: f64 = 15.0;
-/// ISO 5457 sheet furniture, mm: the frame margin, and the wider filing edge
-/// on the left [SPEC 15.8].
+/// ISO 5457 sheet furniture, mm: the frame's margin from the trimmed edge
+/// [SPEC 15.8].
 pub(crate) const SHEET_MARGIN: f64 = 10.0;
-pub(crate) const SHEET_FILING: f64 = 20.0;
 
 // ── The schematic chrome [SPEC 10.5/16] — sheet-space baked constants;
 // Phase 6's visual pass tunes them against the reference sheet.

@@ -2980,15 +2980,13 @@ drawing's `scale:` is its drafting ratio directly, and so a default drawing on a
 page draws **1 : 1 true** (a 2 : 1 detail is `scale: 2`).
 
 The ISO furniture is generated chrome ([15.7](#157-leaders-notes--line-conventions)):
-the thick `|frame|` at the margins (a 20 mm filing edge on the left, 10 mm
-elsewhere); the **zone grid** — divisions of ≈ 50 mm, rounded to the nearest even
-count per edge (A4 4 × 6, A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-right along
-top and bottom and lettered `A…` top-to-bottom along both sides, drawn as `|zone|`
-labels and `|tick|` dividers in the **reference band**: the 10 mm beside the frame
-on every side, so the references read alike all round and the filing margin's
-extra 10 mm stays truly empty; and the four centring marks — each crossing the
-frame at an edge's midpoint (the middle divider, which would coincide, is not
-drawn; the left mark starts at its band, keeping the filing strip empty). The
+the thick `|frame|` 10 mm in from every trimmed edge; the **zone grid** —
+divisions of ≈ 50 mm, rounded to the nearest even count per edge (A4 4 × 6,
+A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-right along top and bottom and
+lettered `A…` top-to-bottom along both sides, drawn as `|zone|` labels and
+`|tick|` dividers in the **reference band**, the margin beside the frame; and the
+four centring marks, each crossing the frame at an edge's midpoint (the middle
+divider, which would coincide, is not drawn). The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
 by **type**, flush inside the frame's bottom-right corner. **String-valued field
