@@ -40,9 +40,8 @@ use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 pub(crate) use nest::{Nest, STATEMENT_ENGINES};
 use nest::{in_drawing_scope, is_drawing_body, is_schematic_body, seals_schematic_scope};
 use std::collections::{BTreeSet, HashMap};
-use tables::{
-    column_count, distribute_cell_alignment, header_node, wrap_body_cells, wrap_header_row,
-};
+pub(crate) use tables::column_count;
+use tables::{distribute_cell_alignment, header_node, wrap_body_cells, wrap_header_row};
 use types::{Types, is_template};
 
 type Bodies = HashMap<String, (Vec<Child>, Vec<Link>)>;

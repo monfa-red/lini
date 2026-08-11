@@ -362,3 +362,43 @@ fn chrome_text_scales_with_the_inherited_body_size() {
     assert!(s.contains("font-size: 12px"), "caption exactly 12: {s}");
     assert!(s.contains("font-size: 11px"), "label exactly 11: {s}");
 }
+
+#[test]
+fn class_sized_chrome_stacks_its_lines_live_like_baked() {
+    // [SPEC 5]: chrome built by `prim::text_classed` (a chart title) states its
+    // size only in a class rule, so the live `<text>` must step its baselines
+    // by the cascade-resolved size — the same step the outlined twin bakes,
+    // never zero (which collapsed every line onto one baseline).
+    let src = "|pie| \"Share\\nof revenue\" [ |slice| \"a\" { value: 1 } ]\n";
+
+    let live = render_live(src);
+    let text = live
+        .rsplit_once("lini-chart-title")
+        .and_then(|(_, r)| r.split_once("</text>"))
+        .expect("live title")
+        .0;
+    let dy: f64 = scrape(text, " dy=\"")
+        .first()
+        .expect("second line dy")
+        .parse()
+        .expect("number");
+
+    let baked = render_baked(src);
+    let group = baked
+        .rsplit_once("lini-chart-title")
+        .and_then(|(_, r)| r.split_once("</g>"))
+        .expect("baked title")
+        .0;
+    let mut ys: Vec<String> = scrape_to(group, "transform=\"translate(", ')')
+        .iter()
+        .filter_map(|t| t.split_whitespace().nth(1).map(str::to_string))
+        .collect();
+    ys.dedup();
+    let step: f64 = ys[1].parse::<f64>().unwrap() - ys[0].parse::<f64>().unwrap();
+
+    assert!(dy > 0.0, "live lines collapsed onto one baseline: {live}");
+    assert!(
+        (dy - step).abs() < 1e-9,
+        "live dy {dy} must match the baked line step {step}"
+    );
+}

@@ -6,6 +6,7 @@
 //! their id column (the bars line up), and a plain group aligns its type column
 //! too (the labels). Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
+use crate::desugar::{column_count, types::Types};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
@@ -29,12 +30,18 @@ pub fn format(src: &str) -> Result<String, Error> {
     let tokens = lexer::lex(src)?;
     let file = parser::parse(src, &tokens)?;
     let trivia = scan_trivia(src);
+    // The type table feeds the one column reader desugar uses: an `|entity|`'s
+    // implicit `columns: auto, auto` rides its template chain, so its cells
+    // align like a `|table|`'s. A file whose types don't resolve still formats
+    // (the errors are the compiler's to report) — it just reads no chain.
+    let types = Types::build(&file).ok();
     let mut out = String::new();
     Emitter {
         trivia: &trivia,
         cursor: 0,
         out: &mut out,
         terse: true,
+        types: types.as_ref(),
     }
     .emit_file(&file, src.len());
     Ok(out)
@@ -50,6 +57,7 @@ pub(crate) fn print_file(file: &File) -> String {
         cursor: 0,
         out: &mut out,
         terse: false,
+        types: None,
     }
     .emit_file(file, 0);
     out
@@ -65,6 +73,7 @@ pub(crate) fn print_decl_value(decl: &Decl) -> String {
         cursor: 0,
         out: &mut out,
         terse: false,
+        types: None,
     }
     .emit_groups(&decl.groups);
     out
@@ -77,6 +86,10 @@ struct Emitter<'a> {
     /// Contract a lone bare-text child to the head label (`|box#api| "API"`). On
     /// for `fmt`; off for `print_file` (desugar), which keeps the explicit `[ ]`.
     terse: bool,
+    /// The file's type table, for the template chain a node's column count may
+    /// ride. `None` for a synthesized `File` — already-lowered nodes are
+    /// primitives, so their chain is empty anyway.
+    types: Option<&'a Types>,
 }
 
 impl Emitter<'_> {
@@ -308,7 +321,7 @@ impl Emitter<'_> {
         }
         let end = node.span.end;
         if node.links.is_empty()
-            && let Some(cols) = self.table_cols(body, &node.style)
+            && let Some(cols) = self.table_cols(body, node)
         {
             self.out.push_str(" [\n");
             self.emit_aligned_cells(body, cols, depth + 1);
@@ -376,7 +389,7 @@ impl Emitter<'_> {
     /// no interleaved comment — then they align into columns [SPEC 8/16].
     /// Otherwise `None`, falling back to one child per line. The caller has already
     /// excluded a node with internal links.
-    fn table_cols(&self, cells: &[Child], style: &[Decl]) -> Option<usize> {
+    fn table_cols(&self, cells: &[Child], node: &Node) -> Option<usize> {
         if cells.is_empty() || !cells.iter().all(|c| matches!(c, Child::Text(_))) {
             return None;
         }
@@ -385,7 +398,16 @@ impl Emitter<'_> {
         if self.has_trivia_between(start, end) {
             return None;
         }
-        count_columns(style)
+        // The count desugar's grid sugar reads — the node's own `columns:` (last
+        // wins), else its template chain's bundle — so an `|entity|` aligns on
+        // the `columns: auto, auto` it never spells out.
+        let chain = self
+            .types
+            .zip(node.ty.as_deref())
+            .and_then(|(t, ty)| t.resolve(ty, node.span).ok())
+            .map(|i| i.chain)
+            .unwrap_or_default();
+        column_count(&node.style, &chain)
     }
 
     /// Emit bare-text cells as aligned rows: each column padded to its widest
@@ -916,13 +938,6 @@ fn quoted(s: &str) -> String {
     }
     out.push('"');
     out
-}
-
-/// The grid column count from a `columns:` declaration — a track list where
-/// `repeat(N)` counts as N and every other entry as one. `None` if absent.
-fn count_columns(decls: &[Decl]) -> Option<usize> {
-    let n = decls.iter().find(|d| d.name == "columns")?.track_count();
-    (n > 0).then_some(n)
 }
 
 fn format_number(n: f64) -> String {

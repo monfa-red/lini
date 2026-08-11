@@ -58,7 +58,6 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     body.rotation = 0.0;
 
     let mut copies = Vec::with_capacity(offsets.len() + ring.len());
-    let ring_len = ring.len();
     copies.extend(ring);
     for (i, &(dx, dy)) in offsets.iter().enumerate() {
         let mut copy = if i + 1 == offsets.len() {
@@ -75,9 +74,7 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         copy.cy = dy;
         copies.push(copy);
     }
-    // The ring is chrome sized to the pitch circle, not a copy — the carrier
-    // box is the copies' own reach.
-    let bbox = carrier_bbox(&copies[ring_len..]);
+    let bbox = carrier_bbox(&copies);
 
     // The carrier: identity + position, no paint of its own (inline `none`
     // beats the type's class rule, so the union box never draws).
@@ -98,12 +95,16 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     Ok(())
 }
 
-/// A pattern carrier's bbox — its copies' union, each shifted to where it
-/// sits. Read at expansion and again whenever the copies move (a broken
-/// ancestor slides them; `drawing::ride_view`).
-pub(super) fn carrier_bbox<'a>(copies: impl IntoIterator<Item = &'a PlacedNode>) -> Bbox {
-    copies
+/// A pattern carrier's bbox — the union of its **copies**, each shifted to
+/// where it sits [SPEC 15.4]. Generated chrome among the children (the radial
+/// pattern's hoisted `|pitch-circle|`, sized to the ring, not to anything
+/// drawn) is not a copy and never widens the box. Read at expansion and again
+/// whenever the copies move (a broken ancestor slides them;
+/// `drawing::ride_view`) — one reading, so the box cannot grow mid-flight.
+pub(super) fn carrier_bbox<'a>(children: impl IntoIterator<Item = &'a PlacedNode>) -> Bbox {
+    children
         .into_iter()
+        .filter(|c| !super::drawing::chrome::is_chrome(&c.attrs))
         .fold(None, |acc: Option<Bbox>, c| {
             let b = c.bbox.shifted(c.cx, c.cy);
             Some(match acc {

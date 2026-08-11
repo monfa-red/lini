@@ -8,7 +8,7 @@ use crate::syntax::ast::TextNode;
 /// The grid column count for a table / entity node [SPEC 8]: its own `columns:` decl,
 /// else a bundle default in its chain (`entity` carries `columns: auto, auto`). `None`
 /// when undeterminable — the auto-header and title-span then no-op.
-pub(super) fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
+pub(crate) fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
     // The **last** `columns:` wins, as it does in the cascade the grid engine
     // reads [SPEC 4] — a repeated declaration must not leave the sugar counting
     // one list while the layout sizes another.

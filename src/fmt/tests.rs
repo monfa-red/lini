@@ -195,6 +195,37 @@ fn table_cells_align_into_columns() {
 }
 
 #[test]
+fn an_entity_aligns_on_its_bundles_columns() {
+    // [SPEC 8/16]: the column count fmt aligns on is the one the grid sugar
+    // reads — the node's own `columns:` (last wins), else its template chain's
+    // bundle. An |entity| never spells out `columns: auto, auto`, so counting
+    // only its own style left its cells unaligned while an identical |table|
+    // aligned.
+    let out = "|entity#e| \"Users\" [\n  \"id\"   \"int\"\n  \"name\" \"text\"\n]\n";
+    assert_eq!(
+        fmt("|entity#e| \"Users\" [\n\"id\" \"int\"\n\"name\" \"text\"\n]\n"),
+        out
+    );
+    idempotent(out);
+    // A define over |entity| inherits the same count through its chain.
+    let out =
+        "{\n  |myent::entity|\n}\n\n|myent#f| [\n  \"id\"   \"int\"\n  \"name\" \"text\"\n]\n";
+    assert_eq!(
+        fmt("{ |myent::entity| {} }\n|myent#f| [\n\"id\" \"int\"\n\"name\" \"text\"\n]\n"),
+        out
+    );
+    idempotent(out);
+    // A repeated `columns:` counts the last, as the cascade does.
+    let out =
+        "|table#t| { columns: 80; columns: 80, 80; } [\n  \"a\"   \"b\"\n  \"ccc\" \"d\"\n]\n";
+    assert_eq!(
+        fmt("|table#t| { columns: 80; columns: 80, 80 } [\n\"a\" \"b\"\n\"ccc\" \"d\"\n]\n"),
+        out
+    );
+    idempotent(out);
+}
+
+#[test]
 fn a_comma_data_list_prints_the_law() {
     // [SPEC 2]: comma-groups re-emit comma-separated, spaces within a group —
     // `data: 9, 15, 24` round-trips; point pairs keep their internal space.

@@ -349,6 +349,42 @@ fn a_tree_keeps_topic_nesting_wears_level_classes_and_fans_branches() {
 }
 
 #[test]
+fn a_minted_topic_id_keeps_its_ordinal_and_steps_over_a_taken_one() {
+    // [SPEC 12]: `lini-topic-N` is 1-based among the scope's topics, so an
+    // authored sibling spends its ordinal — the anonymous topic after `#b` is 2.
+    let out = desugar_source(
+        "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic| \"C\"\n  ]\n]\n",
+    )
+    .unwrap();
+    assert!(out.contains("|block#lini-topic-2|"), "{out}");
+    assert!(
+        out.contains("a:bottom - a.b:top & a.lini-topic-2:top"),
+        "{out}"
+    );
+
+    // [SPEC 19/23]: the lowered form legitimately carries `lini-topic-N` ids, so
+    // a scope that mixes one with an anonymous topic must be stepped over, never
+    // minted onto twice (the duplicate broke both the fan and the id table).
+    let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |block#lini-topic-2| .lini-topic.lini-block [ \"kept\" ]\n    |topic| \"new\"\n  ]\n]\n";
+    let once = desugar_source(src).unwrap();
+    assert_eq!(
+        once.matches("|block#lini-topic-2|").count(),
+        1,
+        "the taken id is minted onto: {once}"
+    );
+    assert!(once.contains("|block#lini-topic-3|"), "{once}");
+    assert!(
+        lini::compile_str(&once).is_ok(),
+        "the lowered form must compile: {once}"
+    );
+    assert_eq!(
+        desugar_source(&once).unwrap(),
+        once,
+        "a fixed point: {once}"
+    );
+}
+
+#[test]
 fn a_row_tree_fans_on_the_right_side() {
     let out = desugar_source(
         "|column#o| { layout: tree; direction: row } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n  ]\n]\n",

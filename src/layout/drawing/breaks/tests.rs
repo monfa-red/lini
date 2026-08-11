@@ -140,6 +140,43 @@ fn pattern_copies_ride_the_broken_view_too() {
 }
 
 #[test]
+fn a_ridden_carrier_boxes_its_copies_not_its_pitch_circle() {
+    // [SPEC 15.4]: a carrier's box is the union of the **copies**. The radial
+    // pattern's `|pitch-circle|` is generated chrome — it stays at the datum
+    // while the copies ride the break [SPEC 15.3], so re-unioning after the
+    // ride must not let the ring stretch the box back to its full diameter.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, -50) right(300) down(100) left(300) close(); break: -30 30 } [\n  |hole#vent| { width: 10; pattern: radial(4, 40) }\n]\n",
+    );
+    let vent = by_id(&l.nodes, "vent");
+    let ring = vent
+        .children
+        .iter()
+        .find(|c| c.attrs.get("chrome").is_some())
+        .expect("the pitch circle");
+    let copies = || {
+        vent.children
+            .iter()
+            .filter(|c| c.attrs.get("chrome").is_none())
+    };
+    let (lo, hi) = copies().fold((f64::MAX, f64::MIN), |(lo, hi), c| {
+        let b = c.bbox.shifted(c.cx, c.cy);
+        (lo.min(b.min_x), hi.max(b.max_x))
+    });
+    assert!(
+        (vent.bbox.min_x - lo).abs() < 1e-9 && (vent.bbox.max_x - hi).abs() < 1e-9,
+        "the box is the copies' reach: {:?} vs {lo}..{hi}",
+        vent.bbox
+    );
+    assert!(
+        vent.bbox.w() < ring.bbox.w(),
+        "the ring must not widen the ridden box: {} vs {}",
+        vent.bbox.w(),
+        ring.bbox.w()
+    );
+}
+
+#[test]
 fn break_errors_speak_spec() {
     assert_eq!(
         layout_err(

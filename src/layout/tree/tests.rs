@@ -138,3 +138,22 @@ fn a_deeper_subtree_packs_without_overlap() {
     let gap = (ex - dx).abs() - (d.bbox.w() + e.bbox.w()) / 2.0;
     assert!(gap > 0.0, "leaves separated (gap {gap})");
 }
+
+#[test]
+fn a_turned_card_stays_inside_the_cluster_box() {
+    // [SPEC 5] law 5: a rotated node propagates its **rotated** bounding
+    // rectangle upward, so the tree container's box must hold a turned card's
+    // corners — the naive corner union measured the unturned card and let it
+    // hang out of the cluster (and out of any frame drawn around it).
+    let nodes = laid(
+        "|column#o| { layout: tree } [\n  |topic#a| \"Chief Executive\" [\n    |topic#b| \"Chief Technology Officer\" { rotate: 35 }\n    |topic#c| \"Operations\"\n  ]\n]\n",
+    );
+    let (o, ox, oy) = crate::testutil::placed_by_id(&nodes, "o");
+    let (b, bx, by) = crate::testutil::placed_by_id(&nodes, "b");
+    let turned = crate::layout::ir::Bbox::drawn_of(b).shifted(bx, by);
+    let cluster = o.bbox.shifted(ox, oy).inflate(1e-6);
+    assert!(
+        cluster.contains(turned),
+        "the cluster box {cluster:?} must hold the turned card {turned:?}"
+    );
+}

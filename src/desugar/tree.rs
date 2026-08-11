@@ -29,7 +29,7 @@ use crate::syntax::ast::{
     Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, Rule, SelUnit, Selector,
     StyleItem, Value, ident_of, layout_of, root_ident,
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// A branch's outward growth [SPEC 12] — the direction its fan leaves the
 /// parent. `column`/`row` are whole-tree; a `bilateral` tree splits into a
@@ -520,17 +520,28 @@ fn push_unique(links: &mut Vec<Link>, link: Link) {
 }
 
 /// Mint deterministic `lini-topic-N` ids for a scope's anonymous topic children
-/// (1-based among the scope's topics) [SPEC 12]. Idempotent: an already-id'd
-/// topic keeps its id.
+/// (1-based among the scope's topics) [SPEC 12], through the shared reserved-id
+/// mint: every sibling id is taken first, so a scope that already carries a
+/// `lini-topic-N` — a lowered topic hand-mixed with surface ones — is stepped
+/// over instead of minted onto. Idempotent: an already-id'd topic keeps its id,
+/// and it spends its ordinal, so a first lowering numbers exactly as the
+/// position does.
 fn mint_ids(children: &mut [Child]) {
-    let mut nth = 0usize;
+    let declared: HashSet<String> = children
+        .iter()
+        .filter_map(|c| match c {
+            Child::Box(n) => n.id.clone(),
+            _ => None,
+        })
+        .collect();
+    let mut mint = super::mint::Mint::new("topic", &declared);
     for c in children.iter_mut() {
         if let Child::Box(t) = c
             && is_topic(t)
         {
-            nth += 1;
-            if t.id.is_none() {
-                t.id = Some(format!("lini-topic-{nth}"));
+            match t.id.clone() {
+                Some(id) => mint.reserve_slot(id),
+                None => t.id = Some(mint.next_id()),
             }
         }
     }

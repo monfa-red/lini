@@ -199,23 +199,12 @@ fn layout_card(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
     layout_inst(&card, path, program, Ctx::sheet())
 }
 
-/// Recursive union of a placed subtree's card boxes, in the container's frame.
-///
-/// **Not** [`Bbox::extent_of`]: this walk is deliberately naive — it ignores a
-/// card's own `rotate:` and descends through a `clip:`. Switching it to the
-/// rotation-aware walk moves every turned tree's cluster box, so the two stay
-/// apart until that behaviour change is chosen on purpose.
+/// The placed subtree's visual extent in the container's frame — the one
+/// rotation- and clip-aware walk [SPEC 5 law 5]: a turned card propagates its
+/// **rotated** bounding rectangle upward, so the cluster box holds a card the
+/// naive corner union mismeasured.
 fn union_all(nodes: &[PlacedNode]) -> Bbox {
-    fn go(nodes: &[PlacedNode], ox: f64, oy: f64, acc: &mut Bbox) {
-        for n in nodes {
-            let (x, y) = (ox + n.cx, oy + n.cy);
-            *acc = acc.union(n.bbox.shifted(x, y));
-            go(&n.children, x, y, acc);
-        }
-    }
-    let mut acc = Bbox::empty();
-    go(nodes, 0.0, 0.0, &mut acc);
-    acc
+    Bbox::extent_of(nodes, |_| true)
 }
 
 /// One reconstructed topic: which card it is, its children (indices into this

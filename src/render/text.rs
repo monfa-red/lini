@@ -75,9 +75,9 @@ struct Block {
     line_x: Box<dyn Fn(&str) -> f64>,
 }
 
-/// `size` is the caller's: the `<text>` path deliberately measures at the
-/// **attrs'** `font-size` (what layout saw), the outlined path at the
-/// cascade-resolved one.
+/// `size` is the cascade-resolved rendered size from [`effective_font`] — the
+/// `<text>` tspans and the outlined runs step their baselines by the same
+/// number, so chrome sized only by a class rule stacks its lines in both.
 fn block_layout(
     content: &str,
     attrs: &AttrMap,
@@ -179,25 +179,16 @@ pub(crate) fn emit(
     // Multi-line [SPEC 5]: one tspan per line, leading `font-size × 1.2` plus
     // `line-spacing`, the block centred on (x, y); each line's `y` carries the
     // cap-height half-shift (a tspan's explicit `y` resets the parent `dy`, so
-    // the shift is folded in px — `font-size` is in attrs wherever multi-line
-    // text exists, the same premise the leading already stands on). The
+    // the shift is folded in px, at the cascade-resolved size — chrome states
+    // its size in a class rule, never in attrs). The
     // layout-stamped `line-align` [SPEC 6] anchors each line to the block's
     // edge: `text-anchor: middle` stands (the class rule), so a line's `x` is
-    // its own centre — computed through the one measurement API. (The attrs
-    // read shadows the cascade-resolved size on purpose: it is what the
-    // measurement saw, byte-stable with the historic emission.)
+    // its own centre — computed through the one measurement API.
     let Block {
         spacing,
         top,
         line_x,
-    } = block_layout(
-        content,
-        attrs,
-        font,
-        attrs.number("font-size").unwrap_or(0.0),
-        ls,
-        pos,
-    );
+    } = block_layout(content, attrs, font, size, ls, pos);
     write!(
         out,
         r#"{indent}<text class="{class}" x="{xs}" y="{ys}"{style}{xform}>"#

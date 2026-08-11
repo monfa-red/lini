@@ -40,6 +40,15 @@ impl Mint {
         self.taken.insert(id);
     }
 
+    /// Reserve a name **and** spend its numbering slot — for a sequence
+    /// numbered by position rather than by mint order (a tree's topics are
+    /// `lini-topic-N`, 1-based among *all* the scope's topics, [SPEC 12]), so
+    /// an already-named member still consumes its ordinal.
+    pub(super) fn reserve_slot(&mut self, id: String) {
+        self.reserve(id);
+        self.next += 1;
+    }
+
     fn name(&self) -> String {
         format!("lini-{}-{}", self.what, self.next)
     }
