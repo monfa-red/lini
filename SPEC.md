@@ -17,7 +17,7 @@ reference. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
 
 ## Table of Contents
 
-### Part I — Core
+### Part I
 
 1 [Mental Model](#1-mental-model) · 2 [Lexical Syntax](#2-lexical-syntax) ·
 3 [Statements & the Label](#3-statements--the-label) ·
@@ -26,13 +26,13 @@ reference. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
 7 [Nodes](#7-nodes) · 8 [Templates](#8-templates) · 9 [Links](#9-links) ·
 10 [Colour, Variables & Expressions](#10-colour-variables--expressions)
 
-### Part II — Layout
+### Part II
 
 11 [The Layout Model](#11-the-layout-model) · 12 [Flow, Grid & Tree](#12-flow-grid--tree) ·
 13 [Sequence](#13-sequence) · 14 [Charts](#14-charts) · 15 [Drawing](#15-drawing) ·
 16 [Schematic](#16-schematic)
 
-### Part III — Reference
+### Part III
 
 17 [Property Ledger & Support](#17-property-ledger--support) · 18 [SVG Output](#18-svg-output) ·
 19 [Compile Pipeline](#19-compile-pipeline) · 20 [CLI](#20-cli) · 21 [Errors](#21-errors) ·
@@ -656,7 +656,7 @@ Two kinds of text property, split by whether they touch layout:
   any in the global block to style the whole scene.
 
 For a global `font-family` / `color`, prefer the `--lini-font-family` /
-`--lini-text-color` variables (or a `--theme`) for an **embeddable** diagram — they stay
+`--lini-text-color` variables (or the `--theme` CLI flag, [SPEC 20](#20-cli)) for an **embeddable** diagram — they stay
 live for a host page to re-theme, where a global property bakes its value into the
 `.lini` rule ([SPEC 10](#10-colour-variables--expressions), [SPEC 18](#18-svg-output)).
 
@@ -718,8 +718,8 @@ triangle a drawing's `>-` leader lowers to — [SPEC 15.7](#157-leaders-notes--l
 compositional operators `-+` / `-<` / `-o+` / `-+<` / `-o<` / `-++` are sugar over this
 set ([SPEC 9](#9-links)). `circle` is a larger `dot` — a filled point sized for
 hovering or reading (on a chart line it marks a data point; [SPEC 14](#14-charts)). Markers scale
-with `stroke-width` (a link's wire and a shape's outline alike), floor 5 px; colour follows
-the stroke.
+with `stroke-width` (a link's wire and a shape's outline alike; the size law is
+[SPEC 19](#19-compile-pipeline)'s); colour follows the stroke.
 `|line|` is bare by default — write `|line| { marker-end: arrow }` for a one-shot
 arrow. For links the operator picks markers (see [SPEC 9](#9-links)). Source order wins:
 `marker: arrow; marker-end: dot` → start arrow, end dot.
@@ -793,15 +793,15 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 8; padding: 20` | The **default** node — a rounded, framed card. |
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 8; padding: 20` | Dashed frame for a caption + children. |
-| `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -20; color: --caption-color; font-size: 12; font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
-| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 19; font-size: 12; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
+| `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -20; color: --caption-color; font-size: 12∕15 of inherited ([SPEC 6](#6-paint-stroke--text)); font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
+| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 19; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 2; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
 | `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-fill: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal; scale: 1` | Ruled grid (see below). |
-| `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
+| `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset (the mechanism: **Tables**, below). |
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: semibold` | A **header** cell — a filled, semibold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto, auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
@@ -814,7 +814,8 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
-| `\|halo\|` | `\|block\|` | generated chrome — `halo-margin` each side | An annotation line's **crossing knockout** over geometry ([SPEC 15.7](#157-leaders-notes--line-conventions)); `\|halo\| { … }` restyles or removes them scope-wide. |
+| `\|halo\|` | `\|line\|` | generated chrome — `halo-margin` each side | An annotation line's **crossing knockout** over geometry ([SPEC 15.7](#157-leaders-notes--line-conventions)); `\|halo\| { … }` restyles or removes them scope-wide. |
+| `\|threadline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — generated chrome | A thread's ISO 6410 thin line — the minor/major run and the ¾ arc a `thread:` generates ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
 | `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke: --stroke-dark; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -827,6 +828,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized; `direction` by orientation | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `drawing-number`, `revision`, `date`, `sheet-number`, `author`, …) build the standard grid, absent fields collapsing; its **smart label is the `title` field**; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|field\|` | `\|block\|` | `font-size: 10; color: --footer-color` | A **title-block field's caption**, over its value ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|tick\|` | `\|line\|` | `stroke: --stroke; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|schematic\|` | `\|block\|` | `layout: schematic` | A circuit sheet's scope ([SPEC 16](#16-schematic)). |
@@ -1053,7 +1055,7 @@ overrides — the same cascade a node walks ([SPEC 4](#4-selectors-cascade--spec
   .flow { stroke: --teal }                                 // a worn class — nodes or links
   clearance: 12; routing: orthogonal                       // scene config, cascades to links
 }
-a -> b .flow "hi" { stroke: red; stroke-style: dashed }    // one link overrides
+a -> b "hi" .flow { stroke: red; stroke-style: dashed }    // one link overrides
 ```
 
 `clearance` (default 16) and `routing` (default
@@ -1084,9 +1086,8 @@ Each label is an ordinary **styleable text leaf**; the head label takes no style
 ([SPEC 3](#3-statements--the-label)) — a styled label rides the `[ ]`, exactly as a
 node's does. Keep one link's labels in **one** `[ ]` — a head label *and* a
 `[ ]` of labels on the same link warns ([SPEC 21](#21-errors)). A label is an obstacle to nothing, and may slide along the link to keep
-clear of nodes and other labels; the link never moves for it. Link labels read
-11∕15 of the scope's inherited `font-size` (11 at the default 15 —
-[SPEC 6](#6-paint-stroke--text)) at `font-weight: normal`; a link's text props
+clear of nodes and other labels; the link never moves for it. Link labels ride the
+chrome size ([SPEC 6](#6-paint-stroke--text)) at `font-weight: normal`; a link's text props
 cascade to its labels
 (`|-| { font-size: 14; color: --blue }` restyles every link's labels at once,
 absolutely).
@@ -1214,7 +1215,7 @@ lives in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
 CSS variables theme the **visual** layer — colours and the font family. Everything
 that affects layout — sizes, gaps, padding, and font *size* — is a baked constant, so
 a standalone SVG never depends on host CSS. This section also holds the **expression
-engine** ([SPEC 10.7](#107-expressions--functions)), the one place operators appear.
+engine** ([10.7](#107-expressions--functions)), the one place operators appear.
 
 ### 10.1 Visual variables (live, themeable)
 
@@ -1240,7 +1241,9 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-grid          light-dark(rgba(0,0,0,.1), rgba(255,255,255,.14))  the chart gridline tint
---lini-font-family   "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace
+--lini-tip-bg        light-dark(#333, #e8e8ea)          the chart tooltip card's surface ([SPEC 14.8](#148-tooltips))
+--lini-tip-fg        light-dark(white, #1a1a1f)         …and its text
+--lini-font-family   "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
 --lini-font-weight         500
 --lini-caption-font-weight 400
 --lini-link-font-weight    400
@@ -1266,7 +1269,7 @@ so `light-dark()` follows the viewer's OS (`prefers-color-scheme`) — no script
 (it flips `color-scheme`, and its higher specificity beats the OS). All defaults sit in
 `@layer lini.defaults`, so unlayered host CSS still wins with no `!important`.
 `--static` freezes the light arm into literals for renderers without `light-dark()`
-([SPEC 10.6](#106---static)).
+([10.6](#106---static)).
 
 ### 10.2 The colour palette
 
@@ -1365,7 +1368,7 @@ Alias a host var from CSS: `.lini { --lini-accent: var(--my-brand-blue); }`.
 Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not** `--name`
 variables: they bake (a runtime `var()` can't be measured at compile time). Set them
 with a literal, a rule (`gap: 30;`, `|box| { radius: 4 }`), or a `(…)` expression /
-binding ([SPEC 10.7](#107-expressions--functions)).
+binding ([10.7](#107-expressions--functions)).
 
 ### 10.5 Layout constants (baked)
 
@@ -1391,7 +1394,7 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-pin-pitch 20    pin-stub 12    junction 3 (radius)    tag-point 8 (a flag's nose)
+schematic track gap 48    pin-pitch 20    pin-stub 12    junction 3 (radius)    tag-point 8 (a flag's nose)
 label-seat max(20, 2.5 × clearance) — a seat is a routing corridor, so it is
   derived from the scope's own clearance, floored at one pin pitch
 pin-number offset 7 (across the lead)    readout offset 30 (beside a turned part's axis)
@@ -1505,7 +1508,8 @@ properties. This part is the family; each section states just its delta.
 | `schematic` | circuit sheet | anchors on tracks + satellites at pins ([SPEC 16](#16-schematic)) | orthogonal router, fixed ports | no — arranges in place |
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
-`direction: column` and `gap: 20`; padding defaults per [SPEC 10.5](#105-layout-constants-baked),
+`direction: column` and `gap: 20` (a shape's or a `|topic|`'s children are card
+content, so those default to `12`); padding defaults per [SPEC 10.5](#105-layout-constants-baked),
 the root's framing the whole rendered scene — links and labels included — out to the
 SVG edge.
 
@@ -1532,10 +1536,10 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    routing problem.
 
 3. **A layout-owning engine lowers to primitives in the layout phase.** `flow` / `grid`
-   arrange their children where they sit. `sequence` / `chart` / `pie` instead **read their
+   arrange their children where they sit. `sequence` / `chart` / `pie` / `drawing` instead **read their
    whole subtree** and emit an ordinary primitive tree — `|block|`s, `|line|`s, `|path|`s,
    text — at baked coordinates ([SPEC 19](#19-compile-pipeline)). So the cascade, palette, theming,
-   gradients, `--static`, `fmt`, and determinism all apply to a chart or a sequence with
+   gradients, `--static`, `fmt`, and determinism all apply to a chart, a sequence, or a drawing with
    **no engine-specific render code** — a chart *is* a diagram once lowered.
 
 **The container is still a box.** An engine owns *where its children go*, but the
@@ -1552,8 +1556,8 @@ The container property set — which engine honours which is
 flow / grid, generation distance × sibling separation in a tree
 ([SPEC 12](#12-flow-grid--tree)), the plot-to-title/legend gutter in a chart / pie
 (default 10), and the message pitch / participant spacing in a sequence (default 32); a
-drawing places by datum and ignores it (its dims and mates read a scoped `gap:` of
-their own — [SPEC 15](#15-drawing)). `direction`, `align`, `justify`, and
+drawing places by datum and ignores it (its mates read a scoped `gap:` of
+their own — [SPEC 15.5](#155-mates--seating)). `direction`, `align`, `justify`, and
 `gap-fill` are the **flow / grid arranger's** knobs — a `sequence`, `chart` / `pie`, or
 `drawing` container places its own children and ignores them, and a `tree` reads
 `direction` and `gap` alone. `padding` is honoured wherever it has meaning
@@ -1641,10 +1645,11 @@ count; a `cell:` pins one explicitly and the rest flow around it. Bare-text cell
 pure auto-flow — `cell:` / `span:` apply to **box** children only (a text
 node has no block to carry them). A grid is positional, so an empty `""` cell is
 **kept** — it holds its track and keeps the cells after it aligned (in flow, an
-empty `""` is dropped). `cell:` / `span:` are read only on a grid; off a grid — where the
-container's layout is statically known to be something else — they are an **error**
+empty `""` is dropped). `cell:` is read on a grid and on a schematic
+([SPEC 16.1](#161-placement--anchors--satellites)), `span:` on a grid alone; where the
+container's layout is statically known to be neither, they are an **error**
 ([SPEC 17](#17-property-ledger--support)'s strict rule, [SPEC 21](#21-errors): `'cell' places a
-grid child — this box sits in a 'layout: flow'`).
+grid or schematic child — this box sits in a 'layout: flow'`).
 
 **Per-column alignment.** On a grid, `align` (horizontal ↔) and `justify`
 (vertical ↕) accept a **list parallel to `columns`** (one value per track) or a
@@ -1893,7 +1898,7 @@ its frame, and the cascade styles a chart like any box.
 | `samples` | chart | integer — `fn:` sample count | `24` |
 | `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
 | `legend` | both | `top` · `right` · `bottom` · `none` ⌛ ([SPEC 24](#24-deferred)) | auto (shown when ≥ 2 entries) — built |
-| `tooltip` | both | `none` · `hover` · `auto` · `always` ([SPEC 14.8](#148-tooltips)) | `auto` |
+| `tooltip` | both | `none` · `hover` · `auto` · `always` ([14.8](#148-tooltips)) | `auto` |
 | `gap` | both | number — clear space between the plot and the title / legend outside it | `10` |
 
 `categories` sets the **x (domain) axis's** tick labels — the one form today;
@@ -1927,7 +1932,7 @@ from line *ends* to every vertex: `|line| { marker: circle }` shows a marker at 
 A chart marker is **centred**, so only the symmetric kinds apply — **`dot`**, **`circle`**
 (a larger, hover-sized point), and **`diamond`**; the directional `arrow` / `crow` are an
 error on a series ([SPEC 21](#21-errors)). Every marker carries the datum's `<title>` — a
-marked point is a hover target ([SPEC 14.8](#148-tooltips)). `|dots|` is markers with no line,
+marked point is a hover target ([14.8](#148-tooltips)). `|dots|` is markers with no line,
 **`circle`** by default; its diameter is `width` (`height` too for an ellipse), its shape
 `marker:` — there is **no** `size:` property.
 
@@ -1954,7 +1959,7 @@ the **item width** is the discriminator:
 |---|---|---|
 | categorical | `data: 9, 15, 24, 18, 30` | scalar items → one value per category |
 | points | `data: 0 225, 60 225, 118 221` | `x y` items → points (numeric x; scatter) |
-| formula | `fn: min(8/(x/100-1)^2, 2000)` | an expression in `x`, sampled at `samples:` |
+| formula | `fn: (min(8/(x/100-1)^2, 2000))` | an expression in `x`, sampled at `samples:` |
 
 Scalar and pair items never mix in one `data:` — `data: 10 20` is **one point**
 ([SPEC 2](#2-lexical-syntax)); a legacy space list errors with the comma form.
@@ -1965,7 +1970,7 @@ A point's x may be a **date** — a quoted ISO-8601 literal: `data: "2026-01-01"
 "2026-02-01" 25`. `YYYY-MM-DD`, optionally `THH:MM[:SS]`, optionally `Z` / `±HH:MM`;
 a bare date is date-only (midnight UTC), an offset keeps its instant, and rendering is
 timezone-independent (all math in UTC). Date x-values make the x axis a **time axis**
-([SPEC 14.4](#144-axes-scales--domain)); dates and plain numbers never mix in one domain,
+([14.4](#144-axes-scales--domain)); dates and plain numbers never mix in one domain,
 and an invalid date is an error ([SPEC 21](#21-errors)). Time-only literals don't exist —
 a numeric axis covers them.
 
@@ -1973,7 +1978,7 @@ a numeric axis covers them.
 (one entry per value or `x y` point), distinct from the series' one legend label
 (its smart label). An entry rides with its datum: on the plot beside the point, or
 on hover when there's no room — the placement is `tooltip:`'s job
-([SPEC 14.8](#148-tooltips)). The count must equal the data count; `labels:` needs
+([14.8](#148-tooltips)). The count must equal the data count; `labels:` needs
 discrete `data:` (a sampled `fn:` has no authored points, so `labels:` with `fn:` is
 an error). A per-node mark (`|bubble|`, `|slice|`, `|mark|`) takes no `labels:` —
 its one smart label *is* its point label.
@@ -1986,14 +1991,15 @@ its one smart label *is* its point label.
 operators, the math library, `name = expr;` locals, the ternary, and stylesheet functions.
 Charts bind two ambient names — the same seam that injects `u` for parametric `points:`:
 **`x`** the x-axis data value (a whole-domain `fn:` uses it) and **`u`** a band-local clock
-`0 → 1` ([SPEC 14.5](#145-bands--annotations)). A `fn:` is therefore **not folded at resolve**
+`0 → 1` ([14.5](#145-bands--annotations)). A `fn:` is therefore **not folded at resolve**
 (its `x` is unbound there) but held and **sampled at chart layout**, once the x-domain is
-fixed. Locals chain derivations in one group; a stylesheet function keeps twins DRY:
+fixed — so a `fn:` value is always a `(…)` group (or a bare constant), never a bare
+call: the resolver would fold a call with `x` unbound. Locals chain derivations in one group; a stylesheet function keeps twins DRY:
 
 ```
 { ramp(s) = min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2); }
-|area| "Steel"    { fn: ramp(1) }
-|line| "Aluminum" { fn: ramp(1/0.7) }
+|area| "Steel"    { fn: (ramp(1)) }
+|line| "Aluminum" { fn: (ramp(1/0.7)) }
 ```
 
 **The formula ceiling.** `fn:` expresses a function of `x`, not a recurrence: a numeric
@@ -2032,12 +2038,11 @@ and a second value axis adds none (avoiding moiré). The default tint is the
 default (1-2-5 × 10ⁿ); `step:` sets a spacing, `ticks:` an explicit list, `scale: log`
 decade ticks (domain above 0). Tick labels come from `categories:` (an x axis) or the
 formatted tick value + `unit:` (a value axis) — `format:` sets the value's presentation
-([SPEC 17](#17-property-ledger--support)). Explicit per-axis tick text is
-deferred — `categories:` covers the x axis today ([SPEC 24](#24-deferred));
-`labels:` is the **series'** per-datum text ([SPEC 14.3](#143-data--formulas)).
+([SPEC 17](#17-property-ledger--support));
+`labels:` is the **series'** per-datum text ([14.3](#143-data--formulas)).
 
 **`scale: time`** — a numeric domain in epoch seconds, set by date literals in `data:`
-([SPEC 14.3](#143-data--formulas)); `range:` and `ticks:` read the same literals. Ticks are
+([14.3](#143-data--formulas)); `range:` and `ticks:` read the same literals. Ticks are
 **calendar-aware**: auto picks the boundary unit from the span (years → months → weeks →
 days → hours → minutes) and lands on calendar boundaries; **`step:`** takes a calendar
 interval — a unit ident with an optional count (`step: month`, `step: 2 week`) — and a
@@ -2053,7 +2058,7 @@ Both are children placed in **data** coordinates; the model gives them for free.
 A **`|band|`** partitions an axis and drives three things from one declaration: a
 background **shade**, a **tick** (its smart label), and the **segment boundaries** every
 series shares. `range: a b` is its data range on its bound `axis:` — the same
-interval shape the axis itself reads ([SPEC 14.4](#144-axes-scales--domain));
+interval shape the axis itself reads ([14.4](#144-axes-scales--domain));
 `fill: none` makes it a divider + label with no shading.
 
 ```
@@ -2061,7 +2066,7 @@ interval shape the axis itself reads ([SPEC 14.4](#144-axes-scales--domain));
 ```
 
 **A series opts into segmentation** with a per-band `fn:` **list** — one `(…)` expression
-(or a bare constant) per band, comma-separated (`fn: (u*10), 5, ramp(2)`), evaluated
+(or a bare constant) per band, comma-separated (`fn: (u*10), 5, (ramp(2))`), evaluated
 in local `u`; a **single** `fn:` samples the whole
 domain in `x` and ignores bands. Consecutive segments connect end-to-start (the riser is
 drawn), so a jump is explicit. A per-band list whose length ≠ the band count is an error
@@ -2717,8 +2722,8 @@ mates resolve** and on the **unbroken** model. The number renders through
 ([SPEC 17](#17-property-ledger--support)): the `auto` default rounds to at most
 2 decimals, trailing zeros trimmed — a bare number: drafting states units once, in
 the title block, and a per-value suffix is `format:`'s job. `format:` shapes the
-number **only**, never the measurement — the glyph, the label's words, `tol:`, and
-the `N×` count compose around the formatted number in the table's order; a
+number **only**, never the measurement — the pieces compose around the formatted
+number as **count → glyph → number → label words → `tol:`** (`2× ⌀10 H7`); a
 `fraction D` stack rides the same raised / lowered machinery as `tol:` deviations.
 The text composes from sources that each own one thing:
 
@@ -2726,7 +2731,7 @@ The text composes from sources that each own one thing:
 |---|---|---|
 | the **op** | the glyph | `(o)` → `⌀` / `R` · `(<)` → `°` · `tol:` → `±` (linear `(-)` adds none — a plain length) |
 | the **geometry** | the number | `10` |
-| the **label** | the words | two-ended: **replaces** the number (`a (-) b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (o) "H7"` → `2× ⌀10 H7`) |
+| the **label** | the words | two-ended: **replaces** the number and its glyph (`a (-) b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (o) "H7"` → `2× ⌀10 H7`) |
 | **`tol:`** | the tolerance, appended | `tol: 0.1` → `±0.1` · `tol: +0.2 -0.05` → stacked deviations, 0.7 × font, raised / lowered · `tol: H7` → a fit class |
 | **`pattern:`** | the count prefix | `2× ` |
 
@@ -2847,8 +2852,8 @@ dash conventions and `dashed` the hidden-edge one, each on its own child — one
 has one stroke style ([SPEC 7](#7-nodes)). The **`|hidden|`** template
 ([SPEC 8](#8-templates)) is that child ready-made — a dashed, unfilled pen profile
 for interior geometry (a socket, a bore): a feature in the part's `[ ]`, rigid under
-mates, riding `break:`, its `:segment`s dimensionable like any sketch's. Two chrome types carry the centerline
-pattern ([SPEC 8](#8-templates)): `|centerline|` (a `|line|` — an axis, a symmetry
+mates, riding `break:`, its `:segment`s dimensionable like any sketch's. Besides the section `|plane|` ([15.8](#158-assemblies-views-sheets--titles)), two
+chrome types carry the centerline pattern in the part frame ([SPEC 8](#8-templates)): `|centerline|` (a `|line|` — an axis, a symmetry
 line, a spoke) and `|pitch-circle|` (an `|oval|`, `width:` its diameter — the bolt
 circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers what
 `pattern:` can't — unequally spaced holes still share one drawn circle.
@@ -3024,8 +3029,8 @@ glyph's height follows the annotation `font-size`, its line weight the
 statement's `stroke-width`, so every symbol reads at dimension-linework weight
 beside every value, at every view scale. All three types are **sheet content**
 (`scale: 1` — [15.1](#151-the-container-the-datum--the-scale)) and drawing-scope
-only ([SPEC 21](#21-errors)). Three attachments, all ordinary: place one with
-`translate:`, **seat** it on a face with `||`
+only ([SPEC 21](#21-errors)). Place one with
+`translate:`, or attach it three ways, all ordinary: **seat** it on a face with `||`
 ([15.5](#155-mates--seating)), wire it with a leader (`body:seat <- sf` — the
 same node either way), or carry it in an annotation's `[ ]` (below).
 
@@ -3488,7 +3493,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | Property | Value | Default | Kind |
 |---|---|---|---|
 | `font-family` | ident · string · `--var` | `--font-family` | live |
-| `font-size` | number | 15 (link 11, caption 12) | baked |
+| `font-size` | number | 15 — chrome derives from it: a link label 11∕15, a caption 12∕15 ([SPEC 6](#6-paint-stroke--text)) | baked |
 | `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `medium` (500, `--font-weight`) | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); arbitrary 100–900 ⌛ |
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
 | `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
@@ -3526,7 +3531,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | Property | On | Value | Notes |
 |---|---|---|---|
 | `points` | `\|line\|` `\|poly\|` | `x y, …` · parametric `u` expr | vertex list; **required**. |
-| `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry; chart default 24). |
+| `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry default 2 — a straight segment; chart default 24). |
 | `path` | `\|path\|` | quoted SVG path | **required**; native top-left coords. |
 | `src` | `\|image\|` | quoted URL / data URI / local path | **required**; a local file embeds ([SPEC 7](#7-nodes)). |
 | `symbol` | `\|icon\|` · `\|surface-finish\|` · `\|label\|` · the discretes | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)) · a schematic symbol / variant ([SPEC 16.3](#163-discretes), [SPEC 16.4](#164-labels)). |
@@ -3564,8 +3569,8 @@ out of scope.
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
 | `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` (`range` also a `\|band\|`'s extent — [SPEC 14.5](#145-bands--annotations)) | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
-| `format` | chart / drawing scope · `\|axis\|` · series · a dimension — **inherits** | `auto` · `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` · `fraction D` · date preset (`year`·`month`·`day`·`hour`·`minute`) | `auto` | presentation only, never measurement; composes before `unit:`, `tol:`, the `⌀`/`R`/`°` glyphs, and `N×` counts ([SPEC 14.4](#144-axes-scales--domain), [SPEC 15.6](#156-dimensions)) |
-| `side` (homonym: also an `\|axis\|`'s / a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
+| `format` | chart / drawing scope · `\|axis\|` · series · a dimension — **inherits** | `auto` (a chart tick to 4 decimals, a dimension to 2, zeros trimmed) · `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` · `fraction D` · date preset (`year`·`month`·`day`·`hour`·`minute`) | `auto` | presentation only, never measurement; composes before `unit:`, `tol:`, the `⌀`/`R`/`°` glyphs, and `N×` counts ([SPEC 14.4](#144-axes-scales--domain), [SPEC 15.6](#156-dimensions)) |
+| `side` (homonym: also an `\|axis\|`'s, above, and a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
 | `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`·`time`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
@@ -3703,17 +3708,26 @@ Host CSS may restyle any `lini-`-prefixed class; layout is computed at compile t
 runtime restyling (a fatter `stroke-width`) restyles without re-layout. A chart's or
 sequence's lowered primitives ([SPEC 19](#19-compile-pipeline)) emit exactly like the boxes,
 text, and lines above — a chart's tooltip card is a `<g class="lini-chart-tip">`, a
-reserved styling hook. A drawing's dimension anatomy ([SPEC 15.6](#156-dimensions))
-lowers with its own hooks, paint stated once per class: `lini-dim-line` (dimension /
-leader linework), `lini-ext-line` (extension lines, `--lini-stroke-light`),
-`lini-dim-text` (annotation text — `font-size: 12; font-weight: normal`, so no
-dimension, leader, or callout leaf inlines its own size), and the slender arrowheads as
-`lini-marker lini-marker-dim`; these rules emit only when a sheet carries drawings.
-A restyled `(-)` tier states its tone as compound rules over a generated `lini-dim`
-class on dimension-owned chrome (leaders keep the base tone); GD&T frames, section
-planes, and drafting glyphs carry their own hooks the same way (`lini-frame-cell`,
-`lini-frame-plate`, `lini-plane-*`, `lini-drafting-glyph`) — every generated dress
-is one rule, never a `style=` per wearer. A
+reserved styling hook. Every generated dress is **one rule, never a `style=` per
+wearer**, each rule emitted only when its role is actually worn, and an authored
+class rule of the same name **replaces** the generated one (which is what lets
+`|halo| { … }` restyle chrome scope-wide rather than layer under it). The hook
+families:
+
+| Family | Classes |
+|---|---|
+| core | `lini-node` · `lini-{type}` · `lini-style-{class}` · `lini-text` · `lini-canvas` · `lini-gutter` |
+| link | `lini-link` · `lini-link-label` · `lini-link-dashed` / `-dotted` · `lini-stray` · `lini-marker` + `lini-marker-{kind}` (`arrow`·`dot`·`circle`·`diamond`·`datum`·`dim`·`open`) · `lini-cut` / `lini-cut-bg` (label mask) |
+| chart | `lini-chart-title` · `lini-chart-label` · `lini-chart-tip` · `lini-tip-N` / `lini-hit-N` |
+| sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
+| tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
+| drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
+| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag` · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+
+(`lini-align-*` / `lini-justify-*` carry layout, not paint — they emit no CSS
+rule, the one `lini-` family host CSS cannot restyle. Generated **ids** are
+prefixed too: `lini-aN-` for embedded assets, `lini-shadow-N` / `lini-clip-N` /
+`lini-gradient-N` / `lini-hatch-N` / `lini-label-cut-N` in `<defs>`.) A
 detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
 clips to its region with one interned `<clipPath>` in `<defs>` and a `clip-path=` on
 its group.
@@ -3778,7 +3792,7 @@ so the router never sees them.
 **Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
 deterministic — over every link **except** those a `drawing` scope already drew;
 a sequence's messages route `straight` with layout-fixed anchors.
-Place markers (sized `max(5, stroke-width × 4)`, tip on the endpoint) and link labels at
+Place markers (sized `max(5, stroke-width × 4) + 1`, tip on the endpoint) and link labels at
 their `along:` fractions (auto-distributed when unset).
 
 **Render.** Depth-first emit SVG per [SPEC 18](#18-svg-output): a box is a `<g>`, a string is a
@@ -3856,6 +3870,16 @@ their ordering carry no codes and never will. The human form above stays code-fr
 ([SPEC 20](#20-cli)) emits the structured record — code, severity, span, related span, and a
 machine-applicable replacement where one exists.
 
+**Lexing**
+
+| Condition | Message |
+|---|---|
+| Unclosed string | `unterminated string literal` |
+| Bad number | `invalid number literal` |
+| Bad escape | `invalid escape sequence '\X'` |
+| Stray character | `unexpected character 'X'` |
+| Operator outside a group | `math operators appear inside ( ) — e.g. padding: (8 * 2)` |
+
 **Properties & validation** ([SPEC 17](#17-property-ledger--support)'s strict/lenient rule)
 
 | Condition | Message |
@@ -3921,14 +3945,14 @@ machine-applicable replacement where one exists.
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
 | Invalid `oklch()` | `oklch expects (L, C, H) or (L, C, H, A) — L and A in 0..1, C ≥ 0, H in degrees` |
 | Gradient with < 2 stops | `gradient() needs at least two colour stops` |
-| `linear-gradient` without an angle | `linear-gradient needs an angle first, then ≥ 2 colour stops` |
+| `linear-gradient` without an angle | `linear-gradient needs an angle first, then ≥ 2 colour stops — e.g. linear-gradient(135, --teal, --sky)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Unquoted text value | `'title' takes a quoted string — write title: "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
 | Negative container `gap` | `a container's 'gap' must be ≥ 0` — a **mate's** `gap:` may go negative ([SPEC 15.5](#155-mates--seating)) |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |
-| Function arity | `'scale' takes 1 argument, got 2` |
+| Function arity | `'sin' takes 1 argument(s), got 2` |
 | Spaced call paren | `a call's '(' glues to its name — write 'rgb(…)'` |
 | `hatch()` off `fill` | `'hatch' is a fill — 'stroke' takes a colour or gradient` |
 | Unreadable image path | `cannot read image './logo.svg' — no such file` ([SPEC 7](#7-nodes)) |
@@ -3939,7 +3963,7 @@ machine-applicable replacement where one exists.
 | Condition | Message |
 |---|---|
 | Missing `columns` | `'layout: grid' requires 'columns'` |
-| Empty / bad track | `'columns' needs at least one track` / `a track is a size, 'auto', or repeat(…)` |
+| Empty / bad track | `'columns' needs at least one track` / `a track is a size, 'auto', or repeat(N[, size])` |
 | Grid out of range | `cell: 5 _ exceeds columns=3` |
 
 **Layout — wrap** ([SPEC 5](#5-the-box-model))
@@ -3983,15 +4007,15 @@ machine-applicable replacement where one exists.
 | `fn:` list ≠ band count | `'fn' has N formulas but the chart has M bands` |
 | Data ≠ categories count | `series data has N values but the chart has M categories` |
 | `labels:` count ≠ data count / on `fn:` | `'labels' has N entries but the series has M data points` / `'labels' needs explicit 'data'` |
-| `categories:` + an axis text | `set 'categories' or an axis's tick text, not both` |
-| `\|mark\|` without `axis:` / bad `at:` | `a '\|mark\|' needs 'axis:'` / `'at' takes one value (a line) or two (a point)` |
+| `categories:` + an axis text | `set 'categories' or an axis 'labels', not both` (⌛ — reachable once per-axis tick text lands, [SPEC 24](#24-deferred)) |
+| `\|mark\|` without `axis:` / bad `at:` | `a '\|mark\|' needs 'axis:' to place it` / `'at' takes one value (a line) or two (a point)` |
 | `\|bubble\|` missing `at:` / `value:` | `a '\|bubble\|' needs 'at:' (x y) and 'value:'` |
 | Unknown `axis:` id | `axis 'X' not found` + `; did you mean 'Y'?` |
 | `range:` bad / equal ends | `'range' takes two ends: 'a b', 'a auto', or 'auto b'` / `'range' needs distinct ends` |
 | `scale: log` over a non-positive domain | `a 'scale: log' axis needs a domain above 0` |
 | Paint list count ≠ data count | `'fill' lists N paints but the series has M data points` |
 | Paint list on `\|line\|` / `\|area\|` | `a '\|line\|' is one shape with one paint — per-datum lists read on '\|bars\|' / '\|dots\|'` |
-| Mixed date / numeric domain | `axis 'X' mixes dates and numbers — one domain, one kind` |
+| Mixed date / numeric domain | `the x axis mixes dates and numbers — one domain, one kind` |
 | Invalid date literal | `'2026-13-01' is not a date — ISO-8601: '2026-01-31', optionally 'T09:30' and 'Z'` |
 | Numeric `step:` on a time axis | `a time axis steps by calendar — 'step: month', 'step: 2 week'` |
 | Bad `format:` value | `'format' takes auto, decimal N, significant N, scientific N, engineering N, percent N, fraction D, or a date preset` |
@@ -4027,7 +4051,7 @@ machine-applicable replacement where one exists.
 | One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
 | Bare `(o)` with no axis | `'(o)' can't pick an axis on 'X' — anchor a side ('X:top (o)') or a segment` |
 | `(<)` on a point anchor | `an angle reads two edges — a named segment, a '\|line\|', or a side` |
-| Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' or 'revolve:' — no twin to measure against` |
+| Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
 | Station `⌀` on a mirror-only profile | `a station '⌀' reads a revolved profile — 'revolve: x-axis'` |
 | `revolve:` + `mirror:` together | `a sketch takes 'revolve:' or 'mirror:', not both` |
 | Bad `revolve:` value | `'revolve' takes x-axis or y-axis` |
@@ -4108,8 +4132,18 @@ machine-applicable replacement where one exists.
 | Duplicate wire | `'a - b' is already wired — a repeated wire means nothing on a sheet` |
 | Dot-path into a label | `a label is its own terminal — it has no pins` |
 | Unknown schematic `symbol:` | `unknown symbol 'gnb'; did you mean 'gnd'?` |
-| Bad `shape:` / `pins:` / `number:` | `'shape' takes plain, left, right, both, or round` · `'pins' takes a count ≥ 1` · `'number' takes an integer` |
+| Bad `shape:` / `pins:` / `number:` | `'shape' takes plain, left, right, both, or round — not 'X'` · `'pins' takes a count ≥ 1` · `'number' takes an integer` |
 | Satellite chain with no placed end | `'C7' has no placed end — its chain falls back to the flow` (warning) |
+
+**Routing** — a stray's reasons ([ROUTING.md](ROUTING.md), Impossible layouts / Fixed ports); each is a warning naming the link, `--strict` an error
+
+| Condition | Message |
+|---|---|
+| Closed graph | `no legal route: every side entry or channel is closed at this layout` |
+| Blocked fixed port | `fixed port blocked: a body covers the port's landing` |
+| Crowded fixed ports | `fixed ports closer than the minimum pitch on one side` |
+| Conflicted fan | `fan ends carry two different fixed ports` |
+| Pinned self-loop | `self-loop with both ends forced onto one side` |
 
 
 ---
@@ -4484,7 +4518,7 @@ db      --> api     "record"
 |chart| "Injection profile" [
   |axis#bar| "Pressure (bar)" { side: left; range: 0 1100 }
   |axis#x|   "Speed (mm/s)"   { side: bottom; range: 0 133 }
-  |area| "Pressure" { axis: bar; fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
+  |area| "Pressure" { axis: bar; fn: (x <= 93 ? 1000 : 1000 - 319*((x-93)/40)); fill: --teal }
   |band| { range: 93 133; axis: x; fill: --red }
   |mark| "1000 bar @ 93" { at: 93; axis: x; color: --muted }
 ]
