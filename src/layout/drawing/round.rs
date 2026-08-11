@@ -30,7 +30,7 @@ pub(super) fn lower(
     rows: &mut Rows,
     stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
+    let paint = Paint::of_link(ctx, w);
     let ep = &w.endpoints[0];
     let a = anchors::resolve(ctx.kids, ctx.scope, ep, "dimension")?;
     let follows = w.texts.first();

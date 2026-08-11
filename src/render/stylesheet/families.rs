@@ -220,6 +220,126 @@ pub(super) fn build_shape_rules(
     }
 }
 
+/// The drafting symbols' generated chrome [SPEC 15.9/18]: the GD&T frame's
+/// bordered compartments, the backing plate under a framed letter, and the
+/// glyph linework. Each is stamped identically on every wearer by the frame
+/// lowering, so each states its dress **once** here — seeded from
+/// [`crate::layout::drawing::symbols::default_paint`], the one place a
+/// symbol's dress is decided, exactly as the dimension chrome rules are seeded
+/// from the annotation tone. A symbol that restyles still inlines its own diff.
+pub(super) fn build_symbol_chrome_rules(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    present: &BTreeSet<&str>,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    use crate::layout::drawing::symbols;
+    let paint = symbols::default_paint();
+    let (fill, stroke) = (
+        format_value(&paint.fill, vars, opts),
+        format_value(&paint.stroke, vars, opts),
+    );
+    let width = num(paint.sw).to_string();
+    emit_generated_default(
+        rules,
+        laid,
+        &format!("lini-{}", symbols::FRAME_CELL),
+        present.contains(symbols::FRAME_CELL),
+        vec![
+            ("fill".into(), fill.clone()),
+            ("stroke".into(), stroke.clone()),
+            ("stroke-width".into(), width.clone()),
+        ],
+    );
+    // The plate only grounds the letter — the frame outline is a separate
+    // `datum-frame` polyline over it, so the plate strokes nothing.
+    emit_generated_default(
+        rules,
+        laid,
+        &format!("lini-{}", symbols::FRAME_PLATE),
+        present.contains(symbols::FRAME_PLATE),
+        vec![
+            ("fill".into(), fill),
+            ("stroke".into(), "none".into()),
+            ("stroke-width".into(), "0".into()),
+        ],
+    );
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-drafting-glyph",
+        present.contains("drafting-glyph"),
+        vec![
+            ("fill".into(), "none".into()),
+            ("stroke".into(), stroke),
+            ("stroke-width".into(), width),
+        ],
+    );
+}
+
+/// The cutting plane's generated chrome [SPEC 15.8/18]: a `|plane|` fills into
+/// a dash-dot chain line plus two thick end strokes, two solid arrow shafts,
+/// and two viewing heads — each role identical on every plane in the sheet, so
+/// each states its one departure from the `.lini-plane` dress here rather than
+/// inlining on both ends of every plane. The ends and shafts differ only in
+/// **weight and dash** (ISO constants); the head fills with the plane's own
+/// tone, read from that same `.lini-plane` rule so the pair can never drift.
+pub(super) fn build_plane_chrome_rules(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    present: &BTreeSet<&str>,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    use crate::layout::drawing::section::plane;
+    emit_generated_default(
+        rules,
+        laid,
+        &format!("lini-{}", plane::PLANE_END),
+        present.contains(plane::PLANE_END),
+        vec![
+            (
+                "stroke-width".into(),
+                num(crate::ledger::consts::PLANE_THICK_WIDTH).to_string(),
+            ),
+            ("stroke-dasharray".into(), "none".into()),
+        ],
+    );
+    emit_generated_default(
+        rules,
+        laid,
+        &format!("lini-{}", plane::PLANE_SHAFT),
+        present.contains(plane::PLANE_SHAFT),
+        vec![("stroke-dasharray".into(), "none".into())],
+    );
+    if let Some(tone) = class_prop(laid, "lini-plane", "stroke", vars, opts) {
+        emit_generated_default(
+            rules,
+            laid,
+            &format!("lini-{}", plane::PLANE_ARROW),
+            present.contains(plane::PLANE_ARROW),
+            vec![("fill".into(), tone)],
+        );
+    }
+}
+
+/// What a generated class's own rule states for `prop` — the seed for a chrome
+/// rule whose wearers take their paint from that class [SPEC 18].
+fn class_prop(
+    laid: &LaidOut,
+    class: &str,
+    prop: &str,
+    vars: &VarTable,
+    opts: &Options,
+) -> Option<String> {
+    let (_, attrs) = laid.sheet.class_rules.iter().find(|(n, _)| n == class)?;
+    paint_props(attrs, vars, opts)
+        .into_iter()
+        .find(|(p, _)| p == prop)
+        .map(|(_, v)| v)
+}
+
 /// Sequence tab / guard text [SPEC 13] — size / weight stated once, never inline.
 pub(super) fn build_sequence_text_rules(rules: &mut Vec<Rule>, present: &BTreeSet<&str>) {
     // Sequence tab / guard text [SPEC 13] takes its size / weight from these rules,
@@ -494,10 +614,12 @@ pub(super) fn build_halo_rules(
 
 /// The base marker paint (`.lini-marker`), the drafting-head variants, and the
 /// chart-label pointer-events rule.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn build_marker_rules(
     rules: &mut Vec<Rule>,
     laid: &LaidOut,
     present: &BTreeSet<&str>,
+    marker_hosts: &BTreeSet<&str>,
     has_markers: bool,
     vars: &VarTable,
     opts: &Options,
@@ -534,6 +656,16 @@ pub(super) fn build_marker_rules(
     // the slender dim arrow and the datum triangle fill with the linework
     // colour, after `.lini-marker` so the variant wins the same-specificity tie.
     let (dim_tone, _) = annotation_tones(laid, vars, opts);
+    // A leader's own head (`*-`'s dot, `->`'s arrow) is a *core* marker emitted
+    // inside its `.lini-dim-line` `<g>`, not a lowered head node — so it takes
+    // the linework tone through the same companion the wire's heads do, stated
+    // once here rather than inlined on every head [SPEC 18].
+    if marker_hosts.contains("dim-line") && dim_tone != live("stroke", vars, opts) {
+        rules.push(Rule {
+            class: "lini-dim-line .lini-marker".into(),
+            props: vec![("fill".into(), dim_tone.clone())],
+        });
+    }
     for variant in ["marker-dim", "marker-datum"] {
         emit_generated_default(
             rules,
@@ -551,6 +683,43 @@ pub(super) fn build_marker_rules(
             class: "lini-chart-label".into(),
             props: vec![("pointer-events".into(), "none".into())],
         });
+    }
+}
+
+/// The `(-)` dimension tier's chrome paint [SPEC 4/15.6/18]: one **compound**
+/// rule per chrome role a dimension actually lowers (`.lini-dim-line.lini-dim`
+/// and friends), so a document that recolours its dimensions alone says it
+/// three times in CSS instead of on every one of its chrome nodes. The roles
+/// are shared with the leaders — `lini-dim-line` dresses both — so only the
+/// tier class tells them apart, and only the compound can name the pair.
+///
+/// `dim_roles` holds exactly the roles worn beside the tier class, and layout
+/// mints that class only when the tier repaints
+/// ([`crate::layout::drawing::annotate::dim_tier_repaints`]), so this emits
+/// nothing for an unstyled document and never a rule with no wearer.
+pub(super) fn build_dim_tier_rules(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    dim_roles: &BTreeSet<&str>,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    let tier = crate::layout::drawing::annotate::DIM_TIER;
+    let (dim_tone, ext_tone) = tier_tones(laid, vars, opts);
+    // Role → the property that role paints with, and its tone: linework
+    // strokes, a head fills, an extension line takes the support tone.
+    for (role, prop, value) in [
+        ("dim-line", "stroke", &dim_tone),
+        ("ext-line", "stroke", &ext_tone),
+        ("marker-dim", "fill", &dim_tone),
+        ("marker-datum", "fill", &dim_tone),
+    ] {
+        if dim_roles.contains(role) {
+            rules.push(Rule {
+                class: format!("lini-{role}.lini-{tier}"),
+                props: vec![(prop.into(), value.clone())],
+            });
+        }
     }
 }
 
@@ -628,7 +797,18 @@ fn link_default_stroke(laid: &LaidOut, vars: &VarTable, opts: &Options) -> Strin
 /// defaults; so the emitted chrome rules say exactly what a default statement
 /// paints and its wearers diff to nothing [SPEC 18].
 fn annotation_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String) {
-    let (dim, ext) = crate::layout::drawing::annotate::default_paint(&laid.sheet.link_defaults);
+    tones(&laid.sheet.link_defaults, vars, opts)
+}
+
+/// The same reading one cascade tier up: the tones a **dimension** dressed by
+/// nothing but the document's `(-)` rule paints — what the tier's compound
+/// rules state [SPEC 4/15.6].
+fn tier_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String) {
+    tones(&laid.sheet.dim_defaults, vars, opts)
+}
+
+fn tones(defaults: &AttrMap, vars: &VarTable, opts: &Options) -> (String, String) {
+    let (dim, ext) = crate::layout::drawing::annotate::default_paint(defaults);
     (
         format_value(&dim, vars, opts),
         format_value(&ext, vars, opts),

@@ -67,6 +67,7 @@ pub(crate) fn lower(laid: &mut LaidOut) {
         lower_attrs(attrs, &mut it);
     }
     lower_attrs(&mut laid.sheet.link_defaults, &mut it);
+    lower_attrs(&mut laid.sheet.dim_defaults, &mut it);
     if let Some(fill) = &mut laid.canvas_fill {
         rewrite(fill, &mut it);
     }

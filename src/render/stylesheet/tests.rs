@@ -222,3 +222,123 @@ fn the_cut_rules_wait_for_an_actual_cut() {
     ));
     assert!(!seq.contains("lini-cut"), "{seq}");
 }
+
+/// A drawing with a plain dimension, a leader, a GD&T frame, and a datum — the
+/// chrome-rule fixtures below all read it, so each states only what it tests.
+const CHROME: &str = concat!(
+    "|drawing#d| [\n",
+    "  |rect#p| { width: 40; height: 20 }\n",
+    "  p:left (-) p:right\n",
+    "  p:top <- \"note\"\n",
+    "  |feature-control#f| \"flatness\" { tol: 0.1; translate: 0 40 }\n",
+    "  |datum#dm| \"A\" { translate: 0 60 }\n",
+    "]\n",
+);
+
+#[test]
+fn the_dimension_tier_states_its_chrome_paint_as_compound_rules() {
+    // `(-)` dresses dimensions alone, and the chrome roles are shared with the
+    // leaders — so the tier's paint rides one compound rule per role, keyed on
+    // the class only a dimension's chrome wears [SPEC 4/15.6/18].
+    let css = emit_str(&rules_for(&format!(
+        "{{ (-) {{ stroke: blue }} }}\n{CHROME}"
+    )));
+    for rule in [
+        ".lini .lini-dim-line.lini-dim { stroke: blue; }",
+        ".lini .lini-ext-line.lini-dim { stroke: blue; }",
+        ".lini .lini-marker-dim.lini-dim { fill: blue; }",
+    ] {
+        assert!(css.contains(rule), "missing {rule}: {css}");
+    }
+    // The leaders keep the document tone — the base rules are untouched.
+    assert!(
+        css.contains(
+            ".lini .lini-dim-line { fill: none; stroke: var(--lini-stroke-dark); stroke-width: 1; }"
+        ),
+        "{css}"
+    );
+}
+
+#[test]
+fn an_undressed_dimension_tier_emits_no_rule() {
+    // No `(-)` restyle, no tier: the class would be dead chrome [SPEC 18].
+    let css = emit_str(&rules_for(CHROME));
+    assert!(
+        !css.contains(".lini-dim {") && !css.contains(".lini-dim "),
+        "{css}"
+    );
+    assert!(!css.contains(".lini-dim-line.lini-dim"), "{css}");
+    // …and a `(-)` that repaints nothing is no restyle either.
+    let sized = emit_str(&rules_for(&format!(
+        "{{ (-) {{ clearance: 20 }} }}\n{CHROME}"
+    )));
+    assert!(!sized.contains(".lini-dim-line.lini-dim"), "{sized}");
+}
+
+#[test]
+fn drafting_symbol_chrome_states_its_dress_once() {
+    // A frame's compartments, the datum plate, and the glyph linework are
+    // stamped identically on every wearer, so each dress rides one rule.
+    let css = emit_str(&rules_for(CHROME));
+    for rule in [
+        ".lini .lini-frame-cell { fill: var(--lini-bg); stroke: var(--lini-stroke-dark); stroke-width: 1; }",
+        ".lini .lini-frame-plate { fill: var(--lini-bg); stroke: none; stroke-width: 0; }",
+        ".lini .lini-drafting-glyph { fill: none; stroke: var(--lini-stroke-dark); stroke-width: 1; }",
+    ] {
+        assert!(css.contains(rule), "missing {rule}: {css}");
+    }
+    // A drawing with no drafting symbol grows none of them.
+    let bare = emit_str(&rules_for(
+        "|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n]\n",
+    ));
+    assert!(
+        !bare.contains("lini-frame-cell") && !bare.contains("lini-drafting-glyph"),
+        "{bare}"
+    );
+}
+
+#[test]
+fn a_leaders_own_head_fills_through_the_chrome_companion() {
+    // A `*-` dot is a core marker inside its leader's `<g>`, so it takes the
+    // linework tone through one companion rule, never a `fill` per head.
+    let css = emit_str(&rules_for(
+        "{ |-| { stroke: red } }\n|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  p:top *- \"note\"\n]\n",
+    ));
+    assert!(
+        css.contains(".lini .lini-dim-line .lini-marker { fill: red; }"),
+        "{css}"
+    );
+    // The annotation tone is `--stroke-dark`, never the link stroke the base
+    // `.lini-marker` rule states, so the companion earns its seat undressed too.
+    let plain = emit_str(&rules_for(
+        "|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  p:top *- \"note\"\n]\n",
+    ));
+    assert!(
+        plain.contains(".lini .lini-dim-line .lini-marker { fill: var(--lini-stroke-dark); }"),
+        "{plain}"
+    );
+    // A drawing whose leaders carry no head of their own grows no companion.
+    let headless = emit_str(&rules_for(
+        "|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n]\n",
+    ));
+    assert!(
+        !headless.contains(".lini-dim-line .lini-marker"),
+        "{headless}"
+    );
+}
+
+#[test]
+fn the_cutting_planes_chrome_states_its_roles_once() {
+    // A `|plane|` fills into ends, shafts, and heads — each role identical on
+    // every plane, so each departure from the `.lini-plane` dress is a rule.
+    let css = emit_str(&rules_for(
+        "|drawing#d| [\n  |rect#p| { width: 40; height: 20 }\n  |plane#a| \"A\" { at: 0 }\n]\n",
+    ));
+    for rule in [
+        ".lini .lini-plane-end { stroke-width: 2; stroke-dasharray: none; }",
+        ".lini .lini-plane-shaft { stroke-dasharray: none; }",
+        ".lini .lini-plane-arrow { fill: var(--lini-stroke-light); }",
+    ] {
+        assert!(css.contains(rule), "missing {rule}: {css}");
+    }
+}

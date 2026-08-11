@@ -9,9 +9,15 @@
 
 use super::rounding::{Point, RoundedPath, Seg, round};
 use super::values::num;
+use crate::layout::geom::unit;
 use crate::ledger::consts::{WAVY_AMPLITUDE, WAVY_WAVELENGTH};
 use std::f64::consts::TAU;
 use std::fmt::Write;
+
+/// The heading a degenerate step falls back to — a zero-length segment or a
+/// stalled wave tangent has no direction of its own, and +x reads the same as
+/// the old local normalizer's default.
+const RIGHT: Point = (1.0, 0.0);
 
 /// Chord the arcs flatten to before sampling — fine enough that a fillet's
 /// finite-difference tangent stays smooth.
@@ -46,7 +52,7 @@ pub fn wavy_d(pts: &[Point], targets: &[f64]) -> Option<String> {
         let d_offset = denv * WAVY_AMPLITUDE * phase.sin() + env * WAVY_AMPLITUDE * k * phase.cos();
         let normal = (-t.1, t.0);
         let w = (p.0 + normal.0 * offset, p.1 + normal.1 * offset);
-        let wt = unit((t.0 + normal.0 * d_offset, t.1 + normal.1 * d_offset));
+        let wt = unit((t.0 + normal.0 * d_offset, t.1 + normal.1 * d_offset)).unwrap_or(RIGHT);
         (w, wt)
     };
 
@@ -134,7 +140,7 @@ impl Centerline {
             0.0
         };
         let p = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-        (p, unit((b.0 - a.0, b.1 - a.1)))
+        (p, unit((b.0 - a.0, b.1 - a.1)).unwrap_or(RIGHT))
     }
 }
 
@@ -152,15 +158,6 @@ fn flatten_arc(from: Point, to: Point, center: Point, radius: f64, out: &mut Vec
         out.push((center.0 + dx, center.1 + dy));
     }
     out.push(to);
-}
-
-fn unit(v: Point) -> Point {
-    let len = (v.0 * v.0 + v.1 * v.1).sqrt();
-    if len < 1e-12 {
-        (1.0, 0.0)
-    } else {
-        (v.0 / len, v.1 / len)
-    }
 }
 
 fn dist(a: Point, b: Point) -> f64 {

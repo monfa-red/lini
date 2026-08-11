@@ -3708,7 +3708,12 @@ lowers with its own hooks, paint stated once per class: `lini-dim-line` (dimensi
 leader linework), `lini-ext-line` (extension lines, `--lini-stroke-light`),
 `lini-dim-text` (annotation text — `font-size: 12; font-weight: normal`, so no
 dimension, leader, or callout leaf inlines its own size), and the slender arrowheads as
-`lini-marker lini-marker-dim`; these rules emit only when a sheet carries drawings. A
+`lini-marker lini-marker-dim`; these rules emit only when a sheet carries drawings.
+A restyled `(-)` tier states its tone as compound rules over a generated `lini-dim`
+class on dimension-owned chrome (leaders keep the base tone); GD&T frames, section
+planes, and drafting glyphs carry their own hooks the same way (`lini-frame-cell`,
+`lini-frame-plate`, `lini-plane-*`, `lini-drafting-glyph`) — every generated dress
+is one rule, never a `style=` per wearer. A
 detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
 clips to its region with one interned `<clipPath>` in `<defs>` and a `clip-path=` on
 its group.

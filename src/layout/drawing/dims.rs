@@ -11,11 +11,11 @@ use super::super::ir::{Bbox, PlacedNode};
 use super::anchors;
 use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, away, corner_pull, stack_side};
 use super::compose::{self, DimText, Glyph};
-use super::geometry::{Frame, P, dist, unit};
+use super::geometry::{Frame, P, dist};
 use super::symbols::CarriedStack;
 use crate::ast::Side;
 use crate::error::{Code, Error};
-use crate::layout::geom::{cross, dot, scale, sub};
+use crate::layout::geom::{cross, dot, scale, sub, unit};
 use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -38,7 +38,7 @@ pub(super) fn linear(
     rows: &mut Rows,
     stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
+    let paint = Paint::of_link(ctx, w);
     let mut hops = Vec::new();
     for hop in 0..w.endpoints.len() - 1 {
         let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
@@ -71,7 +71,7 @@ pub(super) fn linear(
         };
         let span_dir = {
             let d = (pb.0 - pa.0, pb.1 - pa.1);
-            (d.0.hypot(d.1) > AXIS_EPS).then(|| unit(d))
+            (d.0.hypot(d.1) > AXIS_EPS).then(|| unit(d)).flatten()
         };
         let project = project_attr(&w.attrs, w.span)?;
         // The measure direction `u` — the dim line runs along it — and
@@ -436,14 +436,13 @@ pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
     let (l, w) = (ARROW_LEN * paint.sw, ARROW_HALF * paint.sw);
     let base = (tip.0 - dir.0 * l, tip.1 - dir.1 * l);
     let perp = (-dir.1, dir.0);
-    super::super::prim::dim_marker(
+    paint.head(
         "dim",
         vec![
             tip,
             (base.0 + perp.0 * w, base.1 + perp.1 * w),
             (base.0 - perp.0 * w, base.1 - perp.1 * w),
         ],
-        paint.stroke.clone(),
     )
 }
 

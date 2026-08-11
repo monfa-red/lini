@@ -29,6 +29,7 @@ use super::super::ortho::cost::min_pitch;
 use super::super::ortho::rect::{box_dist, seg_box};
 use super::super::ortho::scene::SceneIndex;
 use super::{EPS, Rule, Severity, Violation, breach, contact_ends, fan_pair, name};
+use crate::layout::geom::unit;
 use crate::layout::ir::RoutedLink;
 use crate::render::markers::marker_size;
 
@@ -88,11 +89,6 @@ fn contact(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Viol
             }
         }
     }
-}
-
-fn unit(v: (f64, f64)) -> Option<(f64, f64)> {
-    let l = v.0.hypot(v.1);
-    (l > EPS).then(|| (v.0 / l, v.1 / l))
 }
 
 /// Smoothness: the cubics chain G1 — every knot's incoming and outgoing

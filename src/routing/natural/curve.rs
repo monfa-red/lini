@@ -18,21 +18,10 @@ pub(crate) type Fitted = (Vec<Pt>, Vec<[Pt; 4]>);
 /// checker all read the drawn curve faithfully, and all read the same one.
 pub(crate) const SAMPLES: usize = 24;
 
-use crate::layout::geom::{add, dot, scale as mul, sub};
+use crate::layout::geom::{add, dot, scale as mul, sub, unit};
 
 fn len(a: Pt) -> f64 {
     a.0.hypot(a.1)
-}
-
-/// Unlike [`crate::layout::geom::norm`], a degenerate vector collapses to the
-/// origin here — a zero-length curve tangent has no direction to keep.
-fn unit(a: Pt) -> Pt {
-    let l = len(a);
-    if l <= 0.0 {
-        (0.0, 0.0)
-    } else {
-        mul(a, 1.0 / l)
-    }
 }
 
 pub(crate) fn bezier(c: &[Pt; 4], t: f64) -> Pt {
@@ -82,10 +71,11 @@ const HOOK_RATIO: f64 = 0.1;
 /// direct fit instead.
 pub(crate) fn hooky(curve: &[[Pt; 4]]) -> bool {
     let end = |c: &[Pt; 4], handle: Pt| {
-        let t = unit(handle);
-        if t == (0.0, 0.0) {
+        // A zero-length handle points nowhere, so it hooks nowhere — the skip
+        // the origin-collapsing normalizer used to reach through an equality.
+        let Some(t) = unit(handle) else {
             return false;
-        }
+        };
         let d = sub(c[3], c[0]);
         dot(d, t) < HOOK_RATIO * len(d) - 1e-9
     };
@@ -105,9 +95,9 @@ pub(crate) fn spans(knots: &[(Pt, Option<Pt>)]) -> Vec<[Pt; 4]> {
     let mut knots: Vec<(Pt, Option<Pt>)> = knots.to_vec();
     knots.dedup_by(|b, a| b.0 == a.0);
     let tangent = |i: usize| {
-        knots[i]
-            .1
-            .unwrap_or_else(|| unit(sub(knots[(i + 1).min(knots.len() - 1)].0, knots[i - 1].0)))
+        knots[i].1.unwrap_or_else(|| {
+            unit(sub(knots[(i + 1).min(knots.len() - 1)].0, knots[i - 1].0)).unwrap_or((0.0, 0.0))
+        })
     };
     (0..knots.len().saturating_sub(1))
         .map(|i| span(knots[i].0, tangent(i), knots[i + 1].0, tangent(i + 1)))

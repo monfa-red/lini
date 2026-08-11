@@ -38,6 +38,9 @@ input_file: samples/drawing_screw.lini
     .lini .lini-steel { fill: url(#lini-hatch-1); }
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker-dim { fill: black; }
+    .lini .lini-plane-end { stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-plane-shaft { stroke-dasharray: none; }
+    .lini .lini-plane-arrow { fill: rgba(0, 0, 0, 0.545); }
   </style>
   <defs>
     <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="2" y1="0" x2="2" y2="4"/></g></pattern>
@@ -127,25 +130,25 @@ input_file: samples/drawing_screw.lini
         </g>
         <g class="lini-node lini-plane lini-line" data-id="a" transform="translate(70,-0.5)">
           <line x1="140" y1="-40.5" x2="140" y2="40.5"/>
-          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-plane-end lini-line" data-id="a" transform="translate(0,0)">
             <line x1="140" y1="-40.5" x2="140" y2="-30.5"/>
           </g>
-          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-plane-end lini-line" data-id="a" transform="translate(0,0)">
             <line x1="140" y1="40.5" x2="140" y2="30.5"/>
           </g>
-          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-plane-shaft lini-line" data-id="a" transform="translate(0,0)">
             <line x1="140" y1="-40.5" x2="153" y2="-40.5"/>
           </g>
-          <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
+          <g class="lini-node lini-marker lini-marker-dim lini-plane-arrow lini-poly" transform="translate(0,0)">
             <polygon points="153,-40.5 141,-38.5 141,-42.5"/>
           </g>
           <g class="lini-text lini-dim-text">
             <use href="#lg0400-37" transform="translate(156.4 -36.204) scale(0.006 -0.006)"/>
           </g>
-          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-plane-shaft lini-line" data-id="a" transform="translate(0,0)">
             <line x1="140" y1="40.5" x2="153" y2="40.5"/>
           </g>
-          <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
+          <g class="lini-node lini-marker lini-marker-dim lini-plane-arrow lini-poly" transform="translate(0,0)">
             <polygon points="153,40.5 141,42.5 141,38.5"/>
           </g>
           <g class="lini-text lini-dim-text">

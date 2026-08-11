@@ -30,6 +30,7 @@ input_file: samples/drawing_assembly.lini
     .lini .lini-shoulder { stroke: black; }
     .lini .lini-steel { fill: url(#lini-hatch-1); }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-dim-line .lini-marker { fill: black; }
     .lini .lini-marker-dim { fill: black; }
   </style>
   <defs>
@@ -151,16 +152,16 @@ input_file: samples/drawing_assembly.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="-103.0584" y1="-222.4937" x2="-1.3908" y2="-117.4372"/>
-        <circle class="lini-marker lini-marker-dot" cx="-1.8255" cy="-117.8863" r="2.625" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="-1.8255" cy="-117.8863" r="2.625"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="440" y1="-174.5" x2="440" y2="-50"/>
-        <circle class="lini-marker lini-marker-dot" cx="440" cy="-50.625" r="2.625" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="440" cy="-50.625" r="2.625"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <mask id="lini-halo-pump-1" maskUnits="userSpaceOnUse" x="-610.3151" y="-179.1302" width="91.8151" height="180.6302"><rect class="lini-cut-bg" x="-610.3151" y="-179.1302" width="91.8151" height="180.6302"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-543,-46 -537,-34"/></mask>
         <line x1="-608.8151" y1="-177.6302" x2="-520.8944" y2="-1.7889" mask="url(#lini-halo-pump-1)"/>
-        <circle class="lini-marker lini-marker-dot" cx="-521.1739" cy="-2.3479" r="2.625" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="-521.1739" cy="-2.3479" r="2.625"/>
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,215.25)">
         <rect x="-68.4" y="-6" width="136.8" height="12" rx="0" ry="0"/>

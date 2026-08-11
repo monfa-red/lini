@@ -474,13 +474,22 @@ fn build_sheet_inputs(
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
     // scope config, then the root `|-|` element rule [SPEC 9, 16]. Its paint states
     // the `.lini-link` CSS rule; a link that differs inlines the difference.
-    let dress = |owner| {
+    // `tier` layers the `(-)` element rule over the `|-|` one — the same two
+    // steps, in the same order, that [`links::resolve_link`]'s ladder walks for
+    // a dimension, so the emitted chrome rules say exactly what a default
+    // dimension paints.
+    let dress = |owner, tier: bool| {
         let (base, _) = link_scope::link_scope(baked, root_attrs, &[], owner);
         let mut ordered = base;
         ordered.extend(sheet.class_decls(links::LINK_CLASS));
+        if tier {
+            ordered.extend(sheet.class_decls(links::DIMENSION_CLASS));
+        }
         collapse(&ordered)
     };
-    let link_defaults = dress(link_scope::statement_owner(&[], root_attrs));
+    let root_owner = link_scope::statement_owner(&[], root_attrs);
+    let link_defaults = dress(root_owner, false);
+    let dim_defaults = dress(root_owner, true);
     // …and the same recipe once more for a schematic scope written inside the
     // file: its wires wear `SCHEMATIC_WIRE_CLASS`, so the dress states itself
     // as the one `.lini-links .lini-schematic-wire` rule the renderer emits
@@ -490,7 +499,7 @@ fn build_sheet_inputs(
         descendant_rules.push((
             "lini-links".to_string(),
             link_scope::SCHEMATIC_WIRE_CLASS.to_string(),
-            dress(links::Owner::Sheet),
+            dress(links::Owner::Sheet, false),
         ));
     }
     // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
@@ -508,6 +517,7 @@ fn build_sheet_inputs(
         class_rules,
         descendant_rules,
         link_defaults,
+        dim_defaults,
         root_font_size,
         root_text,
     })

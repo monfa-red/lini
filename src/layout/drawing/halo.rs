@@ -13,10 +13,11 @@
 use super::super::ir::{Bbox, PlacedNode};
 use super::annotate::Ctx;
 use super::chrome;
-use super::geometry::{P, dist, unit};
+use super::geometry::{P, dist};
 use super::outline;
 use crate::layout::geom::cross;
 use crate::layout::geom::rotate;
+use crate::layout::geom::unit;
 use crate::ledger::consts::{DRAWING_LINK_STROKE_WIDTH, HALO_MARGIN};
 use crate::resolve::{NodeKind, ResolvedValue};
 
@@ -114,7 +115,10 @@ fn cut_chains(points: &[P], geometry: &[&PlacedNode], contacts: &[Bbox], sw: f64
         if len < 1e-9 {
             continue;
         }
-        let d = unit((w[1].0 - w[0].0, w[1].1 - w[0].1));
+        // `len >= 1e-9` above, so the segment always has a direction.
+        let Some(d) = unit((w[1].0 - w[0].0, w[1].1 - w[0].1)) else {
+            continue;
+        };
         let mut hits = Vec::new();
         for g in geometry {
             node_crossings(g, w[0], d, &mut hits);

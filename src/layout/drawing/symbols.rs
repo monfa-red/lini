@@ -17,30 +17,53 @@ use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};
 pub(in crate::layout) use crate::glyph::drafting_type;
 
 /// The node's annotation paint [SPEC 15.9]: the font its glyphs and texts
-/// size by, the statement's stroke and width its linework draws at — the
-/// scope defaults unless the node restyles.
-pub(super) struct SymbolPaint {
+/// size by, the statement's stroke and width its linework draws at, and the
+/// ground its compartments back onto — the scope defaults unless the node
+/// restyles.
+pub(crate) struct SymbolPaint {
     pub fs: f64,
     pub sw: f64,
     pub stroke: ResolvedValue,
+    pub fill: ResolvedValue,
 }
 
 impl SymbolPaint {
     pub(super) fn of(inst: &ResolvedInst) -> SymbolPaint {
+        SymbolPaint::of_attrs(&inst.attrs)
+    }
+
+    fn of_attrs(attrs: &crate::resolve::AttrMap) -> SymbolPaint {
         SymbolPaint {
-            fs: inst
-                .attrs
-                .number("font-size")
-                .unwrap_or(DRAWING_LINK_FONT_SIZE),
-            sw: inst.attrs.number("stroke-width").unwrap_or(1.0),
-            stroke: inst
-                .attrs
+            fs: attrs.number("font-size").unwrap_or(DRAWING_LINK_FONT_SIZE),
+            sw: attrs.number("stroke-width").unwrap_or(1.0),
+            stroke: attrs
                 .get("stroke")
                 .cloned()
                 .unwrap_or_else(|| ResolvedValue::live("stroke-dark")),
+            fill: attrs
+                .get("fill")
+                .cloned()
+                .unwrap_or_else(|| ResolvedValue::live("bg")),
         }
     }
 }
+
+/// The dress a drafting symbol's **generated chrome** defaults to — a frame
+/// compartment, a datum's backing plate, a glyph's linework — for a symbol
+/// dressed by nothing but the scope defaults. Read through [`SymbolPaint`],
+/// the one place that dress is decided, so the renderer's chrome rules say
+/// exactly what a default symbol paints and its wearers diff to nothing
+/// [SPEC 18].
+pub(crate) fn default_paint() -> SymbolPaint {
+    SymbolPaint::of_attrs(&crate::resolve::AttrMap::new())
+}
+
+/// The generated class a GD&T frame's bordered compartment wears — the frame
+/// and the `|datum|` box both lower theirs through it [SPEC 15.9/18].
+pub(crate) const FRAME_CELL: &str = "frame-cell";
+
+/// …and the class the unbordered backing plate under a framed letter wears.
+pub(crate) const FRAME_PLATE: &str = "frame-plate";
 
 /// Lower a drafting-symbol node, dispatched on its type. `path` / `program`
 /// give the frame types their drawing scope — `datums:` validates against
@@ -72,7 +95,7 @@ const FINISH_HEIGHT_EM: f64 = 3.0;
 /// (the datum the node places by, and Stage 3's seat anchor); the indication
 /// rides the long leg's apex.
 fn layout_finish(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
-    let SymbolPaint { fs, sw, stroke } = SymbolPaint::of(inst);
+    let SymbolPaint { fs, sw, stroke, .. } = SymbolPaint::of(inst);
     let variant = match inst.attrs.get("symbol") {
         Some(ResolvedValue::Ident(s)) => s.as_str(),
         _ => "basic",

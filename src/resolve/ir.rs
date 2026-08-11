@@ -39,6 +39,12 @@ pub struct SheetInputs {
     pub descendant_rules: Vec<(String, String, AttrMap)>,
     /// The link layer's defaults (the `.lini-link` rule).
     pub link_defaults: AttrMap,
+    /// The same recipe one tier further up: the **dimension** layer's defaults
+    /// — `link_defaults` with the `(-)` element rule layered over it [SPEC 4,
+    /// 15.6]. A drawing's chrome rules read it so a document that recolours
+    /// `(-)` alone states the tier's paint once, instead of on every dimension
+    /// chrome node [SPEC 18].
+    pub dim_defaults: AttrMap,
     /// The root container's `font-size` — the inherited-text baseline for `.lini`
     /// (a baked layout constant carried in the global block, not a CSS var).
     pub root_font_size: f64,
@@ -444,6 +450,16 @@ pub enum LinkKind {
     Wire,
     Measure(MeasureOp),
     Mate,
+}
+
+impl LinkKind {
+    /// Whether the statement is a **dimension** — the `|-|` subtype `(-)`
+    /// matches [SPEC 4, 15.6]. The one home for that reading: the cascade wears
+    /// [`crate::resolve::links::DIMENSION_CLASS`] by it, and the drawing's
+    /// lowering classes its chrome into the same tier by it.
+    pub fn is_dimension(self) -> bool {
+        matches!(self, LinkKind::Measure(_))
+    }
 }
 
 /// A drawing measure's reading [SPEC 15.6], one per measuring op: `Linear` from

@@ -23,7 +23,7 @@ use crate::ledger::consts::{
 use crate::resolve::NodeKind;
 use crate::resolve::{Program, ResolvedInst, ResolvedLink, ResolvedValue};
 
-mod plane;
+pub(crate) mod plane;
 
 #[cfg(test)]
 mod tests;

@@ -11,7 +11,7 @@
 //! locates [SPEC 15.2/15.4].
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, unit};
+use super::geometry::{MirrorAxis, P};
 use super::{Segment, chrome};
 use crate::ast::Side;
 use crate::error::Error;
@@ -316,6 +316,13 @@ impl Anchor<'_> {
         self.view().map_or(p, |v| v.unmap(p))
     }
 
+    /// The unit direction `a` → `b` of an edge anchor — the zero vector when
+    /// its two ends coincide, as before (a zero-length edge names no
+    /// direction, and the readings below fall through on it).
+    fn edge_unit(a: P, b: P) -> P {
+        crate::layout::geom::unit((b.0 - a.0, b.1 - a.1)).unwrap_or((0.0, 0.0))
+    }
+
     /// The **outward** unit normal of a directed anchor (a side, a named
     /// edge), in the drawing frame — what a mate seats along and what sets a
     /// dimension's axis. `None` for the point anchors.
@@ -323,7 +330,7 @@ impl Anchor<'_> {
         let local = match &self.spot {
             Spot::Side(side) => side.outward(),
             Spot::Segment(Segment::Edge(a, b)) => {
-                let t = unit((b.0 - a.0, b.1 - a.1));
+                let t = Self::edge_unit(*a, *b);
                 // Outward = the **left of the pen's travel** [SPEC 15.5]: a
                 // profile drawn the natural way (material on the pen's right —
                 // axis, up, across, down) faces every edge outward, interior
@@ -358,7 +365,7 @@ impl Anchor<'_> {
     /// side (the edge along it). `None` for the point anchors.
     pub fn direction(&self) -> Option<P> {
         if let Spot::Segment(Segment::Edge(a, b)) = &self.spot {
-            return Some(rotate(unit((b.0 - a.0, b.1 - a.1)), self.rot));
+            return Some(rotate(Self::edge_unit(*a, *b), self.rot));
         }
         if let Spot::Side(side) = &self.spot {
             let along = match side {
@@ -379,7 +386,7 @@ impl Anchor<'_> {
             && pts.len() >= 2
         {
             let (a, b) = (pts[0], pts[pts.len() - 1]);
-            return Some(rotate(unit((b.0 - a.0, b.1 - a.1)), self.rot));
+            return Some(rotate(Self::edge_unit(a, b), self.rot));
         }
         None
     }

@@ -1,6 +1,15 @@
 //! The cutting-plane geometry [SPEC 15.8]: fill each authored `|plane|` from the view's box + `at:` / `facing:` into the ISO chain line, thick ends, viewing arrows, and letters.
 
 use super::*;
+
+/// The generated classes the plane's three chrome roles wear [SPEC 15.8/18] —
+/// the thick end stroke, the solid arrow shaft, and the viewing head. Each
+/// role is stamped identically on every plane in the sheet, so each states its
+/// one departure from the `.lini-plane` dress as a rule instead of inlining it
+/// on both ends of every plane.
+pub(crate) const PLANE_END: &str = "plane-end";
+pub(crate) const PLANE_SHAFT: &str = "plane-shaft";
+pub(crate) const PLANE_ARROW: &str = "plane-arrow";
 use crate::layout::drawing::geometry::project;
 
 /// Fill every authored `|plane|` among a view's children from its
@@ -114,7 +123,9 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
             end.1 + facing.1 * PLANE_ARROW_SHAFT,
         );
         pieces.push(shaft(cp, end, tip));
-        pieces.push(dims::arrow(tip, facing, &paint));
+        let mut head = dims::arrow(tip, facing, &paint);
+        head.type_chain.push(PLANE_ARROW.to_string());
+        pieces.push(head);
         if let Some(letter) = cp.label.clone() {
             let lp = (
                 tip.0 + facing.0 * PLANE_LETTER_GAP,
@@ -152,6 +163,7 @@ fn thick_end(cp: &PlacedNode, from: P, d: P) -> PlacedNode {
         .insert("stroke-width", ResolvedValue::Number(PLANE_THICK_WIDTH));
     e.attrs
         .insert("stroke-style", ResolvedValue::Ident("solid".into()));
+    e.type_chain.push(PLANE_END.to_string());
     set_points(&mut e, from, (from.0 + d.0, from.1 + d.1));
     e
 }
@@ -163,6 +175,7 @@ fn shaft(cp: &PlacedNode, a: P, b: P) -> PlacedNode {
     s.attrs.remove("chrome");
     s.attrs
         .insert("stroke-style", ResolvedValue::Ident("solid".into()));
+    s.type_chain.push(PLANE_SHAFT.to_string());
     set_points(&mut s, a, b);
     s
 }

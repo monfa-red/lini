@@ -23,7 +23,7 @@ mod mates;
 mod outline;
 pub(crate) mod pen;
 mod round;
-mod section;
+pub(crate) mod section;
 pub(crate) mod symbols;
 pub(crate) mod threads;
 

@@ -12,8 +12,9 @@
 //! every line.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, arc_tangent, unit};
+use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, arc_tangent};
 use crate::layout::geom::dot;
+use crate::layout::geom::unit;
 use crate::resolve::ResolvedValue;
 
 /// Positional agreement finer than any drafting feature (px).
@@ -107,7 +108,7 @@ fn covered(subs: &[Subpath], u: P, perp: P, s: f64, m: f64) -> bool {
 /// The outgoing unit direction at a segment's end.
 fn dir_at_end(seg: &PathSeg) -> P {
     match *seg {
-        PathSeg::Line { from, to } => unit((to.0 - from.0, to.1 - from.1)),
+        PathSeg::Line { from, to } => zero_if_degenerate((to.0 - from.0, to.1 - from.1)),
         PathSeg::Arc {
             from,
             to,
@@ -116,7 +117,7 @@ fn dir_at_end(seg: &PathSeg) -> P {
             sweep,
         } => arc_tangent(to, arc_center(from, to, r, large, sweep), sweep),
         PathSeg::Cubic { from, c1, c2, to } => {
-            unit(first_nonzero(&[(to, c2), (to, c1), (to, from)]))
+            zero_if_degenerate(first_nonzero(&[(to, c2), (to, c1), (to, from)]))
         }
     }
 }
@@ -124,7 +125,7 @@ fn dir_at_end(seg: &PathSeg) -> P {
 /// The incoming unit direction at a segment's start.
 fn dir_at_start(seg: &PathSeg) -> P {
     match *seg {
-        PathSeg::Line { from, to } => unit((to.0 - from.0, to.1 - from.1)),
+        PathSeg::Line { from, to } => zero_if_degenerate((to.0 - from.0, to.1 - from.1)),
         PathSeg::Arc {
             from,
             to,
@@ -133,9 +134,15 @@ fn dir_at_start(seg: &PathSeg) -> P {
             sweep,
         } => arc_tangent(from, arc_center(from, to, r, large, sweep), sweep),
         PathSeg::Cubic { from, c1, c2, to } => {
-            unit(first_nonzero(&[(c1, from), (c2, from), (to, from)]))
+            zero_if_degenerate(first_nonzero(&[(c1, from), (c2, from), (to, from)]))
         }
     }
+}
+
+/// A segment direction, or the zero vector when the segment has no length —
+/// the edge laws below read a zero heading as "no direction", as before.
+fn zero_if_degenerate(v: P) -> P {
+    unit(v).unwrap_or((0.0, 0.0))
 }
 
 fn first_nonzero(pairs: &[(P, P)]) -> P {

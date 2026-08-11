@@ -27,8 +27,12 @@ input_file: samples/drawing_annotations.lini
     .lini .lini-hole { fill: white; stroke: black; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-dim-line .lini-marker { fill: #484848; }
     .lini .lini-marker-dim { fill: #484848; }
     .lini .lini-marker-datum { fill: #484848; }
+    .lini .lini-dim-line.lini-dim { stroke: #004496; }
+    .lini .lini-ext-line.lini-dim { stroke: #004496; }
+    .lini .lini-marker-dim.lini-dim { fill: #004496; }
     .lini .lini-drawing .lini-note { font-size: 13px; }
   </style>
   <defs>
@@ -138,40 +142,40 @@ input_file: samples/drawing_annotations.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-300" y1="3" x2="-300" y2="162"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-0" maskUnits="userSpaceOnUse" x="-201.5" y="-58.5" width="3" height="222"><rect class="lini-cut-bg" x="-201.5" y="-58.5" width="3" height="222"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,-42 -200,-38"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,38 -200,42"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,78 -200,82"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,137 -200,143"/></mask>
         <line x1="-200" y1="-57" x2="-200" y2="162" mask="url(#lini-halo-plate-view-0)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-298" y1="159" x2="-202" y2="159"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-300,159 -288,157 -288,161"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-200,159 -212,161 -212,157"/>
       </g>
       <g class="lini-text lini-dim-text">
         <use href="#lg0400-22" transform="translate(-260.8 144.296) scale(0.006 -0.006)"/>
         <use href="#lg0400-25" transform="translate(-253.6 144.296) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-1" maskUnits="userSpaceOnUse" x="-201.5" y="-58.5" width="3" height="222"><rect class="lini-cut-bg" x="-201.5" y="-58.5" width="3" height="222"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,-42 -200,-38"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,38 -200,42"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,78 -200,82"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,137 -200,143"/></mask>
         <line x1="-200" y1="-57" x2="-200" y2="162" mask="url(#lini-halo-plate-view-1)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="300" y1="3" x2="300" y2="162"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-198" y1="159" x2="298" y2="159"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-200,159 -188,157 -188,161"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="300,159 288,161 288,157"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -179,19 +183,19 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-22" transform="translate(42.8 144.296) scale(0.006 -0.006)"/>
         <use href="#lg0400-25" transform="translate(50 144.296) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-300" y1="3" x2="-300" y2="183"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="300" y1="3" x2="300" y2="183"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-298" y1="180" x2="298" y2="180"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-300,180 -288,178 -288,182"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="300,180 288,182 288,178"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -199,21 +203,21 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-25" transform="translate(-7.2 165.296) scale(0.006 -0.006)"/>
         <use href="#lg0400-20" transform="translate(-0 165.296) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-2" maskUnits="userSpaceOnUse" x="-201.5" y="-151.5" width="3" height="90"><rect class="lini-cut-bg" x="-201.5" y="-151.5" width="3" height="90"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,-78 -200,-82"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-200,-137 -200,-143"/></mask>
         <line x1="-200" y1="-63" x2="-200" y2="-150" mask="url(#lini-halo-plate-view-2)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-3" maskUnits="userSpaceOnUse" x="198.5" y="-151.5" width="3" height="90"><rect class="lini-cut-bg" x="198.5" y="-151.5" width="3" height="90"/><polyline class="lini-halo" fill="none" stroke-width="3" points="200,-78 200,-82"/><polyline class="lini-halo" fill="none" stroke-width="3" points="200,-137 200,-143"/></mask>
         <line x1="200" y1="-63" x2="200" y2="-150" mask="url(#lini-halo-plate-view-3)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-198" y1="-147" x2="198" y2="-147"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-200,-147 -188,-149 -188,-145"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="200,-147 188,-145 188,-149"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -221,39 +225,39 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-20" transform="translate(-7.2 -161.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-20" transform="translate(-0 -161.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-3" y1="-140" x2="-310" y2="-140"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-4" maskUnits="userSpaceOnUse" x="-311.5" y="58.5" width="310" height="3"><rect class="lini-cut-bg" x="-311.5" y="58.5" width="310" height="3"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-9,60 -15,60"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-178,60 -182,60"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-218,60 -222,60"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-297,60 -303,60"/></mask>
         <line x1="-3" y1="60" x2="-310" y2="60" mask="url(#lini-halo-plate-view-4)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-307" y1="-138" x2="-307" y2="58"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-307,-140 -305,-128 -309,-128"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-307,60 -309,48 -305,48"/>
       </g>
       <g class="lini-text lini-dim-text" transform="rotate(-90 -318.6 -51)">
         <use href="#lg0400-25" transform="translate(-325.8 -46.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-20" transform="translate(-318.6 -46.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-3" y1="-140" x2="-330" y2="-140"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-3" y1="140" x2="-330" y2="140"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <line x1="-327" y1="-138" x2="-327" y2="138"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-327,-140 -325,-128 -329,-128"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-327,140 -329,128 -325,128"/>
       </g>
       <g class="lini-text lini-dim-text" transform="rotate(-90 -338.6 2.6)">
@@ -273,14 +277,14 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-20" transform="translate(-331.46 -16.1928) scale(0.0042 -0.0042)"/>
         <use href="#lg0400-25" transform="translate(-326.42 -16.1928) scale(0.0042 -0.0042)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-5" maskUnits="userSpaceOnUse" x="-323.9096" y="-95.8229" width="157.9757" height="47.0927"><rect class="lini-cut-bg" x="-323.9096" y="-95.8229" width="157.9757" height="47.0927"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-297,-89.1 -303,-90.9"/></mask>
         <polyline points="-167.4339,-50.2302 -314.4096,-94.3229 -322.4096,-94.3229" mask="url(#lini-halo-plate-view-5)"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-219.1565,-65.747 -231.2251,-67.2795 -230.0757,-71.1108"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-180.8435,-54.253 -168.7749,-52.7205 -169.9243,-48.8892"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -292,14 +296,14 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-44" transform="translate(-342.4096 -101.0269) scale(0.006 -0.006)"/>
         <use href="#lg0400-27" transform="translate(-335.2096 -101.0269) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(-3.6,-11)">
         <mask id="lini-halo-plate-view-6" maskUnits="userSpaceOnUse" x="-19.8848" y="-152.3995" width="240.2843" height="232.2843"><rect class="lini-cut-bg" x="-19.8848" y="-152.3995" width="240.2843" height="232.2843"/><polyline class="lini-halo" fill="none" stroke-width="3" points="197,-137 203,-143"/></mask>
         <polyline points="-18.3848,78.3848 210.8995,-150.8995 218.8995,-150.8995" mask="url(#lini-halo-plate-view-6)"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="8.4853,51.5147 15.5563,41.6152 18.3848,44.4437"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(-3.6,-11)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(-3.6,-11)">
         <polygon points="-8.4853,68.4853 -15.5563,78.3848 -18.3848,75.5563"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -392,7 +396,7 @@ input_file: samples/drawing_annotations.lini
           <use href="#lg0500-43" transform="translate(70.2 4.654) scale(0.0065 -0.0065)"/>
         </g>
       </g>
-      <g class="lini-node lini-dim-line lini-path" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-dim-line lini-dim lini-path" transform="translate(54.85,2.5)">
         <path d="M -88 66 A 40 40 0 0 1 -80 90"/>
       </g>
       <g class="lini-text lini-dim-text">
@@ -403,29 +407,29 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-27" transform="translate(-8.6185 80.3522) scale(0.006 -0.006)"/>
         <use href="#lg0400-681" transform="translate(-1.4185 80.3522) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(54.85,2.5)">
         <polyline points="116.3367,85.9161 132.2618,97.6769 140.2618,97.6769"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(54.85,2.5)">
         <polygon points="114.7279,84.7279 125.569,90.2479 123.1928,93.4656"/>
       </g>
       <g class="lini-text lini-dim-text">
         <use href="#lg0400-54" transform="translate(197.1118 104.4729) scale(0.006 -0.006)"/>
         <use href="#lg0400-26" transform="translate(204.3118 104.4729) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(54.85,2.5)">
         <line x1="-121.8" y1="87.6" x2="-126.1897" y2="81.7471"/>
       </g>
-      <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-ext-line lini-dim lini-line" transform="translate(54.85,2.5)">
         <line x1="118.2" y1="-92.4" x2="113.8103" y2="-98.2529"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(54.85,2.5)">
         <line x1="-122.7897" y1="82.9471" x2="114.0103" y2="-94.6529"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(54.85,2.5)">
         <polygon points="-124.3897,84.1471 -115.9897,75.3471 -113.5897,78.5471"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(54.85,2.5)">
         <polygon points="115.6103,-95.8529 107.2103,-87.0529 104.8103,-90.2529"/>
       </g>
       <g class="lini-text lini-dim-text" transform="rotate(-36.8699 45.6603 -9.7529)">
@@ -433,13 +437,13 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-20" transform="translate(42.0603 -5.4569) scale(0.006 -0.006)"/>
         <use href="#lg0400-20" transform="translate(49.2603 -5.4569) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-dim-line lini-dim lini-line" transform="translate(54.85,2.5)">
         <line x1="60" y1="97" x2="60" y2="21.4"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(54.85,2.5)">
         <polygon points="60,51 62,63 58,63"/>
       </g>
-      <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
+      <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(54.85,2.5)">
         <polygon points="60,99 58,87 62,87"/>
       </g>
       <g class="lini-text lini-dim-text" transform="rotate(-90 106.85 38.7)">
@@ -461,7 +465,7 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(54.85,2.5)">
         <polyline points="122,0 135,0 143,0"/>
-        <circle class="lini-marker lini-marker-dot" cx="122.625" cy="0" r="2.625" style="fill: #484848"/>
+        <circle class="lini-marker lini-marker-dot" cx="122.625" cy="0" r="2.625"/>
       </g>
       <g class="lini-text lini-dim-text">
         <use href="#lg0400-43" transform="translate(199.85 6.796) scale(0.006 -0.006)"/>
@@ -493,11 +497,11 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(54.85,2.5)">
         <line x1="155.1057" y1="-81.9133" x2="120.7878" y2="-1.8383"/>
-        <circle class="lini-marker lini-marker-dot" cx="121.034" cy="-2.4128" r="2.625" style="fill: #484848"/>
+        <circle class="lini-marker lini-marker-dot" cx="121.034" cy="-2.4128" r="2.625"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(54.85,2.5)">
         <line x1="-202.5" y1="-47.5" x2="-121.029" y2="88.285"/>
-        <polygon class="lini-marker lini-marker-arrow" points="-120,90 -125.6595,86.3985 -120.5145,83.3116" style="fill: #484848"/>
+        <polygon class="lini-marker lini-marker-arrow" points="-120,90 -125.6595,86.3985 -120.5145,83.3116"/>
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,142)">
         <rect x="-46.8" y="-6" width="93.6" height="12" rx="0" ry="0"/>

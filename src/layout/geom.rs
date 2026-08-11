@@ -34,10 +34,18 @@ pub fn cross(a: P, b: P) -> f64 {
     a.0 * b.1 - a.1 * b.0
 }
 
-/// `a` scaled to unit length; a degenerate vector is returned unchanged.
-pub fn norm(a: P) -> P {
+/// The length below which a vector is numerically zero — a plane coordinate is
+/// px-scaled, so 1e-12 is a dozen orders under anything drawn.
+const ZERO_LEN: f64 = 1e-12;
+
+/// `a` scaled to unit length — **`None` for a zero-length vector**, which has no
+/// direction to report. The one normalizer in the codebase (curve tangents, edge
+/// headings, leader aim, the wavy stroke's frame all read it), so the degenerate
+/// case is answered once and each caller states its own fallback — a skip, a
+/// substitute direction — where the reader can see it.
+pub fn unit(a: P) -> Option<P> {
     let l = a.0.hypot(a.1);
-    if l > 1e-12 { (a.0 / l, a.1 / l) } else { a }
+    (l > ZERO_LEN).then(|| (a.0 / l, a.1 / l))
 }
 
 /// Rotate about the origin by `t` **radians** — positive reads clockwise on a

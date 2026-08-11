@@ -43,6 +43,7 @@ pub fn referenced(laid: &LaidOut, ruleset: &RuleSet) -> BTreeSet<String> {
         walk_attrs(attrs, &mut names);
     }
     walk_attrs(&laid.sheet.link_defaults, &mut names);
+    walk_attrs(&laid.sheet.dim_defaults, &mut names);
     walk_attrs(&laid.sheet.root_text, &mut names);
     if let Some(fill) = &laid.canvas_fill {
         collect_live(fill, &mut names);

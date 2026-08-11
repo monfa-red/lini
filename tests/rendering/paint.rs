@@ -299,3 +299,42 @@ fn a_recoloured_link_states_its_marker_fill_once() {
         "no head repeats it: {svg}"
     );
 }
+
+#[test]
+fn a_recoloured_dimension_tier_emits_no_inline_style() {
+    // `(-)` dresses dimensions alone [SPEC 4/15.6]: the tier's paint rides
+    // three compound rules, so no chrome node repeats it — while the leaders
+    // beside them keep the document tone through the base rules.
+    let svg = render_live(
+        "{ |-| { stroke: green }\n  (-) { stroke: blue } }\n|drawing#d| { unit: mm } [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n  p:top (-) p:bottom { side: left }\n  p:top <- \"note\"\n]\n",
+    );
+    assert!(
+        svg.contains(".lini .lini-dim-line.lini-dim { stroke: blue; }"),
+        "the tier states its linework once: {svg}"
+    );
+    assert!(
+        !svg.contains(r#"style="stroke: blue""#) && !svg.contains(r#"style="fill: blue""#),
+        "no dimension chrome node repeats it: {svg}"
+    );
+    assert!(
+        !svg.contains(r#"style="stroke: green""#),
+        "and the leader still diffs to nothing: {svg}"
+    );
+    // A dimension that restyles itself still inlines its own diff, and nothing more.
+    let one = render_live(
+        "{ (-) { stroke: blue } }\n|drawing#d| { unit: mm } [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right { stroke: red }\n]\n",
+    );
+    assert!(one.contains(r#"style="stroke: red""#), "{one}");
+    assert!(!one.contains("blue\""), "{one}");
+}
+
+#[test]
+fn a_drawings_drafting_symbols_emit_no_inline_style() {
+    // A GD&T frame's compartments, its glyphs, a `|datum|`'s plate, and a
+    // cutting plane's ends / shafts / heads all wear generated chrome classes
+    // whose rules state the whole dress [SPEC 15.8/15.9/18].
+    let svg = render_live(
+        "|drawing#d| [\n  |rect#p| { width: 60; height: 30 }\n  |plane#a| \"A\" { at: 0 }\n  |feature-control#f| \"position\" { tol: 0.1; datums: A; translate: 0 40 }\n  |datum#dm| \"A\" { translate: 0 60 }\n]\n",
+    );
+    assert!(!svg.contains("style=\""), "no inline style: {svg}");
+}

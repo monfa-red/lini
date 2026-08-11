@@ -9,14 +9,15 @@ use super::Segment;
 use super::anchors::{self, Anchor, Spot};
 use super::annotate::{Ctx, Paint};
 use super::compose::{self, Glyph};
-use super::geometry::{P, dist, n as fmt_n, reflect_point, unit};
+use super::geometry::{P, dist, n as fmt_n, reflect_point};
 use crate::error::Error;
 use crate::layout::geom::rotate;
+use crate::layout::geom::unit;
 use crate::layout::geom::{cross, dot};
 use crate::resolve::ResolvedLink;
 
 pub(super) fn lower(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
+    let paint = Paint::of_link(ctx, w);
     let mut out = Vec::new();
     if w.endpoints.len() == 1 {
         out.extend(unary(ctx, w, &paint)?);
@@ -151,5 +152,6 @@ fn two_edges(w: &ResolvedLink) -> Error {
 }
 
 fn edge_dir(a: P, b: P) -> P {
-    unit((b.0 - a.0, b.1 - a.1))
+    // Two coincident points name no edge direction — the zero vector, as before.
+    unit((b.0 - a.0, b.1 - a.1)).unwrap_or((0.0, 0.0))
 }

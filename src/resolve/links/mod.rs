@@ -133,7 +133,7 @@ pub fn resolve_link(
         ChainOp::Measure(DrawOp::Angle) => LinkKind::Measure(MeasureOp::Angle),
         ChainOp::Mate => LinkKind::Mate,
     };
-    let is_dim = matches!(kind, LinkKind::Measure(_));
+    let is_dim = kind.is_dimension();
 
     // A link is a node whose type is `lini-link` — plus `lini-dimension` for a
     // dimension (the `|-|` subtype) — whose ancestors are its scope chain, with no

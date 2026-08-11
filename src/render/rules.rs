@@ -71,33 +71,30 @@ impl RuleSet {
     }
 
     /// The value the sheet provides for an element carrying `classes` under
-    /// DOM ancestors carrying `ancestors` — later rules win on the tie within
-    /// a specificity, and a matching descendant rule (`"outer .inner"`, one
-    /// more class) beats every single-class rule, exactly the CSS cascade the
-    /// emitted `<style>` computes. The root `.lini` rule is deliberately
+    /// DOM ancestors carrying `ancestors` — the **most specific** matching
+    /// rule wins, later rules win the tie within a specificity, exactly the
+    /// CSS cascade the emitted `<style>` computes. Specificity is the
+    /// selector's class count ([`selector_rank`]), so a compound
+    /// (`"a.b"`) and a descendant (`"outer .inner"`) both beat a lone class
+    /// and tie with each other. The root `.lini` rule is deliberately
     /// excluded: its props (`font-*`, `color`) are *inherited*, so a nested
     /// element's effective value comes from its nearest ancestor, not the
     /// root — diffing against the root would drop a reset-to-default that an
     /// overriding ancestor then overrides (the node must state its own value
     /// to win, exactly as `font-weight` already does by never being on root).
     pub fn provided(&self, classes: &[String], ancestors: &[String], prop: &str) -> Option<&str> {
-        let mut hit = None;
-        for descendant in [false, true] {
-            for rule in &self.rules {
-                let matches = match rule.class.split_once(" .") {
-                    Some((outer, inner)) => {
-                        descendant
-                            && classes.iter().any(|c| c == inner)
-                            && ancestors.iter().any(|c| c == outer)
-                    }
-                    None => !descendant && classes.contains(&rule.class),
-                };
-                if matches && let Some((_, v)) = rule.props.iter().find(|(p, _)| p == prop) {
-                    hit = Some(v.as_str());
-                }
+        let mut hit: Option<(usize, &str)> = None;
+        for rule in &self.rules {
+            let Some(rank) = selector_rank(&rule.class, classes, ancestors) else {
+                continue;
+            };
+            if let Some((_, v)) = rule.props.iter().find(|(p, _)| p == prop)
+                && hit.is_none_or(|(best, _)| rank >= best)
+            {
+                hit = Some((rank, v.as_str()));
             }
         }
-        hit
+        hit.map(|(_, v)| v)
     }
 
     /// The inline paint `style=` declarations for one element — a node `<g>` or a
@@ -148,20 +145,40 @@ impl RuleSet {
     /// required colour differs from this — so a class-driven colour rides the
     /// descendant rule, and only a direct inline `stroke:` (which no rule can
     /// target) lands in `style=`.
+    ///
+    /// A marker *is* an element carrying `.lini-marker` inside its line's `<g>`,
+    /// so this is [`Self::provided`] asked that question — never a second
+    /// cascade walk beside it.
     pub fn marker_fill(&self, classes: &[String]) -> Option<&str> {
-        let mut hit = None;
-        for rule in &self.rules {
-            let matches = rule.class == "lini-marker"
-                || rule
-                    .class
-                    .strip_suffix(" .lini-marker")
-                    .is_some_and(|prefix| classes.iter().any(|c| c == prefix));
-            if matches && let Some((_, v)) = rule.props.iter().find(|(p, _)| p == "fill") {
-                hit = Some(v.as_str());
-            }
-        }
-        hit
+        self.provided(&[MARKER_CLASS.to_string()], classes, "fill")
     }
+}
+
+/// The class every filled marker head wears — what `emit_marker` writes and
+/// what the sheet's marker rules key on.
+pub const MARKER_CLASS: &str = "lini-marker";
+
+/// How specifically a rule's selector matches an element — its **class count**,
+/// or `None` when it does not match at all. `class` is one of the three shapes a
+/// [`Rule`] holds: a lone class (`a`), a compound on one element (`a.b`, every
+/// unit worn by the element), or a descendant (`outer .inner`, the inner part
+/// compound-capable and the outer worn by an ancestor). CSS scores all three by
+/// class count, so counting the units is the cascade, not an approximation of it.
+fn selector_rank(class: &str, classes: &[String], ancestors: &[String]) -> Option<usize> {
+    let worn = |c: &str| classes.iter().any(|x| x == c);
+    let (outer, inner) = match class.split_once(" .") {
+        Some((outer, inner)) => (Some(outer), inner),
+        None => (None, class),
+    };
+    if let Some(outer) = outer
+        && !ancestors.iter().any(|c| c == outer)
+    {
+        return None;
+    }
+    inner
+        .split('.')
+        .all(worn)
+        .then(|| inner.split('.').count() + usize::from(outer.is_some()))
 }
 
 /// The stroke colour an element actually paints with — its inline `stroke`,

@@ -5,11 +5,12 @@
 use super::super::super::ir::{Bbox, PlacedNode};
 use super::super::anchors::Anchor;
 use super::super::annotate::Ctx;
-use super::super::geometry::{P, dist, unit};
+use super::super::geometry::{P, dist};
 use super::super::outline;
 use super::super::symbols::CarriedStack;
 use crate::layout::geom::dot;
 use crate::layout::geom::rotate;
+use crate::layout::geom::unit;
 use crate::ledger::consts::{NOTE_LANDING, NOTE_OFFSET};
 
 /// A leader's drawn skeleton: tip → elbow → landing, plus where its text
@@ -69,7 +70,9 @@ pub(super) fn leader_line(
     let tip = exact
         .or_else(|| circle_tip(circle, elbow))
         .unwrap_or_else(|| {
-            let d = unit((aim.0 - elbow.0, aim.1 - elbow.1));
+            // An elbow on the aim point casts no ray — the zero direction
+            // raycasts nowhere and the aim itself is the tip, as before.
+            let d = unit((aim.0 - elbow.0, aim.1 - elbow.1)).unwrap_or((0.0, 0.0));
             let o = anchor.to_local(elbow);
             match outline::raycast(anchor.node, o, rotate(d, -anchor.rot)) {
                 Some(t) => (elbow.0 + d.0 * t, elbow.1 + d.1 * t),
@@ -125,6 +128,7 @@ fn clear_along(b: Bbox, dir: P, obstacle: Bbox, margin: f64) -> f64 {
 /// The nearest rim point of an analytic circle toward the elbow.
 pub(super) fn circle_tip(circle: Option<(P, f64)>, from: P) -> Option<P> {
     let (c, r) = circle?;
-    let u = unit((from.0 - c.0, from.1 - c.1));
+    // A `from` at the centre picks no rim point — the centre, as before.
+    let u = unit((from.0 - c.0, from.1 - c.1)).unwrap_or((0.0, 0.0));
     Some((c.0 + u.0 * r, c.1 + u.1 * r))
 }

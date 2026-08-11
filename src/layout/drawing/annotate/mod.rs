@@ -55,10 +55,29 @@ pub(super) struct Paint {
     /// The measurement font for the annotation text [SPEC 5] — the statement's
     /// resolved kind × weight (the scope default is mono regular).
     pub font: crate::font::Font,
+    /// The statement is a **dimension**, so every chrome node it lowers joins
+    /// the `(-)` tier ([`DIM_TIER`]).
+    tier: bool,
 }
 
 impl Paint {
     pub fn of(attrs: &AttrMap) -> Paint {
+        Paint::tiered(attrs, false)
+    }
+
+    /// A statement's paint, tiered by its kind — a **dimension** whose tier
+    /// repaints the chrome ([`dim_tier_repaints`]) lowers chrome wearing
+    /// [`DIM_TIER`], so that paint rides one rule instead of inlining on every
+    /// chrome node [SPEC 18]. Two readings, both stated once: the kind is
+    /// [`LinkKind::is_dimension`] (what the cascade wears `.lini-dimension`
+    /// by), and the repaint test is the renderer's own, so the class is worn
+    /// exactly when its rules emit — never a dead class.
+    pub fn of_link(ctx: &Ctx, w: &ResolvedLink) -> Paint {
+        let tier = w.kind.is_dimension() && dim_tier_repaints(&ctx.program.sheet);
+        Paint::tiered(&w.attrs, tier)
+    }
+
+    fn tiered(attrs: &AttrMap, tier: bool) -> Paint {
         let set = attrs.get("stroke").cloned();
         Paint {
             stroke: set
@@ -70,14 +89,26 @@ impl Paint {
                 .unwrap_or(DRAWING_LINK_STROKE_WIDTH),
             fs: attrs.number("font-size").unwrap_or(DRAWING_LINK_FONT_SIZE),
             font: crate::font::Font::of(attrs),
+            tier,
         }
+    }
+
+    /// The chrome roles this statement's linework wears: the role class, plus
+    /// the `(-)` tier when it is a dimension. One place, so a role can never
+    /// join the tier on one lowering and not another.
+    pub fn roles(&self, role: &str) -> Vec<String> {
+        let mut chain = vec![role.to_string()];
+        if self.tier {
+            chain.push(DIM_TIER.to_string());
+        }
+        chain
     }
 
     /// A dimension / leader polyline in this link's stroke — classed
     /// `lini-dim-line`, so the default paint rides the sheet [SPEC 18].
     pub fn dim(&self, points: Vec<P>) -> PlacedNode {
         let mut n = super::super::prim::line(points, self.stroke.clone(), self.sw);
-        n.type_chain = vec!["dim-line".into()];
+        n.type_chain = self.roles("dim-line");
         n
     }
 
@@ -85,7 +116,18 @@ impl Paint {
     /// shape — in the light support tone, classed `lini-ext-line`.
     pub fn ext(&self, points: Vec<P>) -> PlacedNode {
         let mut n = super::super::prim::line(points, self.light.clone(), self.sw);
-        n.type_chain = vec!["ext-line".into()];
+        n.type_chain = self.roles("ext-line");
+        n
+    }
+
+    /// A filled marker head this statement lowers [SPEC 15.6/15.7] — the
+    /// slender dimension arrow, the seated datum triangle — in the statement's
+    /// stroke, joining the `(-)` tier when the statement is a dimension.
+    pub fn head(&self, variant: &str, points: Vec<P>) -> PlacedNode {
+        let mut n = super::super::prim::dim_marker(variant, points, self.stroke.clone());
+        if self.tier {
+            n.type_chain.push(DIM_TIER.to_string());
+        }
         n
     }
 
@@ -93,13 +135,22 @@ impl Paint {
     /// `prim::path` is fill-only, built for chart bodies.
     pub fn stroked_path(&self, d: String, bbox: Bbox) -> PlacedNode {
         let mut n = super::super::prim::path(d, ResolvedValue::Ident("none".into()), bbox);
-        n.type_chain = vec!["dim-line".into()];
+        n.type_chain = self.roles("dim-line");
         n.attrs.insert("stroke", self.stroke.clone());
         n.attrs
             .insert("stroke-width", ResolvedValue::Number(self.sw));
         n
     }
 }
+
+/// The generated class every chrome node a **dimension** lowers wears
+/// [SPEC 4/15.6/18] — the `(-)` tier, alongside the node's chrome role
+/// (`lini-dim-line`, `lini-ext-line`, `lini-marker-dim`). A leader's chrome
+/// wears the same roles but not this, so a document that restyles `(-)` alone
+/// states the tier's paint as compound rules (`.lini-dim-line.lini-dim`) and
+/// no chrome node inlines it. Only dimensions mint it, so an unstyled document
+/// emits no rule for it and the class is never worn without one.
+pub(crate) const DIM_TIER: &str = "dim";
 
 /// The tones a document's drawing chrome defaults to — `(linework, extension
 /// line)` — for a statement dressed by nothing but the document's `|-|`
@@ -111,6 +162,16 @@ impl Paint {
 pub(crate) fn default_paint(link_defaults: &AttrMap) -> (ResolvedValue, ResolvedValue) {
     let paint = Paint::of(link_defaults);
     (paint.stroke, paint.light)
+}
+
+/// Whether the `(-)` tier repaints a drawing's chrome [SPEC 4/15.6/18] — the
+/// dimension layer's tones against the document's. The **one** test the tier
+/// class and its rules both key on: layout mints [`DIM_TIER`] on a dimension's
+/// chrome only when this holds, and the renderer emits the tier's compound
+/// rules only for the roles that then wear it — so an unstyled document grows
+/// neither a class nor a rule.
+pub(crate) fn dim_tier_repaints(sheet: &crate::resolve::SheetInputs) -> bool {
+    default_paint(&sheet.dim_defaults) != default_paint(&sheet.link_defaults)
 }
 
 /// Lower every non-mate link of a drawing scope. Leaders, callouts, and

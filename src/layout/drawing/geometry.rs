@@ -4,7 +4,7 @@
 
 use super::super::ir::Bbox;
 use super::annotate::Axis;
-use crate::layout::geom::dot;
+use crate::layout::geom::{dot, unit};
 use crate::path_data;
 
 /// The plane primitives are layout-level — the schematic engine's stacking
@@ -206,14 +206,6 @@ pub fn dist(a: P, b: P) -> f64 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
-/// `v` scaled to unit length. A near-zero vector divides by a 1e-9 floor
-/// rather than blowing up — the callers (leader aim, edge direction) clamp or
-/// raycast past the degenerate case.
-pub fn unit(v: P) -> P {
-    let len = v.0.hypot(v.1).max(1e-9);
-    (v.0 / len, v.1 / len)
-}
-
 /// The ISO reading angle for text riding a line in direction `dir` [SPEC 15.6]:
 /// the line's own angle folded into [-90, 90) so the text reads from the
 /// bottom / right — a vertical line's text turns exactly −90.
@@ -247,7 +239,9 @@ pub fn arc_center(from: P, to: P, r: f64, large: bool, sweep: bool) -> P {
 /// raycast's crossing angle all read this one.
 pub fn arc_tangent(p: P, centre: P, sweep: bool) -> P {
     let v = (p.0 - centre.0, p.1 - centre.1);
-    unit(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
+    // A point *at* the centre has no tangent — the zero vector, as before.
+    let t = if sweep { (-v.1, v.0) } else { (v.1, -v.0) };
+    unit(t).unwrap_or((0.0, 0.0))
 }
 
 /// The minor arc's midpoint — on the far side of the chord from the centre;

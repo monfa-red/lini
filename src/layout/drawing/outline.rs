@@ -146,7 +146,7 @@ fn hit_line(o: P, d: P, a: P, b: P) -> Option<Hit> {
     let s = cross(ao, d) / denom;
     (t > EPS && (-EPS..=1.0 + EPS).contains(&s)).then(|| Hit {
         t,
-        tangent: super::geometry::unit(e),
+        tangent: crate::layout::geom::unit(e).unwrap_or((0.0, 0.0)),
         graze: !(EPS..=1.0 - EPS).contains(&s),
     })
 }
@@ -209,7 +209,7 @@ fn ellipse_crossings(o: P, d: P, g: Bbox, out: &mut Vec<Hit>) {
         out.push(Hit {
             t,
             // Unit-circle tangent (-py, px), stretched back into the ellipse.
-            tangent: super::geometry::unit((-p.1 * rx, p.0 * ry)),
+            tangent: crate::layout::geom::unit((-p.1 * rx, p.0 * ry)).unwrap_or((0.0, 0.0)),
             // A full ellipse has no endpoints to graze.
             graze: false,
         });

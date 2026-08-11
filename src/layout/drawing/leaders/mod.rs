@@ -11,12 +11,13 @@ use super::super::{approx_height, approx_width, prim};
 use super::anchors::{self, Anchor, Spot};
 use super::annotate::{Ctx, Paint, side_attr, side_unit};
 use super::compose::DimText;
-use super::geometry::{P, dist, unit};
+use super::geometry::{P, dist};
 use super::symbols::CarriedStack;
 use super::{dims, outline};
 use crate::error::Error;
 use crate::layout::geom::dot;
 use crate::layout::geom::rotate;
+use crate::layout::geom::unit;
 use crate::ledger::consts::ARROW_LEN;
 use crate::resolve::{MarkerKind, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -77,7 +78,7 @@ fn lower_measured(
         let mut line = leader_line(ctx, a, aim, dir, exact, circle, extra);
         let tip = line.points[0];
         let elbow = line.points[1];
-        let to_tip = unit((tip.0 - elbow.0, tip.1 - elbow.1));
+        let to_tip = unit((tip.0 - elbow.0, tip.1 - elbow.1)).unwrap_or((0.0, 0.0));
         let mut out = vec![dims::arrow(tip, to_tip, paint)];
         // A circle's ⌀ line runs along the diameter [SPEC 15.6]: through the
         // centre to the far rim, overshooting it, both arrowheads pressing the
@@ -116,7 +117,7 @@ pub(super) fn callout(
     w: &ResolvedLink,
     stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
+    let paint = Paint::of_link(ctx, w);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
     // A callout on a threaded segment composes its spec — `M⌀×pitch`, the
     // numbers living once [SPEC 15.7]. A bare `<-` reads the spec alone; an
@@ -223,20 +224,19 @@ fn leg(a: &Anchor, marker: MarkerKind, mut points: Vec<P>, paint: &Paint) -> Vec
         let apex = (tip.0 + n.0 * size, tip.1 + n.1 * size);
         points[0] = apex;
         out.push(paint.dim(points));
-        out.push(prim::dim_marker(
+        out.push(paint.head(
             "datum",
             vec![
                 (tip.0 + t.0 * half, tip.1 + t.1 * half),
                 (tip.0 - t.0 * half, tip.1 - t.1 * half),
                 apex,
             ],
-            paint.stroke.clone(),
         ));
     } else if marker == MarkerKind::Arrow {
         // ISO 129: one arrowhead style per sheet — a word leader tips with
         // the same slender arrow as every dimension [SPEC 15.7].
         let tip = points[0];
-        let to_tip = unit((tip.0 - points[1].0, tip.1 - points[1].1));
+        let to_tip = unit((tip.0 - points[1].0, tip.1 - points[1].1)).unwrap_or((0.0, 0.0));
         let trim = 2.0 * paint.sw;
         points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
         out.push(paint.dim(points));
@@ -361,7 +361,7 @@ fn thread_spec(a: &Anchor, ep: &crate::resolve::ResolvedEndpoint) -> Option<Stri
 /// node's outline (a balloon's rim), except a dot's, which lands **within**
 /// it (`-*` — a face, a region); explicit anchors are honoured exactly.
 pub(super) fn arrows(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
+    let paint = Paint::of_link(ctx, w);
     let mut out = Vec::new();
     for hop in 0..w.endpoints.len() - 1 {
         let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[hop], "leader")?;
@@ -397,7 +397,7 @@ fn trim(anchor: &Anchor, p: P, other: P, marker: MarkerKind, full: f64) -> P {
     if !matches!(anchor.spot, Spot::Origin) || marker == MarkerKind::Dot {
         return p;
     }
-    let d = unit((other.0 - p.0, other.1 - p.1));
+    let d = unit((other.0 - p.0, other.1 - p.1)).unwrap_or((0.0, 0.0));
     let o = anchor.to_local(p);
     match outline::raycast(anchor.node, o, rotate(d, -anchor.rot)) {
         Some(t) if t < full => (p.0 + d.0 * t, p.1 + d.1 * t),

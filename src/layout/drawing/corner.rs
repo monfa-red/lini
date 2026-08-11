@@ -12,7 +12,7 @@
 use super::Segment;
 use super::geometry::{P, PathSeg, arc_center, arc_tangent, dist};
 use crate::error::Error;
-use crate::layout::geom::{add, cross, dot, norm, rotate_rad, scale, sub};
+use crate::layout::geom::{add, cross, dot, rotate_rad, scale, sub, unit};
 use crate::span::Span;
 
 /// A pending corner modifier — parked between its two segments.
@@ -36,7 +36,10 @@ impl Mod {
 /// y-down screen), or the line's own direction.
 fn heading(seg: &PathSeg, p: P) -> P {
     match *seg {
-        PathSeg::Line { from, to } => norm(sub(to, from)),
+        PathSeg::Line { from, to } => {
+            let d = sub(to, from);
+            unit(d).unwrap_or(d)
+        }
         PathSeg::Arc {
             from,
             to,
@@ -77,7 +80,8 @@ pub(super) fn apply_mod(
         ));
     }
     // The interior bisector points from the corner toward the joint's centre.
-    let bi = norm(add(scale(t_in, -1.0), t_out));
+    let inward = add(scale(t_in, -1.0), t_out);
+    let bi = unit(inward).unwrap_or(inward);
     let amount = match m {
         Mod::Fillet(r) => r,
         Mod::Chamfer(cc) => cc,
@@ -114,7 +118,8 @@ enum Offset {
 fn leg_offset(seg: &PathSeg, at_end: bool, r: f64, bi: P, span: Span) -> Result<Offset, Error> {
     match *seg {
         PathSeg::Line { from, to } => {
-            let u = norm(sub(to, from));
+            let d = sub(to, from);
+            let u = unit(d).unwrap_or(d);
             let n = (-u.1, u.0);
             let n = if dot(n, bi) >= 0.0 { n } else { scale(n, -1.0) };
             let c = if at_end { to } else { from };
@@ -201,7 +206,8 @@ fn circle_circle(o1: P, r1: f64, o2: P, r2: f64) -> Option<(P, P)> {
     }
     let a = (r1 * r1 - r2 * r2 + d * d) / (2.0 * d);
     let h2 = (r1 * r1 - a * a).max(0.0);
-    let u = norm(sub(o2, o1));
+    let d = sub(o2, o1);
+    let u = unit(d).unwrap_or(d);
     let mid = add(o1, scale(u, a));
     let perp = (-u.1, u.0);
     let h = h2.sqrt();
@@ -213,7 +219,8 @@ fn circle_circle(o1: P, r1: f64, o2: P, r2: f64) -> Option<(P, P)> {
 fn tangent_point(seg: &PathSeg, at_end: bool, centre: P) -> P {
     match *seg {
         PathSeg::Line { from, to } => {
-            let u = norm(sub(to, from));
+            let d = sub(to, from);
+            let u = unit(d).unwrap_or(d);
             add(from, scale(u, dot(sub(centre, from), u)))
         }
         PathSeg::Arc {
@@ -225,7 +232,8 @@ fn tangent_point(seg: &PathSeg, at_end: bool, centre: P) -> P {
         } => {
             let _ = at_end;
             let o = arc_center(from, to, r, large, sweep);
-            add(o, scale(norm(sub(centre, o)), r))
+            let d = sub(centre, o);
+            add(o, scale(unit(d).unwrap_or(d), r))
         }
         PathSeg::Cubic { .. } => unreachable!(),
     }
@@ -250,7 +258,8 @@ fn fillet(
     }
     // Sweep so the arc's heading at `ta` continues the prev leg's [SPEC 15.3].
     let sweep = dot(arc_tangent(ta, centre, true), heading(prev, ta)) > 0.0;
-    let mid = add(centre, scale(norm(sub(midpoint(ta, tb), centre)), r));
+    let out = sub(midpoint(ta, tb), centre);
+    let mid = add(centre, scale(unit(out).unwrap_or(out), r));
     Ok((
         ta,
         tb,
@@ -285,7 +294,8 @@ fn back_along(seg: &PathSeg, at_end: bool, cc: f64) -> Result<P, Error> {
             if cc > len - 1e-9 {
                 return Err(fit_err(Mod::Chamfer(cc), Span::empty()));
             }
-            let u = norm(sub(to, from));
+            let d = sub(to, from);
+            let u = unit(d).unwrap_or(d);
             Ok(if at_end {
                 sub(to, scale(u, cc))
             } else {

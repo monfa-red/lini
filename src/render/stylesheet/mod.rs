@@ -30,34 +30,32 @@ use std::collections::BTreeSet;
 pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let vars = &laid.vars;
 
-    let mut present: BTreeSet<&str> = BTreeSet::new();
-    let mut used_styles: BTreeSet<&str> = BTreeSet::new();
-    let mut has_markers = false;
-    let mut has_open = false;
-    let mut has_gutters = false;
+    let mut seen = Presence::default();
     // The junction dots ride with the wires rather than in the scene tree
     // [SPEC 16.5], and they wear the classes whose rules paint them — so the
     // presence walk reads both, or `.lini-junction` would never emit.
     for node in laid.nodes.iter().chain(&laid.junctions) {
-        collect(
-            node,
-            &mut present,
-            &mut used_styles,
-            &mut has_markers,
-            &mut has_open,
-            &mut has_gutters,
-        );
+        collect(node, &mut seen);
     }
     // Links carry styles too (same class surface as nodes), so a style used
     // only by a link still emits its rule.
     for link in &laid.links {
         for style in &link.applied_styles {
-            used_styles.insert(style.as_str());
+            seen.used_styles.insert(style.as_str());
         }
-        has_markers |=
+        seen.has_markers |=
             link.markers.start != MarkerKind::None || link.markers.end != MarkerKind::None;
-        has_open |= link.markers.start.is_open() || link.markers.end.is_open();
+        seen.has_open |= link.markers.start.is_open() || link.markers.end.is_open();
     }
+    let Presence {
+        present,
+        dim_roles,
+        marker_hosts,
+        used_styles,
+        has_markers,
+        has_open,
+        has_gutters,
+    } = seen;
     // The mask rules' wearer test [SPEC 18]: a label only cuts a wire whose
     // path it actually reaches, so "any link has texts" would emit `.lini-cut`
     // / `.lini-cut-bg` for a document where no mask is ever produced. The
@@ -76,6 +74,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     families::build_frame_rules(&mut rules, laid, vars, opts);
     families::build_shape_rules(&mut rules, laid, &present, vars, opts);
+    families::build_symbol_chrome_rules(&mut rules, laid, &present, vars, opts);
     families::build_sequence_text_rules(&mut rules, &present);
     families::build_gutter_rule(&mut rules, has_gutters);
     families::build_halo_rules(&mut rules, laid, present.contains("halo"), has_cuts);
@@ -91,7 +90,17 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         vars,
         opts,
     );
-    families::build_marker_rules(&mut rules, laid, &present, has_markers, vars, opts);
+    families::build_marker_rules(
+        &mut rules,
+        laid,
+        &present,
+        &marker_hosts,
+        has_markers,
+        vars,
+        opts,
+    );
+    families::build_dim_tier_rules(&mut rules, laid, &dim_roles, vars, opts);
+    families::build_plane_chrome_rules(&mut rules, laid, &present, vars, opts);
     families::build_style_class_rules(&mut rules, laid, &used_styles, has_markers, vars, opts);
     families::build_descendant_rules(&mut rules, laid, &present, vars, opts);
     families::build_open_marker_rule(&mut rules, has_open);
@@ -115,43 +124,60 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
     out
 }
 
-fn collect<'a>(
-    node: &'a PlacedNode,
-    present: &mut BTreeSet<&'a str>,
-    used_styles: &mut BTreeSet<&'a str>,
-    has_markers: &mut bool,
-    has_open: &mut bool,
-    has_gutters: &mut bool,
-) {
-    *has_gutters |= !node.gutters.is_empty();
-    present.insert(node.kind.as_str());
+/// What the sheet's wearer tests read off the placed tree — one walk, one
+/// struct, so a new test is a field rather than another out-parameter.
+#[derive(Default)]
+struct Presence<'a> {
+    /// Every `.lini-*` type / chrome class worn anywhere (sans the prefix).
+    present: BTreeSet<&'a str>,
+    /// The chrome roles worn **beside** the `(-)` tier class — what the tier's
+    /// compound rules key on [SPEC 18].
+    dim_roles: BTreeSet<&'a str>,
+    /// The classes of nodes that actually carry a marker — what a
+    /// `"{host} .lini-marker"` companion rule keys on, so a head's fill rides
+    /// the sheet only where a head exists.
+    marker_hosts: BTreeSet<&'a str>,
+    used_styles: BTreeSet<&'a str>,
+    has_markers: bool,
+    has_open: bool,
+    has_gutters: bool,
+}
+
+fn collect<'a>(node: &'a PlacedNode, seen: &mut Presence<'a>) {
+    seen.has_gutters |= !node.gutters.is_empty();
+    seen.present.insert(node.kind.as_str());
+    // A chrome node in the `(-)` tier registers its role there too, so the
+    // tier's compound rules emit for exactly the roles a dimension lowers.
+    let tier = crate::layout::drawing::annotate::DIM_TIER;
+    if node.type_chain.iter().any(|t| t == tier) {
+        seen.dim_roles
+            .extend(node.type_chain.iter().map(String::as_str));
+    }
     // A line with baked crossing-halo cuts registers the `halo` chrome type,
     // so its base cut paint and any `|halo|` user rule emit [SPEC 15.7].
     if node.attrs.get("halo").is_some() {
-        present.insert("halo");
+        seen.present.insert("halo");
     }
     // An icon's optional label renders as a `lini-text`, so register the text
     // rule even though the label is not a separate Text node.
     if node.kind == NodeKind::Icon && node.label.is_some() {
-        present.insert("text");
+        seen.present.insert("text");
     }
     for name in &node.type_chain {
-        present.insert(name.as_str());
+        seen.present.insert(name.as_str());
     }
     for name in &node.applied_styles {
-        used_styles.insert(name.as_str());
+        seen.used_styles.insert(name.as_str());
     }
-    *has_markers |= node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
-    *has_open |= node.markers.start.is_open() || node.markers.end.is_open();
+    let marked = node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
+    if marked {
+        seen.marker_hosts
+            .extend(node.type_chain.iter().map(String::as_str));
+    }
+    seen.has_markers |= marked;
+    seen.has_open |= node.markers.start.is_open() || node.markers.end.is_open();
     for child in &node.children {
-        collect(
-            child,
-            present,
-            used_styles,
-            has_markers,
-            has_open,
-            has_gutters,
-        );
+        collect(child, seen);
     }
 }
 

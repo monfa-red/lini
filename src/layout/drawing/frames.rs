@@ -367,8 +367,19 @@ fn cell_width(items: &[Item], font: crate::font::Font, fs: f64, floor: f64) -> f
     (inner + 2.0 * PAD).max(floor)
 }
 
-/// One bordered compartment: the `--bg`-backed cell rect at annotation
-/// linework, then its items laid left-to-right, vertically centred.
+/// One bordered compartment [SPEC 15.9] — the **one** place a frame cell is
+/// built (the symbol column, every row cell, the `|datum|` box), backed by the
+/// symbol's ground at annotation linework and classed `lini-frame-cell`, so
+/// its dress rides one rule and the rect inlines nothing [SPEC 18].
+fn cell_rect(cx: f64, cy: f64, w: f64, h: f64, paint: &SymbolPaint) -> PlacedNode {
+    let mut rect = prim::rect(cx, cy, w, h, paint.fill.clone(), 1.0);
+    prim::outline(&mut rect, paint.stroke.clone(), paint.sw);
+    rect.type_chain = vec![symbols::FRAME_CELL.into()];
+    rect
+}
+
+/// One compartment's cell rect, then its items laid left-to-right, vertically
+/// centred.
 #[allow(clippy::too_many_arguments)]
 fn lower_cell(
     out: &mut Vec<PlacedNode>,
@@ -378,12 +389,9 @@ fn lower_cell(
     w: f64,
     h: f64,
     paint: &SymbolPaint,
-    fill: &ResolvedValue,
     font: crate::font::Font,
 ) {
-    let mut rect = prim::rect(x + w / 2.0, y + h / 2.0, w, h, fill.clone(), 1.0);
-    prim::outline(&mut rect, paint.stroke.clone(), paint.sw);
-    out.push(rect);
+    out.push(cell_rect(x + w / 2.0, y + h / 2.0, w, h, paint));
     // Items centre as a group in their cell (a lone value reads centred, a
     // modifier run stays inside the borders).
     let total: f64 = items.iter().map(|i| i.width(font, paint.fs)).sum::<f64>()
@@ -452,11 +460,6 @@ pub(in crate::layout) fn layout_frame(
 
     let paint = SymbolPaint::of(inst);
     let font = inst.font;
-    let fill = inst
-        .attrs
-        .get("fill")
-        .cloned()
-        .unwrap_or_else(|| ResolvedValue::live("bg"));
     // The frame anatomy shares the datum box's height [SPEC 15.7/15.9]; the
     // symbol compartment is square at it (the characteristic glyphs are
     // grid-square).
@@ -490,16 +493,13 @@ pub(in crate::layout) fn layout_frame(
         }
         let span_h = h * (j - i) as f64;
         let y = y0 + h * i as f64;
-        let mut rect = prim::rect(
+        children.push(cell_rect(
             x0 + sym_w / 2.0,
             y + span_h / 2.0,
             sym_w,
             span_h,
-            fill.clone(),
-            1.0,
-        );
-        prim::outline(&mut rect, paint.stroke.clone(), paint.sw);
-        children.push(rect);
+            &paint,
+        ));
         let g = crate::glyph::lookup(rows[i].ch.name).expect("a validated characteristic");
         let gw = g.width * paint.fs / GRID;
         children.push(prim::glyph(
@@ -519,7 +519,7 @@ pub(in crate::layout) fn layout_frame(
         let mut x = x0 + sym_w;
         for (c, items) in row.iter().enumerate() {
             let w = widths[r][c];
-            lower_cell(&mut children, items, x, y, w, h, &paint, &fill, font);
+            lower_cell(&mut children, items, x, y, w, h, &paint, font);
             x += w;
         }
     }
@@ -546,13 +546,10 @@ pub(in crate::layout) fn layout_datum(inst: &ResolvedInst) -> Result<PlacedNode,
     let paint = SymbolPaint::of(inst);
     let font = inst.font;
     let (w, h) = symbols::framed_letter_size(letter, font, paint.fs);
-    let fill = inst
-        .attrs
-        .get("fill")
-        .cloned()
-        .unwrap_or_else(|| ResolvedValue::live("bg"));
+    let mut plate = prim::rect(0.0, 0.0, w, h, paint.fill.clone(), 1.0);
+    plate.type_chain = vec![symbols::FRAME_PLATE.into()];
     let children = vec![
-        prim::rect(0.0, 0.0, w, h, fill, 1.0),
+        plate,
         symbols::datum_frame_box((0.0, 0.0), w, h, paint.stroke.clone(), paint.sw),
         prim::dim_text(letter, 0.0, 0.0, paint.fs, font.kind),
     ];
