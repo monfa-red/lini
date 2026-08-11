@@ -112,14 +112,14 @@ pub(crate) const SHEET_MARGIN: f64 = 10.0;
 /// Pin centre-to-centre spacing — a pin row's height, so rows stacking at
 /// gap 0 land on exact pitch centres. Must stay ≥ the router's min pitch at
 /// the scope's clearance [SPEC 16.5].
-pub(crate) const PIN_PITCH: f64 = 20.0;
+pub(crate) const PIN_PITCH: f64 = 25.0;
 /// The stub — the short lead a pin extends outward; the wire lands on its tip.
-pub(crate) const PIN_STUB: f64 = 12.0;
+pub(crate) const PIN_STUB: f64 = 15.0;
 /// The junction dot's radius [SPEC 16.5].
-pub(crate) const JUNCTION_RADIUS: f64 = 3.0;
+pub(crate) const JUNCTION_RADIUS: f64 = 4.0;
 /// How deep a shaped tag's point is cut back from its box [SPEC 16.4] — the
 /// flag's nose. The tag's own padding holds it, so the text never rides it.
-pub(crate) const TAG_POINT: f64 = 8.0;
+pub(crate) const TAG_POINT: f64 = 10.0;
 /// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
 /// stub tip and the satellite seated off it, and between stacked satellites.
 ///
@@ -127,34 +127,34 @@ pub(crate) const TAG_POINT: f64 = 8.0;
 /// and its satellite is an ordinary routed wire, and the channel model gives
 /// it a cell only where the two keep-outs do not overlap — so the seat must
 /// clear `2 × SCH_CLEARANCE`. SPEC 10.5's 10 leaves no channel at the
-/// schematic's own clearance 8 and every lead strays; one pin pitch does,
+/// schematic's own clearance 10 and every lead strays; one pin pitch does,
 /// which also puts satellites on the sheet grid. (The same reasoning
 /// widened the tree's `gap` past SPEC's plain 20.)
-pub(crate) const LABEL_SEAT: f64 = 20.0;
+pub(crate) const LABEL_SEAT: f64 = 25.0;
 /// The schematic scope's link `clearance` [SPEC 10.5/16.6] — tighter than the
 /// routing 16, so a sheet's short leads and pin pitch have room. Cascades
 /// from the scope's own block, so a user's `clearance:` still wins.
-pub(crate) const SCH_CLEARANCE: f64 = 8.0;
+pub(crate) const SCH_CLEARANCE: f64 = 10.0;
 /// Part linework weight — symbol bodies, stubs, tag outlines [SPEC 16.6].
 pub(crate) const SCH_STROKE_WIDTH: f64 = 1.5;
 /// The pin-number readout, outside beside the stub [SPEC 16.2].
-pub(crate) const PIN_NUMBER_FONT: f64 = 9.0;
+pub(crate) const PIN_NUMBER_FONT: f64 = 10.0;
 /// How far the pin number sits off its lead, across the stub: above a
 /// horizontal one, beside a vertical one [SPEC 16.2].
-pub(crate) const PIN_NUMBER_OFFSET: f64 = 7.0;
+pub(crate) const PIN_NUMBER_OFFSET: f64 = 9.0;
 /// The ref / value readout text size [SPEC 16.2] — also the line height a
 /// readout's seat adds back, since `pin:` aligns edges (a single line measures
 /// one em, [`crate::layout::text::approx_height`]).
-pub(crate) const REF_FONT: f64 = 11.0;
+pub(crate) const REF_FONT: f64 = 12.0;
 /// The clear gap between a part's drawing and the readout naming it, and
 /// between the two readouts where they stack [SPEC 16.2].
-pub(crate) const READOUT_GAP: f64 = 6.0;
-pub(crate) const READOUT_STACK: f64 = 3.0;
+pub(crate) const READOUT_GAP: f64 = 8.0;
+pub(crate) const READOUT_STACK: f64 = 4.0;
 /// How far a **turned** part's ref / value readouts sit beside its axis
 /// [SPEC 16.2] — clear of the symbol *and* of the wire's own corridor running
 /// down through it, so a typical value (up to ~5 characters) never blocks a
 /// landing. A longer one is `translate:`'s to move.
-pub(crate) const READOUT_OFFSET: f64 = 30.0;
+pub(crate) const READOUT_OFFSET: f64 = 40.0;
 
 /// The absurd-rendered-extent hint threshold [SPEC 21]: a drawing wider or
 /// taller than this many px almost certainly authored a magnitude into

@@ -28,7 +28,7 @@ pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 /// tracks. Wider than the generic `20`: a part's stubs, its seated satellites,
 /// and the wires running between two tracks all live in that space. Shared by
 /// the `|schematic|` template and the root `{ layout: schematic }` form.
-pub(crate) const SCH_GAP: f64 = 48.0;
+pub(crate) const SCH_GAP: f64 = 60.0;
 
 /// The `|mindmap|` depth ramp + wrap cap [SPEC 8] — one obvious table, retuned
 /// by eye. The root tier rides the `.lini-mindmap` bundle (the node *is* the
