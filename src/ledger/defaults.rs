@@ -385,14 +385,20 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // Sharp corners: the chain reaches this through `|table|` → `|group|`,
         // whose 8 would round the block [SPEC 8].
         "title-block" => vec![
-            n("font-size", 11.0),
+            n("font-size", 13.0),
+            id("font-weight", "semibold"),
             n("stroke-width", 1.0),
             n("radius", 0.0),
         ],
         // A title-block field caption [SPEC 15.8]: the muted footer tone, a step
-        // down from the value it labels. A type (not inline style), so its font
-        // states once as a `.lini-field` class rule.
-        "field" => vec![n("font-size", 10.0), var("color", "footer-color")],
+        // down from the value it labels — quieter in both channels, so the value
+        // reads first. A type (not inline style), so its font states once as a
+        // `.lini-field` class rule.
+        "field" => vec![
+            n("font-size", 11.0),
+            id("font-weight", "normal"),
+            var("color", "footer-color"),
+        ],
         // …and the sheet's generated furniture: the thick border, the zone
         // reference labels, and the thin dividers / centring marks.
         "frame" => vec![
@@ -802,15 +808,20 @@ mod tests {
     }
 
     #[test]
-    fn the_title_block_is_small_thin_and_square() {
-        // [SPEC 8]: `font-size: 11; stroke-width: 1` — the ISO 7200 block reads
-        // a step below body text. Its `radius: 0` is not dead: the chain runs
-        // `|table|` → `|group|`, whose 8 would round it.
+    fn the_title_block_reads_loud_thin_and_square() {
+        // [SPEC 8]: the ISO 7200 block's **values** carry the sheet's identity,
+        // so they read at 13 semibold while the `|field|` captions labelling
+        // them stay quieter in size, weight, and tone. Its `radius: 0` is not
+        // dead: the chain runs `|table|` → `|group|`, whose 8 would round it.
         let tb = template_bundle("title-block");
-        assert_eq!(num(&tb, "font-size"), Some(11.0));
+        assert_eq!(num(&tb, "font-size"), Some(13.0));
+        assert_eq!(ident(&tb, "font-weight").as_deref(), Some("semibold"));
         assert_eq!(num(&tb, "stroke-width"), Some(1.0));
         assert_eq!(num(&tb, "radius"), Some(0.0));
         assert_eq!(num(&template_bundle("group"), "radius"), Some(8.0));
+        let f = template_bundle("field");
+        assert_eq!(num(&f, "font-size"), Some(11.0));
+        assert_eq!(ident(&f, "font-weight").as_deref(), Some("normal"));
     }
 
     #[test]
