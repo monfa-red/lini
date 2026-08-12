@@ -1,6 +1,6 @@
 [package]
 name = "lini"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 edition = "2024"
 rust-version = "1.88"
 description = "Pretty diagrams, charts, and technical drawings from plain text, with fine-grained control. Compiles to clean, themeable SVG."
@@ -12,8 +12,11 @@ readme = "README.md"
 keywords = ["diagram", "svg", "dsl", "diagrams-as-code", "graph"]
 categories = ["command-line-utilities", "visualization"]
 # Raw font sources are xtask input only (the committed subsets/metrics are the
-# shipped artifacts) — keep the ~8 MB out of the published crate.
-exclude = ["assets/fonts/raw"]
+# shipped artifacts) — keep the ~8 MB out of the published crate. The README's
+# imagery is fetched from GitHub by URL, never from the package, so the crate
+# carries none of it either; the PNGs stay in the repo because the READMEs of
+# already-published versions still point at them.
+exclude = ["assets/fonts/raw", "assets/*.png", "assets/*.svg", "assets/logo"]
 
 [[bin]]
 name = "lini"

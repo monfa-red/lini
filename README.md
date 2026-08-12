@@ -18,7 +18,7 @@ cat -> dog -> bird
 One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes; Lini routes the links.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.svg" alt="A colourful service map rendered by Lini" width="440">
 </p>
 
 <p align="center"><em>Thirty-odd lines of Lini — <a href="https://github.com/monfa-red/lini/blob/main/samples/hero.lini"><code>samples/hero.lini</code></a>.</em></p>
@@ -90,7 +90,7 @@ A flow orients with `direction: row` / `column`; a `grid` is sized by `columns` 
 
 ## Nodes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's primitives and templates" width="480"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.svg" alt="Lini's primitives and templates" width="480"></p>
 
 Block, oval, hex, slant, cylinder, diamond, polygon, line, icon, and image — plus `path` for anything else.
 
@@ -106,7 +106,7 @@ Text is not a primitive: a bare `"…"` is content, styleable in place (`"x" { c
 
 ## Icons
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/icons.png" alt="Lini's built-in Phosphor icons and signs" width="520"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/icons.svg" alt="Lini's built-in Phosphor icons and signs" width="520"></p>
 
 Built-in **[Phosphor](https://phosphoricons.com/)** icons as inline SVG paths — no icon font, no external files. An icon paints like any node: `fill` is the body, `stroke` the line, `stroke-width` counter-scaled so the weight holds at any size.
 
@@ -123,7 +123,7 @@ Only the symbols a diagram uses are embedded.
 
 ## Charts
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="700"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.svg" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="700"></p>
 
 `layout: chart` plots from data instead of pixels, working out the scale, ticks, gridlines, and a colour per series.
 
@@ -140,7 +140,7 @@ Only the symbols a diagram uses are embedded.
 
 ## Sequences
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/sequence.png" alt="A Lini sequence diagram: a checkout flow with activation bars, a loop frame, a self-message, and a note" width="530"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/sequence.svg" alt="A Lini sequence diagram: a checkout flow with activation bars, a loop frame, a self-message, and a note" width="530"></p>
 
 `layout: sequence` reads the diagram on a **time axis** — participants across the top, messages top-to-bottom **in the order you write them**. No new syntax: participants are nodes, messages are links.
 
@@ -161,7 +161,7 @@ The operator picks the message: `->` a call, `-->` a return, `~>` async, `a -> a
 
 ## Trees & mindmaps
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/mindmap.png" alt="A Lini mindmap: a centred root with six colour-tinted branches on smooth curves" width="700"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/mindmap.svg" alt="A Lini mindmap: a centred root with six colour-tinted branches on smooth curves" width="700"></p>
 
 `layout: tree` makes **nesting the hierarchy** — every `|topic|` child is a branch, source order is sibling order, and branch wires are generated for you.
 
@@ -198,7 +198,7 @@ Full routing contract — crossings, priority, self-loops, starvation: [`ROUTING
 
 ## Entities
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/entity_hero.png" alt="An e-commerce ER schema in Lini: six entities wired with crow's-foot cardinality" width="470"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/entity_hero.svg" alt="An e-commerce ER schema in Lini: six entities wired with crow's-foot cardinality" width="470"></p>
 
 An `|entity|` is an ER / database card built on `|table|` — its label is the title, each row `"field" "type"` (add a third column for a `PK` / `FK` gutter). Relationships are ordinary links with the **crow's-foot** operators:
 
@@ -222,7 +222,7 @@ Parts *mate* against each other, holes and patterns punch through, a half-profil
 
 ## Schematics
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/schematic.png" alt="A Lini schematic sheet: an ISO A5 page with two captioned regions, a TMC2300 driver with pins, a decoupling capacitor and ground, net labels, connectors, and a title block" width="760"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/schematic_hero.svg" alt="A Lini schematic sheet: an ISO A4 page with two captioned regions, a TMC2300 driver with pins, a decoupling capacitor and ground, net labels, connectors, and a title block" width="760"></p>
 
 `layout: schematic` reads a diagram as a **circuit sheet**. It places the parts and lets the ordinary router draw the wires — landing them on **fixed ports** (a pin's stub tip, a label's connection point), bending square, and dotting the junctions.
 
