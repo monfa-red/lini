@@ -133,13 +133,38 @@ fn chains_on_one_pin_stack_in_statement_order_one_seat_apart() {
 }
 
 #[test]
+fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
+    // [SPEC 16.1] a chain leaving its pin sideways gets its own lane, so its
+    // lead is one square turn — out along the pin, then away. Sharing a lane
+    // would stand one chain's body over the next one's leg, and the router,
+    // which may not cross a body, would jog that leg into a staircase.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left }; |pin#c| { side: right }\n  ]\n"
+            .to_owned()
+            + "  |gnd#ga|\n  |gnd#gb|\n  u1.a - ga\n  u1.b - gb\n"),
+    ));
+    let (pay, pby) = (cell(&nodes, "a").1, cell(&nodes, "b").1);
+    let (tax, tbx) = (tip(&nodes, "a", false), tip(&nodes, "b", false));
+    assert!(close(tax, tbx), "both stubs tip on one rail: {tax} {tbx}");
+    let ((gax, gay), (gbx, gby)) = (at(&nodes, "ga"), at(&nodes, "gb"));
+    assert!(!close(gax, gbx), "a lane each: {gax} {gbx}");
+    // Neither was pushed along the ray, so each turns once and lands square.
+    assert!(
+        close(gay - pay, gby - pby),
+        "each keeps its own pin's depth: {} vs {}",
+        gay - pay,
+        gby - pby
+    );
+}
+
+#[test]
 fn chains_on_different_pins_seat_in_the_order_their_pins_do() {
-    // [SPEC 16.1] the stack packs one way — outward along the growth ray — so
-    // whichever chain seats first keeps the seat nearest its own pin and every
-    // later one is pushed past it. Take them as written and a chain off the
-    // **lower** pin can end up outside one off the upper pin: their two leads
-    // then have to overtake each other, and cross. The order is the pins' own,
-    // so the sheet reads the same however the wires are written.
+    // [SPEC 16.1] no chain overtakes another. A chain that turns onto its ray
+    // competes for a lane and its leg crosses every lane inside its own, so the
+    // one off the **shallower** pin has to take the outer lane; take them as
+    // declared instead and the two leads cross. The order is the pins' own, so
+    // the sheet reads the same however the parts are written.
     let two_left = "  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left }; |pin#c| { side: right }\n  ]\n";
     // Declared either way round — the order a capsule terminator (`- |gnd|`)
     // hoists in, so this is the ordinary spelling's own variation.

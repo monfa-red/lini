@@ -57,6 +57,24 @@ struct Seat {
     dy: f64,
 }
 
+/// A chain one anchor holds, with everything the lane ladder and the seat both
+/// read off it — struck once in [`Seats::build`], because [`growth`] answers
+/// the ray and the pin together and neither pass may ask a second time.
+struct Growing {
+    /// Its (anchor, ray) ladder — chains on one ray compete for lanes.
+    group: usize,
+    ray: Side,
+    /// The pin it hangs from, in the anchor's own frame.
+    pin: (f64, f64),
+    /// How far along the ray that pin already sits — the ladder's order.
+    depth: f64,
+    /// The outward sign along the lane axis, `0` when the ray *is* the pin's
+    /// own normal and the chain never turns.
+    lead: f64,
+    chain: Chain,
+    held: End,
+}
+
 /// A chain held at both ends: its satellites distribute between the two
 /// terminals once the anchors are placed.
 struct Spanning {
@@ -124,11 +142,10 @@ impl Seats {
         for (i, c) in children.iter().enumerate() {
             packers[i].obstruct(drawn(c));
         }
-        let mut held: Vec<(usize, f64, Chain, End)> = Vec::new();
-        // The rays seen so far — an (anchor, growth direction) pair. Chains on
-        // different rays never share a lane, so only chains within one ray are
-        // reordered against each other; the rays themselves stay in the order
-        // they were declared in.
+        let mut held: Vec<Growing> = Vec::new();
+        // The rays seen so far — an (anchor, growth direction) pair. A ray owns
+        // its own ladder of lanes, so the rays keep the order they were
+        // declared in and only the chains within one are reordered.
         let mut rays: Vec<(usize, Side)> = Vec::new();
         for chain in chains(&satellite, &edges(children, links, scope)) {
             let ends = placed_ends(&chain, roles);
@@ -138,76 +155,77 @@ impl Seats {
             match (holder(&ends), ends.as_slice()) {
                 (Some(one), _) => {
                     let one = one.clone();
-                    let (out_side, pin) = growth(children, &chain, &one);
-                    let ray = (one.child, out_side);
-                    let group = rays.iter().position(|r| *r == ray).unwrap_or_else(|| {
-                        rays.push(ray);
+                    let (ray, pin) = growth(children, &chain, &one);
+                    let key = (one.child, ray);
+                    let group = rays.iter().position(|r| *r == key).unwrap_or_else(|| {
+                        rays.push(key);
                         rays.len() - 1
                     });
-                    let base = Frame::outward(out_side.normal()).cross(pin.at);
-                    held.push((group, base, chain, one));
+                    let frame = Frame::outward(ray.normal());
+                    let depth = frame.cross(pin.at);
+                    let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
+                    held.push(Growing {
+                        group,
+                        ray,
+                        pin: pin.at,
+                        depth,
+                        lead,
+                        chain,
+                        held: one,
+                    });
                 }
                 (None, [a, b, ..]) => out.distribute(children, chain, a, b),
                 (None, _) => out.floating.extend(chain.members),
             }
         }
-        // **Arrival order, not declaration order** [SPEC 16.1]. The stack packs
-        // one way — outward along the growth ray — so whichever chain seats
-        // first keeps the seat nearest its own pin and every later one is
-        // pushed past it. Seat them as written and a chain hanging off a *far*
-        // pin can end up outside one hanging off a near pin: the two leads then
-        // have to overtake each other, and cross. Ordering by how far along the
-        // ray each chain's own pin already sits — nearest first — is the
-        // routing contract's own rule for the runs in a channel ("wires leave
-        // in the order they arrive — nested, never braided", ROUTING.md model
-        // step 5), asked one pass earlier of the parts those wires will join.
+        // **No chain overtakes another** [SPEC 16.1] — the routing contract's
+        // own rule for the runs in a channel ("wires leave in the order they
+        // arrive — nested, never braided", ROUTING.md model step 5), asked one
+        // pass earlier of the parts those wires will join. Which end of the
+        // order that is depends on the axis a chain competes for:
+        //
+        // - a chain that **turns** onto its ray competes for a lane, and its
+        //   leg crosses every lane inside its own — so the one off the
+        //   *shallower* pin has to take the *outer* lane, or its turn cuts
+        //   through a deeper chain's leg. Deepest first.
+        // - a chain that grows **straight** out along its pin takes no lane and
+        //   stacks in depth instead, where the stack only ever pushes outward —
+        //   so the shallowest keeps its own pin's depth and the rest pass it.
+        //   Shallowest first.
+        //
         // A stable sort, so chains sharing a ray *and* a pin keep their
         // statement order, which is the only thing left to break the tie.
-        held.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.total_cmp(&b.1)));
-        for (_, _, chain, one) in &held {
-            out.grow(children, chain, one, &mut packers[one.child]);
+        held.sort_by(|a, b| {
+            a.group.cmp(&b.group).then(if a.lead == 0.0 {
+                a.depth.total_cmp(&b.depth)
+            } else {
+                b.depth.total_cmp(&a.depth)
+            })
+        });
+        let lanes = ladder(children, &held, seat);
+        for (g, along) in held.iter().zip(lanes) {
+            let frame = Frame::outward(g.ray.normal());
+            out.grow(children, g, frame, along, &mut packers[g.held.child]);
         }
         out
     }
 
     /// A one-placed-end chain: each satellite seats farther out along the
     /// growth ray, its connection point landing where the packer clears.
-    fn grow(&mut self, children: &[PlacedNode], chain: &Chain, held: &End, stack: &mut Stack) {
-        let anchor = &children[held.child];
-        let (out, pin) = growth(children, chain, held);
-        let frame = Frame::outward(out.normal());
-        // The chain hangs off the wire's **first leg** — one seat out along the
-        // pin — and grows from there in its terminator's direction [SPEC 16.1]:
-        // a cap under a side pin sits below the wire leaving it, not inside the
-        // component's own column. When the ray is the pin's own normal the leg
-        // has no cross component and this is exactly the pin.
-        // The leg runs **as long as the chain needs** to stand clear of the
-        // part it hangs from: a satellite's own ink — its symbol, its ref and
-        // value readouts — must never reach back over the body, and pushing it
-        // farther *along* the ray instead would drop it past the whole
-        // component.
-        let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
-        let base = frame.cross(pin.at);
-        let mut along = frame.u(pin.at) + lead * self.seat;
-        if lead != 0.0 {
-            let wall = {
-                let (lo, hi) = project(drawn(anchor), frame.u);
-                if lead > 0.0 { hi } else { lo }
-            };
-            for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
-                let box_ = drawn(&children[member]);
-                let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
-                let u = frame.u(terminal(&children[member], inbound.as_deref()).at);
-                // The member's edge facing the body, relative to the leg.
-                let near = if lead > 0.0 { u0.min(u1) } else { u0.max(u1) } - u;
-                let want = wall + lead * self.seat - near;
-                along = if lead > 0.0 {
-                    along.max(want)
-                } else {
-                    along.min(want)
-                };
-            }
-        }
+    fn grow(
+        &mut self,
+        children: &[PlacedNode],
+        g: &Growing,
+        frame: Frame,
+        along: f64,
+        stack: &mut Stack,
+    ) {
+        let (chain, held) = (&g.chain, &g.held);
+        // The chain hangs off the wire's **first leg** — out along the pin to
+        // its own lane ([`Self::lane`]) — and grows from there in its
+        // terminator's direction [SPEC 16.1]: a cap under a side pin sits
+        // below the wire leaving it, not inside the component's own column.
+        let base = frame.cross(g.pin);
         for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
             let sat = &children[member];
             let point = terminal(sat, inbound.as_deref()).at;
@@ -393,6 +411,89 @@ fn step(
         step = step.max((pair[0] + pair[1]) / 2.0);
     }
     (e.len() + 1) as f64 * (step + seat)
+}
+
+/// Every chain's **lane** [SPEC 16.1] — how far out along its pin's own normal
+/// it stands before turning onto its growth ray — one per entry of `held`, in
+/// that order.
+///
+/// **A lane per chain, within a ray.** A chain reaches back toward the part from
+/// its own lane, so sharing one lane stands a flag's body over its neighbour's
+/// leg — and the router, which may not cross a body, jogs that leg into a
+/// staircase rather than the one square turn a sheet draws. Each chain
+/// therefore steps out past the whole reach of the one before it, in the order
+/// `held` arrives in (see [`Seats::build`]). The step only ever pushes a lane
+/// **outward**, so the walk is monotone and its bound is a backstop, never a
+/// cutoff.
+///
+/// A chain growing straight out along its own pin (`lead == 0`) has no lane to
+/// take: it never turns, so there is nothing to ladder.
+fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
+    // Everything below is in **outward** coordinates — the lane axis times the
+    // pin's own outward sign — so "farther out" is always larger.
+    let lead: Vec<f64> = held.iter().map(|g| g.lead).collect();
+    // A straight-growing chain's lane *is* its pin, and it takes no part in the
+    // ladder; only a turning one is carried in outward coordinates below.
+    let mut along: Vec<f64> = Vec::with_capacity(held.len());
+    let mut out: Vec<f64> = Vec::with_capacity(held.len());
+    let mut back: Vec<f64> = Vec::with_capacity(held.len());
+    for (g, &lead) in held.iter().zip(&lead) {
+        let (lane, reach) = clearing(children, g, lead, seat);
+        along.push(lane);
+        out.push(lead * lane);
+        back.push(reach);
+    }
+    for _ in 0..=held.len() {
+        let mut moved = false;
+        // Ladder: within one ray, each chain steps past its predecessor's reach.
+        let mut prev: Option<(usize, f64)> = None;
+        for (i, g) in held.iter().enumerate() {
+            if lead[i] == 0.0 {
+                continue;
+            }
+            if let Some((group, edge)) = prev
+                && group == g.group
+                && out[i] < edge
+            {
+                out[i] = edge;
+                moved = true;
+            }
+            prev = Some((g.group, out[i] + back[i] + seat));
+        }
+        if !moved {
+            break;
+        }
+    }
+    for (i, &lead) in lead.iter().enumerate() {
+        if lead != 0.0 {
+            along[i] = lead * out[i];
+        }
+    }
+    along
+}
+
+/// What one chain asks of its lane before any other is consulted [SPEC 16.1]:
+/// the innermost lane clearing the part it hangs from, and how far back toward
+/// that part its widest member reaches from the lane — the ink the next lane
+/// out has to clear. Both in outward coordinates.
+fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64, f64) {
+    let frame = Frame::outward(g.ray.normal());
+    let straight = frame.u(g.pin) + lead * seat;
+    if lead == 0.0 {
+        return (straight, 0.0);
+    }
+    let wall = {
+        let (lo, hi) = project(drawn(&children[g.held.child]), frame.u);
+        lead * if lead > 0.0 { hi } else { lo }
+    };
+    let mut back = 0.0f64;
+    for (&member, inbound) in g.chain.members.iter().zip(&g.chain.inbound) {
+        let box_ = drawn(&children[member]);
+        let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
+        let u = frame.u(terminal(&children[member], inbound.as_deref()).at);
+        back = back.max(lead * (u - if lead > 0.0 { u0.min(u1) } else { u0.max(u1) }));
+    }
+    (lead * (lead * straight).max(wall + seat + back), back)
 }
 
 /// Where a one-held chain grows **from** and **toward** [SPEC 16.1]: the pin
