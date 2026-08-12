@@ -3211,7 +3211,9 @@ consume space, never cells.
   line between the two pins at even fractions;
 - **no placed end** — the parts fall back to the flow with a warning.
 
-Several chains on one pin stack in statement order. A seated satellite
+Chains stack outward, **in the order the pins they hang on sit** along that
+growth ray — nearest first, so no two leads overtake each other and cross;
+chains sharing one pin keep statement order. A seated satellite
 registers as a router obstacle like any node. **`cell:` promotes a satellite
 to an anchor**; `translate:` nudges it from its seat (pin-relative — move
 the component and the nudge travels along, [SPEC 5](#5-the-box-model)).

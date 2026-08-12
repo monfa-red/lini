@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/schematic_hero.lini
 ---
@@ -373,7 +372,7 @@ input_file: samples/schematic_hero.lini
             </g>
           </g>
         </g>
-        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(-96.0375,-77)">
+        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(-96.0375,-103.5)">
           <rect x="-22.22" y="-10.75" width="44.44" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-21.47,-10)">
             <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
@@ -383,7 +382,7 @@ input_file: samples/schematic_hero.lini
             <use href="#lg1500-87" transform="translate(12.529 3.938) scale(0.011 -0.011)"/>
           </g>
         </g>
-        <g class="lini-node lini-vio lini-label lini-block" data-id="lini-cap-2" transform="translate(-97.242,-123.5)">
+        <g class="lini-node lini-vio lini-label lini-block" data-id="lini-cap-2" transform="translate(-97.242,-57)">
           <rect x="-23.4245" y="-10.75" width="46.849" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-22.6745,-10)">
             <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
@@ -909,10 +908,10 @@ input_file: samples/schematic_hero.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VS" data-to="drv.lini-cap-1">
-      <path d="M -325.5375 -41.25 L -386.9775 -41.25 L -386.9775 -67"/>
+      <path d="M -325.5375 -41.25 L -338.4125 -41.25 L -338.4125 -80.625 L -386.9775 -80.625 L -386.9775 -93.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VIO" data-to="drv.lini-cap-2">
-      <path d="M -325.5375 -21.25 L -338.4125 -21.25 L -338.4125 -100.625 L -389.3865 -100.625 L -389.3865 -113.5"/>
+      <path d="M -325.5375 -21.25 L -389.3865 -21.25 L -389.3865 -47"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VIO" data-to="drv.C24.p1">
       <path d="M -325.5375 -21.25 L -405.3095 -21.25 L -405.3095 4.5"/>

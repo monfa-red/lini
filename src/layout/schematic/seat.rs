@@ -124,16 +124,48 @@ impl Seats {
         for (i, c) in children.iter().enumerate() {
             packers[i].obstruct(drawn(c));
         }
+        let mut held: Vec<(usize, f64, Chain, End)> = Vec::new();
+        // The rays seen so far — an (anchor, growth direction) pair. Chains on
+        // different rays never share a lane, so only chains within one ray are
+        // reordered against each other; the rays themselves stay in the order
+        // they were declared in.
+        let mut rays: Vec<(usize, Side)> = Vec::new();
         for chain in chains(&satellite, &edges(children, links, scope)) {
             let ends = placed_ends(&chain, roles);
             // One anchor holds it → grow off that pin; two → span between them;
             // none → the flow fallback. Which of the first two a chain is, is
             // [`holder`]'s single answer, shared with the pose chooser.
             match (holder(&ends), ends.as_slice()) {
-                (Some(one), _) => out.grow(children, &chain, one, &mut packers[one.child]),
+                (Some(one), _) => {
+                    let one = one.clone();
+                    let (out_side, pin) = growth(children, &chain, &one);
+                    let ray = (one.child, out_side);
+                    let group = rays.iter().position(|r| *r == ray).unwrap_or_else(|| {
+                        rays.push(ray);
+                        rays.len() - 1
+                    });
+                    let base = Frame::outward(out_side.normal()).cross(pin.at);
+                    held.push((group, base, chain, one));
+                }
                 (None, [a, b, ..]) => out.distribute(children, chain, a, b),
                 (None, _) => out.floating.extend(chain.members),
             }
+        }
+        // **Arrival order, not declaration order** [SPEC 16.1]. The stack packs
+        // one way — outward along the growth ray — so whichever chain seats
+        // first keeps the seat nearest its own pin and every later one is
+        // pushed past it. Seat them as written and a chain hanging off a *far*
+        // pin can end up outside one hanging off a near pin: the two leads then
+        // have to overtake each other, and cross. Ordering by how far along the
+        // ray each chain's own pin already sits — nearest first — is the
+        // routing contract's own rule for the runs in a channel ("wires leave
+        // in the order they arrive — nested, never braided", ROUTING.md model
+        // step 5), asked one pass earlier of the parts those wires will join.
+        // A stable sort, so chains sharing a ray *and* a pin keep their
+        // statement order, which is the only thing left to break the tie.
+        held.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.total_cmp(&b.1)));
+        for (_, _, chain, one) in &held {
+            out.grow(children, chain, one, &mut packers[one.child]);
         }
         out
     }
@@ -142,20 +174,7 @@ impl Seats {
     /// growth ray, its connection point landing where the packer clears.
     fn grow(&mut self, children: &[PlacedNode], chain: &Chain, held: &End, stack: &mut Stack) {
         let anchor = &children[held.child];
-        let pin = terminal(anchor, held.terminal.as_deref());
-        // The direction the chain grows: away from the terminator's own
-        // connection geometry, else straight out along the pin [SPEC 16.1].
-        let last = *chain.members.last().expect("a chain has a member");
-        let out = tag_facing(
-            &children[last],
-            chain.inbound.last().and_then(|t| t.as_deref()),
-        )
-        // A part terminator has no drawn convention to read — its pins are just
-        // pins — so its chain runs along the pin's own outward normal; a text
-        // label carries no connection geometry either. With neither (a wire to
-        // a plain box) the chain hangs below, the one direction a sheet always
-        // has room in.
-        .map_or_else(|| pin.facing.unwrap_or(Side::Bottom), Side::opposite);
+        let (out, pin) = growth(children, chain, held);
         let frame = Frame::outward(out.normal());
         // The chain hangs off the wire's **first leg** — one seat out along the
         // pin — and grows from there in its terminator's direction [SPEC 16.1]:
@@ -374,6 +393,29 @@ fn step(
         step = step.max((pair[0] + pair[1]) / 2.0);
     }
     (e.len() + 1) as f64 * (step + seat)
+}
+
+/// Where a one-held chain grows **from** and **toward** [SPEC 16.1]: the pin
+/// that holds it, and the ray it runs along — away from the terminator's own
+/// connection geometry, else straight out along the pin.
+///
+/// One home for the ray, because two passes need it before anything is seated:
+/// [`Seats::grow`] lays the chain along it, and [`Seats::build`] sorts the
+/// chains sharing it into arrival order first.
+fn growth(children: &[PlacedNode], chain: &Chain, held: &End) -> (Side, Terminal) {
+    let pin = terminal(&children[held.child], held.terminal.as_deref());
+    let last = *chain.members.last().expect("a chain has a member");
+    let out = tag_facing(
+        &children[last],
+        chain.inbound.last().and_then(|t| t.as_deref()),
+    )
+    // A part terminator has no drawn convention to read — its pins are just
+    // pins — so its chain runs along the pin's own outward normal; a text
+    // label carries no connection geometry either. With neither (a wire to a
+    // plain box) the chain hangs below, the one direction a sheet always has
+    // room in.
+    .map_or_else(|| pin.facing.unwrap_or(Side::Bottom), Side::opposite);
+    (out, pin)
 }
 
 /// The direction a chain's **terminator** sets [SPEC 16.1] — the way its own

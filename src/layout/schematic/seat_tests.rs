@@ -133,6 +133,32 @@ fn chains_on_one_pin_stack_in_statement_order_one_seat_apart() {
 }
 
 #[test]
+fn chains_on_different_pins_seat_in_the_order_their_pins_do() {
+    // [SPEC 16.1] the stack packs one way — outward along the growth ray — so
+    // whichever chain seats first keeps the seat nearest its own pin and every
+    // later one is pushed past it. Take them as written and a chain off the
+    // **lower** pin can end up outside one off the upper pin: their two leads
+    // then have to overtake each other, and cross. The order is the pins' own,
+    // so the sheet reads the same however the wires are written.
+    let two_left = "  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left }; |pin#c| { side: right }\n  ]\n";
+    // Declared either way round — the order a capsule terminator (`- |gnd|`)
+    // hoists in, so this is the ordinary spelling's own variation.
+    for order in ["  |gnd#ga|\n  |gnd#gb|\n", "  |gnd#gb|\n  |gnd#ga|\n"] {
+        let nodes = laid(&scope(
+            "",
+            &(two_left.to_owned() + order + "  u1.a - ga\n  u1.b - gb\n"),
+        ));
+        let (ay, by) = (cell(&nodes, "a").1, cell(&nodes, "b").1);
+        assert!(ay < by, "pin 'a' is the upper one: {ay} {by}");
+        let (ga, gb) = (at(&nodes, "ga").1, at(&nodes, "gb").1);
+        assert!(
+            ga < gb,
+            "the upper pin's ground stays above the lower pin's, declared {order:?}: {ga} {gb}"
+        );
+    }
+}
+
+#[test]
 fn two_placed_ends_distribute_at_even_fractions() {
     // [SPEC 16.1] the satellites of a chain held at both ends space evenly
     // along the straight line between the two pins — the wire lands on the
