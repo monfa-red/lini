@@ -3,8 +3,8 @@
 //! no placed end flows with a warning; and every seat rides its anchor.
 
 use super::tests::{
-    anchor, at, body, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with,
-    tip, y_gap,
+    anchor, at, body, cell, close, ink, laid, placed, pose_of, scope, seat_warnings, sided,
+    sided_with, tip, y_gap,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::LABEL_SEAT;
@@ -155,6 +155,44 @@ fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
         "each keeps its own pin's depth: {} vs {}",
         gay - pay,
         gby - pby
+    );
+}
+
+#[test]
+fn a_lane_answers_to_the_symbol_not_to_the_name_beside_it() {
+    // [SPEC 16.1] the seat gap is measured on what a wire arrives at — a
+    // flag's symbol — and the name beside it only may not reach back over the
+    // part. Charged on the name too, a connector wired to a flag on one side
+    // and a bare ground on the other stands them off by visibly different
+    // amounts, lopsided for no reason a reader can see.
+    let part = "  |component#u1| [\n    |pin#l| { side: left }; |pin#r| { side: right }; |pin#d| { side: bottom }\n  ]\n";
+    let lanes = |name: &str| {
+        // The define is the stylesheet's, so the source is built around the
+        // scope rather than through the `scope` helper's body alone.
+        let sheet = format!("{{ |flag::label| {{ symbol: power }} [ \"{name}\" ] }}\n");
+        let nodes = laid(
+            &(sheet
+                + &scope(
+                    "",
+                    &(part.to_owned() + "  |flag#f|\n  |gnd#g|\n  u1.l - f\n  u1.r - g\n"),
+                )),
+        );
+        // What a reader compares: stub tip to the far tip of the symbol, the
+        // whole span each side of the part takes up.
+        let (lx, rx) = (tip(&nodes, "l", false), tip(&nodes, "r", true));
+        (lx - ink(&nodes, "f").min_x, ink(&nodes, "g").max_x - rx)
+    };
+    let (flag, ground) = lanes("VM");
+    assert!(
+        close(flag, ground),
+        "a short name stands off exactly as the bare ground does: {flag} vs {ground}"
+    );
+    // A name long enough to actually reach the part pushes its own lane out —
+    // the case the clearance exists for.
+    let (long, ground) = lanes("VM_VERY_VERY_LONG");
+    assert!(
+        long > ground,
+        "a name that would reach the part moves out: {long} vs {ground}"
     );
 }
 

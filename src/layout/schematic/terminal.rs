@@ -73,16 +73,32 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
     // the symbol is drawn by its one `|path|` child. The wire meets the
     // **ink**: the paint bbox is deflated by the glyph's painted half-stroke,
     // or the landing floats a half-stroke off the drawing.
-    let body = ["sch-tag-line", "sch-line"]
-        .iter()
-        .find_map(|k| child_wearing(part, k))
-        .map_or(part.bbox, |c| {
-            c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy)
-        });
+    let body = drawing(part).map_or(part.bbox, |c| {
+        c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy)
+    });
     Terminal {
         at: facing.map_or(body.center(), |s| edge_midpoint(body, s)),
         facing,
     }
+}
+
+/// The drawing a `|label|`'s wire lands on — its one symbol child. One home,
+/// because two passes measure off it: the landing point above, and the lane a
+/// chain hangs its satellites in ([`connection_box`]).
+fn drawing(part: &PlacedNode) -> Option<&PlacedNode> {
+    ["sch-tag-line", "sch-line"]
+        .iter()
+        .find_map(|k| child_wearing(part, k))
+}
+
+/// A part's **connection-bearing** extent in its own frame — what a wire
+/// actually arrives at. For a `|label|` that is its symbol alone: the text
+/// beside it is annotation, *placed by* the symbol rather than placing it, so
+/// it never sets how far out the part must stand ([SPEC 16.1/16.4]). For
+/// everything else it is the part's own box, readouts excluded for the same
+/// reason.
+pub(super) fn connection_box(part: &PlacedNode) -> Bbox {
+    drawing(part).map_or(part.bbox, |c| c.bbox.shifted(c.cx, c.cy))
 }
 
 /// A component pin's connection point: the far end of its stub, on the side

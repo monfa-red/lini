@@ -3202,7 +3202,9 @@ consume space, never cells.
 
 - **one placed end** — the chain hangs off the wire's first leg (one seat out
   along the pin, and as much farther as it needs to stand clear of the part it
-  hangs from) and grows from there, link by link, in the direction of its
+  hangs from — the seat measured on the **connection geometry** a wire arrives
+  at, a flag's symbol rather than the name beside it, which need only not reach
+  back over the part) and grows from there, link by link, in the direction of its
   **terminator's** connection geometry. Only a `|label|` carries that
   convention — a `|gnd|` is drawn with its connection point at its top, so the
   chain grows down; a power flag's sits at its bottom, so up; a text label, and

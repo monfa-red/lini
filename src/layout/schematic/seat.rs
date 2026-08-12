@@ -42,7 +42,7 @@ use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::stack::{Band, SeatLine, Stack};
 use super::net;
-use super::terminal::{Terminal, terminal};
+use super::terminal::{Terminal, connection_box, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
@@ -498,6 +498,17 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
 /// the innermost lane clearing the part it hangs from, and how far back toward
 /// that part its widest member reaches from the lane — the ink the next lane
 /// out has to clear. Both in outward coordinates.
+///
+/// **The seat gap answers to the connection geometry, the ink only to overlap.**
+/// A part stands one seat gap off the wall measured on what a wire actually
+/// arrives at — a flag's symbol, a discrete's body — and its *annotation* (the
+/// name beside a symbol, a ref or value readout) merely may not reach back over
+/// the part. Charging the seat gap on the annotation too would make a chain's
+/// lane a function of how long its name reads: on a connector wired up on one
+/// side and down on the other, `VM` and a bare ground would stand off by
+/// visibly different amounts, lopsided for no reason a reader can see. A name
+/// long enough to actually reach the part still pushes its own lane out, which
+/// is the case the clearance exists for.
 fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64, f64) {
     let frame = Frame::outward(g.ray.normal());
     let straight = frame.u(g.pin) + lead * seat;
@@ -508,14 +519,22 @@ fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64,
         let (lo, hi) = project(drawn(&children[g.held.child]), frame.u);
         lead * if lead > 0.0 { hi } else { lo }
     };
-    let mut back = 0.0f64;
-    for (&member, inbound) in g.chain.members.iter().zip(&g.chain.inbound) {
-        let box_ = drawn(&children[member]);
+    // How far a box reaches back toward the part from the member's landing.
+    let reach = |box_: Bbox, at: (f64, f64)| {
         let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
-        let u = frame.u(terminal(&children[member], inbound.as_deref()).at);
-        back = back.max(lead * (u - if lead > 0.0 { u0.min(u1) } else { u0.max(u1) }));
+        lead * (frame.u(at) - if lead > 0.0 { u0.min(u1) } else { u0.max(u1) })
+    };
+    let (mut ink, mut connection) = (0.0f64, 0.0f64);
+    for (&member, inbound) in g.chain.members.iter().zip(&g.chain.inbound) {
+        let node = &children[member];
+        let at = terminal(node, inbound.as_deref()).at;
+        ink = ink.max(reach(drawn(node), at));
+        connection = connection.max(reach(connection_box(node), at));
     }
-    (lead * (lead * straight).max(wall + seat + back), back)
+    let out = (lead * straight)
+        .max(wall + seat + connection)
+        .max(wall + ink);
+    (lead * out, ink)
 }
 
 /// Where a one-held chain grows **from** and **toward** [SPEC 16.1]: the pin
