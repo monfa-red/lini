@@ -460,6 +460,28 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
             }
             prev = Some((g.group, out[i] + back[i] + seat));
         }
+        // Share: a pin whose net branches **both** ways — a rail up to its
+        // flag, down to its decoupling cap — leaves on one lead and splits
+        // **once**, at one point, rather than peeling twice off its stub. So
+        // every chain on one pin takes the outermost lane any of them asked
+        // for. The two wires then run co-linearly out to that point, which the
+        // router draws as one lead: they land on one fixed port, so they are
+        // an implicit fan and the fan's trunk is one drawn line
+        // ([ROUTING.md](../../../ROUTING.md) Special nodes / Fixed ports).
+        for i in 0..held.len() {
+            for j in 0..held.len() {
+                if i != j
+                    && lead[i] != 0.0
+                    && lead[j] != 0.0
+                    && held[i].held.child == held[j].held.child
+                    && held[i].pin == held[j].pin
+                    && out[i] < out[j]
+                {
+                    out[i] = out[j];
+                    moved = true;
+                }
+            }
+        }
         if !moved {
             break;
         }
