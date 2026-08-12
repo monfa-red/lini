@@ -938,7 +938,7 @@ input_file: samples/schematic_parts.lini
     <g class="lini-node lini-label lini-block" transform="translate(288.2855,198.25)">
       <rect x="-32.665" y="-10.75" width="65.33" height="21.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-31.915,-10)">
-        <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 4 9 L 8 0 L 12 9"/>
+        <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3.5 9 L 8 0 L 12.5 9"/>
       </g>
       <g class="lini-text">
         <use href="#lg1500-156" transform="translate(4.835 3.938) scale(0.011 -0.011)"/>

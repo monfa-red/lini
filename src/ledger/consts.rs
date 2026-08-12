@@ -112,9 +112,9 @@ pub(crate) const SHEET_MARGIN: f64 = 10.0;
 /// Pin centre-to-centre spacing — a pin row's height, so rows stacking at
 /// gap 0 land on exact pitch centres. Must stay ≥ the router's min pitch at
 /// the scope's clearance [SPEC 16.5].
-pub(crate) const PIN_PITCH: f64 = 25.0;
+pub(crate) const PIN_PITCH: f64 = 20.0;
 /// The stub — the short lead a pin extends outward; the wire lands on its tip.
-pub(crate) const PIN_STUB: f64 = 15.0;
+pub(crate) const PIN_STUB: f64 = 20.0;
 /// The junction dot's radius [SPEC 16.5].
 pub(crate) const JUNCTION_RADIUS: f64 = 4.0;
 /// How deep a shaped tag's point is cut back from its box [SPEC 16.4] — the

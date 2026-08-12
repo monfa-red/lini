@@ -1395,7 +1395,7 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-schematic track gap 60    pin-pitch 25    pin-stub 15    junction 4 (radius)    tag-point 10 (a flag's nose)
+schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 10 (a flag's nose)
 label-seat max(25, 2.5 × clearance) — a seat is a routing corridor, so it is
   derived from the scope's own clearance, floored at one pin pitch
 pin-number offset 9 (across the lead)    readout offset 40 (beside a turned part's axis)
