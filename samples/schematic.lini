@@ -24,7 +24,7 @@
 // `pins: 3` generates p1–p3, split bilaterally; `rotate:` is read at lowering
 // — the pins re-side (and their rail reverses) while every text stays upright,
 // so the header's own pins face back at the regulator.
-|J#j1| "3V3 OUT" { pins: 3; rotate: 180; }
+|J#j1| "3V3 OUT" { pins: 4; rotate: 180; }
 
 // ── satellites ──
 |C#c1| "22u"
@@ -42,7 +42,17 @@ u1.vout - j1.p3 "3V3"
 // the capsule form — a label declared where it is wired
 u1.gnd - |gnd|
 // a label wire — the one-ended statement mints the net tag it points at, and
-// the op's end marker shapes it (`->` sets `right`, the flag drawn to a point).
-// Bare (`-`), the tag stays `plain` and is a **run**: the wire travels its
-// length and the name sits over the trace, as on `U7`'s pins in the hero sheet
+// the op's end marker **shapes** it: bare `-` leaves it `plain`, so the tag is
+// a **run** — the wire travels its length and the name rides over the trace,
+// the sheet's own convention. A marker makes it a drawn tag instead, which is
+// how a global label terminates its net.
 j1.p1 -> "NSTDBY"
+// `-<` points the other way, `-<>` draws both ends, `-*` rounds it — the same
+// statement, four outlines. A plain run takes `side:` to pick which side of
+// the trace its name sits on, and `width:` to lengthen the run under it.
+j1.p2 -< "SLEEP"
+// a plain run, one-ended: the wire runs its own length and the name rides
+// over it — no tag drawn, no trace cut. `side:` picks which side of the trace
+// the name sits on and `width:` lengthens the run beneath it; both are left at
+// their defaults here, which on stacked pins is what keeps a name unambiguous.
+j1.p4 - "SENSE"

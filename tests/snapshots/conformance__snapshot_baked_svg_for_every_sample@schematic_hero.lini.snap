@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/schematic_hero.lini
 ---
@@ -375,7 +376,7 @@ input_file: samples/schematic_hero.lini
         <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(-101.0375,-77)">
           <rect x="-27.22" y="-10.75" width="54.44" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-26.47,-10)">
-            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3.5 9 L 8 0 L 12.5 9"/>
+            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <g class="lini-text">
             <use href="#lg1500-156" transform="translate(10.28 3.938) scale(0.011 -0.011)"/>
@@ -385,7 +386,7 @@ input_file: samples/schematic_hero.lini
         <g class="lini-node lini-vio lini-label lini-block" data-id="lini-cap-2" transform="translate(-102.242,-123.5)">
           <rect x="-28.4245" y="-10.75" width="56.849" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-27.6745,-10)">
-            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3.5 9 L 8 0 L 12.5 9"/>
+            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <g class="lini-text">
             <use href="#lg1500-156" transform="translate(9.0755 3.938) scale(0.011 -0.011)"/>
@@ -643,7 +644,7 @@ input_file: samples/schematic_hero.lini
         <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(61.25,-28)">
           <rect x="-27.22" y="-10.75" width="54.44" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-26.47,-10)">
-            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3.5 9 L 8 0 L 12.5 9"/>
+            <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <g class="lini-text">
             <use href="#lg1500-156" transform="translate(10.28 3.938) scale(0.011 -0.011)"/>
