@@ -61,6 +61,17 @@ fn var(name: &str, v: &str) -> Decl {
 fn pair(name: &str, a: f64, b: f64) -> Decl {
     decl(name, vec![Value::Number(a), Value::Number(b)])
 }
+fn quad(name: &str, t: f64, r: f64, b: f64, l: f64) -> Decl {
+    decl(
+        name,
+        vec![
+            Value::Number(t),
+            Value::Number(r),
+            Value::Number(b),
+            Value::Number(l),
+        ],
+    )
+}
 
 /// Root defaults specific to a root `{ layout: X }` engine, layered over [`root_defaults`]
 /// (the user's own decls still win). A root sequence breathes like a `|sequence|` node — it
@@ -616,8 +627,12 @@ pub enum SchChrome {
     /// The `round` tag — a stadium (radius caps at half-height).
     TagRound,
     /// A **flag** tag (`shape: left | right | both`) — the room its drawn
-    /// point sits in; the outline itself is chrome the layout fills.
-    TagFlag,
+    /// point sits in, reserved on **the pointed side only**, so a one-ended
+    /// flag hugs its text at the flat end; the outline itself is chrome the
+    /// layout fills.
+    TagFlagLeft,
+    TagFlagRight,
+    TagFlagBoth,
 }
 
 impl SchChrome {
@@ -632,7 +647,9 @@ impl SchChrome {
         SchChrome::PartValue,
         SchChrome::TagOutline,
         SchChrome::TagRound,
-        SchChrome::TagFlag,
+        SchChrome::TagFlagLeft,
+        SchChrome::TagFlagRight,
+        SchChrome::TagFlagBoth,
     ];
 
     /// The bare class name (worn as `lini-<name>`).
@@ -648,7 +665,9 @@ impl SchChrome {
             SchChrome::PartValue => "part-value",
             SchChrome::TagOutline => "tag-outline",
             SchChrome::TagRound => "tag-round",
-            SchChrome::TagFlag => "tag-flag",
+            SchChrome::TagFlagLeft => "tag-flag-left",
+            SchChrome::TagFlagRight => "tag-flag-right",
+            SchChrome::TagFlagBoth => "tag-flag-both",
         }
     }
 }
@@ -685,7 +704,12 @@ pub fn sch_chrome_decls(chrome: SchChrome) -> Vec<Decl> {
             pair("padding", 2.0, 6.0),
         ],
         SchChrome::TagRound => vec![n("radius", 99.0)],
-        SchChrome::TagFlag => vec![pair("padding", 2.0, 6.0 + consts::TAG_POINT)],
+        // Only the pointed end reserves its nose [SPEC 16.4]: a `shape: right`
+        // tag is flat on the left, so padding it there would set the text
+        // adrift of an edge that has no point to clear.
+        SchChrome::TagFlagLeft => vec![quad("padding", 2.0, 6.0, 2.0, 6.0 + consts::TAG_POINT)],
+        SchChrome::TagFlagRight => vec![quad("padding", 2.0, 6.0 + consts::TAG_POINT, 2.0, 6.0)],
+        SchChrome::TagFlagBoth => vec![pair("padding", 2.0, 6.0 + consts::TAG_POINT)],
     }
 }
 

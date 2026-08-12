@@ -117,9 +117,11 @@ pub(crate) const PIN_PITCH: f64 = 20.0;
 pub(crate) const PIN_STUB: f64 = 20.0;
 /// The junction dot's radius [SPEC 16.5].
 pub(crate) const JUNCTION_RADIUS: f64 = 4.0;
-/// How deep a shaped tag's point is cut back from its box [SPEC 16.4] — the
-/// flag's nose. The tag's own padding holds it, so the text never rides it.
-pub(crate) const TAG_POINT: f64 = 10.0;
+/// The room a shaped tag's point is given [SPEC 16.4] — the flag's nose,
+/// reserved by the class rule on the pointed side alone. The nose itself
+/// draws at half the tag's height (a 45° point at any text size) and clamps
+/// here, so the text never rides it.
+pub(crate) const TAG_POINT: f64 = 8.0;
 /// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
 /// stub tip and the satellite seated off it, and between stacked satellites.
 ///

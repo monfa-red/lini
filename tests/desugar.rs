@@ -1352,7 +1352,7 @@ fn a_marker_shapes_a_tag_however_it_was_written() {
     ] {
         let out = desugar_source(&sheet(wires)).unwrap();
         assert!(
-            out.contains(".lini-tag-flag.lini-label.lini-block { shape: right; }"),
+            out.contains(".lini-tag-flag-right.lini-label.lini-block { shape: right; }"),
             "'{wires}' shapes its tag: {out}"
         );
         assert!(

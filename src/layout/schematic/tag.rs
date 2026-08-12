@@ -36,11 +36,18 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], box_: Bbox) {
     }
 }
 
-/// The flag outline in the tag's own centred frame — the point cut back
-/// [`TAG_POINT`] from the box's edge, so the drawn tip lands **on** it and the
-/// label's padding already holds the whole shape.
+/// The flag outline in the tag's own centred frame — the point cut back from
+/// the box's edge, so the drawn tip lands **on** it and the label's padding
+/// already holds the whole shape.
+///
+/// The cut is **half the tag's height**, which draws the nose at exactly 45°
+/// whatever the text measures — a fixed depth grows sharper as the tag gets
+/// shorter, which is what read as a spike. [`TAG_POINT`] is what the class
+/// rule reserved for it, so a tag taller than that blunts its nose rather
+/// than letting the point eat the text.
 fn outline(shape: &str, w: f64, h: f64) -> String {
     let (x, y) = (w / 2.0, h / 2.0);
+    let point = y.min(TAG_POINT);
     let n = crate::layout::drawing::geometry::n;
     let (left, right) = (shape != "right", shape != "left");
     let mut d = String::new();
@@ -48,13 +55,13 @@ fn outline(shape: &str, w: f64, h: f64) -> String {
     let mut go = |cmd: char, px: f64, py: f64| {
         d.push_str(&format!("{cmd} {} {} ", n(px), n(py)));
     };
-    go('M', if left { -x + TAG_POINT } else { -x }, -y);
-    go('L', if right { x - TAG_POINT } else { x }, -y);
+    go('M', if left { -x + point } else { -x }, -y);
+    go('L', if right { x - point } else { x }, -y);
     if right {
         go('L', x, 0.0);
     }
-    go('L', if right { x - TAG_POINT } else { x }, y);
-    go('L', if left { -x + TAG_POINT } else { -x }, y);
+    go('L', if right { x - point } else { x }, y);
+    go('L', if left { -x + point } else { -x }, y);
     if left {
         go('L', -x, 0.0);
     }

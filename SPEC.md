@@ -1395,7 +1395,7 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 10 (a flag's nose)
+schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 8 (a flag's nose reservation; the nose draws at 45°)
 label-seat max(25, 2.5 × clearance) — a seat is a routing corridor, so it is
   derived from the scope's own clearance, floored at one pin pitch
 pin-number offset 9 (across the lead)    readout offset 40 (beside a turned part's axis)
@@ -3721,7 +3721,7 @@ families:
 | sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
-| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag` · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 
 (`lini-align-*` / `lini-justify-*` carry layout, not paint — they emit no CSS
 rule, the one `lini-` family host CSS cannot restyle. Generated **ids** are

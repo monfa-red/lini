@@ -351,7 +351,7 @@ pub(super) fn label_body(
         // and the layout fills it ([`crate::layout::schematic::tag`]); the
         // class here only buys the room the point sits in.
         shape @ ("left" | "right" | "both") => {
-            classes.insert(0, "lini-tag-flag".into());
+            classes.insert(0, format!("lini-tag-flag-{shape}"));
             children.push(lowered_chrome(cx, &tag_flag(shape), "lini-sch-tag-line")?);
         }
         other => {
