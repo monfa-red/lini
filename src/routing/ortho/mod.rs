@@ -235,6 +235,10 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         } else {
             k
         };
+        // The trunks this bundle rides: a sibling's committed lead is the
+        // very line this wire draws out of the shared port, so the ledger is
+        // read without it (ROUTING.md Special nodes).
+        let trunks: Vec<usize> = [fan_a, fan_b].into_iter().flatten().collect();
 
         let a_contains_b = index.geo_contains(&rep.a_path, &rep.b_path);
         let b_contains_a = index.geo_contains(&rep.b_path, &rep.a_path);
@@ -316,8 +320,9 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             // whole or the world is exhausted — never an unlawful squeeze.
             let mut deny: Vec<search::Deny> = Vec::new();
             let mut last: Option<search::Route> = None;
+            let held = ledger.read(&trunks);
             while let Some(route) =
-                search::cheapest(graph, w, &starts, &goals, &ledger, &deny, k_eff, c)
+                search::cheapest(graph, w, &starts, &goals, &held, &deny, k_eff, c)
             {
                 // A closure that changed nothing (an end run's channel no
                 // edge consults) can't make progress; neither can unbounded
@@ -336,11 +341,11 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                         }
                     });
                 let probe =
-                    geometry::chain(graph, w, &ledger, &route.cells, se, ge, ends, m0, k_eff, c);
+                    geometry::chain(graph, w, &held, &route.cells, se, ge, ends, m0, k_eff, c);
                 let blocked = probe
                     .runs
                     .iter()
-                    .find(|run| ledger.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff)
+                    .find(|run| held.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff)
                     .map(|run| (run.axis, run.chan, run.span))
                     .or_else(|| admit::admits(&worlds, &chains, &probe, k_eff, c));
                 match blocked {
@@ -418,7 +423,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             chains[m] = Some(geometry::chain(
                 &worlds[w].graph,
                 w,
-                &ledger,
+                &ledger.read(&trunks),
                 &cells,
                 es,
                 eg,
@@ -428,8 +433,20 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                 c,
             ));
         }
-        for run in &chains[m0].as_ref().expect("chain built").runs {
-            ledger.commit_run(w, run.axis, run.chan, run.span, k_eff, &worlds[w].graph);
+        // The route commits run by run, each carrying the fan group whose
+        // trunk it draws — the ledger counts that line once, however many
+        // siblings ride it.
+        let chain = chains[m0].as_ref().expect("chain built");
+        for (ri, run) in chain.runs.iter().enumerate() {
+            ledger.commit_run(
+                w,
+                run.axis,
+                run.chan,
+                run.span,
+                k_eff,
+                &worlds[w].graph,
+                cluster::fan_of(chain, ri),
+            );
         }
     }
 

@@ -19,11 +19,14 @@
 //! the canvas edge); end runs want the straightest lawful line to their
 //! port. Ports *are* end-run ordinates — fan siblings merge into one item
 //! and share one port — so a port can never disagree with the wire it
-//! serves.
+//! serves. Their branch runs meet *on* that trunk rather than run alongside
+//! it, so they owe each other nothing where their travel merely abuts
+//! ([`cluster::branch_of`]) and the anchor they both prefer is the one
+//! point the fan forks at.
 
 use std::collections::BTreeMap;
 
-use super::cluster::{Item, clusters_of, merge_fans, owed};
+use super::cluster::{self, Item, clusters_of, merge_fans, owed};
 use super::cost::min_pitch;
 use super::graph::{Axis, Corridor};
 use super::ladder::ladder;
@@ -175,6 +178,7 @@ pub(super) fn collect(
                 clamp: corner_clamp(worlds, chain, ri),
                 pref: prefs[ci][ri].0,
                 window: prefs[ci][ri].1,
+                branch: cluster::branch_of(chain, ri),
                 link: chain.link,
                 world: chain.world,
                 chan: run.chan,

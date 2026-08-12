@@ -16,7 +16,7 @@
 use super::cost::min_pitch;
 use super::entry::Entry;
 use super::graph::{Axis, ChannelGraph};
-use super::ledger::Ledger;
+use super::ledger::View;
 use super::rect::Rect;
 use super::{Chain, EndInfo, Run};
 
@@ -77,7 +77,7 @@ struct Seed {
 pub(crate) fn chain(
     graph: &ChannelGraph,
     world: usize,
-    ledger: &Ledger,
+    ledger: &View,
     cells: &[usize],
     start: &Entry,
     goal: &Entry,
@@ -322,6 +322,7 @@ pub fn stray_segment(a: Rect, b: Rect) -> Option<((f64, f64), (f64, f64))> {
 mod tests {
     use super::super::World;
     use super::super::entry::entries;
+    use super::super::ledger::Ledger;
     use super::super::place::place;
     use super::super::search::cheapest;
     use super::*;
@@ -362,11 +363,20 @@ mod tests {
         let ledger = Ledger::new(C);
         let starts = entries(&graph, a, C, C, None, None, extra, false);
         let goals = entries(&graph, b, C, C, None, None, extra, false);
-        let r = cheapest(&graph, 0, &starts, &goals, &ledger, &[], 1, C).expect("route");
+        let r = cheapest(&graph, 0, &starts, &goals, &ledger.read(&[]), &[], 1, C).expect("route");
         let (se, ge) = (&starts[r.start], &goals[r.goal]);
         let ends = [end_of(se, a), end_of(ge, b)];
         let mut chains = vec![Some(chain(
-            &graph, 0, &ledger, &r.cells, se, ge, ends, 0, 1, C,
+            &graph,
+            0,
+            &ledger.read(&[]),
+            &r.cells,
+            se,
+            ge,
+            ends,
+            0,
+            1,
+            C,
         ))];
         let worlds = [World { key: None, graph }];
         place(&worlds, &mut chains, C);
@@ -465,7 +475,7 @@ mod tests {
         let ch = chain(
             &graph,
             0,
-            &ledger,
+            &ledger.read(&[]),
             &[low, top, low],
             &start,
             &goal,

@@ -251,8 +251,13 @@ fn a_walled_forced_side_strays() {
     assert_eq!(impossibles(src), 1);
 }
 
+/// A fan is one drawn line **until the split** (ROUTING.md Special nodes):
+/// its siblings share the port and the trunk, and part at one point — never
+/// two wires fanning straight out of the port a pitch apart (user-reported:
+/// links_medium's `cat -> bowl & water` peeled off at the mouth, its branch
+/// runs charged each other pitch they never owed across the split).
 #[test]
-fn fan_siblings_share_their_first_point() {
+fn fan_siblings_share_a_trunk_and_split_at_one_point() {
     let src = "{ layout: grid; columns: repeat(2, 60); rows: repeat(2, 60); gap: 40; clearance: 10 }\n\
                |box#a| { cell: 1 1; span: 1 2; width: 60; height: 60 }\n\
                |box#b| { cell: 2 1; width: 60; height: 60 }\n\
@@ -261,6 +266,10 @@ fn fan_siblings_share_their_first_point() {
     let r = routes(src);
     let (pb, pc) = (path(&r, "a", "b"), path(&r, "a", "c"));
     assert_eq!(pb[0], pc[0], "one fan, one port: {pb:?} vs {pc:?}");
+    assert_eq!(pb[1], pc[1], "one trunk, one split: {pb:?} vs {pc:?}");
+    let laid = route_sample(src, 10.0);
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
 }
 
 #[test]
@@ -1137,6 +1146,33 @@ fn same_point_landings_merge_into_one_implicit_fan() {
     assert!(fans[0].is_some(), "the merge is a fan, not a coincidence");
     let breaches = law_breaches(&laid);
     assert!(breaches.is_empty(), "shared lead is a trunk: {breaches:?}");
+}
+
+/// The schematic face of the trunk (ROUTING.md Fixed ports, [SPEC 16.5]):
+/// two wires landing on **one pin**, their far ends beyond one shared
+/// corner, draw one lead out of the port and part at a single point — the
+/// T a junction dot marks. The implicit fan is the `&` fan's geometry
+/// exactly, so it goes through the same machinery: the second wire used to
+/// stray, its trunk asking the ledger for a track its sibling already held.
+#[test]
+fn same_pin_landings_draw_one_lead_before_the_split() {
+    let src = "{ layout: grid; columns: repeat(2, 60); rows: repeat(2, 60); gap: 24; clearance: 10 }\n\
+               |box#a| { cell: 1 1; span: 1 2; width: 60; height: 60 }\n\
+               |box#b| { cell: 2 1; width: 60; height: 60 }\n\
+               |box#c| { cell: 2 2; width: 60; height: 60 }\n\
+               a - b\n\
+               a - c\n";
+    let a = node_rect(&route_sample(src, 10.0), "a").expect("a placed");
+    let pin = (a.1 + a.3) / 2.0;
+    let ports = [("a", "b", "a", "right", pin), ("a", "c", "a", "right", pin)];
+    let laid = route_sample_with_ports(src, 10.0, &ports);
+    let (pb, pc) = (&drawn_paths(&laid, "a", "b"), &drawn_paths(&laid, "a", "c"));
+    assert_eq!(pb.len(), 1, "both wires draw: {:?}", stray_details(&laid));
+    assert_eq!(pc.len(), 1, "both wires draw: {:?}", stray_details(&laid));
+    assert_eq!(pb[0][0], pc[0][0], "one pin, one landing");
+    assert_eq!(pb[0][1], pc[0][1], "one lead, one split: {pb:?} vs {pc:?}");
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
 }
 
 #[test]

@@ -325,7 +325,23 @@ them:
 - **Fan** (`a -> b & c`): siblings share one port and one end segment on the
   shared end; the shared side and port are the first sibling's. Along the
   common prefix — the **trunk** — siblings are one drawn line; past the split
-  each is a full link under every law.
+  each is a full link under every law. Being one line has three consequences,
+  all of them the same sentence:
+  - **One track.** The trunk is one run in the ledger's count, whatever its
+    multiplicity — so a corridor that holds the lead holds the whole fan, and
+    a sibling never asks for room beside the line it is already on.
+  - **One split point.** Siblings' branch runs leave the trunk where they
+    part, and the branches meet *on* the trunk rather than run alongside it:
+    they owe each other pitch only where their travel overlaps, exactly as
+    two pieces of one wire do. Two branches heading opposite ways therefore
+    share one ordinate — placement's preference alone decides which, so both
+    take their corridor's anchor and the fan forks at one point (a T, the
+    schematic's junction dot). Nothing in Law 3 prefers an earlier or later
+    fork: a monotone route costs the same length and turns wherever it bends,
+    so Law 4's fixed preference settles it.
+  - **Peeling, when they travel together.** Branches heading the *same* way
+    overlap, owe full pitch, and so leave one at a time — the trunk runs on
+    under the ones still on it.
 - **Chain** (`a -> b -> c`): separate links, nothing shared.
 - **Duplicates** (`a -> b` twice): one bundle — one route, adjacent rails the
   whole way. A bundle routes whole or not at all.

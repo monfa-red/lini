@@ -158,11 +158,11 @@ input_file: samples/links_medium.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-style-loud" data-from="cat" data-to="kitchen.bowl">
-      <path d="M -182.87 0 L -180.87 0 A 12 12 0 0 0 -168.87 -12 L -168.87 -26.5 A 12 12 0 0 1 -156.87 -38.5 L -121.34 -38.5"/>
+      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 0 -162.87 -12 L -162.87 -26.5 A 12 12 0 0 1 -150.87 -38.5 L -121.34 -38.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="-117.34,-38.5 -126.34,-34 -126.34,-43"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="cat" data-to="kitchen.water">
-      <path d="M -182.87 0 L -168.87 0 A 12 12 0 0 1 -156.87 12 L -156.87 26.5 A 12 12 0 0 0 -144.87 38.5 L -125.87 38.5"/>
+      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 1 -162.87 12 L -162.87 26.5 A 12 12 0 0 0 -150.87 38.5 L -125.87 38.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="-121.87,38.5 -130.87,43 -130.87,34"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="cat" data-to="roof">

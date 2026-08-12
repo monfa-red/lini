@@ -24,6 +24,9 @@ pub(super) struct Item {
     /// Hard bounds from the port window; `None` for interior runs (the
     /// corridor's usable range applies alone).
     pub(super) window: Option<(f64, f64)>,
+    /// The fan group whose trunk this run **branches off**, if any
+    /// ([`branch_of`]) — the siblings that meet at one split point.
+    pub(super) branch: Option<usize>,
     /// Declaration-order key for span ties.
     pub(super) link: usize,
     /// The world whose channel graph this run rides in.
@@ -130,6 +133,9 @@ pub(super) fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
                     (Some(a), Some(b)) => Some(meet(a, b)),
                     (w, None) | (None, w) => w,
                 };
+                if m.branch != item.branch {
+                    m.branch = None;
+                }
                 m.link = m.link.min(item.link);
                 m.members.extend(item.members);
                 for l in item.landings {
@@ -171,8 +177,10 @@ fn meet(a: (f64, f64), b: (f64, f64)) -> (f64, f64) {
     if both.0 <= both.1 { both } else { a }
 }
 
-/// The fan group of an **end** run, if any — interior runs never merge.
-fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
+/// The fan group of an **end** run, if any — the run that draws the group's
+/// trunk. Interior runs never merge, and the ledger tags nothing else as a
+/// trunk ([`super::ledger`]).
+pub(super) fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
     let last = chain.runs.len() - 1;
     match (ri == 0, ri == last) {
         (true, true) => chain.ends[0].fan.or(chain.ends[1].fan),
@@ -182,17 +190,33 @@ fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
     }
 }
 
+/// The fan group whose trunk this run **branches off**: the group of the
+/// end run beside it. A fan is one drawn line until the split, and the
+/// split is one *point* — the branches leave the trunk there, in whatever
+/// directions their far ends lie. So two siblings' branch runs, which meet
+/// on the trunk rather than run alongside it, owe each other no pitch where
+/// their travel merely abuts, exactly as two pieces of one wire do: on the
+/// trunk the siblings *are* one wire.
+pub(super) fn branch_of(chain: &Chain, ri: usize) -> Option<usize> {
+    let last = chain.runs.len() - 1;
+    let before = ri.checked_sub(1).and_then(|n| fan_of(chain, n));
+    before.or_else(|| (ri < last).then(|| fan_of(chain, ri + 1)).flatten())
+}
+
 /// Whether two items owe each other pitch: spans that overlap, or end
 /// within a clearance of one another (their tips flank). Two pieces of one
-/// wire owe each other nothing unless their spans overlap (a U's
-/// doubled-back legs; a Z's jog collapses to zero and the legs weld).
+/// **line** owe each other nothing unless their spans overlap (a U's
+/// doubled-back legs; a Z's jog collapses to zero and the legs weld) — and
+/// two branches off one fan trunk are pieces of one line just as two runs
+/// of one wire are ([`branch_of`]).
 pub(super) fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
-    let same_wire = a
+    let one_line = a
         .members
         .iter()
-        .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1));
+        .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1))
+        || (a.branch.is_some() && a.branch == b.branch);
     let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
-    overlap || (near(a.span, b.span, clearance) && !same_wire)
+    overlap || (near(a.span, b.span, clearance) && !one_line)
 }
 
 /// The ordinate pitch two items genuinely owe, at separation `pitch`

@@ -16,7 +16,7 @@
 use super::cost::{cross_cost, min_pitch, turn_cost};
 use super::entry::Entry;
 use super::graph::{Axis, ChannelGraph};
-use super::ledger::Ledger;
+use super::ledger::View;
 #[cfg(test)]
 use super::rect::Rect;
 
@@ -77,7 +77,7 @@ pub(crate) fn cheapest(
     world: usize,
     starts: &[Entry],
     goals: &[Entry],
-    ledger: &Ledger,
+    ledger: &View,
     deny: &[Deny],
     k: usize,
     clearance: f64,
@@ -382,6 +382,7 @@ pub(crate) fn cheapest(
 #[cfg(test)]
 mod tests {
     use super::super::entry::entries;
+    use super::super::ledger::Ledger;
     use super::*;
     use crate::ast::Side;
 
@@ -415,7 +416,7 @@ mod tests {
     ) -> Option<Route> {
         let starts = entries(g, a, C, C, forced.0, None, &[], false);
         let goals = entries(g, b, C, C, forced.1, None, &[], false);
-        cheapest(g, 0, &starts, &goals, ledger, &[], k, C)
+        cheapest(g, 0, &starts, &goals, &ledger.read(&[]), &[], k, C)
     }
 
     #[test]
@@ -473,8 +474,10 @@ mod tests {
         let mut ledger = Ledger::new(C);
         // Past capacity for every sub-span (narrow spans dodge soft-wall
         // margins, so their capacity runs higher than the full span's).
-        let cap = ledger.tracks_left(0, Axis::V, vchan, (0.0, 100.0), &g);
-        ledger.commit_run(0, Axis::V, vchan, (0.0, 100.0), cap + 8, &g);
+        let cap = ledger
+            .read(&[])
+            .tracks_left(0, Axis::V, vchan, (0.0, 100.0), &g);
+        ledger.commit_run(0, Axis::V, vchan, (0.0, 100.0), cap + 8, &g, None);
         // Forced onto the facing sides, the jog has nowhere to run.
         assert_eq!(
             route(&g, a, b, &ledger, 1, (Some(Side::Right), Some(Side::Left))),
@@ -491,14 +494,14 @@ mod tests {
                 .expect("middle V-channel");
         // One committed rail across the corridor, sparing the low road.
         let mut one = Ledger::new(C);
-        one.commit_run(0, Axis::V, vchan, (10.0, 70.0), 1, &g);
+        one.commit_run(0, Axis::V, vchan, (10.0, 70.0), 1, &g, None);
         let r = route(&g, a, b, &one, 1, (None, None)).expect("route");
         assert_eq!(r.cells.len(), 1, "one crossing beats any detour: {r:?}");
         assert_eq!(r.cost, 104.0 + cross_cost(C));
         // Eight committed rails: crossing costs 8× — the U-detour under
         // their span end is now cheaper.
         let mut eight = Ledger::new(C);
-        eight.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g);
+        eight.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None);
         let r = route(&g, a, b, &eight, 1, (None, None)).expect("route");
         assert!(
             r.cells.len() > 1,
@@ -524,8 +527,10 @@ mod tests {
                 .position(|c| c.rect == Rect::new(48.0, 32.0, 152.0, 68.0))
                 .expect("row channel");
         let mut full = Ledger::new(C);
-        let cap = full.tracks_left(0, Axis::H, row, (48.0, 152.0), &g);
-        full.commit_run(0, Axis::H, row, (48.0, 152.0), cap + 8, &g);
+        let cap = full
+            .read(&[])
+            .tracks_left(0, Axis::H, row, (48.0, 152.0), &g);
+        full.commit_run(0, Axis::H, row, (48.0, 152.0), cap + 8, &g, None);
         let detour = route(&g, a, b, &full, 1, (None, None)).expect("route");
         assert!(
             detour.cells.len() > direct.cells.len(),
@@ -558,7 +563,7 @@ mod tests {
             g.v.iter()
                 .position(|c| c.rect == Rect::new(48.0, 0.0, 152.0, 100.0))
                 .expect("middle V-channel");
-        ledger.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g);
+        ledger.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None);
         let first = route(&g, a, b, &ledger, 1, (None, None));
         for _ in 0..100 {
             assert_eq!(route(&g, a, b, &ledger, 1, (None, None)), first);

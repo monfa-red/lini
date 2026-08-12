@@ -7,6 +7,15 @@
 //! of committed runs over the span, and an edge is closed to a bundle of *k*
 //! when fewer than *k* tracks remain. Capacity is never exceeded, only
 //! priced — the search detours around a closed span or reports a stray.
+//!
+//! What it counts is **drawn lines**, not routes, and a fan's trunk is one
+//! drawn line however many siblings ride it (ROUTING.md Special nodes). So a
+//! committed run carries the fan group whose trunk it draws: the group's
+//! commits merge into that one line, and a sibling — which reads the ledger
+//! through a [`View`] naming its own groups — sees none of it, because it is
+//! already on it. Without that, a fan's second sibling asks a corridor for a
+//! track its own trunk already holds, and a corridor holding one closes the
+//! fan out of its own lead.
 
 use std::collections::BTreeMap;
 
@@ -23,6 +32,9 @@ struct Committed {
     span: (f64, f64),
     k: usize,
     ord: f64,
+    /// The fan group whose **trunk** this run draws, if any — the tag that
+    /// makes one line count once ([`View`]).
+    fan: Option<usize>,
 }
 
 pub(crate) struct Ledger {
@@ -31,6 +43,15 @@ pub(crate) struct Ledger {
     runs: BTreeMap<(usize, u8, usize), Vec<Committed>>,
     /// Landed port slots per `(node path, side)` — a fan group counts once.
     ports: BTreeMap<(String, u8), usize>,
+}
+
+/// The ledger read on behalf of one bundle: the trunks of the fan groups it
+/// belongs to are lines it already rides, never load it must find room
+/// beside (ROUTING.md Special nodes — a fan is one drawn line until the
+/// split). A bundle in no fan names no trunks and reads the ledger whole.
+pub(crate) struct View<'a> {
+    ledger: &'a Ledger,
+    trunks: &'a [usize],
 }
 
 impl Ledger {
@@ -42,7 +63,18 @@ impl Ledger {
         }
     }
 
-    /// Commit one run of a routed bundle: `k` rails over `span` in a channel.
+    /// Read the ledger on behalf of a bundle riding these fan trunks — `&[]`
+    /// for a bundle in no fan.
+    pub fn read<'a>(&'a self, trunks: &'a [usize]) -> View<'a> {
+        View {
+            ledger: self,
+            trunks,
+        }
+    }
+
+    /// Commit one run of a routed bundle: `k` rails over `span` in a channel,
+    /// carrying the fan group whose trunk it draws (`None` off a trunk).
+    #[allow(clippy::too_many_arguments)]
     pub fn commit_run(
         &mut self,
         world: usize,
@@ -51,13 +83,14 @@ impl Ledger {
         span: (f64, f64),
         k: usize,
         graph: &ChannelGraph,
+        fan: Option<usize>,
     ) {
         let span = (span.0.min(span.1), span.0.max(span.1));
         let ord = graph.corridor(axis, chan, span.0, span.1).anchor();
         self.runs
             .entry((world, axis.index(), chan))
             .or_default()
-            .push(Committed { span, k, ord });
+            .push(Committed { span, k, ord, fan });
     }
 
     /// Land `n` port slots on a side.
@@ -66,117 +99,6 @@ impl Ledger {
             .ports
             .entry((path.to_owned(), side.index()))
             .or_insert(0) += n;
-    }
-
-    /// Tracks still free over `span` of a channel at maximum compression:
-    /// the **corridor's** capacity `floor(usable / min_pitch) + 1` minus the
-    /// committed maximum point-load across every channel the corridor
-    /// absorbs — fragments of one void share its tracks. Spans count as
-    /// concurrent within `min_pitch` of each other — near-touching runs need
-    /// distinct tracks, exactly as placement will cluster them.
-    pub fn tracks_left(
-        &self,
-        world: usize,
-        axis: Axis,
-        chan: usize,
-        span: (f64, f64),
-        graph: &ChannelGraph,
-    ) -> usize {
-        let (lo, hi) = (span.0.min(span.1), span.0.max(span.1));
-        let corridor = graph.corridor(axis, chan, lo, hi);
-        let (u0, u1) = corridor.usable();
-        // A zero-width usable range still holds one track (the +1 below) —
-        // a corner pass through a min-width corridor.
-        let capacity = ((u1 - u0).max(0.0) / min_pitch(self.clearance)).floor() as usize + 1;
-        capacity.saturating_sub(self.max_load(world, axis, &corridor, (lo, hi)))
-    }
-
-    /// The maximum k-weighted number of committed runs concurrent at any
-    /// point of `span` inside the corridor, runs reaching `min_pitch` past
-    /// their ends. Runs in absorbed channels count whole; a fragment the
-    /// walk could not absorb (it covers only part of the span) still parks
-    /// its wires in the same void, so its commits count wherever their
-    /// estimated ordinate lies inside the corridor's walls — otherwise two
-    /// overlapping corridors each admit a full complement into shared
-    /// ordinate space and placement inherits an impossible cluster.
-    fn max_load(&self, world: usize, axis: Axis, corridor: &Corridor, span: (f64, f64)) -> usize {
-        let reach = min_pitch(self.clearance);
-        // Sweep events over the query span; at equal position ends retire
-        // before starts, so a gap of exactly min_pitch shares a track.
-        let mut events: Vec<(f64, i64)> = Vec::new();
-        let range = (world, axis.index(), 0)..=(world, axis.index(), usize::MAX);
-        for ((.., chan), committed) in self.runs.range(range) {
-            let absorbed = corridor.chans.contains(chan);
-            for c in committed {
-                if !(absorbed || (corridor.walls.0 <= c.ord && c.ord <= corridor.walls.1)) {
-                    continue;
-                }
-                let lo = (c.span.0 - reach).max(span.0);
-                let hi = (c.span.1 + reach).min(span.1);
-                if hi <= lo {
-                    continue;
-                }
-                events.push((lo, c.k as i64));
-                events.push((hi, -(c.k as i64)));
-            }
-        }
-        events.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)));
-        let (mut load, mut max) = (0i64, 0i64);
-        for (_, d) in events {
-            load += d;
-            max = max.max(load);
-        }
-        max as usize
-    }
-
-    /// The **certain** crossings of candidate travel along `axis`: committed
-    /// perpendicular rails whose ordinate lies in the half-open `travel`
-    /// interval and whose span **covers** the whole `covered` window — the
-    /// candidate crosses them whatever track placement later picks. Estimates
-    /// stay optimistic: an avoidable rail is never charged, and the exact
-    /// count lands in the report once geometry is drawn. Half-open travel
-    /// intervals let a route's consecutive pieces share endpoints without
-    /// double-charging the rail sitting exactly on the joint.
-    ///
-    /// A rail exactly on a travel endpoint is a *corner in the rail's own
-    /// channel* — corner and rail share one anchor estimate, and whether the
-    /// drawn wire crosses depends on which flank the nesting order gives the
-    /// corner's perpendicular leg. The half-open charge over-counts a fan
-    /// sibling's own split rail (links_hard @8 draws a sibling braid whose
-    /// clean twin route ties); a strict bound was tried and under-counts the
-    /// mirror case (links_simple's fan drew two real crossings). Deciding
-    /// the corner case truly needs the order walk over both chains —
-    /// committed topology this ledger doesn't hold; future work.
-    pub fn crossings_covering(
-        &self,
-        world: usize,
-        axis: Axis,
-        travel: (f64, f64),
-        covered: (f64, f64),
-    ) -> u32 {
-        self.perpendicular(world, axis)
-            .filter(|c| travel.0 <= c.ord && c.ord < travel.1)
-            .filter(|c| c.span.0 <= covered.0 && c.span.1 >= covered.1)
-            .map(|c| c.k as u32)
-            .sum()
-    }
-
-    /// The **pinned** crossings of a stub-like piece along `axis`: committed
-    /// perpendicular rails strictly inside the open `travel` interval whose
-    /// span overlaps the piece's `window` of possible ordinates. Used only
-    /// where the candidate has no freedom to dodge (the run into a port).
-    pub fn crossings_overlapping(
-        &self,
-        world: usize,
-        axis: Axis,
-        travel: (f64, f64),
-        window: (f64, f64),
-    ) -> u32 {
-        self.perpendicular(world, axis)
-            .filter(|c| travel.0 < c.ord && c.ord < travel.1)
-            .filter(|c| c.span.0 < window.1 && c.span.1 > window.0)
-            .map(|c| c.k as u32)
-            .sum()
     }
 
     /// Committed runs of the axis perpendicular to `axis` in `world`.
@@ -214,6 +136,144 @@ impl Ledger {
     }
 }
 
+impl View<'_> {
+    /// Tracks still free over `span` of a channel at maximum compression:
+    /// the **corridor's** capacity `floor(usable / min_pitch) + 1` minus the
+    /// committed maximum point-load across every channel the corridor
+    /// absorbs — fragments of one void share its tracks. Spans count as
+    /// concurrent within `min_pitch` of each other — near-touching runs need
+    /// distinct tracks, exactly as placement will cluster them.
+    pub fn tracks_left(
+        &self,
+        world: usize,
+        axis: Axis,
+        chan: usize,
+        span: (f64, f64),
+        graph: &ChannelGraph,
+    ) -> usize {
+        let (lo, hi) = (span.0.min(span.1), span.0.max(span.1));
+        let corridor = graph.corridor(axis, chan, lo, hi);
+        let (u0, u1) = corridor.usable();
+        // A zero-width usable range still holds one track (the +1 below) —
+        // a corner pass through a min-width corridor.
+        let capacity = ((u1 - u0).max(0.0) / min_pitch(self.ledger.clearance)).floor() as usize + 1;
+        capacity.saturating_sub(self.max_load(world, axis, &corridor, (lo, hi)))
+    }
+
+    /// The maximum k-weighted number of committed runs concurrent at any
+    /// point of `span` inside the corridor, runs reaching `min_pitch` past
+    /// their ends. Runs in absorbed channels count whole; a fragment the
+    /// walk could not absorb (it covers only part of the span) still parks
+    /// its wires in the same void, so its commits count wherever their
+    /// estimated ordinate lies inside the corridor's walls — otherwise two
+    /// overlapping corridors each admit a full complement into shared
+    /// ordinate space and placement inherits an impossible cluster.
+    ///
+    /// A fan's trunk is **one** line: the group's commits merge into one
+    /// span before the sweep, and a group this reader rides drops out
+    /// entirely — it is already on that line, so charging it would close the
+    /// fan's own lead against its siblings.
+    fn max_load(&self, world: usize, axis: Axis, corridor: &Corridor, span: (f64, f64)) -> usize {
+        let reach = min_pitch(self.ledger.clearance);
+        // Sweep events over the query span; at equal position ends retire
+        // before starts, so a gap of exactly min_pitch shares a track.
+        let mut events: Vec<(f64, i64)> = Vec::new();
+        let mut trunks: BTreeMap<usize, ((f64, f64), usize)> = BTreeMap::new();
+        let range = (world, axis.index(), 0)..=(world, axis.index(), usize::MAX);
+        for ((.., chan), committed) in self.ledger.runs.range(range) {
+            let absorbed = corridor.chans.contains(chan);
+            for c in committed {
+                if !(absorbed || (corridor.walls.0 <= c.ord && c.ord <= corridor.walls.1)) {
+                    continue;
+                }
+                match c.fan {
+                    Some(g) if self.trunks.contains(&g) => {}
+                    Some(g) => {
+                        let e = trunks.entry(g).or_insert((c.span, c.k));
+                        e.0 = (e.0.0.min(c.span.0), e.0.1.max(c.span.1));
+                        e.1 = e.1.max(c.k);
+                    }
+                    None => push(&mut events, c.span, c.k, reach, span),
+                }
+            }
+        }
+        for (_, (line, k)) in trunks {
+            push(&mut events, line, k, reach, span);
+        }
+        events.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)));
+        let (mut load, mut max) = (0i64, 0i64);
+        for (_, d) in events {
+            load += d;
+            max = max.max(load);
+        }
+        max as usize
+    }
+
+    /// The **certain** crossings of candidate travel along `axis`: committed
+    /// perpendicular rails whose ordinate lies in the half-open `travel`
+    /// interval and whose span **covers** the whole `covered` window — the
+    /// candidate crosses them whatever track placement later picks. Estimates
+    /// stay optimistic: an avoidable rail is never charged, and the exact
+    /// count lands in the report once geometry is drawn. Half-open travel
+    /// intervals let a route's consecutive pieces share endpoints without
+    /// double-charging the rail sitting exactly on the joint.
+    ///
+    /// A rail exactly on a travel endpoint is a *corner in the rail's own
+    /// channel* — corner and rail share one anchor estimate, and whether the
+    /// drawn wire crosses depends on which flank the nesting order gives the
+    /// corner's perpendicular leg. The half-open charge over-counts a fan
+    /// sibling's own split rail (links_hard @8 draws a sibling braid whose
+    /// clean twin route ties); a strict bound was tried and under-counts the
+    /// mirror case (links_simple's fan drew two real crossings). Deciding
+    /// the corner case truly needs the order walk over both chains —
+    /// committed topology this ledger doesn't hold; future work.
+    pub fn crossings_covering(
+        &self,
+        world: usize,
+        axis: Axis,
+        travel: (f64, f64),
+        covered: (f64, f64),
+    ) -> u32 {
+        self.ledger
+            .perpendicular(world, axis)
+            .filter(|c| travel.0 <= c.ord && c.ord < travel.1)
+            .filter(|c| c.span.0 <= covered.0 && c.span.1 >= covered.1)
+            .map(|c| c.k as u32)
+            .sum()
+    }
+
+    /// The **pinned** crossings of a stub-like piece along `axis`: committed
+    /// perpendicular rails strictly inside the open `travel` interval whose
+    /// span overlaps the piece's `window` of possible ordinates. Used only
+    /// where the candidate has no freedom to dodge (the run into a port).
+    pub fn crossings_overlapping(
+        &self,
+        world: usize,
+        axis: Axis,
+        travel: (f64, f64),
+        window: (f64, f64),
+    ) -> u32 {
+        self.ledger
+            .perpendicular(world, axis)
+            .filter(|c| travel.0 < c.ord && c.ord < travel.1)
+            .filter(|c| c.span.0 < window.1 && c.span.1 > window.0)
+            .map(|c| c.k as u32)
+            .sum()
+    }
+}
+
+/// One committed line's sweep events, clipped to the query span: it reaches
+/// `reach` past each end, so near-touching runs need distinct tracks.
+fn push(events: &mut Vec<(f64, i64)>, line: (f64, f64), k: usize, reach: f64, span: (f64, f64)) {
+    let lo = (line.0 - reach).max(span.0);
+    let hi = (line.1 + reach).min(span.1);
+    if hi <= lo {
+        return;
+    }
+    events.push((lo, k as i64));
+    events.push((hi, -(k as i64)));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,7 +309,12 @@ mod tests {
         let g = gap_graph();
         let chan = gap_chan(&g);
         let ledger = Ledger::new(8.0);
-        assert_eq!(ledger.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 7);
+        assert_eq!(
+            ledger
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            7
+        );
     }
 
     #[test]
@@ -258,12 +323,54 @@ mod tests {
         let chan = gap_chan(&g);
         let mut ledger = Ledger::new(8.0);
         // Two k=2 runs overlapping in span: peak load 4.
-        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 2, &g);
-        ledger.commit_run(0, Axis::V, chan, (40.0, 80.0), 2, &g);
-        assert_eq!(ledger.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 3);
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 2, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (40.0, 80.0), 2, &g, None);
+        assert_eq!(
+            ledger
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            3
+        );
         // A run far below the query span adds nothing there.
-        ledger.commit_run(0, Axis::V, chan, (90.0, 100.0), 3, &g);
-        assert_eq!(ledger.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 3);
+        ledger.commit_run(0, Axis::V, chan, (90.0, 100.0), 3, &g, None);
+        assert_eq!(
+            ledger
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            3
+        );
+    }
+
+    /// A fan's trunk is one drawn line (ROUTING.md Special nodes): however
+    /// many siblings commit it, strangers see one track — and the siblings
+    /// themselves see none, or a corridor holding exactly one would close
+    /// the fan out of its own lead.
+    #[test]
+    fn one_fan_trunk_counts_once_and_costs_its_siblings_nothing() {
+        let g = gap_graph();
+        let chan = gap_chan(&g);
+        let mut ledger = Ledger::new(8.0);
+        // Two siblings' leads, the second running further before it splits:
+        // one line over the union of their spans.
+        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, Some(3));
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, Some(3));
+        let all = ledger.read(&[]);
+        assert_eq!(all.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 6);
+        // A stranger's untagged run beside them stacks as ever.
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, None);
+        assert_eq!(
+            ledger
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            5
+        );
+        // A third sibling reads past its own trunk — only the stranger loads.
+        assert_eq!(
+            ledger
+                .read(&[3])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            6
+        );
     }
 
     #[test]
@@ -271,16 +378,26 @@ mod tests {
         let g = gap_graph();
         let chan = gap_chan(&g);
         let mut ledger = Ledger::new(8.0);
-        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g);
+        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, None);
         // Gap of 2 < min pitch 4: the two runs need distinct tracks.
-        ledger.commit_run(0, Axis::V, chan, (52.0, 80.0), 1, &g);
-        assert_eq!(ledger.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 5);
+        ledger.commit_run(0, Axis::V, chan, (52.0, 80.0), 1, &g, None);
+        assert_eq!(
+            ledger
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            5
+        );
         // Gap of exactly 2×min-pitch: the reaches touch, ends retire before
         // starts, so the two runs never stack — they may share a track.
         let mut spaced = Ledger::new(8.0);
-        spaced.commit_run(0, Axis::V, chan, (20.0, 46.0), 1, &g);
-        spaced.commit_run(0, Axis::V, chan, (54.0, 80.0), 1, &g);
-        assert_eq!(spaced.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 6);
+        spaced.commit_run(0, Axis::V, chan, (20.0, 46.0), 1, &g, None);
+        spaced.commit_run(0, Axis::V, chan, (54.0, 80.0), 1, &g, None);
+        assert_eq!(
+            spaced
+                .read(&[])
+                .tracks_left(0, Axis::V, chan, (20.0, 80.0), &g),
+            6
+        );
     }
 
     #[test]
@@ -290,45 +407,61 @@ mod tests {
         let mut ledger = Ledger::new(8.0);
         // A 4-rail bundle riding the gap channel, estimated at its anchor
         // (both walls are keep-outs → the midline, x = 92).
-        ledger.commit_run(0, Axis::V, chan, (30.0, 70.0), 4, &g);
+        ledger.commit_run(0, Axis::V, chan, (30.0, 70.0), 4, &g, None);
         // H travel across the gap whose ordinate window the span covers:
         // certain, all 4 charged.
         assert_eq!(
-            ledger.crossings_covering(0, Axis::H, (60.0, 140.0), (45.0, 55.0)),
+            ledger
+                .read(&[])
+                .crossings_covering(0, Axis::H, (60.0, 140.0), (45.0, 55.0)),
             4
         );
         // A window the span does not fully cover is dodgeable: uncharged.
         assert_eq!(
-            ledger.crossings_covering(0, Axis::H, (60.0, 140.0), (2.0, 55.0)),
+            ledger
+                .read(&[])
+                .crossings_covering(0, Axis::H, (60.0, 140.0), (2.0, 55.0)),
             0
         );
         // Travel that stops short of the anchor never crosses; half-open
         // travel charges a rail sitting exactly on the interval's start once.
         assert_eq!(
-            ledger.crossings_covering(0, Axis::H, (60.0, 92.0), (45.0, 55.0)),
+            ledger
+                .read(&[])
+                .crossings_covering(0, Axis::H, (60.0, 92.0), (45.0, 55.0)),
             0
         );
         assert_eq!(
-            ledger.crossings_covering(0, Axis::H, (92.0, 140.0), (45.0, 55.0)),
+            ledger
+                .read(&[])
+                .crossings_covering(0, Axis::H, (92.0, 140.0), (45.0, 55.0)),
             4
         );
         // Same-axis runs are never crossings.
         assert_eq!(
-            ledger.crossings_covering(0, Axis::V, (0.0, 100.0), (85.0, 95.0)),
+            ledger
+                .read(&[])
+                .crossings_covering(0, Axis::V, (0.0, 100.0), (85.0, 95.0)),
             0
         );
         // A pinned stub: charged while its window overlaps the span, tangent
         // at the span edge is contact.
         assert_eq!(
-            ledger.crossings_overlapping(0, Axis::H, (60.0, 140.0), (50.0, 50.0)),
+            ledger
+                .read(&[])
+                .crossings_overlapping(0, Axis::H, (60.0, 140.0), (50.0, 50.0)),
             4
         );
         assert_eq!(
-            ledger.crossings_overlapping(0, Axis::H, (60.0, 140.0), (5.0, 5.0)),
+            ledger
+                .read(&[])
+                .crossings_overlapping(0, Axis::H, (60.0, 140.0), (5.0, 5.0)),
             0
         );
         assert_eq!(
-            ledger.crossings_overlapping(0, Axis::H, (60.0, 140.0), (30.0, 30.0)),
+            ledger
+                .read(&[])
+                .crossings_overlapping(0, Axis::H, (60.0, 140.0), (30.0, 30.0)),
             0
         );
     }
