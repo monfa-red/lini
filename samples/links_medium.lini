@@ -1,0 +1,47 @@
+// The realistic scene — a mid-size diagram with groups, exercising every
+// common routing pattern at once.
+
+{
+  direction: row; gap: 40; clearance: 12;
+  .loud { stroke: --red; }
+  .quiet { stroke: --blue; }
+  .happy { stroke: --green; }
+  |treat::box| { radius: 6; }
+}
+
+|oval#cat| "Cat"
+
+|group#kitchen| [
+  |caption| "Kitchen"
+  |treat#bowl| "Bowl"
+  |treat#water| "Water"
+]
+
+|group#garden| [
+  |caption| "Garden"
+  |treat#dog| "Dog"
+  |treat#bird| "Bird"
+]
+
+|treat#roof| [
+  "Roof"
+  |badge| "new"
+]
+
+cat -> kitchen.bowl & kitchen.water .loud
+cat -> roof .loud
+
+kitchen.bowl -> garden.dog "X" .loud { along: 0.35; }
+kitchen.bowl -> garden.dog .loud
+
+kitchen.water <--- garden.dog .quiet
+kitchen.water <- garden.dog .quiet
+kitchen.water <- garden.dog .quiet
+
+garden.bird -> roof
+garden.bird -> roof
+kitchen.water <-> garden.bird .quiet
+kitchen.water -> roof .happy
+kitchen.water -> roof .happy
+
+garden ~> kitchen.bowl .loud
