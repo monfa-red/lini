@@ -22,10 +22,14 @@
 //! is two: the pin is never the dot, the split is ([SPEC 16.5] says so in as
 //! many words).
 //!
-//! **A label's stub never counts** [SPEC 16.5]. A net tag hangs off the wire
-//! rather than conducting away from it, so a member whose far end lands on a
-//! `|label|` is dropped by *type* before any counting — not by hoping its leg
-//! draws too short to matter.
+//! **A plain net run's lead never counts** [SPEC 16.5]. A run's box *is* a
+//! stretch of the trace it names ([SPEC 16.4]), so the wire drawn to it is the
+//! wire being named, not a second conductor leaving the point — it is dropped
+//! by asking [`super::net::is_run`], the one predicate that answers what a run
+//! is, before any counting; never by hoping its leg draws too short to matter.
+//! Every other label is a **terminal** a wire genuinely ends on — a ground, a
+//! power flag, a shaped tag — so its lead counts exactly like a part's, and a
+//! rail that forks to its flag and its decoupling cap is dotted where it forks.
 //!
 //! The dot is chrome: it paints entirely through its one `.lini-junction` rule
 //! and authors no `style=` diff of its own [SPEC 18], so `|junction| { fill:
@@ -35,7 +39,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::super::ir::{PlacedNode, RoutedLink};
 use super::super::prim;
-use crate::desugar::schematic::{SchKind, sch_kind};
+use super::net;
+use crate::desugar::schematic::sch_kind;
 use crate::ledger::consts::JUNCTION_RADIUS;
 use crate::resolve::Strategy;
 
@@ -87,21 +92,33 @@ pub(crate) fn junctions(nodes: &[PlacedNode], links: &[RoutedLink]) -> Vec<Place
         .collect()
 }
 
+/// One placed part, as the count reads it: whether it is a plain **net run**,
+/// whose lead is the trace rather than a branch off it. Its presence in the map
+/// is the other half — the landing has to be a schematic part's at all.
+struct Part {
+    run: bool,
+}
+
 /// The placed schematic parts by dot-path [SPEC 16.2] — a part is a leaf, so
 /// the walk stops there and every address inside it (`u7.vs`, `c24.p1`) is that
 /// part's. Anonymous containers contribute no path segment [SPEC 9], exactly as
 /// the router's scene index reads them.
-fn parts(nodes: &[PlacedNode]) -> BTreeMap<String, SchKind> {
-    fn walk(nodes: &[PlacedNode], prefix: &str, out: &mut BTreeMap<String, SchKind>) {
+fn parts(nodes: &[PlacedNode]) -> BTreeMap<String, Part> {
+    fn walk(nodes: &[PlacedNode], prefix: &str, out: &mut BTreeMap<String, Part>) {
         for n in nodes {
             let path = match &n.id {
                 Some(id) if prefix.is_empty() => id.clone(),
                 Some(id) => format!("{prefix}.{id}"),
                 None => prefix.to_owned(),
             };
-            match (sch_kind(&n.type_chain), n.id.is_some()) {
-                (Some(kind), true) => {
-                    out.insert(path, kind);
+            match (sch_kind(&n.type_chain).is_some(), n.id.is_some()) {
+                (true, true) => {
+                    out.insert(
+                        path,
+                        Part {
+                            run: net::is_run(n),
+                        },
+                    );
                 }
                 _ => walk(&n.children, &path, out),
             }
@@ -114,7 +131,7 @@ fn parts(nodes: &[PlacedNode]) -> BTreeMap<String, SchKind> {
 
 /// The part an endpoint address names — itself, or the nearest ancestor path
 /// (a pin's `u1.c` is the part `u1`).
-fn part_of<'a>(parts: &'a BTreeMap<String, SchKind>, addr: &str) -> Option<&'a SchKind> {
+fn part_of<'a>(parts: &'a BTreeMap<String, Part>, addr: &str) -> Option<&'a Part> {
     let mut at = addr;
     loop {
         if let Some(kind) = parts.get(at) {
@@ -138,7 +155,7 @@ struct Leg {
 fn meets(
     links: &[RoutedLink],
     members: &[(usize, bool)],
-    parts: &BTreeMap<String, SchKind>,
+    parts: &BTreeMap<String, Part>,
 ) -> Vec<(f64, f64)> {
     let mut origin: Option<(f64, f64)> = None;
     let mut dir: Option<(i8, i8)> = None;
@@ -172,8 +189,9 @@ fn meets(
             Some(t) if t == d => {}
             Some(_) => return Vec::new(),
         }
-        // A label's stub never counts [SPEC 16.5] — by type, at the far end.
-        if part_of(parts, far) == Some(&SchKind::Label) {
+        // A plain net run's lead never counts [SPEC 16.5] — it is the trace
+        // being named. Every other terminal's does.
+        if part_of(parts, far).is_some_and(|p| p.run) {
             continue;
         }
         legs.push(leg(&path, path[0], d));

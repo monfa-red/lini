@@ -3376,9 +3376,12 @@ A schematic wire is an ordinary link, routed by the orthogonal router
 ports** (stub tips, label connection points), corners bend **square**
 (`corner-radius: 0`, the scope's link default — [SPEC 17](#17-property-ledger--support)),
 and a **junction dot** — generated `|junction|` chrome — marks every point
-where **three or more wire ends meet** (a fan's trunk split, a shared pin;
-a label's stub never counts). Crossings stay clean and dotless. The wire
-laws:
+where **three or more wire ends meet** (a fan's trunk split, a shared pin).
+A **plain net run**'s lead never counts — the run's box *is* the trace it
+names ([16.4](#164-labels)), so that wire is the one being named, not a
+second conductor leaving the point; every other terminal's lead counts, so a
+rail forking to its power flag and its decoupling cap is dotted where it
+forks. Crossings stay clean and dotless. The wire laws:
 
 - **Pinless landing gates on arity**, never on a type list: a wire to a
   1-pin part lands on it; to a 2-pin part, on the next free pin in the

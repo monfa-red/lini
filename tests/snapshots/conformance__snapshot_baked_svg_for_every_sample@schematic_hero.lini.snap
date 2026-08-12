@@ -8,6 +8,7 @@ input_file: samples/schematic_hero.lini
     .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
@@ -25,6 +26,7 @@ input_file: samples/schematic_hero.lini
     .lini .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
     .lini .lini-pin { font-size: 11px; }
     .lini .lini-label { color: #0e6a6a; font-size: 11px; }
+    .lini .lini-junction { fill: #0a7a2f; stroke: none; }
     .lini .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
     .lini .lini-sch-solid { fill: #8a1c1c; stroke: none; }
     .lini .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
@@ -1032,6 +1034,9 @@ input_file: samples/schematic_hero.lini
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J1.p2" data-to="mot.lini-cap-2">
       <path d="M 386.9885 7.75 L 421.4885 7.75 L 421.4885 33.5"/>
+    </g>
+    <g class="lini-node lini-junction lini-oval" transform="translate(-417.4885,-16.75)">
+      <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
   </g>
 </svg>
