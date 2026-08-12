@@ -474,3 +474,25 @@ fn a_theme_retunes_the_whole_schematic_family_from_one_place() {
         );
     }
 }
+
+#[test]
+fn a_sheet_never_opens_a_trace() {
+    // [SPEC 16.5] the knockout is the **diagram** convention — a label rides
+    // its wire and the wire opens behind it [SPEC 9]. A schematic scope draws
+    // in the other one: the net name stands beside the line, so no wire is
+    // ever cut and, nothing wearing them, the mask rules go unemitted
+    // [SPEC 18].
+    let sheet = "{ layout: schematic }\n\
+                 |component#u1| [ |pin#a| { side: right }; |pin#b|; |pin#c| ]\n\
+                 |component#u2| [ |pin#d| { side: left }; |pin#e|; |pin#f| ]\n\
+                 u1.a - u2.d \"VBUS\"\n";
+    let svg = render_live(sheet);
+    assert!(!svg.contains("lini-label-cut"), "no wire is cut: {svg}");
+    assert!(!svg.contains("lini-cut"), "and no rule is worn: {svg}");
+    // The same statement in a diagram still cuts — the convention is the
+    // scope's, not the placement's.
+    let diagram = "|box#a| { width: 60 }\n|box#b| { width: 60 }\na - b \"VBUS\"\n";
+    let svg = render_live(diagram);
+    assert!(svg.contains("lini-label-cut"), "a diagram cuts: {svg}");
+    assert!(svg.contains(".lini-cut {"), "and states the rule: {svg}");
+}

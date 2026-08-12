@@ -462,6 +462,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             markers: req.markers.clone(),
             attrs: req.attrs.clone(),
             applied_styles: req.applied_styles.clone(),
+            sheet: req.sheet,
             texts: Vec::new(),
             data_from: req.data_from.clone(),
             data_to: req.data_to.clone(),

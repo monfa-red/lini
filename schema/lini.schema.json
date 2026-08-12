@@ -2653,6 +2653,13 @@
           "name": "pin"
         },
         {
+          "kind": "type",
+          "name": "label"
+        },
+        {
+          "kind": "link"
+        },
+        {
           "kind": "role",
           "name": "dimension"
         }

@@ -154,6 +154,13 @@ impl Stack {
         self.painted.push(bbox);
     }
 
+    /// What has been painted so far — read by a caller that must choose
+    /// between two symmetric seats and wants to know which side is freer
+    /// ([SPEC 16.4]'s net text). Measuring it is the caller's own business.
+    pub fn painted(&self) -> &[Bbox] {
+        &self.painted
+    }
+
     /// Seat `band` occupying `interval` along `at`, standing at least
     /// `clearance` off everything already painted; returns the seated line's
     /// world coordinate along the stack (cross) axis, and registers the band

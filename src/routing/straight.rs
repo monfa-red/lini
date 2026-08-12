@@ -39,6 +39,7 @@ pub(crate) fn wire(
     markers: Markers,
     attrs: &AttrMap,
     applied_styles: &[String],
+    sheet: bool,
     span: Span,
 ) -> RoutedLink {
     RoutedLink {
@@ -48,6 +49,7 @@ pub(crate) fn wire(
         markers,
         attrs: attrs.clone(),
         applied_styles: applied_styles.to_vec(),
+        sheet,
         texts,
         data_from: data.0.to_owned(),
         data_to: data.1.to_owned(),
@@ -91,6 +93,7 @@ pub(crate) fn route(reqs: &[EdgeReq], routing: &mut Routing, req_of: &mut Vec<us
             req.markers.clone(),
             &req.attrs,
             &req.applied_styles,
+            req.sheet,
             req.span,
         ));
     }
@@ -132,6 +135,7 @@ mod tests {
             Markers::default(),
             &attrs,
             &["loud".into()],
+            false,
             Span::empty(),
         );
         assert_eq!((w.seg_from.as_str(), w.seg_to.as_str()), ("a", "b"));

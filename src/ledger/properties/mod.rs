@@ -599,11 +599,19 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     // Homonym: an `|axis|`'s side [SPEC 14.4], a dimension's / callout's seat
-    // [SPEC 15.6], a first-level `|topic|`'s bilateral half [SPEC 12], and a
-    // `|pin|`'s component side [SPEC 16.2].
+    // [SPEC 15.6], a first-level `|topic|`'s bilateral half [SPEC 12], a
+    // `|pin|`'s component side [SPEC 16.2], and — on a `|label|` or on a
+    // schematic wire — which side of the trace the net name sits [SPEC 16.4].
     row(
         "side",
-        &[Type("axis"), Type("topic"), Type("pin"), Role("dimension")],
+        &[
+            Type("axis"),
+            Type("topic"),
+            Type("pin"),
+            Type("label"),
+            Link,
+            Role("dimension"),
+        ],
         One(Kind::Ident),
         Engine,
         No,

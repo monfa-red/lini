@@ -601,3 +601,52 @@ fn a_sheet_inside_a_page_wires_its_own_interior() {
         assert_eq!(strays(&sheet("page", style)), 0, "and stays clean: {style}");
     }
 }
+
+/// The **net-run convention** [SPEC 16.4]: a plain net label is a stretch of
+/// trace with its name beside it, so the wire crosses the whole box and lands
+/// on its far end, and the name steps clear of the centreline. Judged off the
+/// drawn wire and the placed text, never off the reader that produced them.
+#[test]
+fn a_plain_net_label_is_a_run_the_wire_travels() {
+    let laid = routed(&sheet(
+        &(sided("u1").replace("  |component", "|component") + "u1.b - \"NET\"\n"),
+    ));
+    let nodes = &laid.nodes;
+    let (run, rx, ry) = placed(nodes, "lini-label-1");
+    let path = wire(&laid, "u1.b", "lini-label-1");
+    let (end, start) = (path[path.len() - 1], path[0]);
+    // Pin `b` faces right, so the run lies to the right of it: the wire enters
+    // the box's near edge and lands on the **far** one, having crossed it
+    // whole.
+    let (near_x, far_x) = (rx + run.bbox.min_x, rx + run.bbox.max_x);
+    assert!(near(end, (far_x, ry)), "{end:?} vs the far edge {far_x}");
+    assert!(
+        start.0 < near_x && near_x < end.0,
+        "the wire crosses the run: {start:?} → {end:?}, near edge {near_x}"
+    );
+    // …and the name stands off the trace it names, above a horizontal run.
+    let text = run.children.first().expect("the net text");
+    assert!(
+        ry + text.cy + text.bbox.max_y < ry - crate::ledger::consts::NET_LABEL_OFFSET + 1e-9,
+        "the name clears the centreline: {} vs {ry}",
+        ry + text.cy + text.bbox.max_y
+    );
+}
+
+/// A **shaped** tag is untouched [SPEC 16.4]: it stays a body the wire ends
+/// on, its landing the outline's own edge — the run reading is the plain
+/// shape's alone.
+#[test]
+fn a_shaped_tag_still_terminates_its_wire() {
+    let laid = routed(&sheet(
+        &(sided("u1").replace("  |component", "|component") + "u1.b -> \"NET\"\n"),
+    ));
+    let (tag, tx, _) = placed(&laid.nodes, "lini-label-1");
+    let path = wire(&laid, "u1.b", "lini-label-1");
+    let end = path[path.len() - 1];
+    assert!(
+        end.0 <= tx + tag.bbox.min_x + 1e-6,
+        "the wire stops at the tag: {end:?} vs {}",
+        tx + tag.bbox.min_x
+    );
+}

@@ -39,6 +39,7 @@ pub(super) fn link(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedLink {
         markers: Markers::default(),
         attrs,
         applied_styles: Vec::new(),
+        sheet: false,
         texts: Vec::new(),
         data_from: from.to_owned(),
         data_to: to.to_owned(),

@@ -105,6 +105,14 @@ impl PartNode for PlacedNode {
 /// stubs, inward onto a symbol's glyph ports. Terminals on one side share
 /// that line by construction (a rail's stubs are one length, a glyph's ports
 /// on a side one coordinate); the outermost wins if a future glyph disagrees.
+///
+/// **A frame may collapse to that line.** A net run's terminal sits on the
+/// edge *opposite* the one it faces [SPEC 16.4], so moving its facing side
+/// onto the landing takes the whole run with it — which is the honest answer:
+/// a run is a stretch of wire with a name over it, not a body, so the only
+/// thing a wire must reach is the landing itself, and the run's own wire
+/// crosses free space to get there. Every other part's landings sit outward
+/// or on interior glyph ports and never collapse.
 fn frame(mut box_: Bbox, terms: &[Terminal]) -> Bbox {
     for side in Side::ALL {
         let mut hits = terms
@@ -137,7 +145,7 @@ fn frame(mut box_: Bbox, terms: &[Terminal]) -> Bbox {
                 ..box_
             },
         };
-        if moved.min_x < moved.max_x && moved.min_y < moved.max_y {
+        if moved.min_x <= moved.max_x && moved.min_y <= moved.max_y {
             box_ = moved;
         }
     }

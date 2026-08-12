@@ -61,10 +61,15 @@ const BARE_TYPES: &[&str] = &["pin", "junction"];
 /// it *creates* the scope.
 ///
 /// Takes the chain **most-derived first** — a lowered node's `type_chain`, the
-/// order the layout gate reads it in.
+/// order the layout gate reads it in. **Generated utility classes are skipped**
+/// (a shaped tag's outline, a net run's box): they are dress the lowering
+/// stamped on, never a type the author could have written.
 pub(crate) fn schematic_type<S: AsRef<str>>(chain: &[S]) -> Option<&str> {
     let member = |t: &str| sch_kind(&[t]).is_some() || BARE_TYPES.contains(&t);
-    let written = chain.first()?.as_ref();
+    let written = chain
+        .iter()
+        .map(|t| t.as_ref())
+        .find(|t| !crate::desugar::classes::is_utility_class(t))?;
     chain.iter().any(|t| member(t.as_ref())).then_some(written)
 }
 
@@ -219,14 +224,19 @@ pub(crate) fn part_glyph<S: AsRef<str>>(
 /// chooser turns to face an anchor. Read off the registry in the part's
 /// **unposed** frame, so a caller turns it with `Pose::side`. `terminal` is
 /// the pin id an endpoint names (`None` — a `|label|`, which has no dot-path
-/// terminal — takes the glyph's one port). `None` for a `|component|` (its
-/// pins are authored children, sided by the bilateral split) and for a part
-/// with no glyph at all.
+/// terminal — takes the glyph's one port). A **net run** has no glyph and
+/// answers [`NET_RUN_FACING`] instead. `None` for a `|component|` (its pins
+/// are authored children, sided by the bilateral split), for a shaped tag,
+/// and for a part with no glyph at all.
 pub(crate) fn terminal_facing<S: AsRef<str>>(
     chain: &[S],
     symbol: Option<&str>,
+    shape: Option<&str>,
     terminal: Option<&str>,
 ) -> Option<Side> {
+    if is_net_run(chain, symbol, shape) {
+        return Some(NET_RUN_FACING);
+    }
     let glyph = part_glyph(chain, symbol)?;
     let index = match terminal {
         Some(t) => part_pin_ids(chain, symbol).iter().position(|p| *p == t)?,
@@ -303,3 +313,29 @@ fn variants(ty: &str) -> &'static [Variant] {
 
 /// The `|label|` symbol vocabulary [SPEC 16.4].
 pub(super) const LABEL_SYMBOLS: &[&str] = &["gnd", "earth", "chassis", "power", "nc", "antenna"];
+
+/// Whether a `|label|` is a **net run** [SPEC 16.4] — the plain shape, text
+/// alone: the wire travels the length of it and the name stands beside the
+/// trace, the sheet convention. The two other readings of `|label|` are
+/// bodies the wire *stops* at and are none of this: a `symbol:` (a ground, a
+/// power flag) draws its own connection point, and a shaped tag is an
+/// outlined terminator.
+///
+/// **The** predicate — the run box, the terminal, the pose and the text seat
+/// all ask it, so a label can never be shaped as a run and wired as a tag.
+pub(crate) fn is_net_run<S: AsRef<str>>(
+    chain: &[S],
+    symbol: Option<&str>,
+    shape: Option<&str>,
+) -> bool {
+    sch_kind(chain) == Some(SchKind::Label)
+        && symbol.is_none()
+        && shape.unwrap_or("plain") == "plain"
+}
+
+/// A net run's terminal in its **unposed** frame [SPEC 16.4]: it faces
+/// **right**, back up the wire, and its connection point is the run's far
+/// (left) end — so the wire arrives from the right and travels the whole box
+/// before it lands, leaving the text sitting over a trace. Everything else is
+/// [`Pose`](super::super::pose::Pose)'s: a run is turned like any part.
+pub(crate) const NET_RUN_FACING: Side = Side::Right;

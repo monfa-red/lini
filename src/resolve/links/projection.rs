@@ -139,6 +139,7 @@ pub(super) fn try_projection(
         carried: Vec::new(),
         one_ended: false,
         projection: true,
+        sheet: false,
         span: w.span,
     }]))
 }

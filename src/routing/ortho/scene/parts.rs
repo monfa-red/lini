@@ -79,9 +79,16 @@ impl SceneIndex {
     /// overflows**: the frame's side runs through the stub's tip, so the only
     /// ink a stub or its number can poke past it is stroke-cap dust — and the
     /// wire lands on (and covers) the lead by construction.
+    ///
+    /// **A net run's name never overflows either** [SPEC 16.4], for the reason
+    /// SPEC 9 gives every label: it is text beside a line, an obstacle to
+    /// nothing. Counting it would wall off the very trace it names — a name
+    /// standing its clear space off one wire sits well inside the next wire's
+    /// keep-out, and every second net would stray.
     fn fold(&mut self, n: &PlacedNode, path: &str, i: usize, ox: f64, oy: f64) {
         let frame = self.nodes[i].rect;
         let own = abs_rect(n, ox, oy);
+        let named = crate::layout::schematic::is_net_run(n);
         for c in &n.children {
             let (cx, cy) = (ox + c.cx, oy + c.cy);
             let rect = abs_rect(c, cx, cy);
@@ -97,7 +104,7 @@ impl SceneIndex {
                 .type_chain
                 .iter()
                 .any(|t| t == "pin-stub" || t == "pin-number");
-            if !pin_anatomy && !inside(frame, rect) && !inside(own, rect) {
+            if !pin_anatomy && !named && !inside(frame, rect) && !inside(own, rect) {
                 self.nodes[i].overflow.push(rect);
             }
             self.fold(c, &cpath, i, cx, cy);

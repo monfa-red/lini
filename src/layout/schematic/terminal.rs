@@ -9,12 +9,19 @@
 //! | a `\|component\|` pin | its stub's **tip** — the far end of the lead | the stub's own `pin:` side |
 //! | a symbol part's pin | its zero-size port node | the registry port, posed |
 //! | a `\|label\|` | the symbol's box edge midpoint | the registry port, posed |
+//! | a **net run** | the run's **far** end — the edge *opposite* the facing | [`NET_RUN_FACING`], posed |
 //!
 //! (The router's fixed ports land on exactly these points.)
+//!
+//! The net run is the one terminal whose point does **not** sit on the edge it
+//! faces [SPEC 16.4]: the wire arrives from the facing side and travels the
+//! whole box before it lands, which is what leaves the name sitting over a
+//! trace. Its connection frame is that landing line alone
+//! ([`super::ports::part_ports`]) — a run has no body.
 
 use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::pose::{Pose, Side};
-use crate::desugar::schematic::{part_pin_ids, terminal_facing};
+use crate::desugar::schematic::{is_net_run, part_pin_ids, terminal_facing};
 use crate::resolve::{AttrMap, ResolvedValue};
 
 /// A wirable terminal, in its **part's** coordinates (the part's origin is
@@ -32,11 +39,22 @@ pub(super) struct Terminal {
 /// part's own one connection point).
 pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
     let symbol = ident(&part.attrs, "symbol");
+    let shape = ident(&part.attrs, "shape");
     let pose = Pose::of_chain(&part.type_chain);
     // The registry's answer, turned into the part's landed frame. A
     // `|component|` has no glyph, so its pins answer from the stub below.
     let posed = |s: Side| pose.side(s);
-    let facing = terminal_facing(&part.type_chain, symbol.as_deref(), path).map(posed);
+    let facing =
+        terminal_facing(&part.type_chain, symbol.as_deref(), shape.as_deref(), path).map(posed);
+    // A **net run**: the landing is the run's far end, so the wire crosses the
+    // whole box [SPEC 16.4].
+    if is_net_run(&part.type_chain, symbol.as_deref(), shape.as_deref()) {
+        let facing = facing.expect("a net run faces its wire");
+        return Terminal {
+            at: edge_midpoint(part.bbox, facing.opposite()),
+            facing: Some(facing),
+        };
+    }
 
     // A named terminal is a real node in the lowered tree: a pin block (whose
     // stub carries the tip and the side) or a zero-size port node.

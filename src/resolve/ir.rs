@@ -518,6 +518,11 @@ pub struct ResolvedLink {
     /// straight `|projection|` chrome line between the two resolved anchors,
     /// after `align: origin` has placed the views.
     pub projection: bool,
+    /// A **schematic scope's laws own this wire** [SPEC 16.5] — the resolved
+    /// answer of `statement_owner`, carried rather than re-derived from a path
+    /// later. It is the sheet's *convention* that reads it: the net name
+    /// stands beside its trace [SPEC 16.4] and the trace is never cut.
+    pub sheet: bool,
     pub span: Span,
 }
 

@@ -633,6 +633,14 @@ pub enum SchChrome {
     TagFlagLeft,
     TagFlagRight,
     TagFlagBoth,
+    /// A **net run** (`shape: plain`, no symbol) — the length of trace its
+    /// text names [SPEC 16.4]. The floor rides `width` and the daylight the
+    /// text keeps off the run's ends rides `padding`, so SPEC 5's ordinary
+    /// width law grows it for a longer name and a `width:` of the author's
+    /// raises the floor.
+    NetRun,
+    /// …the same run stood on end, for a wire leaving a pin vertically.
+    NetRunTurned,
 }
 
 impl SchChrome {
@@ -650,6 +658,8 @@ impl SchChrome {
         SchChrome::TagFlagLeft,
         SchChrome::TagFlagRight,
         SchChrome::TagFlagBoth,
+        SchChrome::NetRun,
+        SchChrome::NetRunTurned,
     ];
 
     /// The bare class name (worn as `lini-<name>`).
@@ -668,6 +678,8 @@ impl SchChrome {
             SchChrome::TagFlagLeft => "tag-flag-left",
             SchChrome::TagFlagRight => "tag-flag-right",
             SchChrome::TagFlagBoth => "tag-flag-both",
+            SchChrome::NetRun => "net-run",
+            SchChrome::NetRunTurned => "net-run-turned",
         }
     }
 }
@@ -710,6 +722,18 @@ pub fn sch_chrome_decls(chrome: SchChrome) -> Vec<Decl> {
         SchChrome::TagFlagLeft => vec![quad("padding", 2.0, 6.0, 2.0, 6.0 + consts::TAG_POINT)],
         SchChrome::TagFlagRight => vec![quad("padding", 2.0, 6.0 + consts::TAG_POINT, 2.0, 6.0)],
         SchChrome::TagFlagBoth => vec![pair("padding", 2.0, 6.0 + consts::TAG_POINT)],
+        // A net run is the trace its name sits over [SPEC 16.4]: the run
+        // floor on the wire's own axis, the text's clear space at the two
+        // ends, and **no box size of its own across** — the run is as thick
+        // as the text is, so the wire lands on its middle.
+        SchChrome::NetRun => vec![
+            n("width", consts::NET_LABEL_RUN),
+            pair("padding", 0.0, consts::NET_LABEL_OFFSET),
+        ],
+        SchChrome::NetRunTurned => vec![
+            n("height", consts::NET_LABEL_RUN),
+            pair("padding", consts::NET_LABEL_OFFSET, 0.0),
+        ],
     }
 }
 

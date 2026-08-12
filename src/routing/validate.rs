@@ -114,6 +114,11 @@ fn breach(rule: Rule, w: &RoutedLink, detail: String) -> Violation {
 /// port (ROUTING.md Fixed ports) is judged against its pinned side and
 /// ordinate exactly, and the corner-margin rule is waived for it — the
 /// caller owns the landing.
+///
+/// A body may be a **line** — a net label's connection frame is its landing
+/// alone [SPEC 16.4] — and then its two opposite sides coincide on that line,
+/// so the port satisfies both. The fixed side settles it; a free landing
+/// takes the first by rank, as ever.
 fn landing(
     rect: Rect,
     port: (f64, f64),
@@ -124,15 +129,18 @@ fn landing(
     let (x, y) = port;
     let on_x = x > rect.x0 + EPS && x < rect.x1 - EPS;
     let on_y = y > rect.y0 + EPS && y < rect.y1 - EPS;
-    let side = if (y - rect.y0).abs() <= EPS && on_x {
-        Side::Top
-    } else if (x - rect.x1).abs() <= EPS && on_y {
-        Side::Right
-    } else if (y - rect.y1).abs() <= EPS && on_x {
-        Side::Bottom
-    } else if (x - rect.x0).abs() <= EPS && on_y {
-        Side::Left
-    } else {
+    let on = [
+        (Side::Top, (y - rect.y0).abs() <= EPS && on_x),
+        (Side::Right, (x - rect.x1).abs() <= EPS && on_y),
+        (Side::Bottom, (y - rect.y1).abs() <= EPS && on_x),
+        (Side::Left, (x - rect.x0).abs() <= EPS && on_y),
+    ];
+    let matches = || on.iter().filter(|(_, hit)| *hit).map(|(s, _)| *s);
+    let Some(side) = fixed
+        .map(|(f, _)| f)
+        .filter(|f| matches().any(|s| s == *f))
+        .or_else(|| matches().next())
+    else {
         return Err("end is not on a side".to_owned());
     };
     let (margin, len, perpendicular) = match side {

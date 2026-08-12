@@ -476,9 +476,18 @@ pub(super) fn any_label_cut(laid: &LaidOut) -> bool {
 /// The mask region for one wire and the label boxes that reach it: the wire's
 /// padded bbox — a wavy line swings `AMPLITUDE` past the routed path, so the
 /// region grows to match — filtered to the cut boxes that overlap it. `None`
-/// when the wire is too short to draw or no label reaches it.
+/// when the wire is too short to draw, when no label reaches it, or when it is
+/// a **sheet's** wire.
+///
+/// **A sheet never opens a trace** [SPEC 16.5]. The knockout is the *diagram*
+/// convention — a link label rides its wire and the wire opens behind it
+/// [SPEC 9] — while a schematic scope draws the other one: the net name stands
+/// beside the line [SPEC 16.4], so there is nothing to cut around. Stated here,
+/// at the one seam every cut passes through, because the two failures are not
+/// equal: a name that placement could not move clear overlapping its trace is
+/// still a legible drawing, and a trace with a hole in it is a wrong one.
 fn cut_hits<'a>(w: &RoutedLink, cuts: &'a [Rect]) -> Option<(Rect, Vec<&'a Rect>)> {
-    if w.path.len() < 2 {
+    if w.path.len() < 2 || w.sheet {
         return None;
     }
     let reach = if is_wavy(&w.attrs) {

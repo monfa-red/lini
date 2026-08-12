@@ -129,12 +129,18 @@ pub(super) const ALIGN_CLASSES: [(&str, &str, &str); 4] = [
 /// worn set, so the stylesheet walk drops an incoming copy instead of folding
 /// it (which would double it on re-desugar).
 pub(super) fn is_generated_class(class: &str) -> bool {
-    class.strip_prefix("lini-").is_some_and(|x| {
-        ALIGN_CLASSES.iter().any(|(n, ..)| *n == x)
-            || crate::ledger::defaults::SchChrome::ALL
-                .iter()
-                .any(|c| c.class_name() == x)
-    })
+    class.strip_prefix("lini-").is_some_and(is_utility_class)
+}
+
+/// The same question of a **bare** class name — the shape a lowered node's
+/// `type_chain` carries [SPEC 16.7]. A utility class is dress, never
+/// identity, so the type a chain names skips it
+/// ([`crate::desugar::schematic::schematic_type`]).
+pub(crate) fn is_utility_class(bare: &str) -> bool {
+    ALIGN_CLASSES.iter().any(|(n, ..)| *n == bare)
+        || crate::ledger::defaults::SchChrome::ALL
+            .iter()
+            .any(|c| c.class_name() == bare)
 }
 
 fn align_class_rule(name: &str, prop: &str, value: &str) -> Rule {

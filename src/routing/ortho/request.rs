@@ -39,6 +39,10 @@ pub struct EdgeReq {
     /// `.style` names on the link — carried through to the rendered group's
     /// `lini-style-*` classes (paint never read here; routing ignores it).
     pub applied_styles: Vec<String>,
+    /// A schematic scope's laws own this wire [SPEC 16.5] — routing never
+    /// reads it either; it rides through to the drawn wire, where the sheet's
+    /// net-name and never-cut conventions do.
+    pub sheet: bool,
     pub span: Span,
     pub data_from: String,
     pub data_to: String,
@@ -175,6 +179,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 markers: Markers { start, end },
                 attrs: w.attrs.clone(),
                 applied_styles: w.applied_styles.clone(),
+                sheet: w.sheet,
                 span: w.span,
                 data_from: eps[0].path.clone(),
                 data_to: eps[segs].path.clone(),
@@ -463,6 +468,7 @@ mod tests {
             markers: Markers::default(),
             attrs: AttrMap::default(),
             applied_styles: Vec::new(),
+            sheet: false,
             span: Span::empty(),
             data_from: a.to_owned(),
             data_to: b.to_owned(),

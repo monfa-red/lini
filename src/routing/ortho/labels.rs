@@ -4,12 +4,20 @@
 //! (the same nudge as on any node). A label is an obstacle to nothing and the
 //! link never moves for it — but the label may slide along the link to dodge
 //! node bodies, node labels, and other link labels.
+//!
+//! **A sheet's wire reads its label the other way** [SPEC 16.4]: a net name
+//! stands a constant clear distance *off* the trace, never on it, so the wire
+//! needs no knockout behind it. The anchor, the `translate:` nudge and the
+//! slide are unchanged — only the step off the centreline is added, from the
+//! one home of that convention ([`crate::layout::schematic`]), which also
+//! places the minted net run.
 
 use super::rect::Rect;
 use super::request::EdgeReq;
 use super::scene::SceneIndex;
 use crate::layout::as_pair;
-use crate::layout::ir::{RoutedLink, RoutedText};
+use crate::layout::ir::{Bbox, RoutedLink, RoutedText};
+use crate::layout::schematic::{clear_run, forced_side, net_offset, text_normal};
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -32,6 +40,17 @@ pub fn place(
     index: &SceneIndex,
 ) {
     let obstacles = index.obstacle_rects();
+    // The same obstacles a net name's freer-side reading measures against
+    // [SPEC 16.4] — the scene's solid ink, in the layout's own box type.
+    let boxes: Vec<Bbox> = obstacles
+        .iter()
+        .map(|r| Bbox {
+            min_x: r.x0,
+            min_y: r.y0,
+            max_x: r.x1,
+            max_y: r.y1,
+        })
+        .collect();
     let mut placed: Vec<Rect> = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     let mut expansions: Vec<usize> = Vec::new();
@@ -73,6 +92,9 @@ pub fn place(
         let auto_anchors = distribute_auto(&w.texts, &lens, total);
         let mut auto_i = 0;
 
+        // A sheet's net name steps off the centreline; a diagram's label rides
+        // it. The forced `side:` is the statement's own [SPEC 16.4/17].
+        let forced = w.sheet.then(|| forced_side(&w.attrs));
         for t in &w.texts {
             let box_ = crate::layout::text::measure(&t.text, &t.attrs);
             let (bw, bh) = (box_.w(), box_.h());
@@ -86,10 +108,20 @@ pub fn place(
                 Along::Fraction(f) => f * total,
             };
             // A label rides on the line; lift it off with `translate: x y` — a
-            // world-frame nudge, the same as on any node [SPEC 5/9].
+            // world-frame nudge, the same as on any node [SPEC 5/9]. On a
+            // sheet's wire it also steps clear of the trace [SPEC 16.4],
+            // reading the tangent where it actually landed, so a slid label
+            // stays beside whichever leg it ended on.
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(links, &segs, &lens, s);
-                ((p.0 + tx, p.1 + ty), tan, si)
+                let (nx, ny) = match forced {
+                    Some(forced) => net_offset(
+                        text_normal(tan, forced, |side| clear_run(p, side.normal(), &boxes)),
+                        box_,
+                    ),
+                    None => (0.0, 0.0),
+                };
+                ((p.0 + tx + nx, p.1 + ty + ny), tan, si)
             };
             let boxed = |pos: (f64, f64)| {
                 Rect::new(

@@ -111,6 +111,11 @@ pub struct RoutedLink {
     /// `.style` names applied to the link — rendered as `lini-style-*` classes,
     /// the same surface a node's styles get [SPEC 18]. Routing never reads it.
     pub applied_styles: Vec<String>,
+    /// A **schematic scope's laws own this wire** [SPEC 16.5], carried from
+    /// resolve. Two conventions read it on the drawn output: a net name stands
+    /// beside its trace [SPEC 16.4], and a sheet never opens a trace — the
+    /// label knockout is the *diagram* convention [SPEC 9].
+    pub sheet: bool,
     pub texts: Vec<RoutedText>,
     /// First and last endpoints of the chain this segment belongs to — surfaced
     /// as `data-from` / `data-to`.

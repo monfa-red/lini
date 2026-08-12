@@ -36,10 +36,13 @@ u1.vin - |v5|
 // output rail, the decoupling cap and its ground are one series statement,
 // hanging off the wire that leaves `vout`
 u1.vout - c1 - g1
-// a net name is the wire's own label, placed along the route
+// a net name is the wire's own label, placed along the route — a sheet writes
+// it just **beside** the trace and never cuts one open [SPEC 16.4/16.5]
 u1.vout - j1.p3 "3V3"
 // the capsule form — a label declared where it is wired
 u1.gnd - |gnd|
 // a label wire — the one-ended statement mints the net tag it points at, and
-// the op's end marker shapes it (`->` sets `right`, the flag drawn to a point)
+// the op's end marker shapes it (`->` sets `right`, the flag drawn to a point).
+// Bare (`-`), the tag stays `plain` and is a **run**: the wire travels its
+// length and the name sits over the trace, as on `U7`'s pins in the hero sheet
 j1.p1 -> "NSTDBY"

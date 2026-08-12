@@ -1286,8 +1286,8 @@ fn a_label_wire_mints_its_tag_and_wires_to_it() {
     let out = desugar_source(&sheet("u7.a - \"NSTDBY\"")).unwrap();
     assert!(out.contains("u7.a - lini-label-1"), "{out}");
     assert!(
-        out.contains("|block#lini-label-1| .lini-label.lini-block [ \"NSTDBY\" ]"),
-        "the tag carries the net text as its smart label: {out}"
+        out.contains("|block#lini-label-1| .lini-net-run.lini-label.lini-block"),
+        "the tag carries the net text as its smart label, on a net run: {out}"
     );
     // The text moved onto the tag — the wire keeps no label of its own.
     assert!(!out.contains("[ \"NSTDBY\" ]\n\n"), "{out}");
@@ -1337,6 +1337,25 @@ fn an_authored_shape_outranks_the_markers() {
         out.contains("lini-tag-round"),
         "the rule's shape stands: {out}"
     );
+}
+
+#[test]
+fn a_label_wires_side_rides_onto_the_tag_it_mints() {
+    // A one-ended label wire has no node of its own to carry `side:` — the
+    // block is the *link's* tail [SPEC 9] — so the mint moves it onto the tag,
+    // the way it already moves the op's marker [SPEC 16.4]. Without this the
+    // commonest spelling of the override is silently inert.
+    let out = desugar_source(&sheet("u7.a - \"N\" { side: bottom }")).unwrap();
+    assert!(
+        out.contains("side: bottom"),
+        "the side reaches the minted tag: {out}"
+    );
+    // …and it is *moved*, not copied: the wire keeps no `side:` it cannot read.
+    let wire = out
+        .lines()
+        .find(|l| l.contains("u7.a -"))
+        .expect("the label wire");
+    assert!(!wire.contains("side"), "the wire keeps none of it: {wire}");
 }
 
 #[test]
@@ -1487,7 +1506,7 @@ fn the_scopes_link_laws_reach_a_nested_ordinary_container() {
         "{ layout: schematic; }\n|group#g| [\n  |component#u8| [ |pin#z| ]\n  u8.z - \"NET\"\n]\n";
     let out = desugar_source(nested).unwrap();
     assert!(
-        out.contains("|block#lini-label-1| .lini-label.lini-block"),
+        out.contains("|block#lini-label-1| .lini-net-run.lini-label.lini-block"),
         "the nested group mints its tag: {out}"
     );
     assert!(out.contains("u8.z - lini-label-1"), "{out}");

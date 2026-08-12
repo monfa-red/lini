@@ -139,6 +139,13 @@ pub fn resolve_with_env(
     let mut nested_sheet = false;
     let mut dress_wires =
         |owner: links::Owner, resolved: &mut Vec<crate::resolve::ResolvedLink>| {
+            // The scope answer, carried onto every wire it owns [SPEC 16.5] —
+            // the sheet's *convention* reads it downstream (a net name beside
+            // its trace, and a trace that is never cut), so it is stamped for
+            // every sheet, root-level or nested, ahead of the dress below.
+            for w in resolved.iter_mut() {
+                w.sheet = owner == links::Owner::Sheet;
+            }
             if owner != links::Owner::Sheet || root_owner == links::Owner::Sheet {
                 return;
             }

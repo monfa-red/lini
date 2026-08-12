@@ -177,7 +177,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `tooltip` | \|chart\|, \|pie\|, series (role) | `one:any` | `engine` | — | — |
 | `value` | \|slice\|, \|bubble\| | `one:number` | `none` | — | — |
 | `at` | \|mark\|, \|bubble\|, \|plane\| | `one:any` | `none` | — | — |
-| `side` | \|axis\|, \|topic\|, \|pin\|, dimension (role) | `one:ident` | `engine` | — | — |
+| `side` | \|axis\|, \|topic\|, \|pin\|, \|label\|, link, dimension (role) | `one:ident` | `engine` | — | — |
 | `range` | \|axis\|, \|band\| | `one:number` | `none` | — | — |
 | `step` | \|axis\| | `one:number` | `none` | — | — |
 | `ticks` | \|axis\| | `list:number` | `none` | — | — |

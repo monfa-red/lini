@@ -41,6 +41,7 @@
 use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::stack::{Band, SeatLine, Stack};
+use super::net;
 use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
@@ -69,6 +70,11 @@ pub(super) struct Seats {
     spanning: Vec<Spanning>,
     /// Satellites with no placed end — the flow fallback [SPEC 16.1].
     floating: Vec<usize>,
+    /// Where each **net run**'s name steps off its own trace [SPEC 16.4] —
+    /// decided here, because this is where the run's landing and the anchor's
+    /// painted stack both exist; applied to the label's text in
+    /// [`Seats::absolutize`], and counted by every extent this pass reports.
+    text: Vec<(f64, f64)>,
     /// The scope's seat gap ([`seat_gap`]) — every distance this pass leaves.
     seat: f64,
 }
@@ -102,6 +108,7 @@ impl Seats {
             seats: (0..children.len()).map(|_| None).collect(),
             spanning: Vec::new(),
             floating: Vec::new(),
+            text: vec![(0.0, 0.0); children.len()],
             seat,
         };
         if !satellite.contains(&true) {
@@ -197,6 +204,16 @@ impl Seats {
                 neg: c - lo.min(hi),
                 pos: hi.max(lo) - c,
             };
+            // A **net run**'s name steps off the trace here [SPEC 16.4]: the
+            // run's middle is `band.neg / 2` back from the innermost landing,
+            // and the freer side is read against what this anchor has already
+            // painted. The step is across the growth ray, so the band above is
+            // untouched and only the run's own reach changes.
+            if net::is_run(sat) {
+                let mid = frame.pt(along, base + self.seat + band.neg / 2.0);
+                self.text[member] = net::seat_text(sat, mid, stack.painted());
+            }
+            let box_ = self.extent(children, member);
             let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
             let u = frame.u(point);
             let interval = (along + u0.min(u1) - u, along + u0.max(u1) - u);
@@ -235,14 +252,37 @@ impl Seats {
             .enumerate()
             .filter_map(|(i, s)| s.as_ref().filter(|s| s.anchor == anchor).map(|s| (i, s)))
             .fold(drawn(&children[anchor]), |b, (i, s)| {
-                b.union(drawn(&children[i]).shifted(s.dx, s.dy))
+                b.union(self.extent(children, i).shifted(s.dx, s.dy))
             })
+    }
+
+    /// A satellite's placed extent in its own frame — the one reading of "how
+    /// much room this satellite needs", so the packer, the cluster and the
+    /// scope's box can never disagree about it. Ordinarily that is everything
+    /// it draws; a **net run** is a stretch of wire rather than a body, so it
+    /// reserves its trace and its stepped-off name alone [SPEC 16.4].
+    fn extent(&self, children: &[PlacedNode], i: usize) -> Bbox {
+        if net::is_run(&children[i]) {
+            return net::run_extent(&children[i], self.text[i]);
+        }
+        drawn(&children[i])
     }
 
     /// Once the anchors are placed: land every seated satellite in scene
     /// coordinates. A pin-relative seat rides its anchor; a spanning chain
     /// reads both placed ends now that they exist.
     pub(super) fn absolutize(&self, children: &mut [PlacedNode]) {
+        // A net run's name steps off its own trace [SPEC 16.4] — the decision
+        // was struck when the run was seated; this applies it.
+        for (i, &(dx, dy)) in self.text.iter().enumerate() {
+            if (dx, dy) == (0.0, 0.0) {
+                continue;
+            }
+            for c in children[i].children.iter_mut() {
+                c.cx += dx;
+                c.cy += dy;
+            }
+        }
         for (i, seat) in self.seats.iter().enumerate() {
             let Some(seat) = seat else { continue };
             let held = &children[seat.anchor];

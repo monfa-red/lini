@@ -64,9 +64,10 @@ pub(super) fn mint(
             && let Some(text) = take_first_text(w)
         {
             let shape = tag_shape(cx, &label, &[], op, w.span, AS_A_TAG)?;
+            let side = take_side(w);
             let id = mint.next_id();
             let span = text.span;
-            out.push(tag(&id, text, shape));
+            out.push(tag(&id, text, shape, side));
             w.chain.push(EndpointGroup {
                 endpoints: vec![Endpoint {
                     capsule: None,
@@ -284,11 +285,30 @@ const AS_A_TAG: &str = "a -> \"NET\"";
 /// The minted tag: a `|label|` whose smart label is the net text [SPEC 16.4],
 /// span-seated at that text so `lini desugar` prints it right after the wire
 /// that mints it and re-parses to the same order.
-fn tag(id: &str, text: TextNode, shape: Option<&str>) -> Node {
+fn tag(id: &str, text: TextNode, shape: Option<&str>, side: Option<Decl>) -> Node {
     let mut n = super::synth::labelled("label", text);
     n.id = Some(id.to_string());
-    n.style = shape.map(|s| vec![decl("shape", s)]).unwrap_or_default();
+    n.style = shape
+        .map(|s| decl("shape", s))
+        .into_iter()
+        .chain(side)
+        .collect();
     n
+}
+
+/// Move the statement's `side:` onto the tag it mints [SPEC 16.4]. A one-ended
+/// label wire has no node of its own to carry it — `u1.a - "RX" { side:
+/// bottom }`'s block is the *link's* tail, per the tail law [SPEC 9] — so the
+/// side the net name sits on would land where nothing reads it. Taken, not
+/// copied, exactly as the op's marker is consumed once it has shaped the tag:
+/// the wire keeps no `side:` it has no meaning for. (A **two-ended** wire's
+/// label reads `side:` off the link itself, where it does mean something, so
+/// this runs only on the minted form.)
+fn take_side(w: &mut Link) -> Option<Decl> {
+    let at = w.style.iter().rposition(|d| d.name == "side")?;
+    let taken = w.style.remove(at);
+    w.style.retain(|d| d.name != "side");
+    Some(taken)
 }
 
 fn decl(name: &str, value: &str) -> Decl {

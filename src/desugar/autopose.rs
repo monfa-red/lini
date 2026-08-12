@@ -56,6 +56,9 @@ struct Part<'a> {
     chain: Vec<String>,
     kind: Option<SchKind>,
     symbol: Option<String>,
+    /// A `|label|`'s `shape:` — what tells a **net run** from an outlined tag
+    /// [SPEC 16.4].
+    shape: Option<String>,
     /// The part's own authored pose — an anchor's turn re-sides its pins, and
     /// a satellite's *forces* the choice.
     pose: Pose,
@@ -72,6 +75,7 @@ impl<'a> Part<'a> {
                 chain: Vec::new(),
                 kind: None,
                 symbol: None,
+                shape: None,
                 pose: Pose::NONE,
                 forced: false,
                 role: Role::Anchor,
@@ -80,6 +84,7 @@ impl<'a> Part<'a> {
         let chain = cx.authored_chain(node);
         let kind = schematic::sch_kind(&chain);
         let symbol = cx.chain_ident(&chain, &node.style, "symbol");
+        let shape = cx.chain_ident(&chain, &node.style, "shape");
         let has = |name: &str| cx.chain_decl(&chain, &node.style, name).is_some();
         let pose = cx
             .chain_number(&chain, &node.style, "rotate")
@@ -98,6 +103,7 @@ impl<'a> Part<'a> {
             role: schematic::role(has("pin"), has("cell"), kind, pins),
             kind,
             symbol,
+            shape,
             pose,
             forced: has("rotate"),
             chain,
@@ -123,7 +129,12 @@ impl<'a> Part<'a> {
                     .find(|(_, p)| p.id.as_deref() == Some(want))
                     .map(|((_, side, _), _)| side)
             }
-            _ => schematic::terminal_facing(&self.chain, self.symbol.as_deref(), terminal),
+            _ => schematic::terminal_facing(
+                &self.chain,
+                self.symbol.as_deref(),
+                self.shape.as_deref(),
+                terminal,
+            ),
         }
     }
 }
@@ -178,16 +189,19 @@ pub(super) fn choose<'a>(
         // Which way the chain grows [SPEC 16.1]: away from its **terminator's**
         // own drawing — a `|gnd|` is drawn with its point at the top, so a
         // chain ending in one grows *down*; a power flag's sits at its bottom,
-        // so up. Only a `|label|` carries that convention (a part's pins are
-        // just pins), and a forced terminator poses first; with neither the ray
-        // is the pin's own outward normal. Every member then presents its
-        // terminal back up that ray — the same ray the seat pass reads off the
-        // lowered tree ([`crate::layout::schematic`]), so the two agree.
+        // so up. Only a `|label|` **that draws a symbol** carries that
+        // convention (a part's pins are just pins, and a text label states no
+        // direction of its own — SPEC 16.1 runs it along the pin's outward
+        // normal, which is exactly this fallback), and a forced terminator
+        // poses first; with neither the ray is the pin's own outward normal.
+        // Every member then presents its terminal back up that ray — the same
+        // ray the seat pass reads off the lowered tree
+        // ([`crate::layout::schematic`]), so the two agree.
         let ray = chain
             .members
             .last()
             .map(|&m| &parts[m])
-            .filter(|term| term.kind == Some(SchKind::Label))
+            .filter(|term| term.kind == Some(SchKind::Label) && term.symbol.is_some())
             .zip(chain.inbound.last())
             .and_then(|(term, inbound)| {
                 let side = term.terminal_side(cx, inbound.as_deref())?;

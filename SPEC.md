@@ -1398,6 +1398,10 @@ The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 8 (a flag's nose reservation; the nose draws at 45°)
 label-seat max(25, 2.5 × clearance) — a seat is a routing corridor, so it is
   derived from the scope's own clearance, floored at one pin pitch
+net-label-run 40 (2 × pin-pitch — the floor on a plain net label's run of
+  trace; a longer name grows it, `width:` raises the floor — SPEC 16.4)
+net-label-offset 4 (the clear space that name keeps off the trace, and off
+  the run's two ends)
 pin-number offset 9 (across the lead)    readout offset 40 (beside a turned part's axis)
 readout gap 8 (part edge → its ref / value)    readout stack 4 (between the two)
 schematic clearance 10 (the scope's config — pin-pitch stays ≥ min pitch)
@@ -3172,7 +3176,7 @@ by role:
 | a 3+-pin part (`\|component\|`, `\|opamp\|`, `\|J\|`, `\|Q\|`), or anything explicitly placed (`cell:`) | an **anchor** | on the scope's track grid |
 | a `\|label\|`, or an *unplaced* 1–2-pin part | a **satellite** | seated at the pin its wire touches |
 | a link (`a - b`) | a **wire** | routed orthogonally, square-cornered, junction-dotted |
-| a one-ended link with text or a capsule (`U7.DIAG - "NSTDBY"`, `c24.p2 - \|gnd\|`) | a **label wire** | a stub to a seated `\|label\|` |
+| a one-ended link with text or a capsule (`U7.DIAG - "NSTDBY"`, `c24.p2 - \|gnd\|`) | a **label wire** | a lead to a seated `\|label\|` — a run of trace under a plain net name, a stub to a tag or a symbol ([16.4](#164-labels)) |
 
 Vocabulary: a **component** is the part instance; a **symbol** is the drawing
 it (or a label) wears — `symbol:` names one, exactly as on `|icon|`
@@ -3330,6 +3334,35 @@ A label has **no pins and no dot-path**; a wire lands on its connection
 point — a fixed port like a pin's. `:side` is an error on **every** terminal,
 pin or label — a terminal owns its connection geometry.
 
+**A plain label is a run, not a stop.** The two shaped readings are *bodies*
+the wire ends on — an outlined tag, a symbol — but a sheet writes a bare net
+name **beside a stretch of trace**, and `shape: plain` with no `symbol:` draws
+exactly that: the label's box is a **run** of wire, its connection point the
+end **away** from the pin, so the router draws one wire the whole length of it
+and the name ends up over a trace. The run is `net-label-run` long
+([SPEC 10.5](#105-layout-constants-baked)) and grows for a longer name — the
+ordinary `width` floor ([SPEC 5](#5-the-box-model)), so `|label| { width: N }`
+raises it. Being a run and not a body, it is no obstacle: its frame is that
+landing line alone, and its text obstructs nothing, exactly as a link label
+does not ([SPEC 9](#9-links)).
+
+**Net text stands off its wire, never on it.** The name sits a constant
+`net-label-offset` clear of the centreline — the diagram convention (a label
+riding its wire, the wire opened behind it) is not a sheet's, and a schematic
+wire is never cut ([16.5](#165-wires)). Which side:
+
+| Run | Text |
+|---|---|
+| horizontal | **above** |
+| vertical | **beside**, on the freer side — more clear space that way; ties break on the routing side rank (right → bottom → left → top) |
+
+**`side: left \| right \| top \| bottom`** forces it — on the `|label|` for the
+minted run, on the **wire statement** for the two-ended form (`u7.vs -
+c24.p1 "VM" { side: bottom }`), one more owner of the `side` homonym
+([SPEC 17](#17-property-ledger--support)). Text always stays **upright**: a run
+poses like any part ([16.1](#161-placement--anchors--satellites)) and rotation
+is read at lowering, never as a paint transform.
+
 ### 16.5 Wires
 
 A schematic wire is an ordinary link, routed by the orthogonal router
@@ -3374,8 +3407,16 @@ laws:
   marker at a symbol-form label, errors. The op's **line** stays free
   (`--` is a dashed wire, plain `stroke-style`).
 - A two-ended wire's **net name is its link label** — `U7.VS - c24.p1 "VM"`
-  — placed by `along:` as everywhere; a shaped tag on such a wire is a
+  — placed by `along:` as everywhere, then stepped clear of the trace by the
+  net-label convention ([16.4](#164-labels)); a shaped tag on such a wire is a
   separate label-wire statement at one of its pins.
+- **A sheet never opens a trace.** The label knockout — a label riding its
+  wire, the wire masked open behind it — is the **diagram** convention
+  ([SPEC 9](#9-links)); a schematic scope draws in the other one, standing the
+  net name beside the line, so there is nothing to cut around. The law is the
+  scope's, not the placement's: should a name ever fail to clear its wire, it
+  overlaps a whole trace, which still reads, rather than punching a hole in
+  one, which is a wrong drawing.
 
 ### 16.6 Look
 
@@ -3592,6 +3633,7 @@ out of scope.
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
 | `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split | [SPEC 16.2](#162-components--pins) |
+| `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, the freer side of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
 
 ### Link properties
 
@@ -3721,7 +3763,7 @@ families:
 | sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
-| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 
 (`lini-align-*` / `lini-justify-*` carry layout, not paint — they emit no CSS
 rule, the one `lini-` family host CSS cannot restyle. Generated **ids** are

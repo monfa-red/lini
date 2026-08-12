@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/schematic.lini
 ---
@@ -26,8 +25,6 @@ input_file: samples/schematic.lini
     .lini .lini-part-value { font-size: 12px; }
     .lini .lini-link { fill: none; stroke: #0a7a2f; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -295,12 +292,11 @@ input_file: samples/schematic.lini
       <path d="M -22.4205 52.25 L -22.4205 78.75"/>
     </g>
     <g class="lini-link" data-from="u1.vout" data-to="j1.p3">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-62.6705" y="-39.25" width="152.686" height="58.625"><rect class="lini-cut-bg" x="-62.6705" y="-39.25" width="152.686" height="58.625"/><rect class="lini-cut" x="28.5905" y="-44.65" width="25.289" height="14.3"/></mask>
-      <path d="M -60.9205 -37.5 L 57.8905 -37.5 L 57.8905 17.625 L 88.2655 17.625" mask="url(#lini-label-cut-3)"/>
+      <path d="M -60.9205 -37.5 L 57.8905 -37.5 L 57.8905 17.625 L 88.2655 17.625"/>
       <g class="lini-link-label">
-        <use href="#lg1400-1655" transform="translate(31.8905 -33.562) scale(0.011 -0.011)"/>
-        <use href="#lg1400-156" transform="translate(37.7535 -33.562) scale(0.011 -0.011)"/>
-        <use href="#lg1400-1655" transform="translate(44.7165 -33.562) scale(0.011 -0.011)"/>
+        <use href="#lg1400-1655" transform="translate(31.8905 -43.062) scale(0.011 -0.011)"/>
+        <use href="#lg1400-156" transform="translate(37.7535 -43.062) scale(0.011 -0.011)"/>
+        <use href="#lg1400-1655" transform="translate(44.7165 -43.062) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link" data-from="u1.gnd" data-to="lini-cap-2">

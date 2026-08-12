@@ -255,6 +255,7 @@ mod tests {
             markers: Markers::default(),
             attrs: AttrMap::default(),
             applied_styles: Vec::new(),
+            sheet: false,
             span: Span::empty(),
             data_from: a.to_owned(),
             data_to: b.to_owned(),

@@ -263,6 +263,8 @@ pub(super) fn draw(
             p.link.markers.clone(),
             &p.link.attrs,
             &p.link.applied_styles,
+            // A sequence message is never a sheet's wire.
+            false,
             p.link.span,
         ));
     }

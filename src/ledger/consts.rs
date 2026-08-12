@@ -122,6 +122,17 @@ pub(crate) const JUNCTION_RADIUS: f64 = 4.0;
 /// draws at half the tag's height (a 45° point at any text size) and clamps
 /// here, so the text never rides it.
 pub(crate) const TAG_POINT: f64 = 8.0;
+/// The clear space a **net label**'s text keeps off the trace it names
+/// [SPEC 16.4]: a sheet writes the net name *beside* the line, never on it, so
+/// this is the daylight between the wire's centreline and the nearest edge of
+/// the text. It holds the text off the run's two ends as well — one constant,
+/// one meaning: a net label's clear space.
+pub(crate) const NET_LABEL_OFFSET: f64 = 4.0;
+/// The floor on a plain net label's **run** [SPEC 16.4] — the length of trace
+/// its text names, two pin pitches, so a short name still gets a readable
+/// stretch of wire under it. A longer name grows it, and `width:` raises the
+/// floor, through SPEC 5's ordinary width law.
+pub(crate) const NET_LABEL_RUN: f64 = 2.0 * PIN_PITCH;
 /// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
 /// stub tip and the satellite seated off it, and between stacked satellites.
 ///

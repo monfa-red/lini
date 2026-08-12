@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/schematic_parts.lini
 ---
@@ -887,8 +886,8 @@ input_file: samples/schematic_parts.lini
         <use href="#lg1500-303" transform="translate(19.318 4.654) scale(0.013 -0.013)"/>
       </g>
     </g>
-    <g class="lini-node lini-label lini-block" transform="translate(-229.2145,198.25)">
-      <rect x="-13.53" y="-5.5" width="27.06" height="11" rx="0" ry="0"/>
+    <g class="lini-node lini-net-run lini-label lini-block" transform="translate(-229.2145,198.25)">
+      <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lg1500-88" transform="translate(-13.53 3.938) scale(0.011 -0.011)"/>
         <use href="#lg1500-122" transform="translate(-5.577 3.938) scale(0.011 -0.011)"/>

@@ -16,8 +16,8 @@ pub(crate) use arity::authored_terminal_ids;
 pub(crate) use chain::chains;
 use family::{LABEL_SYMBOLS, variant_names};
 pub(crate) use family::{
-    PartNode, Role, SchKind, part_glyph, part_pin_ids, role, sch_kind, schematic_type,
-    terminal_facing, terminal_ids, walk_pins,
+    NET_RUN_FACING, PartNode, Role, SchKind, is_net_run, part_glyph, part_pin_ids, role, sch_kind,
+    schematic_type, terminal_facing, terminal_ids, walk_pins,
 };
 pub(super) use pins::{
     assemble_component, authored_side, expand_connector_pins, pin_sides, pins_of,
@@ -312,14 +312,15 @@ pub(super) fn label_body(
     children: &mut Vec<Child>,
 ) -> Result<(), Error> {
     let (style, span) = (&node.style, node.span);
-    if let Some(sym) = cx.chain_ident(chain, style, "symbol") {
+    let symbol = cx.chain_ident(chain, style, "symbol");
+    if let Some(sym) = &symbol {
         if !LABEL_SYMBOLS.contains(&sym.as_str()) {
-            let near = crate::suggest::nearest(&sym, LABEL_SYMBOLS.iter().copied(), 1);
+            let near = crate::suggest::nearest(sym, LABEL_SYMBOLS.iter().copied(), 1);
             let mut msg = format!("unknown symbol '{sym}'");
             msg.push_str(&crate::suggest::did_you_mean(&near));
             return Err(Error::at(span, msg));
         }
-        let glyph = part_glyph(chain, Some(&sym)).expect("a label symbol");
+        let glyph = part_glyph(chain, Some(sym)).expect("a label symbol");
         seat_glyph(
             cx,
             children,
@@ -335,11 +336,26 @@ pub(super) fn label_body(
             style_out.insert(0, id("direction", "row"));
         }
     }
-    match cx
-        .chain_ident(chain, style, "shape")
-        .as_deref()
-        .unwrap_or("plain")
-    {
+    let shape = cx.chain_ident(chain, style, "shape");
+    match shape.as_deref().unwrap_or("plain") {
+        // A **net run** [SPEC 16.4]: the wire travels the length of the box
+        // and the text stands beside the trace, so the box is a stretch of
+        // wire rather than a tag. Which axis it runs on is the part's pose —
+        // the same turn a ground or a discrete takes. A terminal on a
+        // *vertical* edge (left / right) faces along x, so its run is the
+        // horizontal one.
+        _ if is_net_run(chain, symbol.as_deref(), shape.as_deref()) => {
+            let upright = pose.side(NET_RUN_FACING).is_vertical();
+            classes.insert(
+                0,
+                if upright {
+                    "lini-net-run"
+                } else {
+                    "lini-net-run-turned"
+                }
+                .to_string(),
+            );
+        }
         "plain" => {}
         "round" => {
             classes.insert(0, "lini-tag-round".into());

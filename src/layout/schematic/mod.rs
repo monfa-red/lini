@@ -21,6 +21,7 @@ use crate::span::Span;
 
 mod hints;
 mod junction;
+mod net;
 mod place;
 mod ports;
 mod seat;
@@ -30,6 +31,13 @@ mod terminal;
 pub(super) use hints::seat_hints;
 /// The generated connection dots [SPEC 16.5], read off the routed geometry.
 pub(crate) use junction::junctions;
+/// The **net-label convention** [SPEC 16.4] — which side of its wire a net
+/// name takes and how far off it sits. Shared with the router's label pass,
+/// which places the two-ended spelling (`u7.vs - c24.p1 "VM"`) while
+/// [`net::seat_text`] places the minted run.
+pub(crate) use net::{
+    clear_run, forced_side, is_run as is_net_run, offset as net_offset, text_normal,
+};
 /// The router's view of a placed part [SPEC 16.5] — the scene index folds a
 /// part's anatomy into this one obstacle and reads its fixed ports off it.
 pub(crate) use ports::{PartPorts, part_ports};
