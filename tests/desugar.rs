@@ -1351,8 +1351,11 @@ fn a_marker_shapes_a_tag_however_it_was_written() {
         "u7.a -> |label#n1|",
     ] {
         let out = desugar_source(&sheet(wires)).unwrap();
+        // The selector and its one declaration, checked apart: the rule is long
+        // enough that `fmt` may break it over two lines.
         assert!(
-            out.contains(".lini-tag-flag-right.lini-label.lini-block { shape: right; }"),
+            out.contains(".lini-tag-flag-right.lini-label.lini-block")
+                && out.contains("shape: right;"),
             "'{wires}' shapes its tag: {out}"
         );
         assert!(
