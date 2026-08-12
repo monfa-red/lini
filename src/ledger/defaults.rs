@@ -451,6 +451,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("shape", "plain"),
             n("font-size", 11.0),
             var("color", "label-ink"),
+            // A symbol label lays its drawing and its text out in a row
+            // [SPEC 16.4], so this is the gap between them — the generic
+            // container 20 sets a ground or a power flag adrift of the net it
+            // names. Inert on a label that is only text (one child, no gap).
+            n("gap", 10.0),
         ],
         // The connection dot [SPEC 16.5] — generated chrome at ≥3-way meets;
         // diameter = 2 × the junction radius constant.
