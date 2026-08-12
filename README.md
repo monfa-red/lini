@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/logo/lini.png" alt="Lini" width="256">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/logo/lini.svg" alt="Lini" width="256">
 </p>
 
 <p align="center"><strong>Pretty diagrams from plain text, with fine-grained control.</strong></p>

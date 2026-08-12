@@ -11,6 +11,7 @@
     .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
     .lini .lini-canvas { fill: var(--lini-bg); }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-path { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
@@ -28,6 +29,7 @@
     .lini .lini-component { fill: var(--lini-component-fill); stroke: var(--lini-component-stroke); stroke-width: 1.5; }
     .lini .lini-pin { font-size: 11px; }
     .lini .lini-label { color: var(--lini-label-ink); font-size: 11px; }
+    .lini .lini-junction { fill: var(--lini-wire); stroke: none; }
     .lini .lini-sch-line { fill: none; stroke: var(--lini-component-stroke); stroke-width: 1.5; }
     .lini .lini-sch-solid { fill: var(--lini-component-stroke); stroke: none; }
     .lini .lini-sch-tag-line { fill: none; stroke: var(--lini-label-ink); stroke-width: 1.5; }
@@ -43,9 +45,9 @@
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" transform="translate(0,0)">
       <rect x="-594" y="-420" width="1188" height="840" rx="0" ry="0"/>
-      <g class="lini-node lini-region lini-group lini-block" data-id="drv" transform="translate(-274.47,0)">
-        <rect x="-179.7685" y="-166.75" width="359.537" height="333.5" rx="8" ry="8"/>
-        <g class="lini-node lini-component lini-block" data-id="U7" transform="translate(26.565,-11.25)">
+      <g class="lini-node lini-region lini-group lini-block" data-id="drv" transform="translate(-264,0)">
+        <rect x="-171.2985" y="-166.75" width="342.597" height="333.5" rx="8" ry="8"/>
+        <g class="lini-node lini-component lini-block" data-id="U7" transform="translate(18.095,-11.25)">
           <rect x="-42.2035" y="-93.5" width="84.407" height="187" rx="0" ry="0"/>
           <g class="lini-node lini-row lini-block" transform="translate(0,-15.5)">
             <rect x="-34.2035" y="-70" width="68.407" height="140" rx="0" ry="0"/>
@@ -178,7 +180,7 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">U7</text>
           </g>
         </g>
-        <g class="lini-node lini-C lini-pose-90 lini-block" data-id="C24" transform="translate(-114.6605,41)">
+        <g class="lini-node lini-C lini-pose-90 lini-block" data-id="C24" transform="translate(-132.5485,41)">
           <rect x="-12.75" y="-32.75" width="25.5" height="65.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-line lini-path" transform="translate(-12,-32)">
             <path d="M 24 0 M 0 64 M 12 0 L 12 29 M 12 35 L 12 64"/>
@@ -199,68 +201,68 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">C24</text>
           </g>
         </g>
-        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(-79.8585,-72.5)">
+        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(-67.3885,-72.5)">
           <rect x="-19.22" y="-10.75" width="38.44" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-18.47,-10)">
             <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">VM</text>
         </g>
-        <g class="lini-node lini-vio lini-label lini-block" data-id="lini-cap-2" transform="translate(-133.344,-52.5)">
+        <g class="lini-node lini-vio lini-label lini-block" data-id="lini-cap-2" transform="translate(-120.874,-52.5)">
           <rect x="-20.4245" y="-10.75" width="40.849" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-19.6745,-10)">
             <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">VIO</text>
         </g>
-        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-3" transform="translate(-114.6605,105.5)">
+        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-3" transform="translate(-132.5485,105.5)">
           <rect x="-8.75" y="-6.75" width="17.5" height="13.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-8,-6)">
             <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
           </g>
         </g>
-        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-4" transform="translate(26.565,134)">
+        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-4" transform="translate(18.095,134)">
           <rect x="-8.75" y="-6.75" width="17.5" height="13.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-8,-6)">
             <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
           </g>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-1" transform="translate(133.7685,-86.75)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-1" transform="translate(125.2985,-86.75)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">EN</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-2" transform="translate(133.7685,-66.75)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-2" transform="translate(125.2985,-66.75)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">STEP</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-3" transform="translate(133.7685,-46.75)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-3" transform="translate(125.2985,-46.75)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">DIR</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-4" transform="translate(133.7685,-26.75)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-4" transform="translate(125.2985,-26.75)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OA1</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-5" transform="translate(133.7685,-6.75)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-5" transform="translate(125.2985,-6.75)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OA2</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-6" transform="translate(133.7685,13.25)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-6" transform="translate(125.2985,13.25)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OB1</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-7" transform="translate(133.7685,33.25)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-7" transform="translate(125.2985,33.25)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OB2</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-115.0025,-154.75)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-106.5325,-154.75)">
           <rect x="-38.766" y="-6" width="77.532" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">Stepper driver</text>
         </g>
       </g>
-      <g class="lini-node lini-region lini-group lini-block" data-id="mot" transform="translate(200.2685,0)">
-        <rect x="-253.97" y="-72.375" width="507.94" height="144.75" rx="8" ry="8"/>
-        <g class="lini-node lini-J lini-component lini-pose-180 lini-block" data-id="J3" transform="translate(-122.97,17.625)">
+      <g class="lini-node lini-region lini-group lini-block" data-id="mot" transform="translate(191.7985,0)">
+        <rect x="-243.5" y="-72.375" width="487" height="144.75" rx="8" ry="8"/>
+        <g class="lini-node lini-J lini-component lini-pose-180 lini-block" data-id="J3" transform="translate(-112.5,17.625)">
           <rect x="-20" y="-28" width="40" height="56" rx="0" ry="0"/>
           <g class="lini-node lini-row lini-block" transform="translate(0,0)">
             <rect x="-12" y="-20" width="24" height="40" rx="0" ry="0"/>
@@ -314,23 +316,23 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">J3</text>
           </g>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-1" transform="translate(-37.97,27.625)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-1" transform="translate(-27.5,27.625)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OA1</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-2" transform="translate(-37.97,7.625)">
+        <g class="lini-node lini-net-run lini-label lini-pose-180 lini-block" data-id="lini-label-2" transform="translate(-27.5,7.625)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OA2</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-3" transform="translate(-207.97,27.625)">
+        <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-3" transform="translate(-197.5,27.625)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OB1</text>
         </g>
-        <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-4" transform="translate(-207.97,7.625)">
+        <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-4" transform="translate(-197.5,7.625)">
           <rect x="-20" y="-5.5" width="40" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">OB2</text>
         </g>
-        <g class="lini-node lini-J lini-component lini-block" data-id="J1" transform="translate(145.47,7.75)">
+        <g class="lini-node lini-J lini-component lini-block" data-id="J1" transform="translate(135,7.75)">
           <rect x="-20" y="-18" width="40" height="36" rx="0" ry="0"/>
           <g class="lini-node lini-row lini-block" transform="translate(0,0)">
             <rect x="-12" y="-10" width="24" height="20" rx="0" ry="0"/>
@@ -366,20 +368,20 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">J1</text>
           </g>
         </g>
-        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(61.25,-28)">
+        <g class="lini-node lini-vm lini-label lini-block" data-id="lini-cap-1" transform="translate(71.72,-28)">
           <rect x="-19.22" y="-10.75" width="38.44" height="21.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-18.47,-10)">
             <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">VM</text>
         </g>
-        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-2" transform="translate(219.22,39.5)">
+        <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-2" transform="translate(208.75,39.5)">
           <rect x="-8.75" y="-6.75" width="17.5" height="13.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-8,-6)">
             <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-187.05,-60.375)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-176.58,-60.375)">
           <rect x="-40.92" y="-6" width="81.84" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">Motor &amp; supply</text>
         </g>
@@ -574,58 +576,61 @@
   </g>
   <g class="lini-links">
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VS" data-to="drv.lini-cap-1">
-      <path d="M -309.3585 -36.75 L -364.7985 -36.75 L -364.7985 -62.5"/>
+      <path d="M -307.3585 -36.75 L -341.8585 -36.75 L -341.8585 -62.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VIO" data-to="drv.lini-cap-2">
-      <path d="M -309.3585 -16.75 L -419.4885 -16.75 L -419.4885 -42.5"/>
+      <path d="M -307.3585 -16.75 L -396.5485 -16.75 L -396.5485 -42.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.VIO" data-to="drv.C24.p1">
-      <path d="M -309.3585 -16.75 L -389.1305 -16.75 L -389.1305 9"/>
+      <path d="M -307.3585 -16.75 L -396.5485 -16.75 L -396.5485 9"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.C24.p2" data-to="drv.lini-cap-3">
-      <path d="M -389.1305 73 L -389.1305 99.5"/>
+      <path d="M -396.5485 73 L -396.5485 99.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.GND" data-to="drv.lini-cap-4">
-      <path d="M -247.905 101.5 L -247.905 128"/>
+      <path d="M -245.905 101.5 L -245.905 128"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.EN" data-to="drv.lini-label-1">
-      <path d="M -186.4515 -86.75 L -120.7015 -86.75"/>
+      <path d="M -184.4515 -86.75 L -118.7015 -86.75"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.STEP" data-to="drv.lini-label-2">
-      <path d="M -186.4515 -66.75 L -120.7015 -66.75"/>
+      <path d="M -184.4515 -66.75 L -118.7015 -66.75"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.DIR" data-to="drv.lini-label-3">
-      <path d="M -186.4515 -46.75 L -120.7015 -46.75"/>
+      <path d="M -184.4515 -46.75 L -118.7015 -46.75"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.OA1" data-to="drv.lini-label-4">
-      <path d="M -186.4515 -26.75 L -120.7015 -26.75"/>
+      <path d="M -184.4515 -26.75 L -118.7015 -26.75"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.OA2" data-to="drv.lini-label-5">
-      <path d="M -186.4515 -6.75 L -120.7015 -6.75"/>
+      <path d="M -184.4515 -6.75 L -118.7015 -6.75"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.OB1" data-to="drv.lini-label-6">
-      <path d="M -186.4515 13.25 L -120.7015 13.25"/>
+      <path d="M -184.4515 13.25 L -118.7015 13.25"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="drv.U7.OB2" data-to="drv.lini-label-7">
-      <path d="M -186.4515 33.25 L -120.7015 33.25"/>
+      <path d="M -184.4515 33.25 L -118.7015 33.25"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J3.p1" data-to="mot.lini-label-1">
-      <path d="M 116.5485 27.625 L 182.2985 27.625"/>
+      <path d="M 118.5485 27.625 L 184.2985 27.625"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J3.p2" data-to="mot.lini-label-2">
-      <path d="M 116.5485 7.625 L 182.2985 7.625"/>
+      <path d="M 118.5485 7.625 L 184.2985 7.625"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J3.p3" data-to="mot.lini-label-3">
-      <path d="M 38.0485 27.625 L -27.7015 27.625"/>
+      <path d="M 40.0485 27.625 L -25.7015 27.625"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J3.p4" data-to="mot.lini-label-4">
-      <path d="M 38.0485 7.625 L -27.7015 7.625"/>
+      <path d="M 40.0485 7.625 L -25.7015 7.625"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J1.p1" data-to="mot.lini-cap-1">
-      <path d="M 306.4885 7.75 L 251.0485 7.75 L 251.0485 -18"/>
+      <path d="M 287.5485 7.75 L 253.0485 7.75 L 253.0485 -18"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mot.J1.p2" data-to="mot.lini-cap-2">
-      <path d="M 384.9885 7.75 L 419.4885 7.75 L 419.4885 33.5"/>
+      <path d="M 366.0485 7.75 L 400.5485 7.75 L 400.5485 33.5"/>
+    </g>
+    <g class="lini-node lini-junction lini-oval" transform="translate(-396.5485,-16.75)">
+      <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
   </g>
 </svg>
