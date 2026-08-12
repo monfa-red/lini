@@ -939,6 +939,33 @@ fn pin_sides(out: &str) -> Vec<(String, String)> {
     seen
 }
 
+/// One pin's **own** declarations, whitespace-normalised — what the lowering
+/// wrote onto the instance, where it beats the rule the value may have come
+/// from. `fmt` wraps a long block, so the reader joins the continuations
+/// rather than pinning one line's exact shape.
+fn pin_own(out: &str, id: &str) -> String {
+    let head = format!("|block#{id}|");
+    let mut lines = out
+        .lines()
+        .skip_while(|l| !(l.contains(&head) && l.contains(".lini-pin.")));
+    let mut body = match lines.next().and_then(|l| l.split_once('{')) {
+        Some((_, rest)) => rest.to_string(),
+        None => return String::new(),
+    };
+    while !body.contains('}') {
+        match lines.next() {
+            Some(l) => body.push_str(l),
+            None => break,
+        }
+    }
+    body.split('}')
+        .next()
+        .unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 /// `pin_sides` as `id:side` strings, for a compact expectation.
 fn sided(out: &str) -> Vec<String> {
     pin_sides(out)
@@ -1164,8 +1191,8 @@ fn a_pins_side_and_slide_read_the_same_cascade_the_pose_does() {
     ))
     .unwrap();
     assert!(
-        out.contains("|block#a| .lini-sig.lini-pin.lini-block { translate: -6 0; }"),
-        "{out}"
+        pin_own(&out, "a").contains("translate: -6 0;"),
+        "the turned slide lands on the pin itself: {out}"
     );
     // And a cross-axis one errors wherever it was stated, in either frame.
     let cross = "{ |sig::pin| { translate: 4 0 } }\n";
@@ -1195,8 +1222,8 @@ fn a_re_sided_pin_says_where_it_landed() {
         desugar_source("{ |up::pin| { side: top } }\n|component#U7| { rotate: 180 } [ |up#a| ]\n")
             .unwrap();
     assert!(
-        out.contains("|block#a| .lini-up.lini-pin.lini-block { side: bottom; }"),
-        "{out}"
+        pin_own(&out, "a").contains("side: bottom;"),
+        "the landed side is written on the pin itself: {out}"
     );
     // Unturned, nothing is rewritten — the pin keeps exactly what it stated.
     let out = desugar_source("|component#U7| [ |pin#a| { side: top } ]\n").unwrap();

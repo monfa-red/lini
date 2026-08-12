@@ -3,6 +3,7 @@
 //! widest anchor — and which children ride a track at all.
 
 use super::tests::{anchor, at, cell, close, laid, placed, pose_of, scope, sided, x_gap, y_gap};
+use crate::ledger::consts::PIN_PITCH;
 use crate::ledger::defaults::SCH_GAP;
 
 // ───────────────────────── tracks ─────────────────────────
@@ -160,6 +161,29 @@ fn a_track_sizes_to_its_widest_anchor() {
         y3 - y1,
         h1.max(h2) / 2.0 + SCH_GAP + h3 / 2.0
     );
+}
+
+#[test]
+fn a_rail_spaces_its_pins_at_the_pitch_whichever_side_it_runs_along() {
+    // [SPEC 16.2] the pitch is the spacing **along a rail**, so it is a pin's
+    // height on a left/right rail and its width on a top/bottom one. Read as a
+    // height either way, a row of bottom pins would crowd to its names' widths
+    // and each name would float half a pitch of empty box off the body edge.
+    let part = |side: &str| {
+        format!(
+            "  |component#u1| [\n    |pin#p| {{ side: {side} }}; |pin#q| {{ side: {side} }}\n    |pin#z| {{ side: {} }}\n  ]\n",
+            if side == "left" { "right" } else { "left" }
+        )
+    };
+    for (side, along) in [("left", 1), ("right", 1), ("top", 0), ("bottom", 0)] {
+        let nodes = laid(&scope("", &part(side)));
+        let (p, q) = (cell(&nodes, "p"), cell(&nodes, "q"));
+        let step = if along == 1 { q.1 - p.1 } else { q.0 - p.0 };
+        assert!(
+            close(step.abs(), PIN_PITCH),
+            "'{side}' pins sit one pitch apart along their rail: {step}"
+        );
+    }
 }
 
 // ───────────────────────── roles ─────────────────────────

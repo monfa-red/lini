@@ -3249,7 +3249,8 @@ the rest on the right, declaration order top-to-bottom (the ⌈n/2⌉ split of
 left-to-right); `side: left | right | top | bottom`
 overrides, and explicitly-sided pins are excluded from the split count. Pins
 lower into generated *anonymous* side rails — scope-transparent
-([SPEC 9](#endpoints--scope)), so `U7.VS` resolves with no rail in the path.
+([SPEC 9](#endpoints--scope)), so `U7.VS` resolves with no rail in the path —
+one `pin-pitch` apart **along** the rail they landed on.
 
 A **pin**'s smart label is its **name**, displayed inside the body; with no
 label the pin's **id is displayed** — schematic identity is drawn, the way a

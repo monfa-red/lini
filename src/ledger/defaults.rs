@@ -455,7 +455,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             // [SPEC 16.4], so this is the gap between them — the generic
             // container 20 sets a ground or a power flag adrift of the net it
             // names. Inert on a label that is only text (one child, no gap).
-            n("gap", 10.0),
+            n("gap", 4.0),
         ],
         // The connection dot [SPEC 16.5] — generated chrome at ≥3-way meets;
         // diameter = 2 × the junction radius constant.

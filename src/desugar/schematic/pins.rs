@@ -287,6 +287,16 @@ fn slide_pin(cx: &Lower, pin: &mut Node, landed: Side, pose: Pose) -> Result<(),
 /// exactly **body edge → tip**: the number is sized to the stub, so its text
 /// centres over the lead on every side and never straddles the outline.
 fn dress_pin(cx: &Lower, pin: &mut Node, side: Side, named: bool) -> Result<(), Error> {
+    // The bundle's `height: PIN_PITCH` is the spacing **along a rail**
+    // [SPEC 16.2], and a top/bottom rail runs the other way: those pins take
+    // the pitch as a width and let their name set the height. Left as a height
+    // it does neither job — a row of bottom pins crowds to its names' widths
+    // instead of the pitch, and each name floats half a pitch of empty box off
+    // the body edge where a side pin's sits one padding in.
+    if !side.is_vertical() {
+        set_own(pin, n("width", consts::PIN_PITCH));
+        set_own(pin, id("height", "auto"));
+    }
     let has_name = pin.children.iter().any(|c| matches!(c, Child::Text(_)));
     if named
         && !has_name

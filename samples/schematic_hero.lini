@@ -6,7 +6,7 @@
 {
   // The sheet is A5 at 5 px per millimetre — `density:` is screen resolution
   // alone, so the paper stays true-scale in print [SPEC 15.1].
-  density: 5;
+  density: 4;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4].
   |vm::label| { symbol: power; } [
@@ -21,7 +21,7 @@
   |region::group| { layout: schematic; padding: 26; gap: 56; }
 }
 
-|page| { sheet: a5 landscape; gap: 40; } [
+|page| { sheet: a4 landscape; gap: 40; } [
 
   |region#drv| "Stepper driver" [
     |component#U7| "TMC2300-LA-T" [
