@@ -29,16 +29,16 @@ pub struct LaidOut {
     /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
     pub canvas_fill: Option<ResolvedValue>,
     /// Distinct gradients [SPEC 10.3], collected post-layout: paint use-sites are
-    /// rewritten to `url(#lini-gradient-N)` and the definitions emitted into
-    /// `<defs>`. Empty unless the scene paints with a gradient.
+    /// rewritten to the def's content-addressed `url(#…)` [`crate::name`] and the
+    /// definitions emitted into `<defs>`. Empty unless the scene paints with one.
     pub gradients: Vec<GradientDef>,
     /// Distinct hatches [SPEC 10.3] — the drafting section-line texture —
-    /// collected exactly like the gradients: use-sites rewritten to
-    /// `url(#lini-hatch-N)`, one `<pattern>` per distinct hatch in `<defs>`.
+    /// collected exactly like the gradients: use-sites rewritten to `url(#…)`,
+    /// one `<pattern>` per distinct hatch in `<defs>`.
     pub hatches: Vec<HatchDef>,
     /// Distinct clip radii [SPEC 15.8] — a `|detail|` view clips its geometry
     /// to a circle. Collected post-layout like the paints: each `clip:` node
-    /// carries the radius, rewritten to a `url(#lini-clip-N)` reference, one
+    /// carries the radius, rewritten to its `url(#…)` reference, one
     /// `<clipPath>` per distinct radius in `<defs>`. Empty unless a detail view.
     pub clips: Vec<f64>,
     /// The true print size in **millimetres** [SPEC 15.8/17], when the drawn

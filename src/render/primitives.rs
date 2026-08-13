@@ -605,7 +605,7 @@ fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
     };
     use crate::resolve::ResolvedValue;
     // An embedded SVG asset [SPEC 18]: resolve already rewrote its ids and
-    // internal references (`lini-aN-`); render maps it into the node box as a
+    // internal references (`lini-a…-`); render maps it into the node box as a
     // nested `<svg>` — its kept root attrs (viewBox, paints) emitted verbatim.
     if let Some(ResolvedValue::String(inner)) = n.attrs.get("embed-svg") {
         let extra = match n.attrs.get("embed-attrs") {

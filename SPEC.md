@@ -3693,18 +3693,14 @@ and `height` carry the sheet's trimmed size in real **millimetres** rather than 
 so a print is true-scale; the `viewBox` is unchanged, so on-screen layout and CSS sizing
 are not.
 
-**Names are content-addressed, so figures don't collide.** Inlining two Lini SVGs
-into one HTML document merges their id space and their CSS selector space, and no
-self-contained figure can claim a name nothing else on the page holds. So every name
-Lini writes into either space is derived from the **thing it names**: a `<defs>` id
-from its definition, an embedded asset's id prefix from the asset's bytes, an
-outlined glyph from its outline, and the root's `lini-scope-HHHHHHHH` class — the
-head of every selector its `<style>` emits — from that stylesheet's own text. Two
-figures then share a name only where the things are identical, and there sharing is
-correct: `url(#…)` resolves to an equal definition, a duplicated rule is a no-op.
-The scope class heads a selector in place of `.lini`, one class either way, so
-specificity is unchanged and host CSS overrides exactly as it always did. `lini`
-stays on the root as the stable hook host CSS targets.
+**Names are content-addressed.** Two figures inlined in one HTML document share its
+id and selector spaces, so every name Lini writes into either comes from the **thing
+it names**: a `<defs>` id from its definition, an asset's prefix from its bytes, a
+glyph from its outline, the root's `lini-scope-HHHHHHHH` class from its stylesheet's
+text. Figures then collide only on equal things, where sharing is correct —
+`url(#…)` resolves to an equal def, a duplicate rule is a no-op. That class heads
+every selector *in place of* `.lini` (one class either way, so specificity and host
+overrides are unchanged); `lini` stays on the root as the host hook.
 
 **Paint compiles to CSS; geometry bakes.** Node and link paint defaults — and every
 rule — are stated once as class rules; only the classes actually used are emitted — and

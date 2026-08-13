@@ -1,8 +1,9 @@
 //! Resolve-time image assets [SPEC 7]: a local `src:` path resolves against
 //! the source file's directory and its bytes are read **once, here** — so
 //! layout and render stay pure and the output is deterministic from the bytes.
-//! An SVG asset is rewritten for embedding (every id prefixed `lini-aN-`, every
-//! internal reference following — [SPEC 18]); a raster folds to a base64 data
+//! An SVG asset is rewritten for embedding (every id prefixed from the asset's
+//! own bytes [`crate::name`], every internal reference following — [SPEC 18]);
+//! a raster folds to a base64 data
 //! URI. HTTP(S) URLs and authored `data:` URIs pass through untouched — the
 //! compiler never touches the network. Under `lini serve` reads are confined
 //! to the served root [SPEC 20].
