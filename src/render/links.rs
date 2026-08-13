@@ -45,7 +45,6 @@ pub fn radius_cap(w: &RoutedLink) -> f64 {
 #[allow(clippy::too_many_arguments)] // one link's full emission context
 pub fn render_link(
     out: &mut String,
-    idx: usize,
     w: &RoutedLink,
     targets: &[f64],
     cuts: &[Rect],
@@ -121,7 +120,7 @@ pub fn render_link(
 
     let wavy = is_wavy(&w.attrs);
 
-    let mask = label_mask(idx, w, cuts);
+    let mask = label_mask(w, cuts);
     let mask_attr = match &mask {
         Some((id, svg)) => {
             writeln!(out, "      {svg}").unwrap();
@@ -522,9 +521,12 @@ fn cut_hits<'a>(w: &RoutedLink, cuts: &'a [Rect]) -> Option<(Rect, Vec<&'a Rect>
 /// required, else a straight link's near-flat bbox would shrink the default
 /// region to nothing and hide the whole link. `None` when no label box reaches
 /// the path.
-fn label_mask(idx: usize, w: &RoutedLink, cuts: &[Rect]) -> Option<(String, String)> {
+fn label_mask(w: &RoutedLink, cuts: &[Rect]) -> Option<(String, String)> {
     let ((rx, ry, rw, rh), hits) = cut_hits(w, cuts)?;
-    let id = format!("lini-label-cut-{idx}");
+    let id = crate::name::def_id(
+        "label-cut",
+        &format!("{rx:?} {ry:?} {rw:?} {rh:?} {hits:?}"),
+    );
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
     // luminance mask, and the SVG stays free of per-label paint [SPEC 18].

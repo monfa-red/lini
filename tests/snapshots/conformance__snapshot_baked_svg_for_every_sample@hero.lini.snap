@@ -4,44 +4,44 @@ assertion_line: 60
 expression: svg
 input_file: samples/hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-208.8725 -276.5 444.052 553" width="444.052" height="553" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-208.8725 -276.5 444.052 553" width="444.052" height="553" class="lini lini-scope-eced7d41">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-sign { stroke-width: 2; }
-    .lini .lini-edge { fill: #cff6ff; stroke: #00547e; color: #00547e; }
-    .lini .lini-svc { fill: #cdf9f4; stroke: #005d56; color: #005d56; }
-    .lini .lini-api { fill: #d6f8e3; stroke: #005d26; color: #005d26; }
-    .lini .lini-auth { fill: #eaebff; stroke: #443394; color: #443394; }
-    .lini .lini-store { fill: #ffe3ec; stroke: #811442; color: #811442; }
-    .lini .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-link .lini-marker { fill: #747474; }
-    .lini .lini-style-flow { stroke: #2774ce; }
-    .lini .lini-style-flow .lini-marker { fill: #2774ce; }
-    .lini .lini-style-cache { stroke: #008e85; }
-    .lini .lini-style-cache .lini-marker { fill: #008e85; }
-    .lini .lini-style-async { stroke: #9f6900; }
-    .lini .lini-style-async .lini-marker { fill: #9f6900; }
-    .lini .lini-style-auth { stroke: #6e62cc; }
-    .lini .lini-style-auth .lini-marker { fill: #6e62cc; }
+    .lini-scope-eced7d41 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-eced7d41 .lini-canvas { fill: white; }
+    .lini-scope-eced7d41 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-eced7d41 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-eced7d41 .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-eced7d41 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-eced7d41 .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-eced7d41 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-eced7d41 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-eced7d41 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-eced7d41 .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
+    .lini-scope-eced7d41 .lini-sign { stroke-width: 2; }
+    .lini-scope-eced7d41 .lini-edge { fill: #cff6ff; stroke: #00547e; color: #00547e; }
+    .lini-scope-eced7d41 .lini-svc { fill: #cdf9f4; stroke: #005d56; color: #005d56; }
+    .lini-scope-eced7d41 .lini-api { fill: #d6f8e3; stroke: #005d26; color: #005d26; }
+    .lini-scope-eced7d41 .lini-auth { fill: #eaebff; stroke: #443394; color: #443394; }
+    .lini-scope-eced7d41 .lini-store { fill: #ffe3ec; stroke: #811442; color: #811442; }
+    .lini-scope-eced7d41 .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-eced7d41 .lini-link-dashed { stroke-dasharray: 6,4.5; }
+    .lini-scope-eced7d41 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-eced7d41 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-eced7d41 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-eced7d41 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-eced7d41 .lini-link .lini-marker { fill: #747474; }
+    .lini-scope-eced7d41 .lini-style-flow { stroke: #2774ce; }
+    .lini-scope-eced7d41 .lini-style-flow .lini-marker { fill: #2774ce; }
+    .lini-scope-eced7d41 .lini-style-cache { stroke: #008e85; }
+    .lini-scope-eced7d41 .lini-style-cache .lini-marker { fill: #008e85; }
+    .lini-scope-eced7d41 .lini-style-async { stroke: #9f6900; }
+    .lini-scope-eced7d41 .lini-style-async .lini-marker { fill: #9f6900; }
+    .lini-scope-eced7d41 .lini-style-auth { stroke: #6e62cc; }
+    .lini-scope-eced7d41 .lini-style-auth .lini-marker { fill: #6e62cc; }
   </style>
   <defs>
-    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00ace2"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
+    <filter id="lini-shadow-803f42a2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <linearGradient id="lini-gradient-dcb518cc" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00ace2"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
     <path id="lg1400-0" d="…"/>
     <path id="lg1400-34" d="…"/>
     <path id="lg1400-38" d="…"/>
@@ -98,7 +98,7 @@ input_file: samples/hero.lini
   </defs>
   <rect class="lini-canvas" x="-208.8725" y="-276.5" width="444.052" height="553"/>
   <g class="lini-scene">
-    <g class="lini-node lini-oval" data-id="users" style="fill: url(#lini-gradient-1); stroke: none; color: white; font-weight: bold" transform="translate(0,-221.5)">
+    <g class="lini-node lini-oval" data-id="users" style="fill: url(#lini-gradient-dcb518cc); stroke: none; color: white; font-weight: bold" transform="translate(0,-221.5)">
       <ellipse cx="0" cy="0" rx="78" ry="31"/>
       <g class="lini-text">
         <use href="#lg1700-137" transform="translate(-20.3325 5.37) scale(0.015 -0.015)"/>
@@ -127,7 +127,7 @@ input_file: samples/hero.lini
           <use href="#lg1500-299" transform="translate(43.245 5.37) scale(0.015 -0.015)"/>
         </g>
         <g class="lini-node lini-badge lini-block" transform="translate(63.494,-26)">
-          <g filter="url(#lini-shadow-1)">
+          <g filter="url(#lini-shadow-803f42a2)">
             <rect x="-11.676" y="-7.5" width="23.352" height="15" rx="8" ry="8"/>
           </g>
           <g class="lini-text">
@@ -205,7 +205,7 @@ input_file: samples/hero.lini
           <use href="#lg1500-299" transform="translate(20.0025 5.37) scale(0.015 -0.015)"/>
         </g>
         <g class="lini-node lini-badge lini-block" transform="translate(33.8605,-26)">
-          <g filter="url(#lini-shadow-1)">
+          <g filter="url(#lini-shadow-803f42a2)">
             <rect x="-18.067" y="-7.5" width="36.134" height="15" rx="8" ry="8"/>
           </g>
           <g class="lini-text">
@@ -298,8 +298,8 @@ input_file: samples/hero.lini
       <polygon class="lini-marker lini-marker-arrow" points="-115.6008,175.5 -120.1008,166.5 -111.1008,166.5"/>
     </g>
     <g class="lini-link lini-link-dashed lini-style-cache" data-from="svc.api" data-to="data.redis">
-      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-101.6008" y="94" width="111.1157" height="83"><rect class="lini-cut-bg" x="-101.6008" y="94" width="111.1157" height="83"/><rect class="lini-cut" x="-64.3799" y="128.35" width="36.674" height="14.3"/></mask>
-      <path d="M -99.6008 96 L -99.6008 119.5 A 16 16 0 0 0 -83.6008 135.5 L -8.485 135.5 A 16 16 0 0 1 7.515 151.5 L 7.515 171.5" mask="url(#lini-label-cut-4)"/>
+      <mask id="lini-label-cut-e62383ad" maskUnits="userSpaceOnUse" x="-101.6008" y="94" width="111.1157" height="83"><rect class="lini-cut-bg" x="-101.6008" y="94" width="111.1157" height="83"/><rect class="lini-cut" x="-64.3799" y="128.35" width="36.674" height="14.3"/></mask>
+      <path d="M -99.6008 96 L -99.6008 119.5 A 16 16 0 0 0 -83.6008 135.5 L -8.485 135.5 A 16 16 0 0 1 7.515 151.5 L 7.515 171.5" mask="url(#lini-label-cut-e62383ad)"/>
       <polygon class="lini-marker lini-marker-arrow" points="7.515,175.5 3.015,166.5 12.015,166.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-203" transform="translate(-61.0799 139.438) scale(0.011 -0.011)"/>
@@ -310,8 +310,8 @@ input_file: samples/hero.lini
       </g>
     </g>
     <g class="lini-link lini-style-async" data-from="svc.worker" data-to="data.queue">
-      <mask id="lini-label-cut-5" maskUnits="userSpaceOnUse" x="135.5275" y="60.6" width="68.745" height="146.3"><rect class="lini-cut-bg" x="135.5275" y="60.6" width="68.745" height="146.3"/><rect class="lini-cut" x="187.2655" y="113.8775" width="27.214" height="14.3"/></mask>
-      <path d="M 138.9275 64 C 139.9482 64 140.9475 64.3538 141.9098 64.6938 C 142.8704 65.0332 144.0704 64.628 144.8922 64.0259 C 145.7809 63.3747 146.7729 62.6229 147.8745 62.6005 C 148.9652 62.5784 149.9768 63.3035 150.8568 63.9482 C 151.7486 64.6015 152.7344 65.3611 153.8392 65.3985 C 154.9258 65.4353 155.9441 64.7198 156.8215 64.0777 C 157.7164 63.4227 158.6961 62.6555 159.8038 62.6029 C 160.8862 62.5516 161.9114 63.257 162.7862 63.8965 C 163.6843 64.5531 164.658 65.3275 165.7685 65.3952 C 166.8464 65.4609 167.8785 64.766 168.7508 64.1293 C 169.6523 63.4713 170.6201 62.6901 171.7332 62.6072 C 172.8065 62.5273 173.8456 63.2111 174.7155 63.8449 C 175.6204 64.5042 176.5825 65.2918 177.6978 65.3899 C 178.7664 65.4839 179.8125 64.8115 180.6802 64.1808 C 181.5886 63.5205 182.5452 62.7267 183.6625 62.6135 C 184.7476 62.5034 185.8829 63.1484 186.6689 63.9045 C 187.4467 64.6525 188.1387 65.5665 189.1161 66.0239 C 190.0457 66.4589 191.1758 66.1698 192.1951 66.0493 C 193.3559 65.912 194.6962 65.784 195.6832 66.4103 C 196.6116 66.9996 197.0754 68.2677 197.1508 69.3647 C 197.2256 70.4525 197.092 71.6014 197.4839 72.6189 C 197.8487 73.5661 198.8448 74.1469 199.668 74.7405 C 200.6176 75.4252 201.6846 76.2259 202.0218 77.3469 C 202.3358 78.3908 201.8148 79.6205 201.1808 80.5072 C 200.518 81.4341 199.6986 82.3657 199.5098 83.4895 C 199.3355 84.5266 199.9291 85.6151 200.539 86.4718 C 201.2017 87.4027 202.0253 88.3298 202.2291 89.4542 C 202.416 90.4857 201.8372 91.5812 201.2311 92.4365 C 200.5687 93.3713 199.7411 94.2942 199.5226 95.4188 C 199.3233 96.4447 199.8868 97.5471 200.4889 98.4012 C 201.1508 99.34 201.9821 100.2588 202.2153 101.3835 C 202.4268 102.4036 201.879 103.5129 201.2809 104.3658 C 200.6198 105.3087 199.785 106.2236 199.5372 107.3482 C 199.3138 108.3624 199.8455 109.4785 200.4394 110.3305 C 201.0995 111.2775 201.9376 112.1886 202.1998 113.3128 C 202.4349 114.3213 201.9198 115.444 201.3302 116.2952 C 200.6712 117.2463 199.8302 118.1539 199.5537 119.2775 C 199.307 120.2801 199.8051 121.4093 200.3904 122.2598 C 201.0479 123.2152 201.8918 124.1194 202.1824 125.2422 C 202.4403 126.2389 201.9597 127.3745 201.3788 128.2245 C 200.723 129.1841 199.8764 130.0851 199.572 131.2068 C 199.3031 132.1977 199.7657 133.3395 200.3421 134.1892 C 200.9961 135.1531 201.845 136.051 202.1632 137.1715 C 202.4429 138.1565 201.9985 139.3044 201.4267 140.1538 C 200.775 141.1221 199.9238 142.0171 199.5921 143.1362 C 199.3018 144.1154 199.7275 145.2691 200.2946 146.1185 C 200.9439 147.0911 201.7972 147.9834 202.1422 149.1008 C 202.4428 150.0742 202.0363 151.2336 201.4739 152.0832 C 200.8272 153.0601 199.972 153.9499 199.6139 155.0655 C 199.3032 156.0332 199.6903 157.198 200.2478 158.0478 C 200.8916 159.0292 201.7486 159.9166 202.1196 161.0302 C 202.4401 161.9922 202.0728 163.1623 201.5203 164.0125 C 200.8797 164.9983 200.021 165.8835 199.6374 166.9948 C 199.3073 167.9512 199.6544 169.1263 200.2019 169.9772 C 200.839 170.9674 201.6992 171.8505 202.0952 172.9595 C 202.4347 173.9103 202.1081 175.0902 201.5657 175.9418 C 200.9323 176.9365 200.0708 177.8177 199.6627 178.9241 C 199.3139 179.8696 199.6197 181.0539 200.1569 181.9065 C 200.7864 182.9056 201.6491 183.7851 202.0691 184.8888 C 202.4311 185.8401 202.1699 187.0667 201.5923 187.9048 C 200.9365 188.8566 200.0146 189.6053 199.3575 190.5563 C 198.8197 191.3346 198.7974 192.424 198.9257 193.3612 C 199.0887 194.5513 199.4443 195.7825 199.1855 196.9555 C 198.9576 197.9885 197.9393 198.9189 196.9114 199.1692 C 195.7806 199.4447 194.5853 199.361 193.4464 199.6007 C 192.5257 199.7946 191.7368 200.5338 191.1946 201.3027 C 190.5041 202.282 189.9353 203.4167 188.9695 204.1261 C 188.118 204.7516 186.7364 204.7777 185.8036 204.2816 C 184.7528 203.7226 183.8749 202.852 182.7842 202.3756 C 181.8692 201.976 180.6638 202.1515 179.8018 202.6555 C 178.7759 203.2553 177.9042 204.1233 176.8195 204.6087 C 175.9091 205.0162 174.6995 204.8663 173.8372 204.3649 C 172.887 203.8125 171.9528 202.9079 170.8548 202.9585 C 169.8455 203.005 168.8829 203.5 167.8725 203.5" mask="url(#lini-label-cut-5)"/>
+      <mask id="lini-label-cut-b0c0ccfd" maskUnits="userSpaceOnUse" x="135.5275" y="60.6" width="68.745" height="146.3"><rect class="lini-cut-bg" x="135.5275" y="60.6" width="68.745" height="146.3"/><rect class="lini-cut" x="187.2655" y="113.8775" width="27.214" height="14.3"/></mask>
+      <path d="M 138.9275 64 C 139.9482 64 140.9475 64.3538 141.9098 64.6938 C 142.8704 65.0332 144.0704 64.628 144.8922 64.0259 C 145.7809 63.3747 146.7729 62.6229 147.8745 62.6005 C 148.9652 62.5784 149.9768 63.3035 150.8568 63.9482 C 151.7486 64.6015 152.7344 65.3611 153.8392 65.3985 C 154.9258 65.4353 155.9441 64.7198 156.8215 64.0777 C 157.7164 63.4227 158.6961 62.6555 159.8038 62.6029 C 160.8862 62.5516 161.9114 63.257 162.7862 63.8965 C 163.6843 64.5531 164.658 65.3275 165.7685 65.3952 C 166.8464 65.4609 167.8785 64.766 168.7508 64.1293 C 169.6523 63.4713 170.6201 62.6901 171.7332 62.6072 C 172.8065 62.5273 173.8456 63.2111 174.7155 63.8449 C 175.6204 64.5042 176.5825 65.2918 177.6978 65.3899 C 178.7664 65.4839 179.8125 64.8115 180.6802 64.1808 C 181.5886 63.5205 182.5452 62.7267 183.6625 62.6135 C 184.7476 62.5034 185.8829 63.1484 186.6689 63.9045 C 187.4467 64.6525 188.1387 65.5665 189.1161 66.0239 C 190.0457 66.4589 191.1758 66.1698 192.1951 66.0493 C 193.3559 65.912 194.6962 65.784 195.6832 66.4103 C 196.6116 66.9996 197.0754 68.2677 197.1508 69.3647 C 197.2256 70.4525 197.092 71.6014 197.4839 72.6189 C 197.8487 73.5661 198.8448 74.1469 199.668 74.7405 C 200.6176 75.4252 201.6846 76.2259 202.0218 77.3469 C 202.3358 78.3908 201.8148 79.6205 201.1808 80.5072 C 200.518 81.4341 199.6986 82.3657 199.5098 83.4895 C 199.3355 84.5266 199.9291 85.6151 200.539 86.4718 C 201.2017 87.4027 202.0253 88.3298 202.2291 89.4542 C 202.416 90.4857 201.8372 91.5812 201.2311 92.4365 C 200.5687 93.3713 199.7411 94.2942 199.5226 95.4188 C 199.3233 96.4447 199.8868 97.5471 200.4889 98.4012 C 201.1508 99.34 201.9821 100.2588 202.2153 101.3835 C 202.4268 102.4036 201.879 103.5129 201.2809 104.3658 C 200.6198 105.3087 199.785 106.2236 199.5372 107.3482 C 199.3138 108.3624 199.8455 109.4785 200.4394 110.3305 C 201.0995 111.2775 201.9376 112.1886 202.1998 113.3128 C 202.4349 114.3213 201.9198 115.444 201.3302 116.2952 C 200.6712 117.2463 199.8302 118.1539 199.5537 119.2775 C 199.307 120.2801 199.8051 121.4093 200.3904 122.2598 C 201.0479 123.2152 201.8918 124.1194 202.1824 125.2422 C 202.4403 126.2389 201.9597 127.3745 201.3788 128.2245 C 200.723 129.1841 199.8764 130.0851 199.572 131.2068 C 199.3031 132.1977 199.7657 133.3395 200.3421 134.1892 C 200.9961 135.1531 201.845 136.051 202.1632 137.1715 C 202.4429 138.1565 201.9985 139.3044 201.4267 140.1538 C 200.775 141.1221 199.9238 142.0171 199.5921 143.1362 C 199.3018 144.1154 199.7275 145.2691 200.2946 146.1185 C 200.9439 147.0911 201.7972 147.9834 202.1422 149.1008 C 202.4428 150.0742 202.0363 151.2336 201.4739 152.0832 C 200.8272 153.0601 199.972 153.9499 199.6139 155.0655 C 199.3032 156.0332 199.6903 157.198 200.2478 158.0478 C 200.8916 159.0292 201.7486 159.9166 202.1196 161.0302 C 202.4401 161.9922 202.0728 163.1623 201.5203 164.0125 C 200.8797 164.9983 200.021 165.8835 199.6374 166.9948 C 199.3073 167.9512 199.6544 169.1263 200.2019 169.9772 C 200.839 170.9674 201.6992 171.8505 202.0952 172.9595 C 202.4347 173.9103 202.1081 175.0902 201.5657 175.9418 C 200.9323 176.9365 200.0708 177.8177 199.6627 178.9241 C 199.3139 179.8696 199.6197 181.0539 200.1569 181.9065 C 200.7864 182.9056 201.6491 183.7851 202.0691 184.8888 C 202.4311 185.8401 202.1699 187.0667 201.5923 187.9048 C 200.9365 188.8566 200.0146 189.6053 199.3575 190.5563 C 198.8197 191.3346 198.7974 192.424 198.9257 193.3612 C 199.0887 194.5513 199.4443 195.7825 199.1855 196.9555 C 198.9576 197.9885 197.9393 198.9189 196.9114 199.1692 C 195.7806 199.4447 194.5853 199.361 193.4464 199.6007 C 192.5257 199.7946 191.7368 200.5338 191.1946 201.3027 C 190.5041 202.282 189.9353 203.4167 188.9695 204.1261 C 188.118 204.7516 186.7364 204.7777 185.8036 204.2816 C 184.7528 203.7226 183.8749 202.852 182.7842 202.3756 C 181.8692 201.976 180.6638 202.1515 179.8018 202.6555 C 178.7759 203.2553 177.9042 204.1233 176.8195 204.6087 C 175.9091 205.0162 174.6995 204.8663 173.8372 204.3649 C 172.887 203.8125 171.9528 202.9079 170.8548 202.9585 C 169.8455 203.005 168.8829 203.5 167.8725 203.5" mask="url(#lini-label-cut-b0c0ccfd)"/>
       <polygon class="lini-marker lini-marker-arrow" points="163.8725,203.5 172.8725,199 172.8725,208"/>
       <g class="lini-link-label">
         <use href="#lg1400-253" transform="translate(190.5655 124.9655) scale(0.011 -0.011)"/>

@@ -1,28 +1,29 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/links_hard.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-239.5025 -330 455.005 640.5" width="455.005" height="640.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-239.5025 -330 455.005 640.5" width="455.005" height="640.5" class="lini lini-scope-cac3a318">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-hot { stroke: #ef675e; stroke-width: 3; }
-    .lini .lini-style-hot .lini-marker { fill: #ef675e; }
-    .lini .lini-style-cool { stroke: #3f98ff; }
-    .lini .lini-style-cool .lini-marker { fill: #3f98ff; }
-    .lini .lini-style-attention { stroke: #e47600; }
-    .lini .lini-style-attention .lini-marker { fill: #e47600; }
+    .lini-scope-cac3a318 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-cac3a318 .lini-canvas { fill: white; }
+    .lini-scope-cac3a318 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-cac3a318 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-cac3a318 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-cac3a318 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-cac3a318 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-cac3a318 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-cac3a318 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-cac3a318 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-cac3a318 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-cac3a318 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-cac3a318 .lini-style-hot { stroke: #ef675e; stroke-width: 3; }
+    .lini-scope-cac3a318 .lini-style-hot .lini-marker { fill: #ef675e; }
+    .lini-scope-cac3a318 .lini-style-cool { stroke: #3f98ff; }
+    .lini-scope-cac3a318 .lini-style-cool .lini-marker { fill: #3f98ff; }
+    .lini-scope-cac3a318 .lini-style-attention { stroke: #e47600; }
+    .lini-scope-cac3a318 .lini-style-attention .lini-marker { fill: #e47600; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -246,18 +247,18 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="109.6475,-36.5 100.6475,-32 100.6475,-41"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-6" maskUnits="userSpaceOnUse" x="-126.745" y="63" width="107.125" height="95.5"><rect class="lini-cut-bg" x="-126.745" y="63" width="107.125" height="95.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/></mask>
-      <path d="M -124.745 65 L -124.745 113 A 12 12 0 0 0 -112.745 125 L -77.4775 125 A 21 21 0 0 1 -56.4775 146 L -56.4775 146 A 10.5 10.5 0 0 0 -45.9775 156.5 L -25.12 156.5" mask="url(#lini-label-cut-6)"/>
+      <mask id="lini-label-cut-b7443390" maskUnits="userSpaceOnUse" x="-126.745" y="63" width="107.125" height="95.5"><rect class="lini-cut-bg" x="-126.745" y="63" width="107.125" height="95.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/></mask>
+      <path d="M -124.745 65 L -124.745 113 A 12 12 0 0 0 -112.745 125 L -77.4775 125 A 21 21 0 0 1 -56.4775 146 L -56.4775 146 A 10.5 10.5 0 0 0 -45.9775 156.5 L -25.12 156.5" mask="url(#lini-label-cut-b7443390)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,156.5 -30.12,161 -30.12,152"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-7" maskUnits="userSpaceOnUse" x="-138.745" y="63" width="119.125" height="107.5"><rect class="lini-cut-bg" x="-138.745" y="63" width="119.125" height="107.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/></mask>
-      <path d="M -136.745 65 L -136.745 113 A 24 24 0 0 0 -112.745 137 L -78.9775 137 A 10.5 10.5 0 0 1 -68.4775 147.5 L -68.4775 147.5 A 21 21 0 0 0 -47.4775 168.5 L -25.12 168.5" mask="url(#lini-label-cut-7)"/>
+      <mask id="lini-label-cut-82a78b98" maskUnits="userSpaceOnUse" x="-138.745" y="63" width="119.125" height="107.5"><rect class="lini-cut-bg" x="-138.745" y="63" width="119.125" height="107.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/></mask>
+      <path d="M -136.745 65 L -136.745 113 A 24 24 0 0 0 -112.745 137 L -78.9775 137 A 10.5 10.5 0 0 1 -68.4775 147.5 L -68.4775 147.5 A 21 21 0 0 0 -47.4775 168.5 L -25.12 168.5" mask="url(#lini-label-cut-82a78b98)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,168.5 -30.12,173 -30.12,164"/>
     </g>
     <g class="lini-link" data-from="alpha" data-to="delta">
-      <mask id="lini-label-cut-8" maskUnits="userSpaceOnUse" x="-91.7275" y="-207" width="192.0225" height="414"><rect class="lini-cut-bg" x="-91.7275" y="-207" width="192.0225" height="414"/><rect class="lini-cut" x="-79.9685" y="-86.3844" width="27.962" height="14.3"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
-      <path d="M -89.7275 -205 L -77.9875 -205 A 12 12 0 0 1 -65.9875 -193 L -65.9875 52.25 A 12 12 0 0 0 -53.9875 64.25 L 37.2811 64.25 A 32.6683 32.6683 0 0 1 69.9494 96.9183 L 69.9494 193 A 12 12 0 0 0 81.9494 205 L 94.795 205" mask="url(#lini-label-cut-8)"/>
+      <mask id="lini-label-cut-ab222ff1" maskUnits="userSpaceOnUse" x="-91.7275" y="-207" width="192.0225" height="414"><rect class="lini-cut-bg" x="-91.7275" y="-207" width="192.0225" height="414"/><rect class="lini-cut" x="-79.9685" y="-86.3844" width="27.962" height="14.3"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
+      <path d="M -89.7275 -205 L -77.9875 -205 A 12 12 0 0 1 -65.9875 -193 L -65.9875 52.25 A 12 12 0 0 0 -53.9875 64.25 L 37.2811 64.25 A 32.6683 32.6683 0 0 1 69.9494 96.9183 L 69.9494 193 A 12 12 0 0 0 81.9494 205 L 94.795 205" mask="url(#lini-label-cut-ab222ff1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="98.795,205 89.795,209.5 89.795,200.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-94" transform="translate(-76.6685 -75.2964) scale(0.011 -0.011)"/>
@@ -278,8 +279,8 @@ input_file: samples/links_hard.lini
       </g>
     </g>
     <g class="lini-link" data-from="beta" data-to="gamma">
-      <mask id="lini-label-cut-9" maskUnits="userSpaceOnUse" x="-221.5025" y="-207" width="324.28" height="420"><rect class="lini-cut-bg" x="-221.5025" y="-207" width="324.28" height="420"/><rect class="lini-cut" x="-79.9685" y="-86.3844" width="27.962" height="14.3"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
-      <path d="M 100.7775 -205 L 79.9425 -205 A 10 10 0 0 0 69.9425 -195 L 69.9425 -98 A 12 12 0 0 1 57.9425 -86 L -43.9875 -86 A 12 12 0 0 1 -55.9875 -98 L -55.9875 -130.75 A 10 10 0 0 0 -65.9875 -140.75 L -207.5025 -140.75 A 12 12 0 0 0 -219.5025 -128.75 L -219.5025 187 A 24 24 0 0 0 -195.5025 211 L -182.86 211" mask="url(#lini-label-cut-9)"/>
+      <mask id="lini-label-cut-1c01d057" maskUnits="userSpaceOnUse" x="-221.5025" y="-207" width="324.28" height="420"><rect class="lini-cut-bg" x="-221.5025" y="-207" width="324.28" height="420"/><rect class="lini-cut" x="-79.9685" y="-86.3844" width="27.962" height="14.3"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
+      <path d="M 100.7775 -205 L 79.9425 -205 A 10 10 0 0 0 69.9425 -195 L 69.9425 -98 A 12 12 0 0 1 57.9425 -86 L -43.9875 -86 A 12 12 0 0 1 -55.9875 -98 L -55.9875 -130.75 A 10 10 0 0 0 -65.9875 -140.75 L -207.5025 -140.75 A 12 12 0 0 0 -219.5025 -128.75 L -219.5025 187 A 24 24 0 0 0 -195.5025 211 L -182.86 211" mask="url(#lini-label-cut-1c01d057)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-178.86,211 -187.86,215.5 -187.86,206.5"/>
     </g>
     <g class="lini-link" data-from="gamma" data-to="south.s1">
@@ -307,8 +308,8 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="176.65,205 185.65,200.5 185.65,209.5"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="west">
-      <mask id="lini-label-cut-16" maskUnits="userSpaceOnUse" x="-79.9875" y="-2" width="213.71" height="104.5"><rect class="lini-cut-bg" x="-79.9875" y="-2" width="213.71" height="104.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
-      <path d="M 131.7225 81.5 L 131.7225 88.5 A 12 12 0 0 1 119.7225 100.5 L 52.6128 100.5 A 12 12 0 0 1 40.6128 88.5 L 40.6128 88.25 A 12 12 0 0 0 28.6128 76.25 L -41.9875 76.25 A 12 12 0 0 1 -53.9875 64.25 L -53.9875 12 A 12 12 0 0 0 -65.9875 0 L -74.4875 0" mask="url(#lini-label-cut-16)"/>
+      <mask id="lini-label-cut-f9a91f89" maskUnits="userSpaceOnUse" x="-79.9875" y="-2" width="213.71" height="104.5"><rect class="lini-cut-bg" x="-79.9875" y="-2" width="213.71" height="104.5"/><rect class="lini-cut" x="-73.7107" y="57.1" width="27.489" height="14.3"/><rect class="lini-cut" x="52.4374" y="76.69" width="35.024" height="14.3"/></mask>
+      <path d="M 131.7225 81.5 L 131.7225 88.5 A 12 12 0 0 1 119.7225 100.5 L 52.6128 100.5 A 12 12 0 0 1 40.6128 88.5 L 40.6128 88.25 A 12 12 0 0 0 28.6128 76.25 L -41.9875 76.25 A 12 12 0 0 1 -53.9875 64.25 L -53.9875 12 A 12 12 0 0 0 -65.9875 0 L -74.4875 0" mask="url(#lini-label-cut-f9a91f89)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-78.4875,0 -69.4875,-4.5 -69.4875,4.5"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="hub">

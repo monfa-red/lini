@@ -48,7 +48,9 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
 fn default_output_has_layered_vars_and_unlayered_rules() {
     let svg = lini::compile_str("|box| \"x\"\n").expect("compile");
     assert!(svg.contains("@layer lini.defaults"), "{}", svg);
-    assert!(svg.contains(".lini .lini-box"), "{}", svg);
+    // Unlayered, and headed by the figure's own scope class [SPEC 18].
+    assert!(svg.contains(".lini-scope-"), "{}", svg);
+    assert!(svg.contains(" .lini-box {"), "{}", svg);
 }
 
 #[test]

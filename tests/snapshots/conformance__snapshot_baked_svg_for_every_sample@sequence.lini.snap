@@ -4,24 +4,24 @@ assertion_line: 60
 expression: svg
 input_file: samples/sequence.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-278.9935 -252.5 557.987 505" width="557.987" height="505" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-278.9935 -252.5 557.987 505" width="557.987" height="505" class="lini lini-scope-3b8b490a">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-slant { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-path { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-sequence-tab { font-size: 12px; font-weight: 600; }
-    .lini .lini-sequence-guard { font-size: 11px; font-weight: normal; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-note { fill: white; stroke: #444; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; font-size: 13px; font-weight: normal; }
-    .lini .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-3b8b490a { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-3b8b490a .lini-canvas { fill: white; }
+    .lini-scope-3b8b490a .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-slant { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-path { stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-3b8b490a .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-sequence-tab { font-size: 12px; font-weight: 600; }
+    .lini-scope-3b8b490a .lini-sequence-guard { font-size: 11px; font-weight: normal; }
+    .lini-scope-3b8b490a .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-3b8b490a .lini-note { fill: white; stroke: #444; }
+    .lini-scope-3b8b490a .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3b8b490a .lini-link-dashed { stroke-dasharray: 6,4.5; }
+    .lini-scope-3b8b490a .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; font-size: 13px; font-weight: normal; }
+    .lini-scope-3b8b490a .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>

@@ -4,37 +4,37 @@ assertion_line: 60
 expression: svg
 input_file: samples/drawing_annotations.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-402.5316 -349 805.0631 717" width="805.0631" height="717" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-402.5316 -349 805.0631 717" width="805.0631" height="717" class="lini lini-scope-468b63a8">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-path { stroke-dasharray: none; }
-    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: #484848; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: #484848; stroke-width: 1; }
-    .lini .lini-dim-text { font-size: 12px; font-weight: 400; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-halo { stroke: black; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
-    .lini .lini-note { fill: white; stroke: #444; }
-    .lini .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
-    .lini .lini-hole { fill: white; stroke: black; }
-    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-dim-line .lini-marker { fill: #484848; }
-    .lini .lini-marker-dim { fill: #484848; }
-    .lini .lini-marker-datum { fill: #484848; }
-    .lini .lini-dim-line.lini-dim { stroke: #004496; }
-    .lini .lini-ext-line.lini-dim { stroke: #004496; }
-    .lini .lini-marker-dim.lini-dim { fill: #004496; }
-    .lini .lini-drawing .lini-note { font-size: 13px; }
+    .lini-scope-468b63a8 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-468b63a8 .lini-canvas { fill: white; }
+    .lini-scope-468b63a8 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-poly { stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-path { stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-468b63a8 .lini-dim-line { fill: none; stroke: #484848; stroke-width: 1; }
+    .lini-scope-468b63a8 .lini-ext-line { fill: none; stroke: #484848; stroke-width: 1; }
+    .lini-scope-468b63a8 .lini-dim-text { font-size: 12px; font-weight: 400; }
+    .lini-scope-468b63a8 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-468b63a8 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-468b63a8 .lini-halo { stroke: black; }
+    .lini-scope-468b63a8 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-468b63a8 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-468b63a8 .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
+    .lini-scope-468b63a8 .lini-note { fill: white; stroke: #444; }
+    .lini-scope-468b63a8 .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
+    .lini-scope-468b63a8 .lini-hole { fill: white; stroke: black; }
+    .lini-scope-468b63a8 .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-468b63a8 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-468b63a8 .lini-dim-line .lini-marker { fill: #484848; }
+    .lini-scope-468b63a8 .lini-marker-dim { fill: #484848; }
+    .lini-scope-468b63a8 .lini-marker-datum { fill: #484848; }
+    .lini-scope-468b63a8 .lini-dim-line.lini-dim { stroke: #004496; }
+    .lini-scope-468b63a8 .lini-ext-line.lini-dim { stroke: #004496; }
+    .lini-scope-468b63a8 .lini-marker-dim.lini-dim { fill: #004496; }
+    .lini-scope-468b63a8 .lini-drawing .lini-note { font-size: 13px; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>

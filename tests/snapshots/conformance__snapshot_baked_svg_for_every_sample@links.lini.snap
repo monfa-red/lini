@@ -4,23 +4,23 @@ assertion_line: 60
 expression: svg
 input_file: samples/links.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-197.4275 -422 394.855 844" width="394.855" height="844" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-197.4275 -422 394.855 844" width="394.855" height="844" class="lini lini-scope-4369532f">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-room { fill: #cdf9f4; stroke: #005d56; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
+    .lini-scope-4369532f { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-4369532f .lini-canvas { fill: white; }
+    .lini-scope-4369532f .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4369532f .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4369532f .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-4369532f .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-4369532f .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-4369532f .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-4369532f .lini-room { fill: #cdf9f4; stroke: #005d56; }
+    .lini-scope-4369532f .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4369532f .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-4369532f .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-4369532f .lini-cut { fill: black; stroke: none; }
+    .lini-scope-4369532f .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-4369532f .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -397,8 +397,8 @@ input_file: samples/links.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="rooms.garden.outlet" data-to="rooms.kitchen.inlet">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-52.5" y="94" width="110.6925" height="87"><rect class="lini-cut-bg" x="-52.5" y="94" width="110.6925" height="87"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-32.5605" y="111.5037" width="33.121" height="14.3"/><rect class="lini-cut" x="-0.5605" y="143.5037" width="33.121" height="14.3"/></mask>
-      <path d="M -50.5 179 L -32 179 A 32 32 0 0 0 0 147 L 0 128 A 32 32 0 0 1 32 96 L 52.6925 96" mask="url(#lini-label-cut-0)"/>
+      <mask id="lini-label-cut-467da254" maskUnits="userSpaceOnUse" x="-52.5" y="94" width="110.6925" height="87"><rect class="lini-cut-bg" x="-52.5" y="94" width="110.6925" height="87"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-32.5605" y="111.5037" width="33.121" height="14.3"/><rect class="lini-cut" x="-0.5605" y="143.5037" width="33.121" height="14.3"/></mask>
+      <path d="M -50.5 179 L -32 179 A 32 32 0 0 0 0 147 L 0 128 A 32 32 0 0 1 32 96 L 52.6925 96" mask="url(#lini-label-cut-467da254)"/>
       <polygon class="lini-marker lini-marker-arrow" points="56.6925,96 47.6925,100.5 47.6925,91.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-203" transform="translate(-16.786 138.5917) scale(0.011 -0.011)"/>
@@ -411,8 +411,8 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rel.author" data-to="rel.book">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-43.355" y="-3.5" width="100" height="4"><rect class="lini-cut-bg" x="-43.355" y="-3.5" width="100" height="4"/><rect class="lini-cut" x="-11.78" y="-8.65" width="36.85" height="14.3"/></mask>
-      <path d="M -41.355 -1.5 L 36.245 -1.5" mask="url(#lini-label-cut-1)"/>
+      <mask id="lini-label-cut-46e5964b" maskUnits="userSpaceOnUse" x="-43.355" y="-3.5" width="100" height="4"><rect class="lini-cut-bg" x="-43.355" y="-3.5" width="100" height="4"/><rect class="lini-cut" x="-11.78" y="-8.65" width="36.85" height="14.3"/></mask>
+      <path d="M -41.355 -1.5 L 36.245 -1.5" mask="url(#lini-label-cut-46e5964b)"/>
       <path class="lini-marker lini-marker-open" d="M -35.555 -6 L -35.555 3"/>
       <path class="lini-marker lini-marker-open" d="M 55.145 3.45 L 46.145 -1.5 L 55.145 -6.45 M 55.145 -1.5 L 46.145 -1.5"/>
       <circle class="lini-marker lini-marker-open" cx="39.845" cy="-1.5" r="3.6"/>
@@ -427,8 +427,8 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rooms.garden.inlet" data-to="rooms.garden.outlet">
-      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-58.1925" y="102" width="44.1925" height="63"><rect class="lini-cut-bg" x="-58.1925" y="102" width="44.1925" height="63"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-32.5605" y="111.5037" width="33.121" height="14.3"/></mask>
-      <path d="M -56.1925 104 L -32 104 A 16 16 0 0 1 -16 120 L -16 147 A 16 16 0 0 1 -32 163 L -47 163" mask="url(#lini-label-cut-2)"/>
+      <mask id="lini-label-cut-63dab0cc" maskUnits="userSpaceOnUse" x="-58.1925" y="102" width="44.1925" height="63"><rect class="lini-cut-bg" x="-58.1925" y="102" width="44.1925" height="63"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-32.5605" y="111.5037" width="33.121" height="14.3"/></mask>
+      <path d="M -56.1925 104 L -32 104 A 16 16 0 0 1 -16 120 L -16 147 A 16 16 0 0 1 -32 163 L -47 163" mask="url(#lini-label-cut-63dab0cc)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-51,163 -42,158.5 -42,167.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-232" transform="translate(-29.2605 122.5918) scale(0.011 -0.011)"/>
@@ -439,8 +439,8 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rooms.kitchen.inlet" data-to="rooms.kitchen.outlet">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="14" y="110" width="44.1925" height="63"><rect class="lini-cut-bg" x="14" y="110" width="44.1925" height="63"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-0.5605" y="143.5037" width="33.121" height="14.3"/></mask>
-      <path d="M 56.1925 112 L 32 112 A 16 16 0 0 0 16 128 L 16 155 A 16 16 0 0 0 32 171 L 47 171" mask="url(#lini-label-cut-3)"/>
+      <mask id="lini-label-cut-e2d14780" maskUnits="userSpaceOnUse" x="14" y="110" width="44.1925" height="63"><rect class="lini-cut-bg" x="14" y="110" width="44.1925" height="63"/><rect class="lini-cut" x="-20.086" y="127.5037" width="40.172" height="14.3"/><rect class="lini-cut" x="-0.5605" y="143.5037" width="33.121" height="14.3"/></mask>
+      <path d="M 56.1925 112 L 32 112 A 16 16 0 0 0 16 128 L 16 155 A 16 16 0 0 0 32 171 L 47 171" mask="url(#lini-label-cut-e2d14780)"/>
       <polygon class="lini-marker lini-marker-arrow" points="51,171 42,175.5 42,166.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-232" transform="translate(2.7395 154.5917) scale(0.011 -0.011)"/>

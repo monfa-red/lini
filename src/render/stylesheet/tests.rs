@@ -9,9 +9,11 @@ fn rules_for(src: &str) -> RuleSet {
     build(&laid, &Options::default())
 }
 
+/// The rules under the bare `.lini` head — these tests are about what the
+/// sheet *says*, not which figure it is scoped to.
 fn emit_str(set: &RuleSet) -> String {
     let mut s = String::new();
-    set.emit(&mut s);
+    set.emit(&mut s, "lini");
     s
 }
 

@@ -1,29 +1,55 @@
 use lini::Options;
 
+/// The rendered SVG with the figure's own scope class ([SPEC 18] — the head of
+/// every selector its `<style>` emits) rewritten back to the bare `.lini`.
+/// The assertions in this suite are about what a rule *says*, never about which
+/// figure owns it; `scoping.rs` is where the real class and its page-level
+/// contract are pinned, on unnormalised output.
+fn unscoped(svg: String) -> String {
+    let Some(scope) = svg
+        .split_once("class=\"lini ")
+        .and_then(|(_, rest)| rest.split_once('"'))
+        .map(|(class, _)| class.to_string())
+    else {
+        return svg;
+    };
+    svg.replace(&format!(" {scope}\""), "\"")
+        .replace(&scope, "lini")
+}
+
 fn render_live(src: &str) -> String {
+    unscoped(render_raw(src))
+}
+
+/// Exactly what the compiler emitted — no scope normalisation.
+fn render_raw(src: &str) -> String {
     lini::compile_str(src).expect("compile")
 }
 
 fn render_baked(src: &str) -> String {
-    lini::compile_str_with(
-        src,
-        &Options {
-            static_mode: true,
-            ..Default::default()
-        },
+    unscoped(
+        lini::compile_str_with(
+            src,
+            &Options {
+                static_mode: true,
+                ..Default::default()
+            },
+        )
+        .expect("compile"),
     )
-    .expect("compile")
 }
 
 fn render_themed(src: &str, theme_css: &str) -> String {
-    lini::compile_str_with(
-        src,
-        &Options {
-            theme_css: Some(theme_css.to_string()),
-            ..Default::default()
-        },
+    unscoped(
+        lini::compile_str_with(
+            src,
+            &Options {
+                theme_css: Some(theme_css.to_string()),
+                ..Default::default()
+            },
+        )
+        .expect("compile"),
     )
-    .expect("compile")
 }
 
 fn lini_root_rule(svg: &str) -> String {
@@ -98,5 +124,6 @@ mod assets;
 mod charts;
 mod links;
 mod paint;
+mod scoping;
 mod shapes;
 mod text;

@@ -4,19 +4,19 @@ assertion_line: 60
 expression: svg
 input_file: samples/entity_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-310.736 -236 622.526 616.5" width="622.526" height="616.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-310.736 -236 622.526 616.5" width="622.526" height="616.5" class="lini lini-scope-77c75f1d">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-gutter { stroke: none; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
+    .lini-scope-77c75f1d { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-77c75f1d .lini-canvas { fill: white; }
+    .lini-scope-77c75f1d .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-77c75f1d .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-77c75f1d .lini-gutter { stroke: none; }
+    .lini-scope-77c75f1d .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-77c75f1d .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-77c75f1d .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
+    .lini-scope-77c75f1d .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-77c75f1d .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-77c75f1d .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>

@@ -72,10 +72,9 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
         let targets = links::fillet_targets(&polys, &caps);
         let cuts = links::cut_boxes(laid_out);
-        for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
+        for (link, targets) in laid_out.links.iter().zip(&targets) {
             links::render_link(
                 &mut body,
-                idx,
                 link,
                 targets,
                 &cuts,
@@ -117,16 +116,6 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         Some((w, h)) => format!(r#"width="{}mm" height="{}mm""#, num(w), num(h)),
         None => format!(r#"width="{}" height="{}""#, num(vb.w), num(vb.h)),
     };
-    writeln!(
-        out,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{} {} {} {}" {size} class="lini">"#,
-        num(vb.x),
-        num(vb.y),
-        num(vb.w),
-        num(vb.h),
-    )
-    .unwrap();
-
     let used = used_vars::referenced(laid_out, &ruleset);
     // One `:hover ~` reveal rule per tooltip card — live charts only.
     let tooltip_rules = if opts.static_mode {
@@ -134,8 +123,23 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     } else {
         tooltip_count(&laid_out.nodes)
     };
+    // The root wears `lini` for host CSS to target and its own scope class for
+    // its own rules to key on, so two figures inlined in one page cannot
+    // restyle each other [SPEC 18].
+    let scope = style_block::scope_class(&laid_out.vars, &ruleset, &used, opts, tooltip_rules);
+    writeln!(
+        out,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{} {} {} {}" {size} class="lini {scope}">"#,
+        num(vb.x),
+        num(vb.y),
+        num(vb.w),
+        num(vb.h),
+    )
+    .unwrap();
+
     style_block::emit(
         &mut out,
+        &scope,
         &laid_out.vars,
         &ruleset,
         &used,
@@ -506,7 +510,7 @@ mod tests {
         // rule's `--lini-bg` rather than overriding it on the element.
         let svg = svg_for("{ fill: #eef; }\n|box#x|\n");
         assert!(
-            svg.contains(".lini .lini-canvas { fill: #eef; }"),
+            svg.contains(" .lini-canvas { fill: #eef; }"),
             "the rule states it: {svg}"
         );
         assert!(
@@ -522,7 +526,7 @@ mod tests {
         let svg = svg_for("|box#x|\n");
         assert!(svg.contains(r#"<rect class="lini-canvas""#), "{svg}");
         assert!(
-            svg.contains(".lini .lini-canvas { fill: var(--lini-bg); }"),
+            svg.contains(" .lini-canvas { fill: var(--lini-bg); }"),
             "{svg}"
         );
     }

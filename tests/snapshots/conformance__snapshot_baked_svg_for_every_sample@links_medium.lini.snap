@@ -1,34 +1,35 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/links_medium.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-269.98 -127 544.96 270.5" width="544.96" height="270.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-269.98 -127 544.96 270.5" width="544.96" height="270.5" class="lini lini-scope-4af237e1">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dotted { stroke-dasharray: 2,3; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-loud { stroke: #ef675e; }
-    .lini .lini-style-loud .lini-marker { fill: #ef675e; }
-    .lini .lini-style-quiet { stroke: #3f98ff; }
-    .lini .lini-style-quiet .lini-marker { fill: #3f98ff; }
-    .lini .lini-style-happy { stroke: #00b66e; }
-    .lini .lini-style-happy .lini-marker { fill: #00b66e; }
+    .lini-scope-4af237e1 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-4af237e1 .lini-canvas { fill: white; }
+    .lini-scope-4af237e1 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4af237e1 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4af237e1 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-4af237e1 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-4af237e1 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-4af237e1 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-4af237e1 .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
+    .lini-scope-4af237e1 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-4af237e1 .lini-link-dotted { stroke-dasharray: 2,3; }
+    .lini-scope-4af237e1 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-4af237e1 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-4af237e1 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-4af237e1 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-4af237e1 .lini-style-loud { stroke: #ef675e; }
+    .lini-scope-4af237e1 .lini-style-loud .lini-marker { fill: #ef675e; }
+    .lini-scope-4af237e1 .lini-style-quiet { stroke: #3f98ff; }
+    .lini-scope-4af237e1 .lini-style-quiet .lini-marker { fill: #3f98ff; }
+    .lini-scope-4af237e1 .lini-style-happy { stroke: #00b66e; }
+    .lini-scope-4af237e1 .lini-style-happy .lini-marker { fill: #00b66e; }
   </style>
   <defs>
-    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <filter id="lini-shadow-803f42a2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
     <path id="lg1400-0" d="…"/>
     <path id="lg1400-57" d="…"/>
     <path id="lg1400-79" d="…"/>
@@ -145,7 +146,7 @@ input_file: samples/links_medium.lini
         <use href="#lg1500-232" transform="translate(10.83 5.37) scale(0.015 -0.015)"/>
       </g>
       <g class="lini-node lini-badge lini-block" transform="translate(26.0625,-26)">
-        <g filter="url(#lini-shadow-1)">
+        <g filter="url(#lini-shadow-803f42a2)">
           <rect x="-16.4225" y="-7.5" width="32.845" height="15" rx="8" ry="8"/>
         </g>
         <g class="lini-text">
@@ -170,16 +171,16 @@ input_file: samples/links_medium.lini
       <polygon class="lini-marker lini-marker-arrow" points="224.495,28 228.995,37 219.995,37"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="kitchen.bowl" data-to="garden.dog">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-43.955" y="-57" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-57" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
-      <path d="M -41.955 -55 L 40.075 -55" mask="url(#lini-label-cut-3)"/>
+      <mask id="lini-label-cut-fb146bc1" maskUnits="userSpaceOnUse" x="-43.955" y="-57" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-57" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
+      <path d="M -41.955 -55 L 40.075 -55" mask="url(#lini-label-cut-fb146bc1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="44.075,-55 35.075,-50.5 35.075,-59.5"/>
       <g class="lini-link-label">
         <use href="#lg1400-162" transform="translate(-15.424 -51.062) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link lini-style-loud" data-from="kitchen.bowl" data-to="garden.dog">
-      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-43.955" y="-50.4" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-50.4" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
-      <path d="M -41.955 -48.4 L 40.075 -48.4" mask="url(#lini-label-cut-4)"/>
+      <mask id="lini-label-cut-5082586d" maskUnits="userSpaceOnUse" x="-43.955" y="-50.4" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-50.4" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
+      <path d="M -41.955 -48.4 L 40.075 -48.4" mask="url(#lini-label-cut-5082586d)"/>
       <polygon class="lini-marker lini-marker-arrow" points="44.075,-48.4 35.075,-43.9 35.075,-52.9"/>
     </g>
     <g class="lini-link lini-link-dotted lini-style-quiet" data-from="kitchen.water" data-to="garden.dog">

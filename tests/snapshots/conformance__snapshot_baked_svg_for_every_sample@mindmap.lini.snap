@@ -4,36 +4,36 @@ assertion_line: 60
 expression: svg
 input_file: samples/mindmap.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-616.728 -345 1233.456 690" width="1233.456" height="690" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-616.728 -345 1233.456 690" width="1233.456" height="690" class="lini lini-scope-14e3af66">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-mindmap { font-size: 17px; font-weight: 600; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dotted { stroke-dasharray: 2,3; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-cut { fill: black; stroke: none; }
-    .lini .lini-mindmap .lini-topic { font-weight: 500; }
-    .lini .lini-mindmap .lini-level-1 { font-size: 15px; }
-    .lini .lini-mindmap .lini-level-2 { font-size: 14px; }
-    .lini .lini-mindmap .lini-level-3 { font-size: 13px; }
-    .lini .lini-mindmap .lini-hue-rose { fill: #ffe3ec; stroke: #b8476e; color: #811442; }
-    .lini .lini-links .lini-hue-rose { stroke: #b8476e; }
-    .lini .lini-mindmap .lini-hue-orange { fill: #ffe8d2; stroke: #b45700; color: #7e2800; }
-    .lini .lini-links .lini-hue-orange { stroke: #b45700; }
-    .lini .lini-mindmap .lini-hue-amber { fill: #feedca; stroke: #9f6900; color: #6d3b00; }
-    .lini .lini-links .lini-hue-amber { stroke: #9f6900; }
-    .lini .lini-mindmap .lini-hue-lime { fill: #e8f4d3; stroke: #628200; color: #385300; }
-    .lini .lini-links .lini-hue-lime { stroke: #628200; }
-    .lini .lini-mindmap .lini-hue-green { fill: #d6f8e3; stroke: #008d51; color: #005d26; }
-    .lini .lini-links .lini-hue-green { stroke: #008d51; }
-    .lini .lini-mindmap .lini-hue-teal { fill: #cdf9f4; stroke: #008e85; color: #005d56; }
-    .lini .lini-links .lini-hue-teal { stroke: #008e85; }
+    .lini-scope-14e3af66 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-14e3af66 .lini-canvas { fill: white; }
+    .lini-scope-14e3af66 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-14e3af66 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-14e3af66 .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-14e3af66 .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-14e3af66 .lini-mindmap { font-size: 17px; font-weight: 600; }
+    .lini-scope-14e3af66 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-14e3af66 .lini-link-dotted { stroke-dasharray: 2,3; }
+    .lini-scope-14e3af66 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-14e3af66 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-14e3af66 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-topic { font-weight: 500; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-level-1 { font-size: 15px; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-level-2 { font-size: 14px; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-level-3 { font-size: 13px; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-rose { fill: #ffe3ec; stroke: #b8476e; color: #811442; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-rose { stroke: #b8476e; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-orange { fill: #ffe8d2; stroke: #b45700; color: #7e2800; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-orange { stroke: #b45700; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-amber { fill: #feedca; stroke: #9f6900; color: #6d3b00; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-amber { stroke: #9f6900; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-lime { fill: #e8f4d3; stroke: #628200; color: #385300; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-lime { stroke: #628200; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-green { fill: #d6f8e3; stroke: #008d51; color: #005d26; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-green { stroke: #008d51; }
+    .lini-scope-14e3af66 .lini-mindmap .lini-hue-teal { fill: #cdf9f4; stroke: #008e85; color: #005d56; }
+    .lini-scope-14e3af66 .lini-links .lini-hue-teal { stroke: #008e85; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -662,8 +662,8 @@ input_file: samples/mindmap.lini
       <path d="M -349.2545 239.2 L -351.2545 239.2 C -398.5397 239.2 -389.6638 279.2 -436.949 279.2 L -438.949 279.2"/>
     </g>
     <g class="lini-link lini-link-dotted" data-from="lini-topic-1.ship.flags" data-to="lini-topic-1.learn.interviews">
-      <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="431.372" y="-141.6" width="64.1798" height="382.8"><rect class="lini-cut-bg" x="431.372" y="-141.6" width="64.1798" height="382.8"/><rect class="lini-cut" x="455.6376" y="181.9276" width="57.0724" height="16.2067"/></mask>
-      <path d="M 442.185 -139.6 L 444.185 -139.6 C 493.0453 -139.6 495.1419 -56.1855 493.0453 33.9279 C 492.6848 49.4237 493.4058 49.432 493.0453 64.9279 C 490.9105 156.6867 493.0453 239.2 435.372 239.2 L 433.372 239.2" mask="url(#lini-label-cut-19)"/>
+      <mask id="lini-label-cut-e0310956" maskUnits="userSpaceOnUse" x="431.372" y="-141.6" width="64.1798" height="382.8"><rect class="lini-cut-bg" x="431.372" y="-141.6" width="64.1798" height="382.8"/><rect class="lini-cut" x="455.6376" y="181.9276" width="57.0724" height="16.2067"/></mask>
+      <path d="M 442.185 -139.6 L 444.185 -139.6 C 493.0453 -139.6 495.1419 -56.1855 493.0453 33.9279 C 492.6848 49.4237 493.4058 49.432 493.0453 64.9279 C 490.9105 156.6867 493.0453 239.2 435.372 239.2 L 433.372 239.2" mask="url(#lini-label-cut-e0310956)"/>
       <g class="lini-link-label" style="font-size: 12.4667px">
         <use href="#lg1400-203" transform="translate(459.3776 194.494) scale(0.0125 -0.0125)"/>
         <use href="#lg1400-271" transform="translate(466.1096 194.494) scale(0.0125 -0.0125)"/>

@@ -23,7 +23,7 @@ fn gap_fill_accepts_a_gradient() {
         "gradient def emitted: {svg}"
     );
     assert!(
-        svg.contains(r#"class="lini-gutter""#) && svg.contains(r#"fill="url(#lini-gradient-1)""#),
+        svg.contains(r#"class="lini-gutter""#) && svg.contains(r#"fill="url(#lini-gradient-"#),
         "the gutter rect fills with the gradient: {svg}"
     );
 }
@@ -111,7 +111,7 @@ fn css_cascade_emits_rules_and_diffs() {
 flat -> loud
 loud --> mix .wire
 "#;
-    let svg = lini::compile_str(src).expect("compile");
+    let svg = render_live(src);
     assert!(
         svg.contains(".lini .lini-style-loud { stroke: red; stroke-width: 2; }"),
         "{}",

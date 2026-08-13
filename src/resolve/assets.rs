@@ -10,7 +10,6 @@
 use super::ir::{AttrMap, ResolvedValue};
 use crate::error::{Code, Error};
 use crate::span::Span;
-use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::ops::Range;
 use std::path::PathBuf;
@@ -25,19 +24,16 @@ pub struct AssetEnv {
     pub root: Option<PathBuf>,
 }
 
-/// Per-compile asset state: the environment plus the 1-based document-order
-/// counter behind the `lini-aN-` id prefix [SPEC 18].
+/// Per-compile asset state — just the environment; an embedded asset's id
+/// prefix comes from its own bytes [SPEC 18], not from where in the document
+/// it appeared.
 pub struct AssetState {
     env: AssetEnv,
-    counter: Cell<usize>,
 }
 
 impl AssetState {
     pub fn new(env: AssetEnv) -> Self {
-        Self {
-            env,
-            counter: Cell::new(0),
-        }
+        Self { env }
     }
 }
 
@@ -84,11 +80,8 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
         Error::at(span, format!("cannot read image '{src}' — {why}")).code(Code::ASSET_NOT_FOUND)
     })?;
 
-    let n = state.counter.get() + 1;
-    state.counter.set(n);
-
     if let Some(text) = sniff_svg(&bytes) {
-        let prefix = format!("lini-a{n}-");
+        let prefix = crate::name::asset_prefix(&bytes);
         let (root_attrs, inner) = rewrite_svg(text, &prefix).map_err(|why| {
             Error::at(span, format!("cannot read image '{src}' — {why}"))
                 .code(Code::ASSET_NOT_FOUND)

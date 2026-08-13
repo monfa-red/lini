@@ -4,41 +4,41 @@ assertion_line: 60
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="297mm" height="210mm" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="297mm" height="210mm" class="lini lini-scope-81cc79c4">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-hex { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-dim-text { font-size: 12px; font-weight: 400; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-gutter { stroke: none; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-halo { stroke: black; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
-    .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-shoulder { stroke: black; }
-    .lini .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-page { fill: white; stroke-width: 0; }
-    .lini .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
-    .lini .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
-    .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
-    .lini .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
-    .lini .lini-projection { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-marker-dim { fill: black; }
+    .lini-scope-81cc79c4 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-81cc79c4 .lini-canvas { fill: white; }
+    .lini-scope-81cc79c4 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-hex { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-poly { stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini-scope-81cc79c4 .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-81cc79c4 .lini-dim-text { font-size: 12px; font-weight: 400; }
+    .lini-scope-81cc79c4 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-81cc79c4 .lini-gutter { stroke: none; }
+    .lini-scope-81cc79c4 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-81cc79c4 .lini-halo { stroke: black; }
+    .lini-scope-81cc79c4 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-81cc79c4 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-81cc79c4 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-81cc79c4 .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
+    .lini-scope-81cc79c4 .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-81cc79c4 .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-81cc79c4 .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-81cc79c4 .lini-shoulder { stroke: black; }
+    .lini-scope-81cc79c4 .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-81cc79c4 .lini-page { fill: white; stroke-width: 0; }
+    .lini-scope-81cc79c4 .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
+    .lini-scope-81cc79c4 .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini-scope-81cc79c4 .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
+    .lini-scope-81cc79c4 .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
+    .lini-scope-81cc79c4 .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
+    .lini-scope-81cc79c4 .lini-projection { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-81cc79c4 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-81cc79c4 .lini-marker-dim { fill: black; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -431,15 +431,15 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-image" transform="translate(91.957,35)">
           <svg x="-6" y="-6" width="12" height="12" viewBox="0 0 48 48">
   <defs>
-    <linearGradient id="lini-a1-g" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="lini-af3ac64a7-g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#4f8bd8"/>
       <stop offset="1" stop-color="#7fd8c8"/>
     </linearGradient>
-    <circle id="lini-a1-dot" r="4"/>
+    <circle id="lini-af3ac64a7-dot" r="4"/>
   </defs>
-  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#lini-a1-g)"/>
-  <use href="#lini-a1-dot" x="17" y="24" fill="#fff"/>
-  <use href="#lini-a1-dot" x="31" y="24" fill="#fff"/>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#lini-af3ac64a7-g)"/>
+  <use href="#lini-af3ac64a7-dot" x="17" y="24" fill="#fff"/>
+  <use href="#lini-af3ac64a7-dot" x="31" y="24" fill="#fff"/>
           </svg>
         </g>
       </g>

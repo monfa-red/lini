@@ -1,17 +1,18 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/tree.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-359.0875 -383.5 718.175 767" width="718.175" height="767" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-359.0875 -383.5 718.175 767" width="718.175" height="767" class="lini lini-scope-fe4dd4d3">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dotted { stroke-dasharray: 2,3; }
+    .lini-scope-fe4dd4d3 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-fe4dd4d3 .lini-canvas { fill: white; }
+    .lini-scope-fe4dd4d3 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fe4dd4d3 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-fe4dd4d3 .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-fe4dd4d3 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fe4dd4d3 .lini-link-dotted { stroke-dasharray: 2,3; }
   </style>
   <defs>
     <path id="lg1500-0" d="…"/>

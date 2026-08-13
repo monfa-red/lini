@@ -15,10 +15,16 @@ fn a_local_svg_asset_embeds_id_rewritten() {
         svg.contains(r#"<svg x="-6" y="-6" width="12" height="12" viewBox="0 0 48 48">"#),
         "{svg}"
     );
-    // Every id prefixed `lini-a1-`, every internal reference following.
-    assert!(svg.contains(r#"id="lini-a1-g""#), "{svg}");
-    assert!(svg.contains("url(#lini-a1-g)"), "{svg}");
-    assert!(svg.contains(r##"href="#lini-a1-dot""##), "{svg}");
+    // Every id prefixed from the asset's own bytes, every internal reference
+    // following [SPEC 18].
+    let prefix = svg
+        .split_once(r#"id="lini-a"#)
+        .and_then(|(_, rest)| rest.split_once('-'))
+        .map(|(tag, _)| format!("lini-a{tag}-"))
+        .expect("an asset id prefix");
+    assert!(svg.contains(&format!(r#"id="{prefix}g""#)), "{svg}");
+    assert!(svg.contains(&format!("url(#{prefix}g)")), "{svg}");
+    assert!(svg.contains(&format!(r##"href="#{prefix}dot""##)), "{svg}");
     assert!(
         !svg.contains(r#"id="g""#) && !svg.contains("url(#g)"),
         "{svg}"
@@ -26,16 +32,21 @@ fn a_local_svg_asset_embeds_id_rewritten() {
 }
 
 #[test]
-fn two_embedded_assets_never_collide() {
+fn the_same_asset_twice_shares_one_prefix() {
+    // The prefix is the asset's own bytes [SPEC 18], not its document order, so
+    // two figures inlined in one page can never cross-wire a `url(#…)`: a
+    // shared prefix means byte-identical embeddings, where sharing resolves to
+    // an equal definition either way. (`name::prefixes_differ_by_asset` pins
+    // the other half — distinct bytes, distinct prefix.)
     let svg = render_assets(
         "|image| { src: \"assets/logo.svg\"; width: 12; height: 12 }\n|image| { src: \"assets/logo.svg\"; width: 12; height: 12 }\n",
         None,
     )
     .expect("compile");
-    // Document-order numbering: the same asset twice gets distinct prefixes.
-    assert!(svg.contains(r#"id="lini-a1-g""#), "{svg}");
-    assert!(svg.contains(r#"id="lini-a2-g""#), "{svg}");
-    assert!(svg.contains("url(#lini-a2-g)"), "{svg}");
+    let prefixes: Vec<&str> = scrape(&svg, r#"id="lini-a"#);
+    assert!(prefixes.len() >= 2, "both copies embed: {svg}");
+    let tag = |p: &str| p.split_once('-').map(|(t, _)| t.to_string());
+    assert_eq!(tag(prefixes[0]), tag(prefixes.last().unwrap()), "{svg}");
 }
 
 #[test]

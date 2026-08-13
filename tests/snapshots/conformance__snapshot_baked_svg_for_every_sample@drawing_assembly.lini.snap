@@ -4,39 +4,39 @@ assertion_line: 60
 expression: svg
 input_file: samples/drawing_assembly.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-624.2763 -280.75 1248.5525 561.5" width="1248.5525" height="561.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-624.2763 -280.75 1248.5525 561.5" width="1248.5525" height="561.5" class="lini lini-scope-b496e48f">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-dim-text { font-size: 12px; font-weight: 400; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-gutter { stroke: none; }
-    .lini .lini-cut-bg { fill: white; stroke: none; }
-    .lini .lini-halo { stroke: black; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
-    .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
-    .lini .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
-    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-shoulder { stroke: black; }
-    .lini .lini-steel { fill: url(#lini-hatch-1); }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-dim-line .lini-marker { fill: black; }
-    .lini .lini-marker-dim { fill: black; }
+    .lini-scope-b496e48f { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-b496e48f .lini-canvas { fill: white; }
+    .lini-scope-b496e48f .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-poly { stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini-scope-b496e48f .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-b496e48f .lini-dim-text { font-size: 12px; font-weight: 400; }
+    .lini-scope-b496e48f .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-b496e48f .lini-gutter { stroke: none; }
+    .lini-scope-b496e48f .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-b496e48f .lini-halo { stroke: black; }
+    .lini-scope-b496e48f .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-b496e48f .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-b496e48f .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-b496e48f .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
+    .lini-scope-b496e48f .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-b496e48f .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
+    .lini-scope-b496e48f .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
+    .lini-scope-b496e48f .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-b496e48f .lini-shoulder { stroke: black; }
+    .lini-scope-b496e48f .lini-steel { fill: url(#lini-hatch-fecd99e1); }
+    .lini-scope-b496e48f .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-b496e48f .lini-dim-line .lini-marker { fill: black; }
+    .lini-scope-b496e48f .lini-marker-dim { fill: black; }
   </style>
   <defs>
-    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
-    <pattern id="lini-hatch-2" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(135)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
+    <pattern id="lini-hatch-fecd99e1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
+    <pattern id="lini-hatch-23764064" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(135)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
     <path id="lg1400-0" d="…"/>
     <path id="lg1400-1" d="…"/>
     <path id="lg1400-27" d="…"/>
@@ -94,7 +94,7 @@ input_file: samples/drawing_assembly.lini
           <line x1="120" y1="-116" x2="120" y2="116"/>
         </g>
       </g>
-      <g class="lini-node lini-steel lini-sketch" data-id="nozzle" style="fill: url(#lini-hatch-2)" transform="translate(359.7763,64.25)">
+      <g class="lini-node lini-steel lini-sketch" data-id="nozzle" style="fill: url(#lini-hatch-23764064)" transform="translate(359.7763,64.25)">
         <path d="M 0 0 L 0 -48 L 160 -48 L 160 -32 L 240 -32 L 240 0 L 240 32 L 160 32 L 160 48 L 0 48 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
           <line x1="-4" y1="0" x2="244" y2="0"/>

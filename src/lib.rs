@@ -13,6 +13,7 @@ mod ledger;
 mod lexer;
 mod lint;
 mod math;
+mod name;
 mod palette;
 mod path_data;
 mod render;

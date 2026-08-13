@@ -3,18 +3,18 @@ source: tests/conformance.rs
 assertion_line: 86
 expression: svg
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-57.665 -48.5 115.33 97" width="115.33" height="97" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-57.665 -48.5 115.33 97" width="115.33" height="97" class="lini lini-scope-85ea4a84">
   <style>
     @layer lini.defaults {
-      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
-      .lini[data-theme="dark"], [data-theme="dark"] .lini { color-scheme: dark; }
-      .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
+      :root, .lini-scope-85ea4a84 { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
+      .lini-scope-85ea4a84[data-theme="dark"], [data-theme="dark"] .lini-scope-85ea4a84 { color-scheme: dark; }
+      .lini-scope-85ea4a84[data-theme="light"], [data-theme="light"] .lini-scope-85ea4a84 { color-scheme: light; }
     }
-    .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
-    .lini .lini-canvas { fill: var(--lini-bg); }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
+    .lini-scope-85ea4a84 { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini-scope-85ea4a84 .lini-canvas { fill: var(--lini-bg); }
+    .lini-scope-85ea4a84 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-85ea4a84 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-85ea4a84 .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-57.665" y="-48.5" width="115.33" height="97"/>

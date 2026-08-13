@@ -84,8 +84,31 @@ fn lower_node(node: &mut PlacedNode, it: &mut Interner) {
     }
 }
 
+/// The `<defs>` id each kind of definition is published under — derived from
+/// the definition itself [`crate::name`], never from its position in the table.
+/// The mint site and the emit site both call these on the **interned** value,
+/// so a `url(#…)` and the def it points at can never drift apart.
+fn gradient_id(g: &GradientDef) -> String {
+    let kind = match g.kind {
+        GradientKind::Linear(angle) => format!("linear {}", num(angle)),
+        GradientKind::Radial => "radial".to_string(),
+    };
+    crate::name::def_id("gradient", &format!("{kind} {:?}", g.stops))
+}
+
+fn hatch_id(h: &HatchDef) -> String {
+    crate::name::def_id(
+        "hatch",
+        &format!("{:?} {} {:?}", h.angles, num(h.pitch), h.color),
+    )
+}
+
+fn clip_id(radius: f64) -> String {
+    crate::name::def_id("clip", &num(radius))
+}
+
 /// A `|detail|`'s `clip:` circle [SPEC 15.8]: intern the radius and rewrite the
-/// attr to its `url(#lini-clip-N)` reference, exactly as the paints do.
+/// attr to its `url(#lini-clip-…)` reference, exactly as the paints do.
 fn lower_clip(attrs: &mut AttrMap, it: &mut Interner) {
     let Some(ResolvedValue::Number(r)) = attrs.get("clip") else {
         return;
@@ -101,7 +124,7 @@ fn lower_clip(attrs: &mut AttrMap, it: &mut Interner) {
         });
     attrs.insert(
         "clip",
-        ResolvedValue::RawCss(format!("url(#lini-clip-{})", idx + 1)),
+        ResolvedValue::RawCss(format!("url(#{})", clip_id(it.clips[idx]))),
     );
 }
 
@@ -116,12 +139,14 @@ fn lower_attrs(attrs: &mut AttrMap, it: &mut Interner) {
 fn rewrite(value: &mut ResolvedValue, it: &mut Interner) {
     if let Some(g) = parse(value) {
         let idx = it.gradients.intern(g.clone(), || g);
-        *value = ResolvedValue::RawCss(format!("url(#lini-gradient-{})", idx + 1));
+        let id = gradient_id(&it.gradients.values()[idx]);
+        *value = ResolvedValue::RawCss(format!("url(#{id})"));
         return;
     }
     if let Some(h) = parse_hatch(value) {
         let idx = it.hatches.intern(h.clone(), || h);
-        *value = ResolvedValue::RawCss(format!("url(#lini-hatch-{})", idx + 1));
+        let id = hatch_id(&it.hatches.values()[idx]);
+        *value = ResolvedValue::RawCss(format!("url(#{id})"));
     }
 }
 
@@ -173,11 +198,11 @@ pub(crate) fn emit_defs(laid: &LaidOut, out: &mut String, opts: &Options) {
 /// at the group's own origin (the region centre the detail recentres to),
 /// `userSpaceOnUse` so it clips the placed geometry directly.
 fn emit_clips(laid: &LaidOut, out: &mut String) {
-    for (i, r) in laid.clips.iter().enumerate() {
+    for r in &laid.clips {
         let _ = writeln!(
             out,
-            r#"    <clipPath id="lini-clip-{}" clipPathUnits="userSpaceOnUse"><circle r="{}"/></clipPath>"#,
-            i + 1,
+            r#"    <clipPath id="{}" clipPathUnits="userSpaceOnUse"><circle r="{}"/></clipPath>"#,
+            clip_id(*r),
             num(*r)
         );
     }
@@ -190,7 +215,7 @@ fn emit_clips(laid: &LaidOut, out: &mut String) {
 /// exactly at any bearing; other offsets draw through the tile centre, best
 /// effort. Line width is fixed — a texture, not a stroke.
 fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
-    for (i, h) in laid.hatches.iter().enumerate() {
+    for h in &laid.hatches {
         let p = h.pitch;
         let lw = num(HATCH_LINE_WIDTH);
         let color = format_value(&h.color, &laid.vars, opts);
@@ -240,8 +265,8 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
         }
         writeln!(
             out,
-            r#"    <pattern id="lini-hatch-{}" patternUnits="userSpaceOnUse" width="{}" height="{}" patternTransform="rotate({})"><g {paint} stroke-width="{lw}">{}</g></pattern>"#,
-            i + 1,
+            r#"    <pattern id="{}" patternUnits="userSpaceOnUse" width="{}" height="{}" patternTransform="rotate({})"><g {paint} stroke-width="{lw}">{}</g></pattern>"#,
+            hatch_id(h),
             num(p),
             num(p),
             num(base),
@@ -254,8 +279,8 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
 /// Emit every collected gradient as a `<linearGradient>` / `<radialGradient>`, in
 /// the order their `url(#…)` ids were assigned.
 fn emit_gradients(laid: &LaidOut, out: &mut String, opts: &Options) {
-    for (i, g) in laid.gradients.iter().enumerate() {
-        let id = format!("lini-gradient-{}", i + 1);
+    for g in &laid.gradients {
+        let id = gradient_id(g);
         let stops = stops_svg(g, &laid.vars, opts);
         match g.kind {
             // SVG's default vector points east; CSS angles are clockwise from north,
@@ -401,9 +426,15 @@ mod tests {
             2,
             "45/6 dedups; 45/4 is distinct"
         );
-        assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
-        assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
-        assert!(matches!(&c, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-2)"));
+        // The reference is the def's content-addressed name, so equal hatches
+        // land on one id and a different pitch on another [`crate::name`].
+        let href = |v: &ResolvedValue| match v {
+            ResolvedValue::RawCss(s) => s.clone(),
+            other => panic!("not a url reference: {other:?}"),
+        };
+        assert!(href(&a).starts_with("url(#lini-hatch-"));
+        assert_eq!(href(&a), href(&b));
+        assert_ne!(href(&a), href(&c));
     }
 
     #[test]
@@ -418,7 +449,7 @@ mod tests {
             1,
             "identical gradients must dedup"
         );
-        assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
-        assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
+        assert!(matches!(&a, ResolvedValue::RawCss(s) if s.starts_with("url(#lini-gradient-")));
+        assert_eq!(a, b, "…and share the one content-addressed reference");
     }
 }

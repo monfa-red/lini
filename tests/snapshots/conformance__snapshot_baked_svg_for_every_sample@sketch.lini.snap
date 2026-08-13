@@ -4,17 +4,17 @@ assertion_line: 60
 expression: svg
 input_file: samples/sketch.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-298.065 -63.5 596.13 127" width="596.13" height="127" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-298.065 -63.5 596.13 127" width="596.13" height="127" class="lini lini-scope-3cf39a69">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-path { stroke-dasharray: none; }
-    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-note { fill: white; stroke: #444; }
-    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-3cf39a69 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-3cf39a69 .lini-canvas { fill: white; }
+    .lini-scope-3cf39a69 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3cf39a69 .lini-path { stroke-dasharray: none; }
+    .lini-scope-3cf39a69 .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3cf39a69 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3cf39a69 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-3cf39a69 .lini-note { fill: white; stroke: #444; }
+    .lini-scope-3cf39a69 .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
   </style>
   <defs>
     <path id="lg1500-0" d="…"/>

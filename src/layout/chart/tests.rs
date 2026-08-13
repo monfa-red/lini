@@ -449,7 +449,7 @@ fn data_text_is_normal_weight_chrome_is_semibold() {
         "|chart| \"Cost\" { categories: \"a\", \"b\" } [\n  |bars| \"A\" { data: 5, 8 }\n  |bars| \"B\" { data: 3, 4 }\n]\n",
     );
     assert!(
-        s.contains(".lini .lini-chart-title { font-size: 14px; font-weight: 600; }"),
+        s.contains(" .lini-chart-title { font-size: 14px; font-weight: 600; }"),
         "title rule: {s}"
     );
     assert!(

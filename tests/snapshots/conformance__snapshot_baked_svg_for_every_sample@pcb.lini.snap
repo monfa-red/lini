@@ -4,23 +4,23 @@ assertion_line: 60
 expression: svg
 input_file: samples/pcb.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-294 -244 588 488" width="588" height="488" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-294 -244 588 488" width="588" height="488" class="lini lini-scope-1bcbbebf">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 12px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: url(#lini-gradient-2); }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-chip { stroke: none; color: white; }
-    .lini .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
-    .lini .lini-passive { fill: #484848; stroke: none; color: #eeeeee; }
-    .lini .lini-link { fill: none; stroke: #cb8b00; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-link .lini-marker { fill: #cb8b00; }
+    .lini-scope-1bcbbebf { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 12px; font-weight: 500; color: black; }
+    .lini-scope-1bcbbebf .lini-canvas { fill: url(#lini-gradient-f006bf96); }
+    .lini-scope-1bcbbebf .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-1bcbbebf .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-1bcbbebf .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-1bcbbebf .lini-chip { stroke: none; color: white; }
+    .lini-scope-1bcbbebf .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
+    .lini-scope-1bcbbebf .lini-passive { fill: #484848; stroke: none; color: #eeeeee; }
+    .lini-scope-1bcbbebf .lini-link { fill: none; stroke: #cb8b00; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-1bcbbebf .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-1bcbbebf .lini-link .lini-marker { fill: #cb8b00; }
   </style>
   <defs>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
-    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#94e2b5"/><stop offset="100%" stop-color="#79e3da"/></linearGradient>
+    <linearGradient id="lini-gradient-d8ec708d" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
+    <linearGradient id="lini-gradient-f006bf96" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#94e2b5"/><stop offset="100%" stop-color="#79e3da"/></linearGradient>
     <path id="lg1500-0" d="…"/>
     <path id="lg1500-1" d="…"/>
     <path id="lg1500-27" d="…"/>
@@ -44,7 +44,7 @@ input_file: samples/pcb.lini
   </defs>
   <rect class="lini-canvas" x="-294" y="-244" width="588" height="488"/>
   <g class="lini-scene">
-    <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-1); font-size: 24px" transform="translate(0,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-d8ec708d); font-size: 24px" transform="translate(0,0)">
       <rect x="-90" y="-90" width="180" height="180" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lg1500-87" transform="translate(-27.648 8.592) scale(0.024 -0.024)"/>

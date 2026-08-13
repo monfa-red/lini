@@ -4,14 +4,14 @@ assertion_line: 60
 expression: svg
 input_file: samples/expr.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-185 -189.4273 370 378.8546" width="370" height="378.8546" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-185 -189.4273 370 378.8546" width="370" height="378.8546" class="lini lini-scope-167e844d">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-167e844d { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-167e844d .lini-canvas { fill: white; }
+    .lini-scope-167e844d .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-167e844d .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-167e844d .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-167e844d .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs>
     <path id="lg1500-0" d="…"/>

@@ -107,19 +107,23 @@ impl FilterTable {
     /// The `url(#…)` filter id for a node's shadow, if it has one.
     pub fn id_for(&self, n: &PlacedNode, vars: &VarTable, opts: &Options) -> Option<String> {
         let shadow = parse(n.attrs.get("shadow")?)?;
-        let i = self.entries.index_of(&key(&shadow, vars, opts))?;
-        Some(format!("lini-shadow-{}", i + 1))
+        // The id is the dedup key's content-addressed name [`crate::name`], the
+        // same one `emit_defs` publishes; the lookup only asks whether this
+        // shadow reached the table at all.
+        let k = key(&shadow, vars, opts);
+        self.entries.index_of(&k)?;
+        Some(crate::name::def_id("shadow", &k))
     }
 
     /// Emit each filter once. A generous region keeps offset + blur from
     /// clipping. `feDropShadow` carries the offset, blur (`stdDeviation`), and
     /// tint in one primitive — resvg and browsers both render it.
     pub fn emit_defs(&self, out: &mut String, vars: &VarTable, opts: &Options) {
-        for (i, s) in self.entries.values().iter().enumerate() {
+        for s in self.entries.values() {
             writeln!(
                 out,
-                r#"    <filter id="lini-shadow-{}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="{}" dy="{}" stdDeviation="{}" flood-color="{}"/></filter>"#,
-                i + 1,
+                r#"    <filter id="{}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="{}" dy="{}" stdDeviation="{}" flood-color="{}"/></filter>"#,
+                crate::name::def_id("shadow", &key(s, vars, opts)),
                 num(s.dx),
                 num(s.dy),
                 num(s.blur),

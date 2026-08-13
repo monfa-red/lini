@@ -3665,18 +3665,18 @@ text props. Its own properties:
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="X Y W H" width="W" height="H" class="lini">
+     viewBox="X Y W H" width="W" height="H" class="lini lini-scope-HHHHHHHH">
   <style>
     @layer lini.defaults {
-      :root, .lini { color-scheme: light dark; /* --lini-*: light-dark(…, …) */ }
-      .lini[data-theme="dark"],  [data-theme="dark"]  .lini { color-scheme: dark; }
-      .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
+      :root, .lini-scope-HHHHHHHH { color-scheme: light dark; /* --lini-*: light-dark(…, …) */ }
+      .lini-scope-HHHHHHHH[data-theme="dark"],  [data-theme="dark"]  .lini-scope-HHHHHHHH { color-scheme: dark; }
+      .lini-scope-HHHHHHHH[data-theme="light"], [data-theme="light"] .lini-scope-HHHHHHHH { color-scheme: light; }
     }
-    .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
-    .lini .lini-canvas { fill: var(--lini-bg); }
-    .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
-    .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
-    .lini .lini-link { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
+    .lini-scope-HHHHHHHH { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini-scope-HHHHHHHH .lini-canvas { fill: var(--lini-bg); }
+    .lini-scope-HHHHHHHH .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
+    .lini-scope-HHHHHHHH .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
+    .lini-scope-HHHHHHHH .lini-link { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
   <defs><!-- filters, gradients, clipPaths --></defs>
   <rect class="lini-canvas" .../>   <!-- the scene background (--lini-bg) -->
@@ -3692,6 +3692,19 @@ is only `|page|`s ([SPEC 15.8](#158-assemblies-views-sheets--titles)), the root 
 and `height` carry the sheet's trimmed size in real **millimetres** rather than pixels,
 so a print is true-scale; the `viewBox` is unchanged, so on-screen layout and CSS sizing
 are not.
+
+**Names are content-addressed, so figures don't collide.** Inlining two Lini SVGs
+into one HTML document merges their id space and their CSS selector space, and no
+self-contained figure can claim a name nothing else on the page holds. So every name
+Lini writes into either space is derived from the **thing it names**: a `<defs>` id
+from its definition, an embedded asset's id prefix from the asset's bytes, an
+outlined glyph from its outline, and the root's `lini-scope-HHHHHHHH` class — the
+head of every selector its `<style>` emits — from that stylesheet's own text. Two
+figures then share a name only where the things are identical, and there sharing is
+correct: `url(#…)` resolves to an equal definition, a duplicated rule is a no-op.
+The scope class heads a selector in place of `.lini`, one class either way, so
+specificity is unchanged and host CSS overrides exactly as it always did. `lini`
+stays on the root as the stable hook host CSS targets.
 
 **Paint compiles to CSS; geometry bakes.** Node and link paint defaults — and every
 rule — are stated once as class rules; only the classes actually used are emitted — and
@@ -3717,8 +3730,8 @@ compiled-in metrics tables ([SPEC 5](#5-the-box-model)).
 
 **Embedded assets.** A local `|image|` ([SPEC 7](#7-nodes)) emits its resolved form:
 an SVG asset nests as a child `<svg>` mapped into the node box (`fit:` sets its
-`preserveAspectRatio`) — with **every id prefixed `lini-aN-`** (N the image's
-1-based document order) and every internal reference rewritten to match (`url(#…)`
+`preserveAspectRatio`) — with **every id prefixed `lini-aHHHHHHHH-`** (a tag of the
+asset's own bytes) and every internal reference rewritten to match (`url(#…)`
 in attributes and inline `style`, fragment `href` / `xlink:href`), since nesting
 alone does not isolate ids; a raster asset emits
 `<image href="data:…;base64,…"/>`. Authored URLs and data URIs emit unchanged.
@@ -3778,8 +3791,9 @@ families:
 
 (`lini-align-*` / `lini-justify-*` carry layout, not paint — they emit no CSS
 rule, the one `lini-` family host CSS cannot restyle. Generated **ids** are
-prefixed too: `lini-aN-` for embedded assets, `lini-shadow-N` / `lini-clip-N` /
-`lini-gradient-N` / `lini-hatch-N` / `lini-label-cut-N` in `<defs>`.) A
+prefixed too, each tagged with a hash of what it names: `lini-aHHHHHHHH-` for
+embedded assets, `lini-shadow-HHHHHHHH` / `lini-clip-…` / `lini-gradient-…` /
+`lini-hatch-…` / `lini-label-cut-…` in `<defs>`.) A
 detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
 clips to its region with one interned `<clipPath>` in `<defs>` and a `clip-path=` on
 its group.

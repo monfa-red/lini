@@ -46,19 +46,22 @@ pub struct RuleSet {
 }
 
 impl RuleSet {
-    /// Append the rules to the `<style>` body.
-    pub fn emit(&self, out: &mut String) {
+    /// Append the rules to the `<style>` body, every selector headed by the
+    /// figure's own `scope` class rather than the shared `.lini` — one class
+    /// either way, so specificity is unchanged and host CSS overrides exactly
+    /// as before [SPEC 18].
+    pub fn emit(&self, out: &mut String, scope: &str) {
         for rule in &self.rules {
             if rule.props.is_empty() {
                 continue;
             }
-            if rule.class == "lini" {
-                out.push_str("    .lini {");
-            } else {
-                out.push_str("    .lini .");
+            out.push_str("    .");
+            out.push_str(scope);
+            if rule.class != "lini" {
+                out.push_str(" .");
                 out.push_str(&rule.class);
-                out.push_str(" {");
             }
+            out.push_str(" {");
             for (prop, value) in &rule.props {
                 out.push(' ');
                 out.push_str(prop);

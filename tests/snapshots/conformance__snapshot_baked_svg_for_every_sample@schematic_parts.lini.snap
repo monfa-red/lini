@@ -1,25 +1,26 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/schematic_parts.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-468.5355 -304.5 937.071 609" width="937.071" height="609" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-468.5355 -304.5 937.071 609" width="937.071" height="609" class="lini lini-scope-f24a2349">
   <style>
-    .lini { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: #faf5e6; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini .lini-label { color: #0e6a6a; font-size: 11px; }
-    .lini .lini-opamp { fill: none; stroke: none; }
-    .lini .lini-head { color: #888; font-size: 13px; }
-    .lini .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini .lini-sch-solid { fill: #8a1c1c; stroke: none; }
-    .lini .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
-    .lini .lini-ref { font-size: 12px; font-weight: 600; }
-    .lini .lini-part-value { font-size: 12px; }
-    .lini .lini-tag-outline { stroke: #0e6a6a; stroke-width: 1.5; }
+    .lini-scope-f24a2349 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-f24a2349 .lini-canvas { fill: #faf5e6; }
+    .lini-scope-f24a2349 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-f24a2349 .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-f24a2349 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-f24a2349 .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-f24a2349 .lini-label { color: #0e6a6a; font-size: 11px; }
+    .lini-scope-f24a2349 .lini-opamp { fill: none; stroke: none; }
+    .lini-scope-f24a2349 .lini-head { color: #888; font-size: 13px; }
+    .lini-scope-f24a2349 .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-f24a2349 .lini-sch-solid { fill: #8a1c1c; stroke: none; }
+    .lini-scope-f24a2349 .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
+    .lini-scope-f24a2349 .lini-ref { font-size: 12px; font-weight: 600; }
+    .lini-scope-f24a2349 .lini-part-value { font-size: 12px; }
+    .lini-scope-f24a2349 .lini-tag-outline { stroke: #0e6a6a; stroke-width: 1.5; }
   </style>
   <defs>
     <path id="lg1500-0" d="…"/>
