@@ -3,6 +3,7 @@
 //! [`read`].
 
 use super::*;
+use crate::math;
 
 mod read;
 use read::*;
@@ -367,7 +368,10 @@ fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Err
     let (min, max) = if has_range {
         (a, b)
     } else {
-        (10f64.powf(a.log10().floor()), 10f64.powf(b.log10().ceil()))
+        (
+            math::powf(10.0, math::log10(a).floor()),
+            math::powf(10.0, math::log10(b).ceil()),
+        )
     };
     Ok(Scale::log(min, max, lo > hi))
 }

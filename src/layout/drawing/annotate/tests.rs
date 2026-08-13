@@ -1,5 +1,6 @@
 use super::super::testutil::{by_id, laid, layout_err, text_at, texts};
 use crate::ledger::consts::DIM_CLEARANCE;
+use crate::math;
 use crate::resolve::{MarkerKind, NodeKind, ResolvedValue};
 
 /// A bottom row's painted band [SPEC 15.6]: text reach `fs + 2` above the
@@ -697,7 +698,7 @@ fn a_leader_tip_ray_casts_onto_the_outline_with_a_landing_elbow() {
     // the bbox corner — the line stops a stub short of it [SPEC 15.6/7].
     let tip = arrow_tip(&l.nodes);
     assert!(
-        (tip.0.hypot(tip.1) - 20.0).abs() < 0.75,
+        (math::hypot(tip.0, tip.1) - 20.0).abs() < 0.75,
         "tip on the rim: {tip:?}"
     );
     // The landing is horizontal.
@@ -822,7 +823,7 @@ fn a_two_ended_arrow_trims_at_the_rim_and_dots_within() {
         .unwrap();
     let b1 = by_id(&l.nodes, "b1");
     assert!(
-        (pts[0].0 - b1.cx).hypot(pts[0].1 - b1.cy) > 7.0,
+        math::hypot(pts[0].0 - b1.cx, pts[0].1 - b1.cy) > 7.0,
         "start off the balloon's centre: {:?}",
         pts[0]
     );

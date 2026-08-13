@@ -5,6 +5,7 @@
 use super::super::ir::Bbox;
 use super::annotate::Axis;
 use crate::layout::geom::{dot, unit};
+use crate::math;
 use crate::path_data;
 
 /// The plane primitives are layout-level — the schematic engine's stacking
@@ -150,7 +151,7 @@ pub fn bearing_dir(deg: f64) -> P {
 
 /// A vector's bearing, the inverse of [`bearing_dir`].
 pub fn dir_bearing(v: P) -> f64 {
-    let deg = v.0.atan2(-v.1).to_degrees();
+    let deg = math::atan2(v.0, -v.1).to_degrees();
     if deg < 0.0 { deg + 360.0 } else { deg }
 }
 
@@ -203,14 +204,14 @@ pub fn mirror(subs: &mut Vec<Subpath>, axis: MirrorAxis) -> bool {
 }
 
 pub fn dist(a: P, b: P) -> f64 {
-    (a.0 - b.0).hypot(a.1 - b.1)
+    math::hypot(a.0 - b.0, a.1 - b.1)
 }
 
 /// The ISO reading angle for text riding a line in direction `dir` [SPEC 15.6]:
 /// the line's own angle folded into [-90, 90) so the text reads from the
 /// bottom / right — a vertical line's text turns exactly −90.
 pub fn iso_text_angle(dir: P) -> f64 {
-    let mut theta = dir.1.atan2(dir.0).to_degrees();
+    let mut theta = math::atan2(dir.1, dir.0).to_degrees();
     if theta < -90.0 {
         theta += 180.0;
     } else if theta >= 90.0 {

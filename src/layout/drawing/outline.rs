@@ -10,6 +10,7 @@ use super::super::ir::{Bbox, PlacedNode};
 use super::chrome;
 use super::geometry::{P, PathSeg, arc_center, arc_tangent};
 use crate::layout::geom::{cross, dot};
+use crate::math;
 use crate::resolve::NodeKind;
 
 /// One crossing of a ray with a drawn path: its parameter and the crossed
@@ -155,8 +156,8 @@ fn hit_line(o: P, d: P, a: P, b: P) -> Option<Hit> {
 #[allow(clippy::too_many_arguments)]
 fn arc_crossings(o: P, d: P, from: P, to: P, r: f64, large: bool, sweep: bool, out: &mut Vec<Hit>) {
     let c = arc_center(from, to, r, large, sweep);
-    let a0 = (from.1 - c.1).atan2(from.0 - c.0);
-    let a1 = (to.1 - c.1).atan2(to.0 - c.0);
+    let a0 = math::atan2(from.1 - c.1, from.0 - c.0);
+    let a1 = math::atan2(to.1 - c.1, to.0 - c.0);
     // SVG's sweep flag is the positive-angle direction in screen coords
     // (y down), which is `atan2`'s increasing direction over raw coordinates.
     let s = if sweep { 1.0 } else { -1.0 };
@@ -165,7 +166,7 @@ fn arc_crossings(o: P, d: P, from: P, to: P, r: f64, large: bool, sweep: bool, o
     // degenerate arc, not a full turn.
     for t in ray_circle(o, d, c, r) {
         let p = (o.0 + d.0 * t, o.1 + d.1 * t);
-        let aq = (p.1 - c.1).atan2(p.0 - c.0);
+        let aq = math::atan2(p.1 - c.1, p.0 - c.0);
         // Swept progress from the arc's start — on the arc within slack.
         let w = ((aq - a0) * s).rem_euclid(std::f64::consts::TAU);
         if w <= span + 1e-9 {

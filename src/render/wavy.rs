@@ -11,6 +11,7 @@ use super::rounding::{Point, RoundedPath, Seg, round};
 use super::values::num;
 use crate::layout::geom::unit;
 use crate::ledger::consts::{WAVY_AMPLITUDE, WAVY_WAVELENGTH};
+use crate::math;
 use std::f64::consts::TAU;
 use std::fmt::Write;
 
@@ -48,8 +49,9 @@ pub fn wavy_d(pts: &[Point], targets: &[f64]) -> Option<String> {
         let (p, t) = line.at(s);
         let (env, denv) = envelope(s, total, taper);
         let phase = k * s;
-        let offset = env * WAVY_AMPLITUDE * phase.sin();
-        let d_offset = denv * WAVY_AMPLITUDE * phase.sin() + env * WAVY_AMPLITUDE * k * phase.cos();
+        let offset = env * WAVY_AMPLITUDE * math::sin(phase);
+        let d_offset =
+            denv * WAVY_AMPLITUDE * math::sin(phase) + env * WAVY_AMPLITUDE * k * math::cos(phase);
         let normal = (-t.1, t.0);
         let w = (p.0 + normal.0 * offset, p.1 + normal.1 * offset);
         let wt = unit((t.0 + normal.0 * d_offset, t.1 + normal.1 * d_offset)).unwrap_or(RIGHT);
@@ -150,7 +152,7 @@ impl Centerline {
 fn flatten_arc(from: Point, to: Point, center: Point, radius: f64, out: &mut Vec<Point>) {
     let v0 = (from.0 - center.0, from.1 - center.1);
     let v1 = (to.0 - center.0, to.1 - center.1);
-    let angle = (v0.0 * v1.1 - v0.1 * v1.0).atan2(v0.0 * v1.0 + v0.1 * v1.1);
+    let angle = math::atan2(v0.0 * v1.1 - v0.1 * v1.0, v0.0 * v1.0 + v0.1 * v1.1);
     let steps = ((radius * angle.abs() / FLATTEN_STEP).ceil() as usize).max(1);
     for i in 1..steps {
         let a = angle * i as f64 / steps as f64;

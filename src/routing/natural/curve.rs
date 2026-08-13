@@ -6,6 +6,7 @@
 //! straight, the offset pair as the classic horizontal-tangent S.
 
 use crate::ledger::consts::NATURAL_PULL;
+use crate::math;
 
 pub(crate) type Pt = (f64, f64);
 
@@ -21,7 +22,7 @@ pub(crate) const SAMPLES: usize = 24;
 use crate::layout::geom::{add, dot, scale as mul, sub, unit};
 
 fn len(a: Pt) -> f64 {
-    a.0.hypot(a.1)
+    math::hypot(a.0, a.1)
 }
 
 pub(crate) fn bezier(c: &[Pt; 4], t: f64) -> Pt {

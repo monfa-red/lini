@@ -5,6 +5,7 @@
 //! the `⌀`/`R`/`°` glyphs, and `N×` counts.
 
 use crate::error::Error;
+use crate::math;
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
@@ -167,7 +168,7 @@ pub fn auto(n: f64) -> String {
 /// carries out of it (9.99 at two digits is 10, not 10.0). Every reading that
 /// counts digits has to count them in the decade the printed number is in.
 fn rounded_exp(n: f64, sig: i32) -> i32 {
-    let exp = n.abs().log10().floor() as i32;
+    let exp = math::log10(n.abs()).floor() as i32;
     let round_to = 10f64.powi(sig - 1);
     let mant = n.abs() / 10f64.powi(exp);
     if (mant * round_to).round() / round_to >= 10.0 {

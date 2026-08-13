@@ -13,6 +13,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, attr_points, class_list, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
+use crate::math;
 use crate::resolve::{MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::fmt::Write;
 
@@ -219,7 +220,7 @@ fn emit_diamond(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) 
 fn emit_slant(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
     let skew_deg = n.attrs.number("skew").unwrap_or(0.0);
-    let shift = (skew_deg.to_radians()).tan() * h / 2.0;
+    let shift = math::tan(skew_deg.to_radians()) * h / 2.0;
     let pts = [
         (-w / 2.0 + shift, -h / 2.0),
         (w / 2.0 + shift, -h / 2.0),

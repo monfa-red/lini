@@ -17,6 +17,7 @@ use crate::ast::Side;
 use crate::error::{Code, Error};
 use crate::layout::geom::{cross, dot, scale, sub, unit};
 use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
+use crate::math;
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -71,7 +72,9 @@ pub(super) fn linear(
         };
         let span_dir = {
             let d = (pb.0 - pa.0, pb.1 - pa.1);
-            (d.0.hypot(d.1) > AXIS_EPS).then(|| unit(d)).flatten()
+            (math::hypot(d.0, d.1) > AXIS_EPS)
+                .then(|| unit(d))
+                .flatten()
         };
         let project = project_attr(&w.attrs, w.span)?;
         // The measure direction `u` — the dim line runs along it — and

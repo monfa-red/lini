@@ -12,6 +12,7 @@ mod layout;
 mod ledger;
 mod lexer;
 mod lint;
+mod math;
 mod palette;
 mod path_data;
 mod render;

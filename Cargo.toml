@@ -28,6 +28,7 @@ path = "src/lib.rs"
 
 [dependencies]
 clap = { version = "4.6", features = ["derive"] }
+libm = "0.2"
 ttf-parser = { version = "0.25", optional = true }
 
 [features]
@@ -49,8 +50,21 @@ lto = "thin"
 codegen-units = 1
 strip = "symbols"
 
-# `xtask` holds repo tooling (icon extraction, future font embedding). It is not
-# part of the published crate; default-members keeps `cargo build/test` on lini.
+# The browser build, used by `cargo xtask wasm`. Cargo reads profiles only from
+# the workspace root, so `crates/lini-wasm` cannot carry its own — and the
+# binary must not inherit these: `opt-level = "z"` trades the CLI's speed for
+# bytes, a bargain that is only ever right over the network.
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+panic = "abort"
+
+# `xtask` holds repo tooling (icon extraction, future font embedding);
+# `crates/lini-wasm` is the browser binding, built only for wasm32 by
+# `cargo xtask wasm`. Neither is part of the published crate; default-members
+# keeps `cargo build/test` on lini alone, so a host-target build never tries to
+# compile the cdylib.
 [workspace]
-members = ["xtask"]
+members = ["xtask", "crates/lini-wasm"]
 default-members = ["."]

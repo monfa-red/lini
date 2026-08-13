@@ -31,6 +31,7 @@ use super::super::ortho::scene::SceneIndex;
 use super::{EPS, Rule, Severity, Violation, breach, contact_ends, fan_pair, name};
 use crate::layout::geom::unit;
 use crate::layout::ir::RoutedLink;
+use crate::math;
 use crate::render::markers::marker_size;
 
 /// Spline overshoot slack for the directness judgment, px: a Catmull blend
@@ -53,7 +54,7 @@ pub(super) fn check(
 
 /// Segment length.
 fn seg_len(s: &[(f64, f64)]) -> f64 {
-    (s[1].0 - s[0].0).hypot(s[1].1 - s[0].1)
+    math::hypot(s[1].0 - s[0].0, s[1].1 - s[0].1)
 }
 
 /// Contact: the shared landing judgment, plus the natural stub law — each
@@ -165,7 +166,7 @@ fn directness(links: &[&RoutedLink], out: &mut Vec<Violation>) {
         if !faces(da) || !faces((-db.0, -db.1)) {
             continue;
         }
-        let l = chord.0.hypot(chord.1);
+        let l = math::hypot(chord.0, chord.1);
         if l <= EPS {
             continue;
         }
@@ -214,7 +215,7 @@ fn respect(
         // port-proximity excuse the engine dodges with.
         let n = w.path.len();
         let (pa, pb) = (w.path[0], w.path[n - 1]);
-        let stub = |a: (f64, f64), b: (f64, f64)| (a.0 - b.0).hypot(a.1 - b.1);
+        let stub = |a: (f64, f64), b: (f64, f64)| math::hypot(a.0 - b.0, a.1 - b.1);
         let keep = Keepouts::build(
             index,
             [

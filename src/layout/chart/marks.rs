@@ -12,6 +12,7 @@ use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::ledger::date;
 use crate::ledger::format;
+use crate::math;
 use crate::resolve::MarkerKind;
 use crate::resolve::ResolvedValue;
 
@@ -289,7 +290,7 @@ fn monotone_resample(pts: &[(f64, f64)]) -> Vec<(f64, f64)> {
             m[i + 1] = 0.0;
         } else {
             let (a, b) = (m[i] / s[i], m[i + 1] / s[i]);
-            let h = a.hypot(b);
+            let h = math::hypot(a, b);
             if h > 3.0 {
                 let t = 3.0 / h;
                 m[i] = t * a * s[i];

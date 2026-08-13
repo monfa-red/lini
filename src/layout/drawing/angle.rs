@@ -14,6 +14,7 @@ use crate::error::Error;
 use crate::layout::geom::rotate;
 use crate::layout::geom::unit;
 use crate::layout::geom::{cross, dot};
+use crate::math;
 use crate::resolve::ResolvedLink;
 
 pub(super) fn lower(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
@@ -88,7 +89,7 @@ fn arc_between(
         }
     };
     let ((u1, l1), (u2, l2)) = (leg(p1, d1), leg(p2, d2));
-    let theta = dot(u1, u2).clamp(-1.0, 1.0).acos().to_degrees();
+    let theta = math::acos(dot(u1, u2).clamp(-1.0, 1.0)).to_degrees();
     let r = l1.min(l2).clamp(14.0, 40.0);
 
     let start = (i.0 + u1.0 * r, i.1 + u1.1 * r);

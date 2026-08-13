@@ -15,6 +15,7 @@ use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, arc_tangent};
 use crate::layout::geom::dot;
 use crate::layout::geom::unit;
+use crate::math;
 use crate::resolve::ResolvedValue;
 
 /// Positional agreement finer than any drafting feature (px).
@@ -148,7 +149,7 @@ fn zero_if_degenerate(v: P) -> P {
 fn first_nonzero(pairs: &[(P, P)]) -> P {
     for (a, b) in pairs {
         let d = (a.0 - b.0, a.1 - b.1);
-        if d.0.hypot(d.1) > 1e-9 {
+        if math::hypot(d.0, d.1) > 1e-9 {
             return d;
         }
     }

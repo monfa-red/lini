@@ -16,6 +16,7 @@ use super::{Segment, breaks::ViewMap, outline};
 use crate::error::Error;
 use crate::layout::geom::dot;
 use crate::ledger::consts::{THREAD_DEPTH, THREAD_DEPTH_INTERNAL};
+use crate::math;
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
@@ -232,7 +233,7 @@ fn inside(p: P, subs: &[Subpath]) -> bool {
 
 fn parallel(a: P, b: P, axis: MirrorAxis) -> bool {
     let d = (b.0 - a.0, b.1 - a.1);
-    let len = d.0.hypot(d.1);
+    let len = math::hypot(d.0, d.1);
     if len < 1e-9 {
         return false;
     }

@@ -6,11 +6,13 @@
 //! and chroma — and baked to `#rrggbb` literals here. Targets are picked in-gamut, so
 //! the channel clamp is a backstop, not a normal path.
 
+use crate::math;
+
 /// An OKLCH colour (`l` 0..1, `c` chroma, `h` degrees) as a 6-digit hex string,
 /// no leading `#` — the form [`crate::resolve::ResolvedValue::Hex`] stores.
 pub fn oklch_to_hex(l: f64, c: f64, h_deg: f64) -> String {
     let h = h_deg.to_radians();
-    let (r, g, b) = oklab_to_srgb(l, c * h.cos(), c * h.sin());
+    let (r, g, b) = oklab_to_srgb(l, c * math::cos(h), c * math::sin(h));
     format!("{:02x}{:02x}{:02x}", encode(r), encode(g), encode(b))
 }
 
@@ -34,7 +36,7 @@ fn oklab_to_srgb(l: f64, a: f64, b: f64) -> (f64, f64, f64) {
 /// out-of-gamut channel), keeping `powf` off a negative base.
 fn gamma(x: f64) -> f64 {
     if x >= 0.003_130_8 {
-        1.055 * x.powf(1.0 / 2.4) - 0.055
+        1.055 * math::powf(x, 1.0 / 2.4) - 0.055
     } else {
         12.92 * x
     }

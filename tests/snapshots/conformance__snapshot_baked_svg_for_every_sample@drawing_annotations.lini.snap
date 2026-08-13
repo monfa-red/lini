@@ -433,8 +433,8 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-dim lini-poly" transform="translate(52.9038,2.5)">
         <polygon points="116.4,-94.8 108,-86 105.6,-89.2"/>
       </g>
-      <g class="lini-text lini-dim-text" transform="rotate(-36.8699 44.5038 -8.7)">
-        <use href="#lg1400-1653" transform="translate(34.2078 -4.404) scale(0.012 -0.012)"/>
+      <g class="lini-text lini-dim-text" transform="rotate(-36.8699 44.5037 -8.7)">
+        <use href="#lg1400-1653" transform="translate(34.2077 -4.404) scale(0.012 -0.012)"/>
         <use href="#lg1400-1652" transform="translate(39.3678 -4.404) scale(0.012 -0.012)"/>
         <use href="#lg1400-1652" transform="translate(47.0838 -4.404) scale(0.012 -0.012)"/>
       </g>

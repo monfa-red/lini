@@ -4,6 +4,7 @@
 
 use crate::ledger::date;
 use crate::ledger::format::{self, DateUnit, Format};
+use crate::math;
 
 /// A position scale along one axis.
 pub enum Scale {
@@ -88,11 +89,11 @@ impl Scale {
                 if *rev { 1.0 - f } else { f }
             }
             Scale::Log { min, max, rev, .. } => {
-                let span = max.log10() - min.log10();
+                let span = math::log10(*max) - math::log10(*min);
                 let f = if span.abs() < f64::EPSILON || v <= 0.0 {
                     0.0
                 } else {
-                    (v.log10() - min.log10()) / span
+                    (math::log10(v) - math::log10(*min)) / span
                 };
                 if *rev { 1.0 - f } else { f }
             }
@@ -150,7 +151,7 @@ pub fn nice_step(range: f64) -> f64 {
         return 1.0;
     }
     let raw = range / super::metrics::TICK_TARGET;
-    let mag = 10f64.powf(raw.log10().floor());
+    let mag = math::powf(10.0, math::log10(raw).floor());
     let norm = raw / mag;
     let unit = if norm <= 1.0 {
         1.0
@@ -203,8 +204,8 @@ fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
         return vec![min.max(1e-9), max.max(1.0)];
     }
     let mut out = Vec::new();
-    let lo = min.log10().floor() as i32;
-    let hi = max.log10().ceil() as i32;
+    let lo = math::log10(min).floor() as i32;
+    let hi = math::log10(max).ceil() as i32;
     for e in lo..=hi {
         let decade = 10f64.powi(e);
         for m in [1.0, 2.0, 5.0] {

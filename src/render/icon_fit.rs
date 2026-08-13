@@ -9,6 +9,7 @@
 //! `translate … rotate` transform (the only forms the set carries).
 
 use crate::icon::Role;
+use crate::math;
 use crate::path_data::extent_points;
 use crate::resolve::{AttrMap, ResolvedValue};
 
@@ -184,10 +185,10 @@ impl Affine {
     fn rotate(deg: f64) -> Self {
         let r = deg.to_radians();
         Self {
-            a: r.cos(),
-            b: r.sin(),
-            c: -r.sin(),
-            d: r.cos(),
+            a: math::cos(r),
+            b: math::sin(r),
+            c: -math::sin(r),
+            d: math::cos(r),
             e: 0.0,
             f: 0.0,
         }

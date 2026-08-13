@@ -12,6 +12,7 @@
 
 use super::curve::{self, Fitted, Pt};
 use crate::ledger::consts::DODGE_ROUNDS;
+use crate::math;
 use crate::routing::ortho::rect::{Rect, box_dist, rect_box, seg_box};
 use crate::routing::ortho::scene::SceneIndex;
 
@@ -85,10 +86,9 @@ impl Keepouts {
     /// its one body).
     fn excused(&self, r: Rect, w: &[Pt]) -> bool {
         let near = |p: Pt| {
-            self.ends
-                .iter()
-                .flatten()
-                .any(|(er, port, radius)| *er == r && (p.0 - port.0).hypot(p.1 - port.1) <= *radius)
+            self.ends.iter().flatten().any(|(er, port, radius)| {
+                *er == r && math::hypot(p.0 - port.0, p.1 - port.1) <= *radius
+            })
         };
         near(w[0]) || near(w[1])
     }
@@ -142,7 +142,7 @@ fn first_offender(curve: &[[Pt; 4]], keep: &Keepouts) -> Option<Rect> {
 fn vias_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [(Pt, Option<Pt>); 2] {
     let d = {
         let (dx, dy) = (chord.1.0 - chord.0.0, chord.1.1 - chord.0.1);
-        let l = dx.hypot(dy);
+        let l = math::hypot(dx, dy);
         if l <= 0.0 {
             (1.0, 0.0)
         } else {
@@ -174,7 +174,7 @@ fn vias_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [(Pt, Opt
             d.0 - p.0 * (d.0 * p.0 + d.1 * p.1),
             d.1 - p.1 * (d.0 * p.0 + d.1 * p.1),
         );
-        let l = fx.hypot(fy);
+        let l = math::hypot(fx, fy);
         if l <= 0.0 { d } else { (fx / l, fy / l) }
     };
     let out = margin * 2.0 * (1.0 + level as f64);

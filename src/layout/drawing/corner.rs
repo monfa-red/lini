@@ -13,6 +13,7 @@ use super::Segment;
 use super::geometry::{P, PathSeg, arc_center, arc_tangent, dist};
 use crate::error::Error;
 use crate::layout::geom::{add, cross, dot, rotate_rad, scale, sub, unit};
+use crate::math;
 use crate::span::Span;
 
 /// A pending corner modifier — parked between its two segments.
@@ -331,8 +332,8 @@ fn midpoint(a: P, b: P) -> P {
 /// How far a point has travelled along an arc from `from`, as a non-negative
 /// angle in the sweep direction (SVG sweep 1 = increasing angle, y-down).
 fn arc_progress(o: P, from: P, p: P, sweep: bool) -> f64 {
-    let a0 = (from.1 - o.1).atan2(from.0 - o.0);
-    let ap = (p.1 - o.1).atan2(p.0 - o.0);
+    let a0 = math::atan2(from.1 - o.1, from.0 - o.0);
+    let ap = math::atan2(p.1 - o.1, p.0 - o.0);
     let mut d = ap - a0;
     use std::f64::consts::TAU;
     if sweep {

@@ -5,6 +5,7 @@
 //! build their frames from here.
 
 use super::ir::Bbox;
+use crate::math;
 
 pub type P = (f64, f64);
 
@@ -44,7 +45,7 @@ const ZERO_LEN: f64 = 1e-12;
 /// case is answered once and each caller states its own fallback — a skip, a
 /// substitute direction — where the reader can see it.
 pub fn unit(a: P) -> Option<P> {
-    let l = a.0.hypot(a.1);
+    let l = math::hypot(a.0, a.1);
     (l > ZERO_LEN).then(|| (a.0 / l, a.1 / l))
 }
 

@@ -6,6 +6,8 @@
 //! turn at a time (a schematic part's re-laid symbol, [SPEC 16.1]). Both ride
 //! the one [`Scanner`]; rendering emits the raw `d` untouched.
 
+use crate::math;
+
 mod rotate;
 
 pub(crate) use rotate::{point, rotated};
@@ -206,7 +208,7 @@ fn arc(p0: P, a: &ArcSeg, out: &mut Vec<P>) {
         return; // degenerate — treated as a straight line, endpoints suffice
     }
     let phi = a.rot.to_radians();
-    let (cosp, sinp) = (phi.cos(), phi.sin());
+    let (cosp, sinp) = (math::cos(phi), math::sin(phi));
     let (dx, dy) = ((p0.0 - a.end.0) / 2.0, (p0.1 - a.end.1) / 2.0);
     let x1p = cosp * dx + sinp * dy;
     let y1p = -sinp * dx + cosp * dy;
@@ -227,7 +229,7 @@ fn arc(p0: P, a: &ArcSeg, out: &mut Vec<P>) {
     let angle = |ux: f64, uy: f64, vx: f64, vy: f64| {
         let dot = ux * vx + uy * vy;
         let len = ((ux * ux + uy * uy) * (vx * vx + vy * vy)).sqrt();
-        let mut t = (dot / len).clamp(-1.0, 1.0).acos();
+        let mut t = math::acos((dot / len).clamp(-1.0, 1.0));
         if ux * vy - uy * vx < 0.0 {
             t = -t;
         }
@@ -245,7 +247,7 @@ fn arc(p0: P, a: &ArcSeg, out: &mut Vec<P>) {
     let steps = 24;
     for i in 1..steps {
         let t = theta1 + dtheta * (i as f64) / (steps as f64);
-        let (ct, st) = (t.cos(), t.sin());
+        let (ct, st) = (math::cos(t), math::sin(t));
         out.push((
             cx + rx * ct * cosp - ry * st * sinp,
             cy + rx * ct * sinp + ry * st * cosp,

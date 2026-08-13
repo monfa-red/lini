@@ -18,6 +18,7 @@ use super::scene::SceneIndex;
 use crate::layout::as_pair;
 use crate::layout::ir::{Bbox, RoutedLink, RoutedText};
 use crate::layout::schematic::{clear_run, forced_side, net_offset, text_normal};
+use crate::math;
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -201,7 +202,7 @@ fn distribute_auto(texts: &[ResolvedText], lens: &[f64], total: f64) -> Vec<f64>
 /// sampled curve. One mechanism for every strategy.
 fn arc_len(poly: &[(f64, f64)]) -> f64 {
     poly.windows(2)
-        .map(|s| (s[1].0 - s[0].0).hypot(s[1].1 - s[0].1))
+        .map(|s| math::hypot(s[1].0 - s[0].0, s[1].1 - s[0].1))
         .sum()
 }
 
@@ -224,7 +225,7 @@ fn at_arc(
         let n = poly.len().saturating_sub(1);
         for (j, seg) in poly.windows(2).enumerate() {
             let (dx, dy) = (seg[1].0 - seg[0].0, seg[1].1 - seg[0].1);
-            let l = dx.hypot(dy);
+            let l = math::hypot(dx, dy);
             if l <= 0.0 {
                 continue;
             }

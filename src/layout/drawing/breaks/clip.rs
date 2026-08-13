@@ -1,6 +1,7 @@
 //! The clip-region construction [SPEC 15.3]: remove the cut band from the folded subpaths, splitting each segment at the station lines and stitching the kept pieces into open runs.
 
 use super::*;
+use crate::math;
 
 const EPS: f64 = 1e-6;
 /// A clip's yield: the kept subpaths and the cut-point cross-coordinates at
@@ -180,7 +181,7 @@ fn split_seg(seg: PathSeg, vertical: bool, a: f64, b: f64) -> Vec<PathSeg> {
                     } else {
                         (station, c.1 + other)
                     };
-                    let aq = (p.1 - c.1).atan2(p.0 - c.0);
+                    let aq = math::atan2(p.1 - c.1, p.0 - c.0);
                     let along = ((aq - a0) * dir).rem_euclid(std::f64::consts::TAU);
                     if along > EPS && along < travel - EPS {
                         hits.push(along);
@@ -219,12 +220,12 @@ fn split_seg(seg: PathSeg, vertical: bool, a: f64, b: f64) -> Vec<PathSeg> {
 
 /// The arc's start angle and swept magnitude (radians, positive) about `c`.
 fn arc_travel(from: P, to: P, c: P, sweep: bool) -> (f64, f64) {
-    let a0 = (from.1 - c.1).atan2(from.0 - c.0);
-    let a1 = (to.1 - c.1).atan2(to.0 - c.0);
+    let a0 = math::atan2(from.1 - c.1, from.0 - c.0);
+    let a1 = math::atan2(to.1 - c.1, to.0 - c.0);
     let dir = if sweep { 1.0 } else { -1.0 };
     (a0, ((a1 - a0) * dir).rem_euclid(std::f64::consts::TAU))
 }
 
 fn arc_point(c: P, r: f64, angle: f64) -> P {
-    (c.0 + r * angle.cos(), c.1 + r * angle.sin())
+    (c.0 + r * math::cos(angle), c.1 + r * math::sin(angle))
 }

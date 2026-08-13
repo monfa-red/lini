@@ -13,6 +13,7 @@
 //! there is no second lexer — the parser below is a Pratt parser over that one stream.
 
 use crate::lexer::{self, TokKind, Token};
+use crate::math;
 use std::collections::HashMap;
 
 /// A folded expression value [SPEC 10.7]: a number, or a point for geometry.
@@ -505,12 +506,12 @@ fn eval_math(name: &str, args: &[Value], arity: Arity) -> Result<Value, ExprErro
             check_arity(name, args, 1)?;
             let x = n(0)?;
             Ok(Value::Number(match name {
-                "sin" => x.sin(),
-                "cos" => x.cos(),
-                "tan" => x.tan(),
-                "exp" => x.exp(),
-                "ln" => x.ln(),
-                "log" => x.log10(),
+                "sin" => math::sin(x),
+                "cos" => math::cos(x),
+                "tan" => math::tan(x),
+                "exp" => math::exp(x),
+                "ln" => math::ln(x),
+                "log" => math::log10(x),
                 "sqrt" => x.sqrt(),
                 "abs" => x.abs(),
                 "floor" => x.floor(),
@@ -520,7 +521,7 @@ fn eval_math(name: &str, args: &[Value], arity: Arity) -> Result<Value, ExprErro
         }
         Arity::Two => {
             check_arity(name, args, 2)?;
-            Ok(Value::Number(n(0)?.powf(n(1)?)))
+            Ok(Value::Number(math::powf(n(0)?, n(1)?)))
         }
         Arity::Three => {
             check_arity(name, args, 3)?;
@@ -568,7 +569,7 @@ fn apply_binop(op: BinOp, x: f64, y: f64) -> f64 {
         BinOp::Sub => x - y,
         BinOp::Mul => x * y,
         BinOp::Div => x / y,
-        BinOp::Pow => x.powf(y),
+        BinOp::Pow => math::powf(x, y),
         BinOp::Eq => b(x == y),
         BinOp::Ne => b(x != y),
         BinOp::Lt => b(x < y),
