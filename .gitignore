@@ -7,3 +7,7 @@
 
 # insta run logs — a test-run artifact, never source
 *.pending-snap
+
+# The browser artifact — built by `cargo xtask wasm`, published from CI.
+# Generated from src/, so committing it would be a second copy to drift.
+/crates/lini-wasm/pkg

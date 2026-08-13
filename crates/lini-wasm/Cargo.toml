@@ -1,0 +1,20 @@
+[package]
+name = "lini-wasm"
+version = "1.0.0-beta.2"
+edition = "2024"
+rust-version = "1.88"
+description = "Lini's compiler as a WebAssembly module — the same engine as the binary, in a browser."
+license = "MIT"
+repository = "https://github.com/monfa-red/lini"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+# The browser needs neither font family: the default SVG output names its fonts
+# rather than embedding them, so the host page supplies them with `@font-face`.
+# `--static`/`--embed-font` are export concerns and stay in the binary — dropping
+# the feature here saves ~120 KB brotli for no loss of preview fidelity.
+[dependencies]
+lini = { path = "../..", default-features = false, features = ["icons"] }
+wasm-bindgen = "0.2"

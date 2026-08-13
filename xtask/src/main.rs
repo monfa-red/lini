@@ -11,8 +11,11 @@
 //!                         `tests/schema.rs`).
 //!   gen-grammars          Regenerate the VS Code + Zed editor grammars from the
 //!                         same ledger (guarded byte-identical by `tests/grammar.rs`).
+//!   wasm                  Build the browser artifact into `crates/lini-wasm/pkg/`
+//!                         (guarded byte-identical to the binary by `tests/wasm.rs`).
 
 mod fonts;
+mod wasm;
 
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
@@ -29,9 +32,10 @@ fn main() -> ExitCode {
         Some("extract-fonts") => fonts::extract_fonts(),
         Some("gen-schema") => gen_schema(),
         Some("gen-grammars") => gen_grammars(),
-        _ => {
-            usage("<command>   (commands: extract-icons, extract-fonts, gen-schema, gen-grammars)")
-        }
+        Some("wasm") => wasm::build(),
+        _ => usage(
+            "<command>   (commands: extract-icons, extract-fonts, gen-schema, gen-grammars, wasm)",
+        ),
     }
 }
 

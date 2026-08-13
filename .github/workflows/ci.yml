@@ -25,3 +25,27 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo build --verbose
       - run: cargo test --verbose
+
+  # The browser artifact must compile every sample to the same bytes the binary
+  # does (`tests/wasm.rs`). Its own job: it needs a wasm target, node, and two
+  # tools the main suite has no use for. `LINI_WASM_REQUIRED=1` turns the test's
+  # local skip into a failure, so a broken toolchain here reports as a broken
+  # toolchain rather than as a green run that checked nothing.
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # The CLI must match the `wasm-bindgen` crate exactly; `cargo xtask wasm`
+      # checks that and says so, but installing the pinned version is cheaper
+      # than debugging the mismatch.
+      - run: cargo install wasm-bindgen-cli --version 0.2.127 --locked
+      - run: sudo apt-get update && sudo apt-get install -y binaryen
+      - run: cargo xtask wasm
+      - run: LINI_WASM_REQUIRED=1 cargo test --test wasm -- --nocapture
