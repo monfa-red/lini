@@ -2,7 +2,9 @@
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/logo/lini.svg" alt="Lini" width="256">
 </p>
 
-<p align="center"><strong>Pretty diagrams from plain text, with fine-grained control.</strong></p>
+<p align="center"><strong>From a mindmap to a blueprint.</strong></p>
+
+<p align="center">One small language for every kind of figure — pretty by default, precise when it has to be.</p>
 
 <p align="center">
   <a href="https://crates.io/crates/lini"><img src="https://img.shields.io/crates/v/lini.svg" alt="crates.io"></a>
@@ -15,7 +17,7 @@
 cat -> dog -> bird
 ```
 
-One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes; Lini routes the links.
+One line is a complete figure: three boxes, two arrows, sensible spacing. You place the boxes; Lini routes the links.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.svg" alt="A colourful service map rendered by Lini" width="440">
@@ -23,19 +25,21 @@ One line is a complete diagram: three boxes, two arrows, sensible spacing. You p
 
 <p align="center"><em>Thirty-odd lines of Lini — <a href="https://github.com/monfa-red/lini/blob/main/samples/hero.lini"><code>samples/hero.lini</code></a>.</em></p>
 
+<p align="center"><sub>flowcharts · mindmaps · charts · sequences · ER schemas · engineering drawings · circuit schematics</sub></p>
+
 ---
 
 ## Why Lini
 
-Lini draws the connectors and leaves the layout to you. Arrange nodes in rows, grids, or by anchor; name any two and it routes a clean orthogonal path between them, clear of everything in the way.
+A compiler: plain text in, clean themeable SVG out. You decide where things go, and the parts you'd rather not do by hand — routing a wire through the gaps, measuring a dimension, picking a palette — are done for you.
 
-- **You place, Lini connects.** Routing is automatic, orthogonal, and rounded, with a clearance it won't cross — force a side to steer one.
+- **You place, Lini routes.** Arrange nodes in rows, grids, or by anchor; name any two and it finds an orthogonal path between them, clear of everything in the way, keeping a clearance it won't cross — force a side to steer one.
+- **One language, every kind of figure.** Charts, sequences, trees, mindmaps, ER schemas, engineering drawings, and schematics are layouts over the same nodes and links. The same grammar draws all of them, so theming, baking, and diffing work identically in each.
 - **The look is yours.** Sizes, anchors, strokes, shadows, rotation, gradients, and raw SVG paths render exactly as set, never filtered through a theme.
-- **Every diagram family, one core.** Charts, sequences, trees, mindmaps, and engineering drawings are layouts over the same nodes and links — so theming, baking, and diffing work identically in all of them.
-- **Measured, not drawn.** In a drawing, every dimension's value is read from the geometry: change the model and the numbers stay true.
-- **Small, and quick to learn.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a diagram. `(…)` adds compile-time math, baked to literals.
-- **One fast binary.** 3.7 MB, no Node or browser, a typical diagram in ~2 ms — byte-identically each run, so SVGs diff cleanly in CI.
-- **Good colour for free.** Eleven OKLCH-tuned hues in five tiers, gradients at a flattering angle, automatic dark mode — no hex to pick.
+- **Measured, not drawn.** In a drawing, a dimension reads its value from the geometry: change the model and the numbers stay true.
+- **A small language.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a figure. `(…)` adds compile-time math, baked to literals.
+- **One binary.** 3.7 MB, no Node or browser, a typical figure in ~2 ms — byte-identical each run, so SVGs diff cleanly in CI.
+- **Eleven tuned hues, and dark mode.** OKLCH ramps in five job-named tiers, gradients at a flattering angle, and one SVG that follows the viewer's OS.
 
 ---
 
