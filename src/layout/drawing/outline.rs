@@ -40,8 +40,8 @@ pub(super) fn raycast(node: &PlacedNode, o: P, d: P) -> Option<f64> {
 /// path [`raycast`] takes its first hit from, so the two never disagree on
 /// what the outline is. Node-local; the caller transforms.
 pub(super) fn crossings(node: &PlacedNode, o: P, d: P, out: &mut Vec<Hit>) {
-    // A pattern carrier draws nothing itself — its copies are the path.
-    if node.attrs.get("pattern").is_some() {
+    // A replication carrier draws nothing itself — its copies are the path.
+    if crate::layout::pattern::replicas(node).is_some() {
         for c in node
             .children
             .iter()

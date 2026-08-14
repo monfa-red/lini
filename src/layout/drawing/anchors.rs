@@ -17,8 +17,7 @@ use crate::ast::Side;
 use crate::error::Error;
 use crate::layout::geom::dot;
 use crate::layout::geom::rotate;
-use crate::resolve::pattern::Pattern;
-use crate::resolve::{ResolvedEndpoint, ResolvedValue};
+use crate::resolve::ResolvedEndpoint;
 
 /// Where an endpoint's anchor sits on its node — resolved against the node's
 /// vocabulary, not yet reduced to a point.
@@ -126,7 +125,7 @@ pub(super) fn resolve<'a>(
         // a copy is picked by its numeric index (`ep.copy`, below), never by
         // id, so the walk won't descend into them; that is also the only
         // placed divergence from the source tree the path resolved against.
-        let more = (node.attrs.get("pattern").is_none())
+        let more = (crate::layout::pattern::replicas(node).is_none())
             .then(|| descend(&node.children, seg))
             .flatten()
             .ok_or_else(|| {
@@ -149,7 +148,7 @@ pub(super) fn resolve<'a>(
     // exactly the order `pattern::expand` placed them. The hop rides `step`,
     // so a broken ancestor's view still unwinds to the model position.
     if let Some(k) = ep.copy {
-        if node.attrs.get("pattern").is_none() {
+        if crate::layout::pattern::replicas(node).is_none() {
             return Err(Error::at(
                 ep.span,
                 format!("'{last}' has no 'pattern:' — a numeric segment picks a pattern copy"),
@@ -242,7 +241,7 @@ impl Anchor<'_> {
     /// `pattern:` carrier, **one copy** (the seed's shape at the datum; a
     /// radial ring reads the same shape about its centre) [SPEC 15.2].
     pub fn feature(&self) -> &PlacedNode {
-        if self.node.attrs.get("pattern").is_some()
+        if crate::layout::pattern::replicas(self.node).is_some()
             && let Some(copy) = self
                 .node
                 .children
@@ -425,15 +424,10 @@ impl Anchor<'_> {
         self.node.sketch.as_ref().is_some_and(|s| s.revolved)
     }
 
-    /// The anchored node's `pattern:` copy count — the dimension text's `N×`
-    /// prefix [SPEC 15.4].
-    pub fn pattern_count(&self) -> Option<usize> {
-        let ResolvedValue::Call(call) = self.node.attrs.get("pattern")? else {
-            return None;
-        };
-        // The call was read at resolve and again at expansion — a malformed
-        // one never reaches a dimension.
-        Some(Pattern::read(call, self.node.span).ok()?.count())
+    /// The anchored node's copy count — the dimension text's `N×` prefix
+    /// [SPEC 15.6], off whichever replication made the copies.
+    pub fn replica_count(&self) -> Option<usize> {
+        crate::layout::pattern::replicas(self.node)
     }
 
     /// Node-local → drawing frame.

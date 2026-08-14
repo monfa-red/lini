@@ -34,7 +34,7 @@ pub(super) fn lower(
     let ep = &w.endpoints[0];
     let a = anchors::resolve(ctx.kids, ctx.scope, ep, "dimension")?;
     let follows = w.texts.first();
-    let count = a.pattern_count();
+    let count = a.replica_count();
     let no_axis = || {
         let who = super::rel_path(&ep.path, ctx.scope);
         Error::at(

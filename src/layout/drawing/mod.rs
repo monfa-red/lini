@@ -299,9 +299,9 @@ fn ride_view(node: &mut super::PlacedNode, v: &breaks::ViewMap, base_model: P, b
         c.cy = d.1 - base_disp.1;
         ride_view(c, v, m, d);
     }
-    // A pattern carrier's bbox is its copies' union (`pattern::expand`) —
+    // A replication carrier's bbox is its copies' union (`pattern::expand`) —
     // re-union it around the ridden positions.
-    if node.attrs.get("pattern").is_some() {
+    if super::pattern::replicas(node).is_some() {
         node.bbox = super::pattern::carrier_bbox(&node.children);
     }
 }

@@ -193,9 +193,9 @@ fn node_crossings(node: &PlacedNode, o: P, d: P, out: &mut Vec<(f64, P, f64, boo
         hits.into_iter()
             .map(|h| (h.t, rotate(h.tangent, node.rotation), sw, h.graze)),
     );
-    // A pattern carrier's copies were its own path above; anything else walks
-    // its children — a part's holes, a shaft's hidden bore.
-    if node.attrs.get("pattern").is_none() {
+    // A replication carrier's copies were its own path above; anything else
+    // walks its children — a part's holes, a shaft's hidden bore.
+    if crate::layout::pattern::replicas(node).is_none() {
         for c in &node.children {
             let mut sub = Vec::new();
             node_crossings(c, local_o, local_d, &mut sub);

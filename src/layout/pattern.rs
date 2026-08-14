@@ -18,10 +18,27 @@ use crate::error::Error;
 use crate::resolve::ResolvedValue;
 use crate::resolve::pattern::Pattern;
 
+/// The **replication carrier** mark [SPEC 15.4]: the copy count, written onto
+/// a node whose children *are* its copies. Read through [`replicas`] alone —
+/// the attr name is this module's business.
+const MARK: &str = "replicas";
+
+/// Whether a placed node is a replication carrier, and by how many copies
+/// [SPEC 15.4/15.6]: a carrier **draws nothing itself** — its copies are the
+/// geometry every outline, halo, anchor and bbox pass reads — and the count is
+/// the `N×` prefix a dimension composes. `None` for an ordinary node.
+///
+/// One home, because six passes ask the question and a second producer of
+/// copies (a `mirror:` reflecting a feature, [SPEC 15.3]) must answer it the
+/// same way rather than teach each pass a second spelling.
+pub(crate) fn replicas(node: &PlacedNode) -> Option<usize> {
+    Some(node.attrs.number(MARK)? as usize)
+}
+
 /// Expand a placed node's `pattern:` in place. `scale` is the node's **own**
 /// effective `scale:` — pattern offsets are part of its shape [SPEC 15.1]. The
-/// `pattern` attr stays on the carrier (the dimension text's `2×` count prefix
-/// reads it later); expansion runs once, from `layout_inst`.
+/// carrier keeps the authored `pattern` attr and gains the [`MARK`] count;
+/// expansion runs once, from `layout_inst`.
 pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     let Some(ResolvedValue::Call(call)) = placed.attrs.get("pattern").cloned() else {
         return Ok(());
@@ -83,6 +100,9 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     placed.children = copies;
     placed.bbox = bbox;
     placed.markers = Default::default();
+    placed
+        .attrs
+        .insert(MARK, ResolvedValue::Number(pattern.count() as f64));
     placed
         .attrs
         .insert("fill", ResolvedValue::Ident("none".into()));
