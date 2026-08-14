@@ -12,7 +12,12 @@
 //! punches and centre-marks per copy with no special case. A `chrome: ring`
 //! child (the radial pattern's generated `|pitch-circle|`, [SPEC 15.7]) is
 //! hoisted out of the body first — one ring through the copies, not one per.
+//!
+//! [`carry`] is that rewrite, and it is the **only** one: `mirror:`'s reflected
+//! features ([`crate::layout::mirror`]) are the same carrier from the same
+//! builder, their placements simply carrying a reflection each.
 
+use super::drawing::geometry::{MirrorAxis, P};
 use super::ir::{Bbox, PlacedNode};
 use crate::error::Error;
 use crate::resolve::ResolvedValue;
@@ -35,6 +40,15 @@ pub(crate) fn replicas(node: &PlacedNode) -> Option<usize> {
     Some(node.attrs.number(MARK)? as usize)
 }
 
+/// Where one copy of a replication sits, and what its body takes on the way
+/// there: the offset from the carrier's own position, plus the reflections its
+/// content is turned by — none for a `pattern:` copy, one per `mirror:` item
+/// for a reflected one [SPEC 15.3/15.4].
+pub(super) struct Placement {
+    pub at: P,
+    pub reflect: Vec<MirrorAxis>,
+}
+
 /// Expand a placed node's `pattern:` in place. `scale` is the node's **own**
 /// effective `scale:` — pattern offsets are part of its shape [SPEC 15.1]. The
 /// carrier keeps the authored `pattern` attr and gains the [`MARK`] count;
@@ -44,7 +58,13 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         return Ok(());
     };
     let pattern = Pattern::read(&call, placed.span)?;
-    let offsets = offsets(pattern, scale);
+    let places: Vec<Placement> = offsets(pattern, scale)
+        .into_iter()
+        .map(|at| Placement {
+            at,
+            reflect: Vec::new(),
+        })
+        .collect();
 
     // The ring chrome stays at pattern level; everything else rides per copy.
     let (mut ring, rest): (Vec<PlacedNode>, Vec<PlacedNode>) = placed.children.drain(..).partition(
@@ -59,12 +79,22 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
             pc.bbox = Bbox::centered(2.0 * r * scale + sw, 2.0 * r * scale + sw);
         }
     }
+    placed.children = rest;
+    carry(placed, &places, ring);
+    Ok(())
+}
 
+/// Rewrite `placed` into a replication carrier holding one copy per placement
+/// [SPEC 15.4] — the one copy loop, whichever property produced the
+/// placements. `level` rides at carrier level rather than per copy (a radial
+/// pattern's hoisted `|pitch-circle|`: one ring through the copies, not one
+/// per). The carrier keeps its identity and position and paints nothing; the
+/// copies are the geometry every later pass reads through [`replicas`].
+pub(super) fn carry(placed: &mut PlacedNode, places: &[Placement], level: Vec<PlacedNode>) {
     // The drawn body: the node's own shape and paint, its features, its name —
     // everything except identity and position, which the carrier keeps.
     let mut body = PlacedNode {
         id: None,
-        children: rest,
         ..placed.clone()
     };
     body.attrs.remove("translate");
@@ -76,10 +106,10 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     body.attrs.remove("pattern");
     body.rotation = 0.0;
 
-    let mut copies = Vec::with_capacity(offsets.len() + ring.len());
-    copies.extend(ring);
-    for (i, &(dx, dy)) in offsets.iter().enumerate() {
-        let mut copy = if i + 1 == offsets.len() {
+    let mut copies = Vec::with_capacity(places.len() + level.len());
+    copies.extend(level);
+    for (i, place) in places.iter().enumerate() {
+        let mut copy = if i + 1 == places.len() {
             std::mem::replace(
                 &mut body,
                 PlacedNode {
@@ -89,8 +119,14 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         } else {
             body.clone()
         };
-        copy.cx = dx;
-        copy.cy = dy;
+        copy.cx = place.at.0;
+        copy.cy = place.at.1;
+        // A reflected copy is a copy whose coordinates are reflected — never a
+        // node wearing a flip [SPEC 15.3], so its labels read forward and its
+        // anchors stay handedness-free.
+        for axis in &place.reflect {
+            super::mirror::reflect_content(&mut copy, axis.dir());
+        }
         copies.push(copy);
     }
     let bbox = carrier_bbox(&copies);
@@ -102,7 +138,7 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     placed.markers = Default::default();
     placed
         .attrs
-        .insert(MARK, ResolvedValue::Number(pattern.count() as f64));
+        .insert(MARK, ResolvedValue::Number(places.len() as f64));
     placed
         .attrs
         .insert("fill", ResolvedValue::Ident("none".into()));
@@ -114,7 +150,6 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         .insert("stroke-width", ResolvedValue::Number(0.0));
     placed.attrs.remove("path");
     placed.attrs.remove("points");
-    Ok(())
 }
 
 /// A pattern carrier's bbox — the union of its **copies**, each shifted to

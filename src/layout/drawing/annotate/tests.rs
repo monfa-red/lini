@@ -414,7 +414,25 @@ fn copy_index_errors_carry_the_count() {
         layout_err(
             "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 } [\n  |hole#d| { width: 6 }\n]\nplate:left (-) plate.d.2\n"
         ),
-        "'d' has no 'pattern:' — a numeric segment picks a pattern copy"
+        "'d' has no copies — a numeric segment picks a replication copy"
+    );
+}
+
+#[test]
+fn a_mirror_copy_is_addressed_and_counted_like_a_pattern_copy() {
+    // A wall half-drawn about the y-axis, its drain 28.5 off it: the
+    // reflection is a replication carrier [SPEC 15.3/15.4] — copy 2 is the
+    // reflected one, and the bare reading takes the `2×` prefix.
+    let wall = "{ layout: drawing; density: 1 }\n|sketch#wall| { draw: move(-40, -8) right(23) down(16) left(23) close(); mirror: y-axis } [\n  |hole#drain| { width: 4; translate: -28.5 0 }\n]\n";
+    let l = laid(&format!(
+        "{wall}wall:left (-) wall.drain.2 {{ side: bottom }}\n"
+    ));
+    text_at(&l.nodes, "68.5");
+    let l = laid(&format!("{wall}wall.drain (o)\n"));
+    text_at(&l.nodes, "2× ⌀4");
+    assert_eq!(
+        layout_err(&format!("{wall}wall:left (-) wall.drain.3\n")),
+        "no copy 'drain.3' — the pattern places 2"
     );
 }
 

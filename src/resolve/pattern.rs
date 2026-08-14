@@ -66,14 +66,6 @@ impl Pattern {
         }
     }
 
-    /// The copy count — the dimension text's `N×` prefix [SPEC 15.6].
-    pub fn count(self) -> usize {
-        match self {
-            Pattern::Grid { cols, rows, .. } => cols * rows,
-            Pattern::Radial { count, .. } => count,
-        }
-    }
-
     /// A bolt circle's radius — what the generated `|pitch-circle|` is sized
     /// to [SPEC 15.7]; `None` for a grid, which draws no ring.
     pub fn ring_radius(self) -> Option<f64> {
@@ -170,9 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn the_count_and_the_ring_come_off_the_form() {
-        assert_eq!(read("grid", &[2.0, 3.0, 1.0, 1.0]).unwrap().count(), 6);
-        assert_eq!(read("radial", &[6.0, 28.0]).unwrap().count(), 6);
+    fn the_ring_comes_off_the_form() {
         assert_eq!(
             read("radial", &[6.0, 28.0]).unwrap().ring_radius(),
             Some(28.0)

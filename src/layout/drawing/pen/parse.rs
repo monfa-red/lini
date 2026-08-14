@@ -28,8 +28,29 @@ fn is_builtin_point(name: &str) -> bool {
     )
 }
 
-/// `mirror:` items → axes: `x-axis` (bearing 90), `y-axis` (0), or a bearing.
-pub(super) fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAxis>, Error> {
+/// How a node reads `mirror:` [SPEC 15.3] — the one reading, shared by the pen
+/// (which folds the node's own path about the axes) and the feature reflection
+/// (which asks whether a child declines).
+pub(crate) enum Mirror {
+    /// `auto`, the default — reflect iff an ancestor does.
+    Auto,
+    /// `none` — no reflection touches this node, its own axes and its
+    /// ancestors' alike.
+    None,
+    /// The axes it reflects about, applied left to right.
+    Axes(Vec<MirrorAxis>),
+}
+
+/// `mirror:` → its reading: `none` / `auto`, else the axis items — `x-axis`
+/// (bearing 90), `y-axis` (0), or a bearing.
+pub(crate) fn read_mirror(v: &ResolvedValue, span: Span) -> Result<Mirror, Error> {
+    if let ResolvedValue::Ident(s) = v {
+        match s.as_str() {
+            "none" => return Ok(Mirror::None),
+            "auto" => return Ok(Mirror::Auto),
+            _ => {}
+        }
+    }
     let one = |item: &ResolvedValue| -> Result<MirrorAxis, Error> {
         match item {
             ResolvedValue::Ident(s) if s == "x-axis" => Ok(MirrorAxis { bearing: 90.0 }),
@@ -37,7 +58,7 @@ pub(super) fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAx
             ResolvedValue::Number(b) => Ok(MirrorAxis { bearing: *b }),
             _ => Err(Error::at(
                 span,
-                "'mirror' takes x-axis, y-axis, or a bearing",
+                "'mirror' takes x-axis, y-axis, a bearing, or none",
             )),
         }
     };
@@ -48,8 +69,12 @@ pub(super) fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAx
             span,
             "'mirror' is one space-separated run of reflections — 'mirror: x-axis 45'",
         )),
-        ResolvedValue::Tuple(items) => items.iter().map(one).collect(),
-        item => Ok(vec![one(item)?]),
+        ResolvedValue::Tuple(items) => items
+            .iter()
+            .map(one)
+            .collect::<Result<_, _>>()
+            .map(Mirror::Axes),
+        item => Ok(Mirror::Axes(vec![one(item)?])),
     }
 }
 

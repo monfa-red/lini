@@ -1708,6 +1708,24 @@
       "example": "|drawing| [\n  |rect#p| { width: 80; height: 40; } [\n    |hole#b| { width: 8; translate: -20 0; pattern: grid(2, 1, 40, 0); }\n  ]\n]"
     },
     {
+      "name": "mirror",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|sketch| { draw: move(-30, 0) up(8) right(30); mirror: x-axis; }"
+    },
+    {
       "name": "href",
       "owners": [
         {
@@ -2033,25 +2051,6 @@
       "deferred": false,
       "dualChannel": false,
       "example": "|sketch| { draw: move(0, 0) right(40) down(20) close(); }"
-    },
-    {
-      "name": "mirror",
-      "owners": [
-        {
-          "kind": "type",
-          "name": "sketch"
-        }
-      ],
-      "shape": "one",
-      "kind": "any",
-      "default": "none",
-      "inherit": "no",
-      "gate": "lenient",
-      "text": false,
-      "baked": false,
-      "deferred": false,
-      "dualChannel": false,
-      "example": "|sketch| { draw: move(-30, 0) up(8) right(30); mirror: x-axis; }"
     },
     {
       "name": "revolve",

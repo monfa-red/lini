@@ -136,6 +136,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `layer` | universal | `one:number` | `engine` | — | text |
 | `scale` | universal, \|axis\| | `one:any` | `bundles` | engine | — |
 | `pattern` | universal | `pattern` | `none` | — | — |
+| `mirror` | universal | `one:any` | `none` | — | — |
 | `href` | universal, link | `one:string` | `none` | — | — |
 | `hint` | universal | `one:string` | `none` | — | — |
 | `points` | \|line\|, \|poly\| | `list:number` | `none` | — | — |
@@ -150,7 +151,6 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `marker-start` | \|line\|, \|mark\|, series (role), link | `one:marker` | `engine` | — | — |
 | `marker-end` | \|line\|, \|mark\|, series (role), link | `one:marker` | `engine` | — | — |
 | `draw` | \|sketch\| | `pen` | `none` | — | — |
-| `mirror` | \|sketch\| | `one:any` | `none` | — | — |
 | `revolve` | \|sketch\| | `one:ident` | `none` | — | — |
 | `thread` | \|sketch\|, \|hole\| | `list:any` | `none` | — | — |
 | `sheet` | \|page\| | `one:any` | `engine` | — | — |

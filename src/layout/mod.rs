@@ -7,6 +7,7 @@ mod frame;
 pub(crate) mod geom;
 mod grid;
 pub(crate) mod ir;
+mod mirror;
 mod note;
 mod page;
 mod pattern;
@@ -380,6 +381,21 @@ fn layout_inst(
             "'break' cuts a '|sketch|' — draw the profile with the pen",
         ));
     }
+    // `mirror:` reflects what a node holds [SPEC 15.3] — but a raw `d` has no
+    // parse/emit round-trip here and a raster no reflection at all, so both
+    // read `none` and saying otherwise is an error, never a silent no-op.
+    if inst.attrs.get("mirror").is_some()
+        && let Some(ty) = match inst.kind {
+            NodeKind::Path => Some("path"),
+            NodeKind::Image => Some("image"),
+            _ => None,
+        }
+    {
+        return Err(Error::at(
+            inst.span,
+            format!("'|{ty}|' has no reflection — draw it with the pen"),
+        ));
+    }
     // `thread:` dresses a sketch segment (side view) or a round feature's
     // circle (the ¾ arc) [SPEC 15.3/15.4]; the pitch-only round form takes
     // one positive number.
@@ -433,6 +449,7 @@ fn layout_inst(
         None
     };
     if let Some(mut placed) = engine {
+        mirror::expand(&mut placed)?;
         if placed.attrs.get("pattern").is_some() {
             let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
             pattern::expand(&mut placed, own)?;
@@ -622,6 +639,10 @@ fn layout_inst(
     if placed.kind == NodeKind::Block && placed.type_chain.iter().any(|t| t == "note") {
         note::fold(&mut placed);
     }
+    // `mirror:` reflects the node's **features** [SPEC 15.3] — the pen folded
+    // its drawn path already; here its children take the same split, read on
+    // their position. Before `pattern:`, as the lowering order states.
+    mirror::expand(&mut placed)?;
     // `pattern:` replicates the node about its own position [SPEC 15.4] — any
     // layout; the offsets are shape, so they carry the node's own scale.
     if placed.attrs.get("pattern").is_some() {

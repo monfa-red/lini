@@ -6,7 +6,7 @@ use super::*;
 /// (model, displayed) with identity slope outside and linear interpolation
 /// between — the removed span squashes into the gap, so the map stays
 /// monotone and invertible.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ViewMap {
     pub(super) x: Vec<(f64, f64)>,
     pub(super) y: Vec<(f64, f64)>,

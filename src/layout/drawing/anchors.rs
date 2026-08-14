@@ -132,7 +132,7 @@ pub(super) fn resolve<'a>(
                 Error::at(
                     ep.span,
                     format!(
-                        "'{rel}' sits inside a 'pattern:' — a copy is addressed by its index (SPEC 15.4)"
+                        "'{rel}' sits inside a replication — a copy is addressed by its index (SPEC 15.4)"
                     ),
                 )
             })?;
@@ -151,7 +151,7 @@ pub(super) fn resolve<'a>(
         if crate::layout::pattern::replicas(node).is_none() {
             return Err(Error::at(
                 ep.span,
-                format!("'{last}' has no 'pattern:' — a numeric segment picks a pattern copy"),
+                format!("'{last}' has no copies — a numeric segment picks a replication copy"),
             ));
         }
         let copies: Vec<&PlacedNode> = node

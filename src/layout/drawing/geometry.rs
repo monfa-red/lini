@@ -52,7 +52,7 @@ impl PathSeg {
 
     /// The segment reflected across a line through the origin with unit
     /// direction `u`. An arc's sweep flips — reflection reverses handedness.
-    fn reflect(&self, u: P) -> PathSeg {
+    pub fn reflect(&self, u: P) -> PathSeg {
         let m = |p: P| reflect_point(p, u);
         match *self {
             PathSeg::Line { from, to } => PathSeg::Line {
@@ -161,7 +161,10 @@ pub fn reflect_point(p: P, u: P) -> P {
     (2.0 * d * u.0 - p.0, 2.0 * d * u.1 - p.1)
 }
 
-const SEAM_EPS: f64 = 1e-9;
+/// The drafting-coordinate tolerance: below this two px coordinates are the
+/// same point — a mirror seam that needs no segment, a feature sitting **on**
+/// the axis rather than off it [SPEC 15.3].
+pub const SEAM_EPS: f64 = 1e-9;
 
 /// Apply one mirror item to every subpath [SPEC 15.3]: a **closed** subpath is
 /// duplicated (a reflected second copy); an **open** one is **fused** — the

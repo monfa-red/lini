@@ -115,6 +115,11 @@ fn fused_mirror_axis(style: &[Decl]) -> Option<Value> {
         .first()?
         .first()?
         .clone();
+    // `none` / `auto` name no axis — they say how the node reads an *ancestor's*
+    // reflection [SPEC 15.3], and fold nothing of its own.
+    if matches!(&axis, Value::Ident(s) if s == "none" || s == "auto") {
+        return None;
+    }
     let draw = style.iter().find(|d| d.name == "draw")?;
     has_open_subpath(draw).then_some(axis)
 }

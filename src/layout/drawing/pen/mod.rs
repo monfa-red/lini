@@ -18,7 +18,8 @@ use crate::resolve::{ResolvedCall, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
 mod parse;
-use parse::{Pen, parse_mirror, parse_revolve};
+pub(crate) use parse::{Mirror, read_mirror};
+use parse::{Pen, parse_revolve};
 
 /// A folded sketch: the path, its measurement bbox, and everything the drawing
 /// engine reads later.
@@ -105,8 +106,10 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         mirror_axes.push(axis);
         revolve = Some(axis);
     }
-    if let Some(v) = inst.attrs.get("mirror") {
-        for axis in parse_mirror(v, span)? {
+    if let Some(v) = inst.attrs.get("mirror")
+        && let Mirror::Axes(axes) = read_mirror(v, span)?
+    {
+        for axis in axes {
             fused |= geometry::mirror(&mut subs, axis);
             mirror_axes.push(axis);
         }
@@ -316,7 +319,7 @@ mod tests {
         assert!(fold_err("draw: move(0, 0):spot right(4);").contains("takes no segment"));
         assert!(
             fold_err("draw: move(0, 0) right(4); mirror: sideways;")
-                .contains("x-axis, y-axis, or a bearing")
+                .contains("x-axis, y-axis, a bearing, or none")
         );
     }
 

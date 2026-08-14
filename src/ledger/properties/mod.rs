@@ -324,6 +324,10 @@ pub static PROPERTIES: &[Property] = &[
         Inherit::Engine,
     ),
     row("pattern", UNIVERSAL, Shape::Pattern, DefaultRef::None, No),
+    // `mirror:` reflects the node's path **and its features** [SPEC 15.3], so
+    // it sits beside `pattern:` here — a placement property on any node, not
+    // the pen's alone.
+    row("mirror", UNIVERSAL, One(Kind::Any), DefaultRef::None, No),
     // ── Media & accessibility ──
     row(
         "href",
@@ -416,13 +420,6 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row("draw", &[Type("sketch")], Shape::Pen, DefaultRef::None, No),
-    row(
-        "mirror",
-        &[Type("sketch")],
-        One(Kind::Any),
-        DefaultRef::None,
-        No,
-    ),
     row(
         "revolve",
         &[Type("sketch")],
