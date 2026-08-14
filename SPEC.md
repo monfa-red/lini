@@ -2433,9 +2433,9 @@ duplicate segment in one `draw:` is an error.
 
 #### `mirror:` — draw half, get the whole
 
-`mirror:` reflects everything the node holds — its drawn path **and its features** —
-and unions the copy. The value is a **list**, applied left to right, each item
-reflecting the union so far — two items give a 4-fold part:
+`mirror:` reflects everything the node holds — the path the **pen** drew **and its
+features** — and unions the copy. The value is a **list**, applied left to right,
+each item reflecting the union so far — two items give a 4-fold part:
 
 | Item | Axis (through the node's origin) | Gives |
 |---|---|---|
@@ -2457,11 +2457,16 @@ so anchors, dimensions, and mates all see the whole part.
 A **feature** takes the same split, read on its **position**: one **on** the axis
 reflects onto itself and is drawn once; one **off** it becomes a reflected second
 copy — a carrier addressed and counted exactly like `pattern:`'s
-([15.4](#154-features-holes--patterns)). A node declines with **`mirror: none`**, and
-its subtree with it: `none` means no reflection touches it, its own axis and its
-ancestors' alike. The `auto` default reflects iff an ancestor does. `|path|` and
-`|image|` read `none` — a raw `d` and a raster have no reflection to take — and an
-explicit `mirror:` on either errors ([SPEC 21](#21-errors)).
+([15.4](#154-features-holes--patterns)). A reflected copy is one whose
+**coordinates** are reflected, never a node wearing a flip: its labels read forward,
+its anchors stay handedness-free, and a silhouette the renderer draws from a box (a
+`|slant|`'s lean, a `|cyl|`'s rim) rides upright with them. A node declines with
+**`mirror: none`**, and its subtree with it: `none` means no reflection touches it,
+its own axis and its ancestors' alike. The `auto` default reflects iff an ancestor
+does. Only the pen folds a path, so on any other primitive `mirror:` reflects the
+features and leaves the node's own shape; `|path|` and `|image|` read `none` outright
+— a raw `d` and a raster have no reflection to take — and naming an axis on either
+errors ([SPEC 21](#21-errors)).
 
 #### `revolve:` — a turned part
 
@@ -2750,7 +2755,7 @@ The text composes from sources that each own one thing:
 | the **geometry** | the number | `10` |
 | the **label** | the words | two-ended: **replaces** the number and its glyph (`a (-) b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (o) "H7"` → `2× ⌀10 H7`) |
 | **`tol:`** | the tolerance, appended | `tol: 0.1` → `±0.1` · `tol: +0.2 -0.05` → stacked deviations, 0.7 × font, raised / lowered · `tol: H7` → a fit class |
-| **`pattern:`** · **`mirror:`** | the count prefix | `2× ` |
+| **`pattern:`** · **`mirror:`** | the count prefix — stacked replications multiply | `2× ` · a mirrored pair of holes `4× ` |
 
 **Axis — inference & `project:`.** The anchors pick the axis. A **directed** anchor
 sets it — a side name (`left` / `right` → horizontal, `top` / `bottom` → vertical) or
@@ -4113,7 +4118,7 @@ machine-applicable replacement where one exists.
 | Bare `point()` | `'point()' names the pen's position — attach a ':segment'` |
 | Arc radius too small | `arc radius N is smaller than half the chord` |
 | Bad `mirror:` item | `'mirror' takes x-axis, y-axis, a bearing, or none` |
-| `mirror:` on `\|path\|` / `\|image\|` | `'\|path\|' has no reflection — draw it with the pen` |
+| Axis `mirror:` on `\|path\|` / `\|image\|` | `'\|path\|' has no reflection — draw it with the pen` |
 | Bad `break:` group | `'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis` |
 | `break:` off a sketch | `'break' cuts a '\|sketch\|' — draw the profile with the pen` |
 | `break:` station off the profile | `'break' at N misses the profile` |
@@ -4159,7 +4164,7 @@ machine-applicable replacement where one exists.
 | Mate within one part | `'a' and 'b' are features of one part — a part is rigid` |
 | Perpendicular directed pair | `'a:left (-) b:top' — perpendicular faces have no shared normal; the angle between edges is '(<)'` |
 | `project:` vs a directed anchor | `'project: vertical' conflicts with 'a:left' — the directed anchor reads horizontal` |
-| Unknown copy index | `no copy 'bolt.5' — the pattern places 4` |
+| Unknown copy index | `no copy 'bolt.5' — the replication places 4` |
 | Duplicate datum letter | `datum 'A' is already placed (previously at L:C)` |
 | Drafting type outside a drawing | `'\|feature-control\|' annotates a drawing — it belongs in a 'layout: drawing'` (same for `\|surface-finish\|`, `\|control\|`, `\|datum\|`) |
 | Unknown characteristic | `unknown characteristic 'flatnes'; did you mean 'flatness'?` |
@@ -4184,7 +4189,7 @@ machine-applicable replacement where one exists.
 | `side:` off-axis | `a horizontal dimension stacks on top or bottom` / `a vertical dimension stacks on left or right` |
 | Parallel `(<)` edges | `the angle's edges are parallel — they never meet` |
 | Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
-| Bad `pattern:` | `'radial' needs count ≥ 2 and radius > 0` |
+| Bad `pattern:` | `'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)` (name **and** arity) · `'radial' needs count ≥ 2 and radius > 0` |
 | `scale:` ≤ 0 | `'scale' must be > 0` |
 | `scale:` on a `\|page\|` | `a '\|page\|' carries no 'scale:' — 'density:' sets its pixels per millimetre (root), a drawing's 'scale:' its drafting ratio` |
 | `density:` ≤ 0 | `'density' must be > 0` |

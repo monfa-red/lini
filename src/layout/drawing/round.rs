@@ -302,21 +302,28 @@ fn diametral(
     // ISO alignment [SPEC 15.6]: the one text seat dims use — turned with
     // the line, reading from the bottom / right, lifted toward its "above".
     let frame = Frame::of(dir);
+    // The block the value would paint riding the line: its own ink plus the
+    // stack it carries below it.
+    let block = {
+        let (at, theta) = frame.text_seat(c, fs);
+        let probe = text.nodes(at, theta, fs, paint.font);
+        let seat = super::symbols::seat_of(&probe);
+        stack.box_below(seat).map_or(seat, |b| b.union(seat))
+    };
+    // It fits when the circle has room for it **and** the seat is free —
+    // concentric rims share a centre, so the second reading would land on the
+    // first; it spills instead and packs along the ray [SPEC 15.6].
     let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0
-        && (stack.is_empty() || {
-            let (at, theta) = frame.text_seat(c, fs);
-            let probe = text.nodes(at, theta, fs, paint.font);
-            let seat = super::symbols::seat_of(&probe);
-            let block = stack.box_below(seat).map_or(seat, |b| b.union(seat));
-            [
+        && (stack.is_empty()
+            || [
                 (block.min_x, block.min_y),
                 (block.max_x, block.min_y),
                 (block.min_x, block.max_y),
                 (block.max_x, block.max_y),
             ]
             .iter()
-            .all(|&p| dist(p, c) <= r)
-        });
+            .all(|&p| dist(p, c) <= r))
+        && rows.spill(dir, block, clearance) <= 1e-9;
 
     let build = |extra: f64| {
         let mut out = Vec::new();

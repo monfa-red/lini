@@ -402,12 +402,12 @@ fn copy_index_errors_carry_the_count() {
     let grid = "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 } [\n  |hole#bolt| { width: 10; translate: -50 -15; pattern: grid(2, 2, 100, 30) }\n]\n";
     assert_eq!(
         layout_err(&format!("{grid}plate:left (-) plate.bolt.5\n")),
-        "no copy 'bolt.5' — the pattern places 4"
+        "no copy 'bolt.5' — the replication places 4"
     );
     // 1-based: copy 0 is the same unknown-index error.
     assert_eq!(
         layout_err(&format!("{grid}plate:left (-) plate.bolt.0\n")),
-        "no copy 'bolt.0' — the pattern places 4"
+        "no copy 'bolt.0' — the replication places 4"
     );
     // An index needs a pattern to pick from.
     assert_eq!(
@@ -432,8 +432,45 @@ fn a_mirror_copy_is_addressed_and_counted_like_a_pattern_copy() {
     text_at(&l.nodes, "2× ⌀4");
     assert_eq!(
         layout_err(&format!("{wall}wall:left (-) wall.drain.3\n")),
-        "no copy 'drain.3' — the pattern places 2"
+        "no copy 'drain.3' — the replication places 2"
     );
+}
+
+#[test]
+fn a_copy_of_a_broken_feature_counts_its_break_once() {
+    // The break is the *copied body's* own; the copies are placed at model
+    // offsets the ride never touched. Reading the view off the carrier as
+    // well counted it twice and the reading came out 103.33.
+    let patterned = "{ layout: drawing; density: 1 }\n|sketch#plate| { draw: move(-60, -20) right(120) down(40) left(120) close() } [\n  |sketch#rib| { draw: move(-20, 0) point():a right(40):b; break: -10 10; translate: -30 0; pattern: grid(2, 1, 60, 0) }\n]\nplate.rib.1:a (-) plate:right { side: bottom }\n";
+    text_at(&laid(patterned).nodes, "110");
+    // The same carrier from the other producer — a half plate's reflected rib.
+    let mirrored = "{ layout: drawing; density: 1 }\n|sketch#plate| { draw: move(-60, -20) right(50) down(40) left(50) close(); mirror: y-axis } [\n  |sketch#rib| { draw: move(-20, 0) point():a right(40):b; break: -10 10; translate: -30 0 }\n]\nplate.rib.2:a (-) plate:right { side: bottom }\n";
+    text_at(&laid(mirrored).nodes, "10");
+}
+
+#[test]
+fn stacked_replications_count_and_measure_through_the_chain() {
+    // A mirrored 2-hole pattern draws four holes: the carrier's copies are
+    // themselves carriers [SPEC 15.4], so the `N×` prefix is the product and
+    // the shape read is the copy at the end of the chain. Reading one level
+    // it said `2× ⌀6` — the inner carrier's own union box.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|sketch#wall| { draw: move(-40, -10) right(30) down(20) left(30) close(); mirror: y-axis } [\n  |hole#drain| { width: 4; translate: -25 0; pattern: grid(2, 1, 8, 0) }\n]\nwall.drain:top (o)\n",
+    );
+    text_at(&l.nodes, "4× ⌀4");
+}
+
+#[test]
+fn a_second_diametral_value_on_one_centre_spills_past_the_rim() {
+    // Concentric rims share a centre, so both values seat on the same spot:
+    // the first rides its line, the second finds the seat taken, overruns its
+    // rim and packs along that ray [SPEC 15.6] — never one on the other.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|oval#od| { width: 80; height: 80 }\n|oval#boss| { width: 70; height: 70 }\nod:top (o)\nboss:top (o)\n",
+    );
+    let (_, y80, _) = text_at(&l.nodes, "⌀80");
+    let (_, y70, _) = text_at(&l.nodes, "⌀70");
+    assert!(y80 - y70 >= DIM_CLEARANCE, "{y80} then {y70}");
 }
 
 #[test]

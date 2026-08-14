@@ -14,7 +14,9 @@
 //! wearing a flip: no `scale(-1, 1)` reaches the renderer, so a label reads
 //! forward and every anchor, outline and halo stays handedness-free.
 
-use super::drawing::geometry::{MirrorAxis, P, SEAM_EPS, Subpath, reflect_point, to_d};
+use super::drawing::geometry::{
+    MirrorAxis, P, SEAM_EPS, Subpath, bearing_dir, dir_bearing, reflect_point, to_d,
+};
 use super::drawing::{Segment, SketchGeo, chrome, pen};
 use super::ir::{Bbox, PlacedNode};
 use super::pattern::{self, Placement};
@@ -43,6 +45,11 @@ pub(super) fn expand(placed: &mut PlacedNode) -> Result<(), Error> {
         if places.len() < 2 {
             continue;
         }
+        // The placements are the **parent's** frame, so the carrier stands
+        // square and each copy wears the feature's own `rotate:` — a carrier
+        // turn would turn the offsets with it, which is `pattern:`'s law, not
+        // a reflection's.
+        child.rotation = 0.0;
         pattern::carry(child, &places, Vec::new());
     }
     Ok(())
@@ -87,6 +94,7 @@ fn placements(child: &PlacedNode, axes: &[MirrorAxis]) -> Vec<Placement> {
         .into_iter()
         .map(|(p, reflect)| Placement {
             at: (p.0 - seed.0, p.1 - seed.1),
+            rotate: child.rotation,
             reflect,
         })
         .collect()
@@ -100,7 +108,38 @@ fn placements(child: &PlacedNode, axes: &[MirrorAxis]) -> Vec<Placement> {
 /// The two frames are one map: a descendant's *position* reflects about the
 /// axis through this node's origin, its own *content* about the same direction
 /// through its own origin — which is exactly this recursion one level down.
+///
+/// A reflection is an exact **cardinal** flip plus a turn: `Refl(u) =
+/// rotate(2·Δ) ∘ Refl(nearest cardinal)`. Only the cardinal flip maps a box to
+/// a box, and a box is what the renderer draws every primitive from — mapping
+/// the corners of a box about a bearing and re-bounding them resizes the shape
+/// (a ⌀8 hole under `mirror: 30` came out ⌀11.7). So the flip is exact and the
+/// residual 2·Δ rides the copy's own rotation; a cardinal mirror has Δ = 0 and
+/// nothing turns.
 pub(super) fn reflect_content(node: &mut PlacedNode, u: P) {
+    let (base, delta) = cardinal_of(u);
+    flip(node, base);
+    node.rotation += 2.0 * delta;
+}
+
+/// The cardinal axis nearest the line `u` and the bearing from it — the line's
+/// bearing folded into [0, 180), so `Δ ∈ [−45, 45]` and an exact cardinal
+/// reads exactly 0.
+fn cardinal_of(u: P) -> (P, f64) {
+    let b = dir_bearing(u).rem_euclid(180.0);
+    let base = if b <= 45.0 {
+        0.0
+    } else if b < 135.0 {
+        90.0
+    } else {
+        180.0
+    };
+    (bearing_dir(base), b - base)
+}
+
+/// The exact half: the content flipped about a **cardinal** line through the
+/// node's own origin.
+fn flip(node: &mut PlacedNode, u: P) {
     // Glyphs stay upright: a reflected label reads forward, it does not
     // mirror-write, so a text leaf takes its position and nothing else.
     if node.kind == NodeKind::Text {
@@ -115,18 +154,15 @@ pub(super) fn reflect_content(node: &mut PlacedNode, u: P) {
         let p = reflect_point((c.cx, c.cy), u);
         c.cx = p.0;
         c.cy = p.1;
-        reflect_content(c, u);
+        flip(c, u);
     }
 }
 
-/// The box around a reflected box — its corners mapped, re-bounded. Exact for
-/// a cardinal axis; for a bearing it is the same over-approximation an
-/// axis-aligned box always is of a turned shape.
+/// A box reflected about a cardinal line through the origin — still a box,
+/// exactly.
 fn reflect_bbox(b: Bbox, u: P) -> Bbox {
     Bbox::from_points(&[
         reflect_point((b.min_x, b.min_y), u),
-        reflect_point((b.max_x, b.min_y), u),
-        reflect_point((b.min_x, b.max_y), u),
         reflect_point((b.max_x, b.max_y), u),
     ])
 }
@@ -320,5 +356,53 @@ mod tests {
             ),
             "'|image|' has no reflection — draw it with the pen"
         );
+        // Naming an axis is the error; spelling out the reading they already
+        // take is not [SPEC 15.3].
+        laid("|path#p| { path: \"M 0 0 L 10 0\"; mirror: none }\n");
+        laid("|path#p| { path: \"M 0 0 L 10 0\"; mirror: auto }\n");
+    }
+
+    #[test]
+    fn a_rotated_feature_reflects_to_the_mirrored_turn() {
+        // `mirror:` reflects about the **parent's** axis, so each copy wears
+        // the feature's own turn — negated on the reflected one. Left on the
+        // carrier the turn rotated the offsets with it, and the copy landed
+        // off the part entirely.
+        let l = laid(
+            "{ layout: drawing; density: 1 }\n|sketch#wall| { draw: move(-40, -14) right(30) down(28) left(30) close(); mirror: y-axis } [\n  |rect#tab| { width: 16; height: 5; translate: -25 0; rotate: 30 }\n]\n",
+        );
+        let (_, wx, _) = placed_by_id(&l.nodes, "wall");
+        let tabs: Vec<(f64, f64)> = all_placed(&l.nodes, &|n| {
+            n.type_chain.iter().any(|t| t == "rect")
+                && crate::layout::pattern::replicas(n).is_none()
+        })
+        .iter()
+        .map(|(n, x, _)| (x - wx, n.rotation))
+        .collect();
+        assert_eq!(tabs, vec![(-25.0, 30.0), (25.0, -30.0)]);
+    }
+
+    #[test]
+    fn a_reflected_copy_keeps_its_size_at_any_bearing() {
+        // A reflection is an exact cardinal flip plus a turn. Mapping a box's
+        // corners about a bearing and re-bounding them gives the box that
+        // *covers* the turned one — and the renderer draws every primitive
+        // from its box, so a ⌀8 hole came out ⌀11.7.
+        let part = |axis: &str| {
+            let l = laid(&format!(
+                "{{ layout: drawing; density: 1 }}\n|sketch#wall| {{ draw: move(-50, -30) right(100) down(60) left(100) close(); mirror: {axis} }} [\n  |hole#h| {{ width: 8; translate: -20 -14 }}\n]\n"
+            ));
+            let mut sizes: Vec<(f64, f64)> = all_placed(&l.nodes, &|n| {
+                n.type_chain.iter().any(|t| t == "hole")
+                    && crate::layout::pattern::replicas(n).is_none()
+            })
+            .iter()
+            .map(|(n, ..)| (n.bbox.w(), n.bbox.h()))
+            .collect();
+            sizes.sort_by(|a, b| a.partial_cmp(b).expect("finite"));
+            sizes
+        };
+        assert_eq!(part("30"), part("y-axis"));
+        assert_eq!(part("30").len(), 2);
     }
 }

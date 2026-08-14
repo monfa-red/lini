@@ -383,13 +383,18 @@ fn layout_inst(
     }
     // `mirror:` reflects what a node holds [SPEC 15.3] — but a raw `d` has no
     // parse/emit round-trip here and a raster no reflection at all, so both
-    // read `none` and saying otherwise is an error, never a silent no-op.
-    if inst.attrs.get("mirror").is_some()
+    // read `none`. Naming an axis on one is an error, never a silent no-op;
+    // spelling out the reading they already take is not.
+    if let Some(v) = inst.attrs.get("mirror")
         && let Some(ty) = match inst.kind {
             NodeKind::Path => Some("path"),
             NodeKind::Image => Some("image"),
             _ => None,
         }
+        && matches!(
+            drawing::pen::read_mirror(v, inst.span)?,
+            drawing::pen::Mirror::Axes(_)
+        )
     {
         return Err(Error::at(
             inst.span,

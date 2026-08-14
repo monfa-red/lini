@@ -90,8 +90,14 @@ pub(super) fn resolve<'a>(
     let mut step = |node: &mut &'a PlacedNode,
                     next: &'a PlacedNode,
                     view: &mut Option<(&'a super::breaks::ViewMap, P, P)>| {
+        // A broken profile slid the positions in its own frame, and the walk
+        // unmaps them back. A replication carrier's children are not in that
+        // frame: they are whole copies of the broken body, each placed at a
+        // model offset the ride never touched — reading the view off one
+        // counted the break twice.
         if let Some(geo) = node.sketch.as_ref()
             && !geo.view.is_identity()
+            && crate::layout::pattern::replicas(node).is_none()
         {
             *view = Some((&geo.view, (0.0, 0.0), (0.0, 0.0)));
         }
@@ -162,7 +168,10 @@ pub(super) fn resolve<'a>(
         if k == 0 || k > copies.len() {
             return Err(Error::at(
                 ep.span,
-                format!("no copy '{last}.{k}' — the pattern places {}", copies.len()),
+                format!(
+                    "no copy '{last}.{k}' — the replication places {}",
+                    copies.len()
+                ),
             ));
         }
         step(&mut node, copies[k - 1], &mut view);
@@ -238,19 +247,12 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
 
 impl Anchor<'_> {
     /// The node whose shape the anchor reads: the node itself — or, on a
-    /// `pattern:` carrier, **one copy** (the seed's shape at the datum; a
-    /// radial ring reads the same shape about its centre) [SPEC 15.2].
+    /// replication carrier, **one copy** (the seed's shape at the datum; a
+    /// radial ring reads the same shape about its centre) [SPEC 15.2]. Through
+    /// stacked replications alike: a `mirror:`ed `pattern:` holds carriers, and
+    /// only the copy at the end of that chain is a drawn shape.
     pub fn feature(&self) -> &PlacedNode {
-        if crate::layout::pattern::replicas(self.node).is_some()
-            && let Some(copy) = self
-                .node
-                .children
-                .iter()
-                .find(|c| !chrome::is_chrome(&c.attrs))
-        {
-            return copy;
-        }
-        self.node
+        crate::layout::pattern::one_copy(self.node).map_or(self.node, |(copy, _)| copy)
     }
 
     /// The node's geometry bbox, local — the drawn shape, stroke excluded
@@ -425,9 +427,10 @@ impl Anchor<'_> {
     }
 
     /// The anchored node's copy count — the dimension text's `N×` prefix
-    /// [SPEC 15.6], off whichever replication made the copies.
+    /// [SPEC 15.6], off whichever replications made the copies: stacked ones
+    /// multiply, so a mirrored 2-hole pattern reads `4×`.
     pub fn replica_count(&self) -> Option<usize> {
-        crate::layout::pattern::replicas(self.node)
+        Some(crate::layout::pattern::one_copy(self.node)?.1)
     }
 
     /// Node-local → drawing frame.

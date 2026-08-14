@@ -40,12 +40,36 @@ pub(crate) fn replicas(node: &PlacedNode) -> Option<usize> {
     Some(node.attrs.number(MARK)? as usize)
 }
 
+/// One drawn copy of a replication, and how many copies stand for it in all
+/// [SPEC 15.4/15.6]. Replications **stack** — a `mirror:`ed `pattern:` is a
+/// carrier whose copies are carriers — so the shape a dimension reads is the
+/// copy at the end of that chain, and the `N×` prefix is the product along it.
+/// `None` for an ordinary node.
+pub(crate) fn one_copy(node: &PlacedNode) -> Option<(&PlacedNode, usize)> {
+    let n = replicas(node)?;
+    let copy = node
+        .children
+        .iter()
+        .find(|c| !super::drawing::chrome::is_chrome(&c.attrs))?;
+    Some(match one_copy(copy) {
+        Some((inner, m)) => (inner, n * m),
+        None => (copy, n),
+    })
+}
+
 /// Where one copy of a replication sits, and what its body takes on the way
-/// there: the offset from the carrier's own position, plus the reflections its
-/// content is turned by — none for a `pattern:` copy, one per `mirror:` item
-/// for a reflected one [SPEC 15.3/15.4].
+/// there: the offset from the carrier's own position, the turn it stands at,
+/// plus the reflections its content is turned by — none for a `pattern:` copy,
+/// one per `mirror:` item for a reflected one [SPEC 15.3/15.4].
+///
+/// `rotate` is the copy's **own** rotation. A `pattern:` leaves it 0 and keeps
+/// the node's `rotate:` on the carrier, so the offsets are the node's shape and
+/// turn with it; a `mirror:` reflects about the *parent's* axis, so its offsets
+/// are the parent's and the turn rides each copy — negated on a reflected one,
+/// as a reflection negates a rotation.
 pub(super) struct Placement {
     pub at: P,
+    pub rotate: f64,
     pub reflect: Vec<MirrorAxis>,
 }
 
@@ -62,6 +86,7 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         .into_iter()
         .map(|at| Placement {
             at,
+            rotate: 0.0,
             reflect: Vec::new(),
         })
         .collect();
@@ -121,6 +146,7 @@ pub(super) fn carry(placed: &mut PlacedNode, places: &[Placement], level: Vec<Pl
         };
         copy.cx = place.at.0;
         copy.cy = place.at.1;
+        copy.rotation = place.rotate;
         // A reflected copy is a copy whose coordinates are reflected — never a
         // node wearing a flip [SPEC 15.3], so its labels read forward and its
         // anchors stay handedness-free.
@@ -163,13 +189,28 @@ pub(super) fn carrier_bbox<'a>(children: impl IntoIterator<Item = &'a PlacedNode
         .into_iter()
         .filter(|c| !super::drawing::chrome::is_chrome(&c.attrs))
         .fold(None, |acc: Option<Bbox>, c| {
-            let b = c.bbox.shifted(c.cx, c.cy);
+            let b = turned(c.bbox, c.rotation).shifted(c.cx, c.cy);
             Some(match acc {
                 Some(a) => a.union(b),
                 None => b,
             })
         })
         .unwrap_or_else(Bbox::empty)
+}
+
+/// A box as the carrier sees it: itself when the copy stands square, else the
+/// box that covers it turned — a `mirror:` copy carries its own rotation.
+fn turned(b: Bbox, deg: f64) -> Bbox {
+    if deg == 0.0 {
+        return b;
+    }
+    let r = |p: P| crate::layout::geom::rotate(p, deg);
+    Bbox::from_points(&[
+        r((b.min_x, b.min_y)),
+        r((b.max_x, b.min_y)),
+        r((b.max_x, b.max_y)),
+        r((b.min_x, b.max_y)),
+    ])
 }
 
 /// The copy offsets from the node's own position, in px. Grid: `(i·dx, j·dy)`,
