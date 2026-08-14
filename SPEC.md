@@ -2433,11 +2433,11 @@ duplicate segment in one `draw:` is an error.
 
 #### `mirror:` — draw half, get the whole
 
-`mirror:` reflects the entire drawn path and unions the copy. The value is a **list**,
-applied left to right, each item reflecting the union so far — two items give a 4-fold
-part:
+`mirror:` reflects everything the node holds — its drawn path **and its features** —
+and unions the copy. The value is a **list**, applied left to right, each item
+reflecting the union so far — two items give a 4-fold part:
 
-| Item | Axis (through the pen origin) | Gives |
+| Item | Axis (through the node's origin) | Gives |
 |---|---|---|
 | `x-axis` | the horizontal axis (y = 0) | top ↔ bottom symmetry |
 | `y-axis` | the vertical axis (x = 0) | left ↔ right symmetry |
@@ -2448,11 +2448,20 @@ each: an **open** subpath is **fused** — the copy joins end-to-end, the edge o
 axis the invisible seam (*draw the half, get the whole*); a **closed** subpath is
 **duplicated** — a reflected second copy (*draw one ear, get both*). So leave a
 half-profile open (a `close()` there would draw a visible spine down the axis — the
-cue you meant the other form), and close a feature you want twice. A fused mirror also
+cue you meant the other form), and close a shape you want twice. A fused mirror also
 generates its axis `|centerline|` — auto chrome,
 [15.7](#157-leaders-notes--line-conventions); a duplicated subpath generates none.
 `mirror:` runs before `pattern:` and before placement: it builds the node's geometry,
 so anchors, dimensions, and mates all see the whole part.
+
+A **feature** takes the same split, read on its **position**: one **on** the axis
+reflects onto itself and is drawn once; one **off** it becomes a reflected second
+copy — a carrier addressed and counted exactly like `pattern:`'s
+([15.4](#154-features-holes--patterns)). A node declines with **`mirror: none`**, and
+its subtree with it: `none` means no reflection touches it, its own axis and its
+ancestors' alike. The `auto` default reflects iff an ancestor does. `|path|` and
+`|image|` read `none` — a raw `d` and a raster have no reflection to take — and an
+explicit `mirror:` on either errors ([SPEC 21](#21-errors)).
 
 #### `revolve:` — a turned part
 
@@ -2468,7 +2477,8 @@ skipped, and vertices sharing a station draw once, at the widest span. So a
 two sharp vertices and generates its two lines, a step completes itself — drafting's
 rule falls out of the geometry, with no per-call cases. Edge lines live in the
 sketch's frame, so they ride `break:` like features. A sketch takes `revolve:` **or**
-`mirror:`, never both; the unary `⌀` readings require a revolved profile
+`mirror:`, never both; `revolve:` folds the **profile alone**, a turned part's
+features being drilled, not turned. The unary `⌀` readings require a revolved profile
 ([15.6](#156-dimensions)).
 
 #### `break:` — cut the boring middle
@@ -2566,7 +2576,8 @@ copy); a radial pattern generates its `|pitch-circle|`
 `radius > 0`; offsets are drawing units.
 
 **Copies are addressable** by a numeric path segment — `plate.bolt.2`: 1-based,
-grid copies **row-major from the seed**, radial copies **clockwise from bearing 0**.
+grid copies **row-major from the seed**, radial copies **clockwise from bearing 0**, a
+`mirror:`'s reflections after their originals, item by item.
 The index extends the carrier's dot-path only — copies leak no ids (`bolt.2` alone
 is an unknown endpoint); an index past the count errors with it
 ([SPEC 21](#21-errors)). A copy is the feature at its own position: every anchor —
@@ -2711,9 +2722,8 @@ anything auto-measure can't read.
 *through* the circle, arrows out against the rims: `:top` / `:bottom` vertical,
 `:left` / `:right` horizontal, a corner the 45° diagonal. The value sits on the line
 when it fits inside; otherwise the line overruns the **anchored** rim and carries the
-text there — `hole:top (o)` spills upward, and a spilled value **packs along that
-ray** (**Placement & stacking**, below), so two diameters read from one side stand
-clear of each other instead of overprinting. Deterministic, no solver.
+text there — `hole:top (o)` spills upward, packing along that ray
+(**Placement & stacking**, below). Deterministic, no solver.
 
 **`(<)` — the angle.** Binary, between two **line-like** anchors — a named edge, a
 `|line|` / `|centerline|`, a bbox side: the angle between their directions, the arc
@@ -2740,7 +2750,7 @@ The text composes from sources that each own one thing:
 | the **geometry** | the number | `10` |
 | the **label** | the words | two-ended: **replaces** the number and its glyph (`a (-) b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (o) "H7"` → `2× ⌀10 H7`) |
 | **`tol:`** | the tolerance, appended | `tol: 0.1` → `±0.1` · `tol: +0.2 -0.05` → stacked deviations, 0.7 × font, raised / lowered · `tol: H7` → a fit class |
-| **`pattern:`** | the count prefix | `2× ` |
+| **`pattern:`** · **`mirror:`** | the count prefix | `2× ` |
 
 **Axis — inference & `project:`.** The anchors pick the axis. A **directed** anchor
 sets it — a side name (`left` / `right` → horizontal, `top` / `bottom` → vertical) or
@@ -2766,8 +2776,7 @@ callouts, frames, earlier rows — never at a fixed pitch. `clearance` is a
 per-dim value widens that dim's own stand-off independently, and the packer may
 still go farther out to clear obstacles. A statement that leaves along a **ray**
 instead of seating on a side — a leader's text, a spilled diametral value — packs the
-same way **along its exit**, in source order, against those same painted bounds, so a
-note never lands on the one before it. `translate` stays the exact nudge; a dimension takes no `gap:`
+same way along its exit. `translate` stays the exact nudge; a dimension takes no `gap:`
 ([SPEC 21](#21-errors)).
 The anatomy is baked sheet constants ([SPEC 10.5](#105-layout-constants-baked)):
 extension lines spring from the anchors with a small gap and overshoot past the dim
@@ -2847,9 +2856,9 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
   past the geometry union (`note-offset`), horizontal — and the leader ends in a
   short horizontal **landing** (`note-landing`) before it, the drafting elbow.
   `side:` picks the direction instead (a side or a corner); a styled label's
-  `translate` nudges from there, and the text packs farther along its exit when
-  something already painted stands in the way ([15.6](#156-dimensions)). The tip
-  ray-casts onto the drawn outline ([15.2](#152-anchors)).
+  `translate` nudges from there; the text packs along its exit
+  ([15.6](#156-dimensions)). The tip ray-casts onto the drawn outline
+  ([15.2](#152-anchors)).
 - **The leader makes the note.** A callout's text lowers to a bare leaf — drafting
   callouts are unboxed. A **boxed** note is the `|note|` template
   ([SPEC 8](#8-templates)) wired with an ordinary two-ended link; a **balloon** is
@@ -3573,6 +3582,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `layer` | integer | 0 (flow) · 1 (pinned) | paint order; ties → source order. |
 | `scale` | number > 0 | 1 | the drafting **ratio** (`2` = 2 : 1) — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
 | `pattern` | `grid(…)` · `radial(…)` | — | replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
+| `mirror` | axis list · `none` · `auto` | `auto` | reflect the node's path and features about the axis through its origin; `auto` reflects iff an ancestor does ([SPEC 15.3](#153-the-sketch-pen)). |
 
 **Media & accessibility** — any node (`href` also a link):
 
@@ -3597,7 +3607,6 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([SPEC 15.3](#153-the-sketch-pen)). |
-| `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
 | `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
 | `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -4103,7 +4112,8 @@ machine-applicable replacement where one exists.
 | Floating `:segment` | `a ':segment' glues to its call — name a station with point():v` |
 | Bare `point()` | `'point()' names the pen's position — attach a ':segment'` |
 | Arc radius too small | `arc radius N is smaller than half the chord` |
-| Bad `mirror:` item | `'mirror' takes x-axis, y-axis, or a bearing` |
+| Bad `mirror:` item | `'mirror' takes x-axis, y-axis, a bearing, or none` |
+| `mirror:` on `\|path\|` / `\|image\|` | `'\|path\|' has no reflection — draw it with the pen` |
 | Bad `break:` group | `'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis` |
 | `break:` off a sketch | `'break' cuts a '\|sketch\|' — draw the profile with the pen` |
 | `break:` station off the profile | `'break' at N misses the profile` |
