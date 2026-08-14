@@ -18,6 +18,7 @@ use super::scene::SceneIndex;
 use crate::layout::as_pair;
 use crate::layout::ir::{Bbox, RoutedLink, RoutedText};
 use crate::layout::schematic::{clear_run, forced_side, net_offset, text_normal};
+use crate::layout::stack::Painted;
 use crate::math;
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -43,13 +44,15 @@ pub fn place(
     let obstacles = index.obstacle_rects();
     // The same obstacles a net name's freer-side reading measures against
     // [SPEC 16.4] — the scene's solid ink, in the layout's own box type.
-    let boxes: Vec<Bbox> = obstacles
+    let boxes: Vec<Painted> = obstacles
         .iter()
-        .map(|r| Bbox {
-            min_x: r.x0,
-            min_y: r.y0,
-            max_x: r.x1,
-            max_y: r.y1,
+        .map(|r| {
+            Painted::of_box(Bbox {
+                min_x: r.x0,
+                min_y: r.y0,
+                max_x: r.x1,
+                max_y: r.y1,
+            })
         })
         .collect();
     let mut placed: Vec<Rect> = Vec::new();

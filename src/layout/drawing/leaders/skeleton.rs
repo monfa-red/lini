@@ -2,15 +2,16 @@
 //! exit direction, outline ray-cast, and the carried-block clearing push —
 //! shared by every leader-shaped dispatch in `leaders`.
 
-use super::super::super::ir::{Bbox, PlacedNode};
+use super::super::super::ir::PlacedNode;
 use super::super::anchors::Anchor;
-use super::super::annotate::Ctx;
+use super::super::annotate::{Ctx, Rows};
 use super::super::geometry::{P, dist};
 use super::super::outline;
 use super::super::symbols::CarriedStack;
 use crate::layout::geom::dot;
 use crate::layout::geom::rotate;
 use crate::layout::geom::unit;
+use crate::layout::stack::{Painted, clear_past};
 use crate::ledger::consts::{NOTE_LANDING, NOTE_OFFSET};
 
 /// A leader's drawn skeleton: tip → elbow → landing, plus where its text
@@ -87,42 +88,37 @@ pub(super) fn leader_line(
     }
 }
 
-/// A carrying statement clears the geometry for its **whole block**
-/// [SPEC 15.9]: the text seat plus the carried stack's one measured box must
-/// stand `NOTE_OFFSET` off `obstacle` along `dir` — the extra push past the
-/// uncarried placement; 0 when nothing is carried or it already stands clear.
-pub(in crate::layout::drawing) fn carried_push(
+/// The extra push along the exit `dir` a **ray-leaving** annotation takes
+/// before it paints — the one law the leaders and the diametral spill share
+/// [SPEC 15.6/15.9]. Two clearings, in order: a carrying statement's whole
+/// block (the text seat plus the carried stack's one measured box, which
+/// hangs below and can reach back onto the part) stands `NOTE_OFFSET` off the
+/// drawn geometry, then the block packs against everything already painted,
+/// in source order. 0 when the deterministic placement already stands clear.
+pub(in crate::layout::drawing) fn outward_push(
     nodes: &[PlacedNode],
     stack: &CarriedStack,
     dir: P,
-    obstacle: Bbox,
+    rows: &Rows,
+    clearance: f64,
 ) -> f64 {
     let seat = super::super::symbols::seat_of(nodes);
-    let Some(below) = stack.box_below(seat) else {
-        return 0.0;
-    };
-    clear_along(seat.union(below), dir, obstacle, NOTE_OFFSET)
-}
-
-/// The distance along unit `dir` that carries `b` past `obstacle`, standing
-/// `margin` off it — clearing either axis separates the boxes, so the
-/// cheaper feasible axis wins; 0 when already clear.
-fn clear_along(b: Bbox, dir: P, obstacle: Bbox, margin: f64) -> f64 {
-    let o = obstacle.inflate(margin);
-    if !b.overlaps(o) {
-        return 0.0;
-    }
-    let past = |lo: f64, hi: f64, o_lo: f64, o_hi: f64, d: f64| {
-        if d < -1e-9 {
-            (hi - o_lo) / -d
-        } else if d > 1e-9 {
-            (o_hi - lo) / d
-        } else {
-            f64::INFINITY
+    // An uncarried seat is already placed clear of the geometry by
+    // construction — the exit ray left it by `NOTE_OFFSET`.
+    let (block, past) = match stack.box_below(seat) {
+        Some(below) => {
+            let block = seat.union(below);
+            let past = clear_past(
+                &Painted::of_box(block),
+                dir,
+                &Painted::of_box(rows.extent()),
+                NOTE_OFFSET,
+            );
+            (block, past)
         }
+        None => (seat, 0.0),
     };
-    past(b.min_x, b.max_x, o.min_x, o.max_x, dir.0)
-        .min(past(b.min_y, b.max_y, o.min_y, o.max_y, dir.1))
+    past + rows.spill(dir, block.shifted(dir.0 * past, dir.1 * past), clearance)
 }
 
 /// The nearest rim point of an analytic circle toward the elbow.

@@ -620,6 +620,49 @@ fn a_bare_round_measure_needs_an_axis() {
     );
 }
 
+// ── Ray-leaving annotations pack too [SPEC 15.6/15.7] ──
+
+#[test]
+fn two_diameters_on_one_side_pack_outward_instead_of_overprinting() {
+    // Two concentric bosses read from the right: the second value leaves
+    // along the same ray and packs past the first, in source order — the
+    // drafting form for concentric diameters, and never one on top of the
+    // other.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|oval#od| { width: 56; height: 56 }\n|oval#boss| { width: 34; height: 34 }\nod (o) { side: right }\nboss (o) { side: right }\n",
+    );
+    let (x56, y56, _) = text_at(&l.nodes, "⌀56");
+    let (x34, y34, _) = text_at(&l.nodes, "⌀34");
+    assert_eq!(y56, y34, "both ride their own diametral line");
+    assert!(
+        x34 - x56 >= DIM_CLEARANCE,
+        "the second stands clear: {x56} then {x34}"
+    );
+}
+
+#[test]
+fn two_callouts_on_one_side_pack_outward_too() {
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 80; height: 60 }\np <- \"THRU\" { side: right }\np <- \"TYP\" { side: right }\n",
+    );
+    let (x1, _, _) = text_at(&l.nodes, "THRU");
+    let (x2, _, _) = text_at(&l.nodes, "TYP");
+    assert!(x2 - x1 >= DIM_CLEARANCE, "{x1} then {x2}");
+}
+
+#[test]
+fn a_lone_ray_leaving_annotation_does_not_move() {
+    // The packer is a stand-off, not a placement: with nothing in the way
+    // the deterministic exit stands.
+    let one = laid(
+        "{ layout: drawing; density: 1 }\n|oval#od| { width: 56; height: 56 }\nod (o) { side: right }\n",
+    );
+    let two = laid(
+        "{ layout: drawing; density: 1 }\n|oval#od| { width: 56; height: 56 }\n|oval#boss| { width: 34; height: 34 }\nod (o) { side: right }\nboss (o) { side: right }\n",
+    );
+    assert_eq!(text_at(&one.nodes, "⌀56"), text_at(&two.nodes, "⌀56"));
+}
+
 // ── `(<)` — the angle [SPEC 15.6] ──
 
 #[test]

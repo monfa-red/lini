@@ -20,6 +20,7 @@
 use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::pose::{Pose, Side};
 use crate::desugar::schematic::{NET_RUN_FACING, is_net_run};
+use crate::layout::stack::Painted;
 use crate::ledger::consts::{NET_LABEL_OFFSET, NET_LABEL_RUN};
 use crate::resolve::{AttrMap, ResolvedValue};
 
@@ -70,11 +71,12 @@ pub(crate) fn offset(normal: (f64, f64), text: Bbox) -> (f64, f64) {
 /// measure [`text_normal`] reads. A ray cast, so a box the ray never crosses
 /// costs nothing; a box already covering `at` reads **negative**, the depth
 /// still to clear, so between two crowded sides the shallower one still wins.
-pub(crate) fn clear_run(at: (f64, f64), dir: (f64, f64), boxes: &[Bbox]) -> f64 {
+pub(crate) fn clear_run(at: (f64, f64), dir: (f64, f64), painted: &[Painted]) -> f64 {
     let mut room = ROOM_LIMIT;
     // `dir` is an axis unit vector, so its one non-zero component is its sign.
     let sign = dir.0 + dir.1;
-    for b in boxes {
+    for p in painted {
+        let b = p.bounds();
         // The box's span along the ray, and its span across it.
         let ((lo, hi), across, span) = if dir.0 != 0.0 {
             ((b.min_x, b.max_x), at.1, (b.min_y, b.max_y))
@@ -129,7 +131,7 @@ pub(super) fn run_tangent(node: &PlacedNode) -> (f64, f64) {
 /// Where a seated run's name steps to [SPEC 16.4]: the displacement of every
 /// child it carries (its text), decided against `painted` — the anchor's own
 /// stack, in the anchor's frame — at `mid`, the middle of the run.
-pub(super) fn seat_text(run: &PlacedNode, mid: (f64, f64), painted: &[Bbox]) -> (f64, f64) {
+pub(super) fn seat_text(run: &PlacedNode, mid: (f64, f64), painted: &[Painted]) -> (f64, f64) {
     let Some(text) = content_box(run) else {
         return (0.0, 0.0);
     };
@@ -176,13 +178,13 @@ fn content_box(run: &PlacedNode) -> Option<Bbox> {
 mod tests {
     use super::*;
 
-    fn box_(x0: f64, y0: f64, x1: f64, y1: f64) -> Bbox {
-        Bbox {
+    fn box_(x0: f64, y0: f64, x1: f64, y1: f64) -> Painted {
+        Painted::of_box(Bbox {
             min_x: x0,
             min_y: y0,
             max_x: x1,
             max_y: y1,
-        }
+        })
     }
 
     #[test]
@@ -239,7 +241,7 @@ mod tests {
     fn the_step_is_the_constant_plus_half_the_names_reach_across() {
         // The daylight the reader sees is the constant, whatever the name
         // measures — so the two spellings sit at the same distance.
-        let text = box_(-20.0, -6.0, 20.0, 6.0);
+        let text = box_(-20.0, -6.0, 20.0, 6.0).bounds();
         assert_eq!(
             offset((0.0, -1.0), text),
             (0.0, -(NET_LABEL_OFFSET + 6.0)),

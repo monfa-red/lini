@@ -2711,7 +2711,9 @@ anything auto-measure can't read.
 *through* the circle, arrows out against the rims: `:top` / `:bottom` vertical,
 `:left` / `:right` horizontal, a corner the 45° diagonal. The value sits on the line
 when it fits inside; otherwise the line overruns the **anchored** rim and carries the
-text there — `hole:top (o)` spills upward. Deterministic, no solver.
+text there — `hole:top (o)` spills upward, and a spilled value **packs along that
+ray** (**Placement & stacking**, below), so two diameters read from one side stand
+clear of each other instead of overprinting. Deterministic, no solver.
 
 **`(<)` — the angle.** Binary, between two **line-like** anchors — a named edge, a
 `|line|` / `|centerline|`, a bbox side: the angle between their directions, the arc
@@ -2762,7 +2764,10 @@ row stands `clearance` off everything already painted on its side — geometry, 
 callouts, frames, earlier rows — never at a fixed pitch. `clearance` is a
 **minimum, not a coordinate** ([SPEC 17](#17-property-ledger--support)); a
 per-dim value widens that dim's own stand-off independently, and the packer may
-still go farther out to clear obstacles. `translate` stays the exact nudge; a dimension takes no `gap:`
+still go farther out to clear obstacles. A statement that leaves along a **ray**
+instead of seating on a side — a leader's text, a spilled diametral value — packs the
+same way **along its exit**, in source order, against those same painted bounds, so a
+note never lands on the one before it. `translate` stays the exact nudge; a dimension takes no `gap:`
 ([SPEC 21](#21-errors)).
 The anatomy is baked sheet constants ([SPEC 10.5](#105-layout-constants-baked)):
 extension lines spring from the anchors with a small gap and overshoot past the dim
@@ -2842,8 +2847,9 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
   past the geometry union (`note-offset`), horizontal — and the leader ends in a
   short horizontal **landing** (`note-landing`) before it, the drafting elbow.
   `side:` picks the direction instead (a side or a corner); a styled label's
-  `translate` nudges from there. The tip ray-casts onto the drawn outline
-  ([15.2](#152-anchors)).
+  `translate` nudges from there, and the text packs farther along its exit when
+  something already painted stands in the way ([15.6](#156-dimensions)). The tip
+  ray-casts onto the drawn outline ([15.2](#152-anchors)).
 - **The leader makes the note.** A callout's text lowers to a bare leaf — drafting
   callouts are unboxed. A **boxed** note is the `|note|` template
   ([SPEC 8](#8-templates)) wired with an ordinary two-ended link; a **balloon** is

@@ -9,7 +9,7 @@
 use super::super::ir::PlacedNode;
 use super::super::{approx_height, approx_width, prim};
 use super::anchors::{self, Anchor, Spot};
-use super::annotate::{Ctx, Paint, side_attr, side_unit};
+use super::annotate::{Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::DimText;
 use super::geometry::{P, dist};
 use super::symbols::CarriedStack;
@@ -24,8 +24,8 @@ use crate::span::Span;
 
 mod skeleton;
 
-pub(super) use skeleton::carried_push;
 use skeleton::leader_line;
+pub(super) use skeleton::outward_push;
 
 /// A measured `(o)` leader (an `R` onto its arc, a `⌀` onto a rim): the
 /// leader line tipped with the slender dim arrow, the composed text past the
@@ -39,10 +39,11 @@ pub(super) fn measured(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    rows: &Rows,
     stack: &CarriedStack,
     _span: Span,
 ) -> Vec<PlacedNode> {
-    lower_measured(ctx, a, aim, exact, None, attrs, text, paint, stack)
+    lower_measured(ctx, a, aim, exact, None, attrs, text, paint, rows, stack)
 }
 
 /// A measured `⌀` leader onto an analytic circle's rim.
@@ -55,10 +56,22 @@ pub(super) fn measured_circle(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    rows: &Rows,
     stack: &CarriedStack,
     _span: Span,
 ) -> Vec<PlacedNode> {
-    lower_measured(ctx, a, c, None, Some((c, r)), attrs, text, paint, stack)
+    lower_measured(
+        ctx,
+        a,
+        c,
+        None,
+        Some((c, r)),
+        attrs,
+        text,
+        paint,
+        rows,
+        stack,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -71,6 +84,7 @@ fn lower_measured(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    rows: &Rows,
     stack: &CarriedStack,
 ) -> Vec<PlacedNode> {
     let dir = side_attr(attrs).and_then(side_unit);
@@ -99,10 +113,10 @@ fn lower_measured(
         out.extend(text.nodes(centre, 0.0, paint.fs, paint.font));
         (out, line.u)
     };
-    // A carrying statement clears for text **and** stack [SPEC 15.9]: the
-    // block's measured box pushes the elbow farther along the exit.
+    // The block clears the part and packs against what is already painted,
+    // both by pushing the elbow farther along the exit [SPEC 15.6/15.9].
     let (out, u) = build(0.0);
-    let push = carried_push(&out, stack, u, ctx.extent);
+    let push = outward_push(&out, stack, u, rows, dims::dim_clearance(attrs));
     if push > 1e-9 { build(push).0 } else { out }
 }
 
@@ -115,6 +129,7 @@ fn lower_measured(
 pub(super) fn callout(
     ctx: &Ctx,
     w: &ResolvedLink,
+    rows: &Rows,
     stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of_link(ctx, w);
@@ -187,10 +202,10 @@ pub(super) fn callout(
         }
         Ok((out, line.u))
     };
-    // A carrying statement clears for text **and** stack [SPEC 15.9]: the
-    // block's measured box pushes the elbow farther along the exit.
+    // The block clears the part and packs against what is already painted,
+    // both by pushing the elbow farther along the exit [SPEC 15.6/15.9].
     let (out, u) = build(0.0)?;
-    let push = carried_push(&out, stack, u, ctx.extent);
+    let push = outward_push(&out, stack, u, rows, dims::dim_clearance(&w.attrs));
     Ok(if push > 1e-9 { build(push)?.0 } else { out })
 }
 

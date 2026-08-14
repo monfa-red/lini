@@ -6,6 +6,8 @@
 //! defines were already lowered by desugar, so resolve sees only primitives).
 //! [`program`] orchestrates them over the [`defaults`] table; [`merge`] folds
 //! resolved declarations and extracts markers; [`ir`] is the resolved form.
+//! [`pattern`] states the `pattern:` call's law once, for value resolution
+//! and layout alike.
 
 pub(crate) mod assets;
 mod cascade;
@@ -13,6 +15,7 @@ pub(crate) mod defaults;
 mod ir;
 mod links;
 mod merge;
+pub(crate) mod pattern;
 mod program;
 pub(crate) mod scene;
 pub(crate) mod value;

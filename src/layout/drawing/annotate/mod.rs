@@ -234,7 +234,7 @@ pub(in crate::layout) fn lower(
             // A one-ended statement is a callout — a `&` fan keeps every
             // endpoint on the one link [SPEC 15.7], so the shape, not the
             // endpoint count, decides.
-            LinkKind::Wire if w.one_ended => leaders::callout(&ctx, w, &stack)?,
+            LinkKind::Wire if w.one_ended => leaders::callout(&ctx, w, &rows, &stack)?,
             _ => leaders::arrows(&ctx, w)?,
         };
         nodes.extend(stack.seat(&nodes));

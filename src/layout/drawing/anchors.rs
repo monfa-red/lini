@@ -17,6 +17,7 @@ use crate::ast::Side;
 use crate::error::Error;
 use crate::layout::geom::dot;
 use crate::layout::geom::rotate;
+use crate::resolve::pattern::Pattern;
 use crate::resolve::{ResolvedEndpoint, ResolvedValue};
 
 /// Where an endpoint's anchor sits on its node — resolved against the node's
@@ -430,12 +431,9 @@ impl Anchor<'_> {
         let ResolvedValue::Call(call) = self.node.attrs.get("pattern")? else {
             return None;
         };
-        let num = |i: usize| call.args.get(i).and_then(ResolvedValue::as_number);
-        match call.name.as_str() {
-            "grid" => Some((num(0)? as usize) * (num(1)? as usize)),
-            "radial" => Some(num(0)? as usize),
-            _ => None,
-        }
+        // The call was read at resolve and again at expansion — a malformed
+        // one never reaches a dimension.
+        Some(Pattern::read(call, self.node.span).ok()?.count())
     }
 
     /// Node-local → drawing frame.

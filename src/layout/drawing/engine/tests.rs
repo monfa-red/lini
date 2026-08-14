@@ -253,11 +253,22 @@ fn a_radial_pattern_rings_its_pitch_circle() {
 
 #[test]
 fn radial_pattern_validates_its_arguments() {
+    let err = |src: &str| crate::testutil::resolve_err(src);
     assert!(
-        layout_err(
-            "{ layout: drawing; density: 1 }\n|hole#h| { width: 8; pattern: radial(1, 20) }\n"
+        err("{ layout: drawing; density: 1 }\n|hole#h| { width: 8; pattern: radial(1, 20) }\n")
+            .contains("'radial' needs count ≥ 2 and radius > 0")
+    );
+    // An argument the form has no room for is an error, not a silent drop —
+    // `radial(4, 14, 45)` read as a start angle and rotated nothing.
+    assert!(
+        err("{ layout: drawing; density: 1 }\n|hole#h| { width: 8; pattern: radial(4, 14, 45) }\n")
+            .contains("'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)")
+    );
+    assert!(
+        err(
+            "{ layout: drawing; density: 1 }\n|hole#h| { width: 8; pattern: grid(2, 1, 30, 0, 77) }\n"
         )
-        .contains("'radial' needs count ≥ 2 and radius > 0")
+        .contains("'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)")
     );
 }
 

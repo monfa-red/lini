@@ -6,7 +6,7 @@
 //! the axis. Span readings lower through `dims::stacked`, leaders through
 //! `leaders::measured*`.
 
-use super::super::ir::{Bbox, PlacedNode};
+use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot};
 use super::annotate::stack_side;
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
@@ -69,6 +69,7 @@ pub(super) fn lower(
                 &w.attrs,
                 text,
                 &paint,
+                rows,
                 stack,
                 w.span,
             ))
@@ -78,7 +79,7 @@ pub(super) fn lower(
             let text = compose(Glyph::Dia, 2.0 * r / ctx.scale)?;
             let c = a.to_world(*center);
             Ok(leaders::measured_circle(
-                ctx, &a, c, *r, &w.attrs, text, &paint, stack, w.span,
+                ctx, &a, c, *r, &w.attrs, text, &paint, rows, stack, w.span,
             ))
         }
         // A revolved `:segment` — the station's span across the axis, stacked.
@@ -121,13 +122,13 @@ pub(super) fn lower(
                 let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotate(side.outward(), a.rot));
                 let text = compose(Glyph::Dia, d / ctx.scale)?;
                 return Ok(diametral(
-                    centre_of(&a),
-                    d / 2.0,
+                    (centre_of(&a), d / 2.0),
                     dir,
                     text,
                     &paint,
-                    ctx.extent,
+                    rows,
                     stack,
+                    dim_clearance(&w.attrs),
                 ));
             }
             let g = a.geometry_box();
@@ -154,13 +155,13 @@ pub(super) fn lower(
             let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotate(*diag, a.rot));
             let text = compose(Glyph::Dia, d / ctx.scale)?;
             Ok(diametral(
-                centre_of(&a),
-                d / 2.0,
+                (centre_of(&a), d / 2.0),
                 dir,
                 text,
                 &paint,
-                ctx.extent,
+                rows,
                 stack,
+                dim_clearance(&w.attrs),
             ))
         }
         // Bare: a round node reads its ⌀ onto the rim; a revolved sketch its
@@ -177,6 +178,7 @@ pub(super) fn lower(
                     &w.attrs,
                     text,
                     &paint,
+                    rows,
                     stack,
                     w.span,
                 ));
@@ -279,16 +281,19 @@ fn station(
 /// when it fits inside, else the line overruns the **anchored** rim and
 /// carries the text there. A carrying statement fits only when its whole
 /// block — value plus carried stack — sits inside the circle, and a spilled
-/// block clears the drawn geometry [SPEC 15.9]. Deterministic, no solver.
+/// block clears the drawn geometry and packs against what is already painted,
+/// like every other ray-leaving annotation [SPEC 15.6/15.9]. Deterministic,
+/// no solver.
 fn diametral(
-    c: P,
-    r: f64,
+    circle: (P, f64),
     dir: P,
     text: DimText,
     paint: &Paint,
-    extent: Bbox,
+    rows: &Rows,
     stack: &CarriedStack,
+    clearance: f64,
 ) -> Vec<PlacedNode> {
+    let (c, r) = circle;
     let (fs, sw) = (paint.fs, paint.sw);
     let rim_a = (c.0 + dir.0 * r, c.1 + dir.1 * r);
     let rim_b = (c.0 - dir.0 * r, c.1 - dir.1 * r);
@@ -341,7 +346,7 @@ fn diametral(
     if fits {
         return out;
     }
-    let push = leaders::carried_push(&out, stack, dir, extent);
+    let push = leaders::outward_push(&out, stack, dir, rows, clearance);
     if push > 1e-9 { build(push) } else { out }
 }
 

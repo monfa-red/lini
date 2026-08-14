@@ -2,7 +2,9 @@
 //! property, legal in any layout: `grid(cols, rows, dx, dy)` copies at offsets
 //! (the **seed is copy one** and keeps the node's position), `radial(count,
 //! radius)` puts every copy **on** the circle (the node's position is the ring
-//! centre; nothing is drawn there).
+//! centre; nothing is drawn there). The call's own law — the names, arities
+//! and ranges — is [`crate::resolve::pattern`]'s; what lives here is the
+//! geometry and the rewrite.
 //!
 //! Expansion rewrites the placed node into an unpainted **carrier** that keeps
 //! its identity (id, position props) and holds the copies as children — each
@@ -13,7 +15,8 @@
 
 use super::ir::{Bbox, PlacedNode};
 use crate::error::Error;
-use crate::resolve::{ResolvedCall, ResolvedValue};
+use crate::resolve::ResolvedValue;
+use crate::resolve::pattern::Pattern;
 
 /// Expand a placed node's `pattern:` in place. `scale` is the node's **own**
 /// effective `scale:` — pattern offsets are part of its shape [SPEC 15.1]. The
@@ -23,15 +26,14 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     let Some(ResolvedValue::Call(call)) = placed.attrs.get("pattern").cloned() else {
         return Ok(());
     };
-    let offsets = offsets(&call, scale, placed)?;
+    let pattern = Pattern::read(&call, placed.span)?;
+    let offsets = offsets(pattern, scale);
 
     // The ring chrome stays at pattern level; everything else rides per copy.
     let (mut ring, rest): (Vec<PlacedNode>, Vec<PlacedNode>) = placed.children.drain(..).partition(
         |c| matches!(c.attrs.get("chrome"), Some(ResolvedValue::Ident(k)) if k == "ring"),
     );
-    if call.name == "radial"
-        && let Some(r) = call.args.get(1).and_then(ResolvedValue::as_number)
-    {
+    if let Some(r) = pattern.ring_radius() {
         let sw = ring
             .first()
             .and_then(|c| c.attrs.number("stroke-width"))
@@ -117,52 +119,25 @@ pub(super) fn carrier_bbox<'a>(children: impl IntoIterator<Item = &'a PlacedNode
 
 /// The copy offsets from the node's own position, in px. Grid: `(i·dx, j·dy)`,
 /// the seed at (0, 0); radial: on the circle, first at bearing 0, clockwise —
-/// the drafting datums [SPEC 15.4].
-fn offsets(call: &ResolvedCall, scale: f64, placed: &PlacedNode) -> Result<Vec<(f64, f64)>, Error> {
-    let num = |i: usize| call.args.get(i).and_then(ResolvedValue::as_number);
-    let usage = || {
-        Error::at(
-            placed.span,
-            "'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)",
-        )
-    };
-    match call.name.as_str() {
-        "grid" => {
-            let (Some(cols), Some(rows), Some(dx), Some(dy)) = (num(0), num(1), num(2), num(3))
-            else {
-                return Err(usage());
-            };
-            if cols < 1.0 || rows < 1.0 {
-                return Err(Error::at(placed.span, "'grid' needs cols ≥ 1 and rows ≥ 1"));
-            }
-            let (cols, rows) = (cols as usize, rows as usize);
+/// the drafting datums [SPEC 15.4]. The call itself was read into a
+/// [`Pattern`] already, so this is pure geometry.
+fn offsets(pattern: Pattern, scale: f64) -> Vec<(f64, f64)> {
+    match pattern {
+        Pattern::Grid { cols, rows, dx, dy } => {
             let mut out = Vec::with_capacity(cols * rows);
             for j in 0..rows {
                 for i in 0..cols {
                     out.push((i as f64 * dx * scale, j as f64 * dy * scale));
                 }
             }
-            Ok(out)
+            out
         }
-        "radial" => {
-            let (Some(count), Some(radius)) = (num(0), num(1)) else {
-                return Err(usage());
-            };
-            if count < 2.0 || radius <= 0.0 {
-                return Err(Error::at(
-                    placed.span,
-                    "'radial' needs count ≥ 2 and radius > 0",
-                ));
-            }
-            let n = count as usize;
-            Ok((0..n)
-                .map(|k| {
-                    let dir = super::drawing::geometry::bearing_dir(k as f64 * 360.0 / n as f64);
-                    (dir.0 * radius * scale, dir.1 * radius * scale)
-                })
-                .collect())
-        }
-        _ => Err(usage()),
+        Pattern::Radial { count, radius } => (0..count)
+            .map(|k| {
+                let dir = super::drawing::geometry::bearing_dir(k as f64 * 360.0 / count as f64);
+                (dir.0 * radius * scale, dir.1 * radius * scale)
+            })
+            .collect(),
     }
 }
 

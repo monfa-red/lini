@@ -14,7 +14,7 @@ mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
 pub(crate) mod schematic;
 pub(crate) mod sequence;
-mod stack;
+pub(crate) mod stack;
 pub(crate) mod text;
 pub(crate) mod tree;
 mod values;

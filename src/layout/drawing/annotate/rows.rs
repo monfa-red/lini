@@ -6,6 +6,11 @@
 //! anchor — both along a [`SeatLine`], the row's frame plus its outward
 //! direction and base.
 //!
+//! An annotation that leaves along a **ray** instead — a leader's text, a
+//! diametral value spilling past its rim — packs against that same painted
+//! set along its exit ([`Rows::spill`]), so every statement that can land on
+//! another one answers to one packer.
+//!
 //! The stacking itself is [`crate::layout::stack`], shared with the schematic
 //! engine's satellites; what lives here is the dimension flavour — the
 //! geometry extent rows stack outside of, the drafting band a dim paints, the
@@ -89,6 +94,12 @@ impl Rows {
         }
     }
 
+    /// The drawn-geometry extent the rows stack outside of — what a
+    /// ray-leaving annotation clears before it packs [SPEC 15.6/15.7].
+    pub(in crate::layout::drawing) fn extent(&self) -> Bbox {
+        self.extent
+    }
+
     /// Register one painted box the rows must clear — a placed drafting
     /// symbol's bounds [SPEC 15.9].
     pub(in crate::layout::drawing) fn obstruct(&mut self, bbox: Bbox) {
@@ -122,6 +133,20 @@ impl Rows {
             Side::Left => (false, -self.extent.min_x),
         };
         SeatLine::new(Frame::axis(axis), away_pos, base)
+    }
+
+    /// How far along `dir` a **ray-leaving** annotation's painted block must
+    /// go to stand `clearance` off everything already painted [SPEC 15.6]. A
+    /// leader's text and a spilled diametral value leave the geometry along a
+    /// ray instead of seating on a side row — so they pack along that ray,
+    /// against the same painted set and in the same source order; only the
+    /// shape of the seat differs. `block` is where the annotation would paint
+    /// unpushed and the answer is 0 when that already stands clear, so the
+    /// packer stays a stand-off and never a placement. The block is not
+    /// registered here: its lowered nodes are, through `obstruct_texts`,
+    /// which measures the real ink.
+    pub(in crate::layout::drawing) fn spill(&self, dir: P, block: Bbox, clearance: f64) -> f64 {
+        self.stack.clear(block, dir, clearance)
     }
 
     /// Seat a dim occupying `interval` along `at`, standing at least

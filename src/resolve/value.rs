@@ -11,6 +11,7 @@
 //! these are visual vars only [SPEC 10.2], never layout numbers.
 
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
+use super::pattern;
 use crate::error::Error;
 use crate::expr::{self, Env, Expr, FuncTable, Value as ExprValue};
 use crate::ledger::properties;
@@ -190,23 +191,24 @@ fn resolve_pen(
     Ok(ResolvedValue::Tuple(items))
 }
 
-/// A `pattern:` value [SPEC 15.4]: exactly one `grid(…)` / `radial(…)` call,
-/// kept structured for the layout replicator; its args fold to numbers.
+/// A `pattern:` value [SPEC 15.4]: exactly one replication call, kept
+/// structured for the layout replicator; its args fold to numbers and the
+/// whole call is read against [`pattern::Pattern`]'s law here, so a malformed
+/// one errors at the declaration it was written on.
 fn resolve_pattern(
     groups: &[Vec<Value>],
     span: Span,
     funcs: &FuncTable,
 ) -> Result<ResolvedValue, Error> {
-    if let [group] = groups
-        && let [Value::Call(c)] = group.as_slice()
-        && matches!(c.name.as_str(), "grid" | "radial")
-    {
-        return Ok(ResolvedValue::Call(fold_call_args(c, span, funcs)?));
-    }
-    Err(Error::at(
-        span,
-        "'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)",
-    ))
+    let [group] = groups else {
+        return Err(pattern::usage(span));
+    };
+    let [Value::Call(c)] = group.as_slice() else {
+        return Err(pattern::usage(span));
+    };
+    let call = fold_call_args(c, span, funcs)?;
+    pattern::Pattern::read(&call, span)?;
+    Ok(ResolvedValue::Call(call))
 }
 
 /// Fold a structured call's arguments to numbers, keeping the call itself.
