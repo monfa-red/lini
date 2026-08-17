@@ -81,8 +81,9 @@ pub(super) fn finish(
         h: bbox.h() + pad.top + pad.bottom,
     };
 
-    // A root `fill:` overrides the canvas colour inline [SPEC 18]; the default
-    // comes from the `.lini-canvas` rule (`--lini-bg`). `none` → transparent.
+    // The scene's background, if it asked for one — a root `fill:` is the whole
+    // lever [SPEC 18]. Unset (or `none`) leaves the figure transparent, so an
+    // embedded one shows its host page through.
     let canvas_fill = program.scene.attrs.get("fill").cloned();
 
     // A pages-only scene prints true-scale [SPEC 15.8]: its `viewBox` is px, but

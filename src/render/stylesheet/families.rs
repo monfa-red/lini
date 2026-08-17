@@ -76,21 +76,39 @@ pub(super) fn build_frame_rules(
         props: root_props,
     });
 
-    // The scene background plate: `.lini-canvas` fills with `--lini-bg`, or with
-    // the root's own `fill:` when it sets one — a schematic root's `--lini-sheet`
-    // wash rides exactly this. Stated as a CSS rule (not a presentation attr,
-    // where `var()` is invalid) so it switches live and bakes to a literal for
-    // resvg/email [SPEC 18]. The plate is class-styled like every other element,
-    // and there is one of it, so its rule states the whole paint and the rect
-    // inlines nothing (the class-diff law).
-    let canvas_fill = match &laid.canvas_fill {
-        Some(v) => css_value("fill", v, vars, opts),
-        None => live("bg", vars, opts),
-    };
-    rules.push(Rule {
-        class: "lini-canvas".into(),
-        props: vec![("fill".into(), canvas_fill)],
-    });
+    // The scene background plate [SPEC 18] — emitted only when the scene asks
+    // for one, so an embedded figure paints no background it was not given.
+    // This rule is the single decision: `render` draws the `<rect>` iff the
+    // sheet dresses `.lini-canvas`, so "no background" means no rule *and* no
+    // element — nothing for a host page to override.
+    if let Some(fill) = canvas_paint(laid, vars, opts) {
+        rules.push(Rule {
+            class: "lini-canvas".into(),
+            props: vec![("fill".into(), fill)],
+        });
+    }
+}
+
+/// The plate's `fill`, or `None` when the scene has no background.
+///
+/// The root's own `fill:` is the one authoring lever — a schematic root's
+/// `--lini-sheet` wash rides exactly this, and an explicit `none` is a scene
+/// that asked for transparency. Unset, live output stays transparent (it is
+/// meant to be inlined in a page that paints its own ground) while `--static`
+/// takes `--lini-bg`: that output is a standalone document for renderers with
+/// no CSS variables — resvg, raster, email — and must carry its own opaque
+/// backdrop, baked to the light or dark literal like every other value.
+///
+/// Stated as a CSS rule rather than a presentation attr (where `var()` is
+/// invalid) so it switches live; the plate is class-styled like every other
+/// element and there is one of it, so the rule states the whole paint and the
+/// rect inlines nothing (the class-diff law).
+fn canvas_paint(laid: &LaidOut, vars: &VarTable, opts: &Options) -> Option<String> {
+    match &laid.canvas_fill {
+        Some(ResolvedValue::Ident(name)) if name == "none" => None,
+        Some(v) => Some(css_value("fill", v, vars, opts)),
+        None => opts.static_mode.then(|| live("bg", vars, opts)),
+    }
 }
 
 /// Per-node paint defaults (only for shapes present), plus the structural

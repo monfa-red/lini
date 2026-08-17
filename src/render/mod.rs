@@ -167,17 +167,23 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     }
 
     // The backing rect paints the scene background over the whole viewBox
-    // [SPEC 13]; its whole fill — `--lini-bg`, or the root's own `fill:` — is
-    // stated by the `.lini-canvas` rule, so the rect carries no `style=`.
-    writeln!(
-        out,
-        r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}"/>"#,
-        num(vb.x),
-        num(vb.y),
-        num(vb.w),
-        num(vb.h),
-    )
-    .unwrap();
+    // [SPEC 18]. Its whole fill is stated by the `.lini-canvas` rule, so the
+    // rect carries no `style=` — and it exists exactly when that rule does, so
+    // a scene with no background (the live default) emits no element at all.
+    if ruleset
+        .provided(&["lini-canvas".to_string()], &[], "fill")
+        .is_some()
+    {
+        writeln!(
+            out,
+            r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}"/>"#,
+            num(vb.x),
+            num(vb.y),
+            num(vb.w),
+            num(vb.h),
+        )
+        .unwrap();
+    }
 
     out.push_str(&body);
     out.push_str("</svg>\n");
@@ -521,14 +527,32 @@ mod tests {
     }
 
     #[test]
-    fn canvas_rect_defaults_to_the_bg_var() {
-        // The backing rect is always present, painted by the `.lini-canvas` rule.
+    fn a_scene_with_no_background_emits_no_plate_at_all() {
+        // [SPEC 18] Live output is for inlining: a figure the source gave no
+        // background paints none — no rect, no rule, and so no `--lini-bg` in
+        // the layer block. A host page has nothing to override.
         let svg = svg_for("|box#x|\n");
+        assert!(!svg.contains("lini-canvas"), "{svg}");
+        assert!(!svg.contains("--lini-bg"), "{svg}");
+        // An explicit `none` is that same scene, said out loud.
+        assert!(!svg_for("{ fill: none; }\n|box#x|\n").contains("lini-canvas"));
+    }
+
+    #[test]
+    fn baked_output_carries_its_own_opaque_backdrop() {
+        // [SPEC 10.6/18] `--static` is a standalone document for renderers with
+        // no CSS variables, so it takes `--lini-bg` as a literal — but a scene
+        // that asked for transparency still gets it.
+        let svg = crate::compile_str_with(
+            "|box#x|\n",
+            &crate::Options {
+                static_mode: true,
+                ..Default::default()
+            },
+        )
+        .expect("compile");
+        assert!(svg.contains(" .lini-canvas { fill: white; }"), "{svg}");
         assert!(svg.contains(r#"<rect class="lini-canvas""#), "{svg}");
-        assert!(
-            svg.contains(" .lini-canvas { fill: var(--lini-bg); }"),
-            "{svg}"
-        );
     }
 
     #[test]

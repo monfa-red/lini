@@ -1258,8 +1258,9 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-sheet             light-dark(#faf5e6, #23221c)   the schematic scene wash
 ```
 
-`--lini-bg` paints the scene background (the canvas rect), so the diagram is
-self-contained in either mode. The default stack leads with the bundled
+`--lini-bg` is the **paper tone** — what a root `fill: --bg`, a `|page|` sheet, and
+a punched `|hole|` paint with. It is not painted unasked: a figure carries a
+background only when the scene sets one ([SPEC 18](#18-svg-output)). The default stack leads with the bundled
 proportional **Google Sans** ([SPEC 6](#6-paint-stroke--text)); its advances are
 what the proportional metrics table measures, so a diagram measures identically
 in every output mode ([SPEC 18](#18-svg-output)).
@@ -3550,7 +3551,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 
 | Property | Value | Default |
 |---|---|---|
-| `fill` | colour · `none` · gradient · `auto` | `--fill` (box) · `none` (block/line) · `--icon-fill` (icon) · `currentColor` (text) · `--bg` (root) |
+| `fill` | colour · `none` · gradient · `auto` | `--fill` (box) · `none` (block/line) · `--icon-fill` (icon) · `currentColor` (text) · `none` (root — the scene background, [SPEC 18](#18-svg-output)) |
 | `color` | colour | inherits (`--text-color`) — text colour for the subtree |
 | `opacity` | `0..1` | 1 |
 | `stroke` | colour · `none` · gradient | `--stroke` (`--group-stroke` on group) |
@@ -3693,21 +3694,29 @@ text props. Its own properties:
       .lini-scope-HHHHHHHH[data-theme="light"], [data-theme="light"] .lini-scope-HHHHHHHH { color-scheme: light; }
     }
     .lini-scope-HHHHHHHH { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
-    .lini-scope-HHHHHHHH .lini-canvas { fill: var(--lini-bg); }
+    .lini-scope-HHHHHHHH .lini-canvas { fill: #eef; }           /* only when the scene sets a background */
     .lini-scope-HHHHHHHH .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
     .lini-scope-HHHHHHHH .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
     .lini-scope-HHHHHHHH .lini-link { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
   <defs><!-- filters, gradients, clipPaths --></defs>
-  <rect class="lini-canvas" .../>   <!-- the scene background (--lini-bg) -->
+  <rect class="lini-canvas" .../>   <!-- …and then this plate, over the viewBox -->
   <g class="lini-scene"> <!-- scene tree --> </g>
   <g class="lini-links"> <!-- links --> </g>
 </svg>
 ```
 
+**A figure paints no background it was not given.** The `lini-canvas` plate — rect
+*and* rule — is emitted only when the scene asks for one: a root `fill:` (a schematic
+root's `--lini-sheet` wash rides exactly this), or `--static`, whose output is a
+standalone document for renderers with no CSS variables and so carries its own opaque
+`--lini-bg` backdrop. Otherwise there is no rect and no rule, so a figure inlined in a
+page shows the page through it with nothing to override. `fill: --bg` on the root is
+how a live figure asks for the themed backdrop; `fill: none` is that default said out
+loud.
+
 `viewBox` auto-sizes to content + the scene's `padding` (20 px by default) on every
-side. The `lini-canvas` backing rect paints the scene background (`--lini-bg`) over the
-viewBox; a root `fill:` overrides it (`none` = transparent). When a file's drawn content
+side. When a file's drawn content
 is only `|page|`s ([SPEC 15.8](#158-assemblies-views-sheets--titles)), the root `width`
 and `height` carry the sheet's trimmed size in real **millimetres** rather than pixels,
 so a print is true-scale; the `viewBox` is unchanged, so on-screen layout and CSS sizing

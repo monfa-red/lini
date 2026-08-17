@@ -3,21 +3,19 @@ source: tests/conformance.rs
 assertion_line: 86
 expression: svg
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-57.665 -48.5 115.33 97" width="115.33" height="97" class="lini lini-scope-85ea4a84">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-57.665 -48.5 115.33 97" width="115.33" height="97" class="lini lini-scope-07540472">
   <style>
     @layer lini.defaults {
-      :root, .lini-scope-85ea4a84 { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
-      .lini-scope-85ea4a84[data-theme="dark"], [data-theme="dark"] .lini-scope-85ea4a84 { color-scheme: dark; }
-      .lini-scope-85ea4a84[data-theme="light"], [data-theme="light"] .lini-scope-85ea4a84 { color-scheme: light; }
+      :root, .lini-scope-07540472 { color-scheme: light dark; --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
+      .lini-scope-07540472[data-theme="dark"], [data-theme="dark"] .lini-scope-07540472 { color-scheme: dark; }
+      .lini-scope-07540472[data-theme="light"], [data-theme="light"] .lini-scope-07540472 { color-scheme: light; }
     }
-    .lini-scope-85ea4a84 { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
-    .lini-scope-85ea4a84 .lini-canvas { fill: var(--lini-bg); }
-    .lini-scope-85ea4a84 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-85ea4a84 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-85ea4a84 .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
+    .lini-scope-07540472 { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini-scope-07540472 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-07540472 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-07540472 .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-57.665" y="-48.5" width="115.33" height="97"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
       <rect x="-36.665" y="-27.5" width="73.33" height="55" rx="8" ry="8"/>

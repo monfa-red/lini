@@ -140,7 +140,9 @@ mod tests {
         // Structural rules always paint with these.
         assert!(names.contains("fill"), "{names:?}");
         assert!(names.contains("stroke"), "{names:?}");
-        assert!(names.contains("bg"), "{names:?}");
+        // …but not `bg`: no background was asked for, so no plate rule names it.
+        assert!(!names.contains("bg"), "{names:?}");
+        assert!(used("{ fill: --bg }\n|box#x|\n").contains("bg"));
         // No palette hue is referenced.
         assert!(!names.contains("teal"), "{names:?}");
         assert!(!names.contains("rose"), "{names:?}");

@@ -273,6 +273,8 @@ OKLCH under the hood, so the ramp is perceptually even; pick any colour the same
 
 Geometry is always baked, so a theme only ever changes colour. `--theme light|dark|high-contrast` pins one palette at export; `lini theme NAME` prints it as an editable `--lini-*` file; `--static` flattens to literals and outlines text to paths for non-browser renderers and email.
 
+**Backgrounds are opt-in.** An SVG drops straight into a page: it paints no backdrop unless the scene asks for one, so the page shows through. Give the root a `fill:` when you want a plate — `fill: --bg` for the themed one, any colour or `gradient(…)` for your own. `--static` is the exception: that output is a standalone file, so it bakes `--lini-bg` in.
+
 Text is **Google Sans** (SIL OFL), the bundled proportional family Lini also measures with — real per-glyph metrics, so boxes hug their text exactly. `font-family: "Google Sans Code"` swaps to the bundled mono face. SVGs carry font *names* by default; `--embed-font` inlines the used weights for browsers, `--static` outlines them for anything else.
 
 ---

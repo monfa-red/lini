@@ -432,11 +432,9 @@ fn the_sheet_wash_rides_a_rule_at_the_root_and_on_a_nested_scope() {
         nested.contains(".lini .lini-schematic { fill: var(--lini-sheet); }"),
         "{nested}"
     );
-    // …and the page behind a nested sheet is still the ordinary background.
-    assert!(
-        nested.contains(".lini .lini-canvas { fill: var(--lini-bg); }"),
-        "{nested}"
-    );
+    // …and the scene behind a nested sheet is nobody's background but the
+    // host page's — only the `|schematic|` asked for a wash [SPEC 18].
+    assert!(!nested.contains("lini-canvas"), "{nested}");
 }
 
 #[test]

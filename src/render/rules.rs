@@ -115,8 +115,8 @@ impl RuleSet {
     /// a paint declaration on such an element outside it (that whack-a-mole is what
     /// this ended). The inline paints that remain in `render/` are all elements
     /// that carry no class rule and so cannot diff against one: icon role groups,
-    /// drawing-chrome geometry, `<defs>` gradient / hatch bodies, the canvas-fill
-    /// override, a gutter rect's varying `fill`, and the marker / stray diagnostics.
+    /// drawing-chrome geometry, `<defs>` gradient / hatch bodies, a gutter rect's
+    /// varying `fill`, and the marker / stray diagnostics.
     pub fn inline_paint_diff<'a>(
         &self,
         classes: &[String],
