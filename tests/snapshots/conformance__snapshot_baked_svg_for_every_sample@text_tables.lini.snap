@@ -1,27 +1,26 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/text_tables.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-328 -319.5 656 639" width="656" height="639" class="lini lini-scope-c6354ccc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-328 -319.5 656 639" width="656" height="639" class="lini lini-scope-f15d968c">
   <style>
-    .lini-scope-c6354ccc { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-c6354ccc .lini-canvas { fill: white; }
-    .lini-scope-c6354ccc .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-c6354ccc .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-c6354ccc .lini-gutter { stroke: none; }
-    .lini-scope-c6354ccc .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-c6354ccc .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-c6354ccc .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-c6354ccc .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini-scope-c6354ccc .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
-    .lini-scope-c6354ccc .lini-link { fill: none; stroke: #989898; stroke-width: 2; stroke-dasharray: none; color: #005d56; }
-    .lini-scope-c6354ccc .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 12px; font-weight: 400; }
-    .lini-scope-c6354ccc .lini-cut-bg { fill: white; stroke: none; }
-    .lini-scope-c6354ccc .lini-cut { fill: black; stroke: none; }
-    .lini-scope-c6354ccc .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-c6354ccc .lini-link .lini-marker { fill: #989898; }
+    .lini-scope-f15d968c { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-f15d968c .lini-canvas { fill: white; }
+    .lini-scope-f15d968c .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-f15d968c .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-f15d968c .lini-gutter { stroke: none; }
+    .lini-scope-f15d968c .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-f15d968c .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini-scope-f15d968c .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-f15d968c .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-f15d968c .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: 600; }
+    .lini-scope-f15d968c .lini-link { fill: none; stroke: #989898; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-f15d968c .lini-link-label { fill: #005d56; stroke: none; text-anchor: middle; font-size: 12px; font-weight: 400; }
+    .lini-scope-f15d968c .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-f15d968c .lini-cut { fill: black; stroke: none; }
+    .lini-scope-f15d968c .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-f15d968c .lini-link .lini-marker { fill: #989898; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>
@@ -631,7 +630,7 @@ input_file: samples/text_tables.lini
       <mask id="lini-label-cut-5f4973cc" maskUnits="userSpaceOnUse" x="34.945" y="97" width="24.0725" height="79"><rect class="lini-cut-bg" x="34.945" y="97" width="24.0725" height="79"/><rect class="lini-cut" x="19.5175" y="130.7362" width="75" height="15.6"/></mask>
       <path d="M 41.0175 99 L 41.0175 99 A 16 16 0 0 1 57.0175 115 L 57.0175 158 A 16 16 0 0 1 41.0175 174 L 40.445 174" mask="url(#lini-label-cut-5f4973cc)"/>
       <polygon class="lini-marker lini-marker-arrow" points="36.445,174 45.445,169.5 45.445,178.5"/>
-      <g class="lini-link-label" style="fill: #005d56; font-weight: bold">
+      <g class="lini-link-label" style="font-weight: bold">
         <use href="#lg1700-303" transform="translate(23.1175 142.8322) scale(0.012 -0.012)"/>
         <use href="#lg1700-310" transform="translate(29.1535 142.8322) scale(0.012 -0.012)"/>
         <use href="#lg1700-341" transform="translate(34.1335 142.8322) scale(0.012 -0.012)"/>

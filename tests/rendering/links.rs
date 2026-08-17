@@ -438,6 +438,46 @@ fn the_sheet_wash_rides_a_rule_at_the_root_and_on_a_nested_scope() {
 }
 
 #[test]
+fn a_two_ended_wires_net_name_is_inked_like_the_tag_it_is() {
+    // [SPEC 16.4/16.5] A sheet has no wire text but net names, so both
+    // spellings of one read alike: the minted tag (`- "SENSE"`) through the
+    // `|label|` bundle, the two-ended form through its link label. The ink is
+    // the scope's link `color:`, so it states on the label's own rule and no
+    // wire label inlines it — the class-diff sees its own value.
+    let sheet = render_live(&sch_sheet("", " \"3V3\"\nu1.b - \"SENSE\""));
+    assert!(
+        sheet.contains(".lini .lini-link-label { fill: var(--lini-label-ink);"),
+        "{sheet}"
+    );
+    assert!(
+        sheet.contains(".lini .lini-label { color: var(--lini-label-ink);"),
+        "{sheet}"
+    );
+    assert!(
+        !sheet.contains(r#"style="fill: var(--lini-label-ink)"#),
+        "{sheet}"
+    );
+    // …and the wire itself is unaffected: `color` is the label's ink, never
+    // the path's paint, so it never reaches the `.lini-link` rule.
+    let link_rule = sheet
+        .lines()
+        .find(|l| l.contains(".lini-link {"))
+        .expect("the link rule");
+    assert!(!link_rule.contains("color"), "{link_rule}");
+
+    // A diagram is the same one mechanism: a scope's link `color:` rides the
+    // label rule there too, rather than inlining on every label.
+    let diagram = render_live("{ |-| { color: crimson } }\n|box#a|\n|box#b|\na - b \"hi\"\n");
+    assert!(
+        diagram.contains(".lini .lini-link-label { fill: crimson;"),
+        "{diagram}"
+    );
+    // …while a label's *own* colour is a real difference, and still inlines.
+    let own = render_live("|box#a|\n|box#b|\na - b \"hi\" { color: crimson }\n");
+    assert!(own.contains(r#"style="fill: crimson""#), "{own}");
+}
+
+#[test]
 fn a_theme_retunes_the_whole_schematic_family_from_one_place() {
     // [SPEC 10.1/16.6] Every part of the classic look is a `--lini-*` role, so
     // one theme file re-dresses the sheet — the KiCad-esque alternative needs no

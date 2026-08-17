@@ -3439,8 +3439,10 @@ forks. Crossings stay clean and dotless. The wire laws:
   marker at a symbol-form label, errors. The op's **line** stays free
   (`--` is a dashed wire, plain `stroke-style`).
 - A two-ended wire's **net name is its link label** — `U7.VS - c24.p1 "VM"`
-  — placed by `along:` as everywhere, then stepped clear of the trace by the
-  net-label convention ([16.4](#164-labels)); a shaped tag on such a wire is a
+  — placed by `along:` as everywhere, then given the net-label convention
+  **whole** ([16.4](#164-labels)): stood clear of the trace *and* inked
+  `--lini-label-ink`, since a sheet carries no wire text but net names. Both
+  spellings of one name therefore read alike. A shaped tag on such a wire is a
   separate label-wire statement at one of its pins.
 - **A sheet never opens a trace.** The label knockout — a label riding its
   wire, the wire masked open behind it — is the **diagram** convention

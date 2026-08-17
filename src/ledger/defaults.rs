@@ -789,6 +789,12 @@ pub fn schematic_link_defaults() -> Vec<Decl> {
         var("stroke", "wire"),
         n("stroke-width", consts::SCH_STROKE_WIDTH),
         n("corner-radius", 0.0),
+        // A sheet has no wire text but net names [SPEC 16.5], so a wire's ink is
+        // the net tag's — the same `--lini-label-ink` the `|label|` bundle above
+        // wears, so the two spellings of one net name read alike and a theme
+        // retunes both from one place. `color`, not `fill`: it is the label's
+        // ink, inherited by the `<text>`, never the wire's own paint.
+        var("color", "label-ink"),
     ]
 }
 

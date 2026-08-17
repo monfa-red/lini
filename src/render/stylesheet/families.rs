@@ -474,7 +474,8 @@ pub(super) fn build_link_rules(
     if !laid.links.is_empty() || !laid.strays.is_empty() {
         // The link path's paint, in a fixed order (fill, stroke, width, dash) so a
         // root `link:` that overrides only some props still emits a stable rule. Font
-        // props from the defaults style labels, not the `<path>`, so they're dropped.
+        // props — and `color`, which is the label's ink — style labels, not the
+        // `<path>`, so they're dropped here and stated by the label rule instead.
         let defaults = &laid.sheet.link_defaults;
         let dp = paint_props(defaults, vars, opts);
         let from_defaults = |p: &str| dp.iter().find(|(k, _)| k == p).map(|(_, v)| v.clone());
@@ -492,7 +493,10 @@ pub(super) fn build_link_rules(
         ];
         for (k, v) in &dp {
             if !k.starts_with("font")
-                && !matches!(k.as_str(), "stroke" | "stroke-width" | "stroke-dasharray")
+                && !matches!(
+                    k.as_str(),
+                    "color" | "stroke" | "stroke-width" | "stroke-dasharray"
+                )
             {
                 props.push((k.clone(), v.clone()));
             }
@@ -548,10 +552,20 @@ pub(super) fn build_link_label_rules(
     // both coexist in one file; a label that overrides one inlines the difference.
     if has_link_labels {
         let wfs = laid.sheet.link_defaults.number("font-size").unwrap_or(11.0);
+        // …and its ink, from the scope's link `color:` — the same seat the size
+        // comes from, and stated as the very value the label's own attrs carry,
+        // so the class-diff sees its own value and inlines nothing (as
+        // `font-weight` already does). A sheet's wires ink their net names
+        // `--lini-label-ink` this way [SPEC 16.5]; with no `color:` the label
+        // inherits, which is what `currentColor` says.
+        let ink = laid.sheet.link_defaults.get("color").map_or_else(
+            || "currentColor".to_string(),
+            |v| css_value("fill", v, vars, opts),
+        );
         rules.push(Rule {
             class: "lini-link-label".into(),
             props: vec![
-                ("fill".into(), "currentColor".into()),
+                ("fill".into(), ink),
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
                 ("font-size".into(), format!("{}px", num(wfs))),
