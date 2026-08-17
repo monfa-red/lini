@@ -3,28 +3,28 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/schematic.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-310.424 -131.5 620.848 263" width="620.848" height="263" class="lini lini-scope-59d119d1">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-310.424 -131.5 620.848 263" width="620.848" height="263" class="lini lini-scope-de409ed0">
   <style>
-    .lini-scope-59d119d1 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-59d119d1 .lini-canvas { fill: #faf5e6; }
-    .lini-scope-59d119d1 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-59d119d1 .lini-oval { stroke-dasharray: none; }
-    .lini-scope-59d119d1 .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-59d119d1 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-59d119d1 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-59d119d1 .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-59d119d1 .lini-pin { font-size: 11px; }
-    .lini-scope-59d119d1 .lini-label { color: #0e6a6a; font-size: 11px; }
-    .lini-scope-59d119d1 .lini-junction { fill: #0a7a2f; stroke: none; }
-    .lini-scope-59d119d1 .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-59d119d1 .lini-sch-solid { fill: #8a1c1c; stroke: none; }
-    .lini-scope-59d119d1 .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
-    .lini-scope-59d119d1 .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-59d119d1 .lini-pin-number { color: #00000073; font-size: 10px; }
-    .lini-scope-59d119d1 .lini-ref { font-size: 12px; font-weight: 600; }
-    .lini-scope-59d119d1 .lini-part-value { font-size: 12px; }
-    .lini-scope-59d119d1 .lini-link { fill: none; stroke: #0a7a2f; stroke-width: 1.5; stroke-dasharray: none; }
-    .lini-scope-59d119d1 .lini-link-label { fill: #0e6a6a; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-de409ed0 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-de409ed0 .lini-canvas { fill: #faf5e6; }
+    .lini-scope-de409ed0 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-de409ed0 .lini-oval { stroke-dasharray: none; }
+    .lini-scope-de409ed0 .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-de409ed0 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-de409ed0 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-de409ed0 .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-de409ed0 .lini-pin { font-size: 11px; }
+    .lini-scope-de409ed0 .lini-label { color: #0e6a6a; font-size: 11px; }
+    .lini-scope-de409ed0 .lini-junction { fill: #0a7a2f; stroke: none; }
+    .lini-scope-de409ed0 .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-de409ed0 .lini-sch-solid { fill: #8a1c1c; stroke: none; }
+    .lini-scope-de409ed0 .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
+    .lini-scope-de409ed0 .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-de409ed0 .lini-pin-number { color: #00000073; font-size: 10px; }
+    .lini-scope-de409ed0 .lini-ref { font-size: 12px; font-weight: 600; }
+    .lini-scope-de409ed0 .lini-part-value { font-size: 12px; }
+    .lini-scope-de409ed0 .lini-link { fill: none; stroke: #0a7a2f; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini-scope-de409ed0 .lini-link-label { fill: #0e6a6a; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 500; }
   </style>
   <defs>
     <path id="lg1400-0" d="…"/>

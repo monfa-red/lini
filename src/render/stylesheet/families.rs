@@ -569,7 +569,13 @@ pub(super) fn build_link_label_rules(
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
                 ("font-size".into(), format!("{}px", num(wfs))),
-                ("font-weight".into(), live("link-font-weight", vars, opts)),
+                (
+                    "font-weight".into(),
+                    laid.sheet.link_defaults.get("font-weight").map_or_else(
+                        || live("link-font-weight", vars, opts),
+                        |v| css_value("font-weight", v, vars, opts),
+                    ),
+                ),
             ],
         });
     }

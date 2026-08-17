@@ -795,6 +795,9 @@ pub fn schematic_link_defaults() -> Vec<Decl> {
         // retunes both from one place. `color`, not `fill`: it is the label's
         // ink, inherited by the `<text>`, never the wire's own paint.
         var("color", "label-ink"),
+        // …and the same weight, for the same reason: a diagram label reads
+        // light against its wire, but a net name is body text on a sheet.
+        var("font-weight", "font-weight"),
     ]
 }
 
