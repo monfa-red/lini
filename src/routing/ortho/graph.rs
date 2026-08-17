@@ -20,6 +20,7 @@
 //! pitch in a void with room to spare.
 
 use super::rect::Rect;
+use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Axis {
@@ -141,6 +142,44 @@ pub struct Edge {
     pub channel: usize,
 }
 
+/// The same-axis channels sharing a boundary with one channel, in index order
+/// — the candidate set [`ChannelGraph::corridor`]'s walk filters by span.
+/// *Which* channels touch is pure geometry, fixed for the graph's life; which
+/// of them cover a given span is the only per-query part. Splitting the two is
+/// what keeps the walk off a scan of every channel per step.
+#[derive(Clone, Debug, PartialEq, Default)]
+struct Abut {
+    /// Channels whose upper wall is this one's lower wall.
+    below: Vec<usize>,
+    /// …and whose lower wall is this one's upper.
+    above: Vec<usize>,
+}
+
+/// [`ChannelGraph::corridor`]'s memo. The walk is a pure function of the graph
+/// and `(axis, chan, lo, hi)`, and the search asks the same question over and
+/// over — a sheet's route puts ~50k queries through ~900 distinct ones — so it
+/// is answered once each. A cache, not state: it compares equal to any other,
+/// clones empty, and never reaches `Debug`, so an equal graph stays equal
+/// however each was queried.
+#[derive(Default)]
+struct Memo(std::cell::RefCell<HashMap<(u8, usize, u64, u64), Corridor>>);
+
+impl Clone for Memo {
+    fn clone(&self) -> Self {
+        Memo::default()
+    }
+}
+impl PartialEq for Memo {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+impl std::fmt::Debug for Memo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Memo(..)")
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChannelGraph {
     pub h: Vec<Channel>,
@@ -148,6 +187,24 @@ pub struct ChannelGraph {
     pub cells: Vec<Cell>,
     pub edges: Vec<Edge>,
     pub adj: Vec<Vec<(usize, Axis, usize)>>,
+    /// Per `h` / `v` channel, its abutting neighbours — derived from that list
+    /// alone, so neither is independent state.
+    h_abut: Vec<Abut>,
+    v_abut: Vec<Abut>,
+    corridors: Memo,
+}
+
+/// Every channel's abutting neighbours, by exact wall equality — the test the
+/// walk used to make inline, hoisted out of it.
+fn abutments(list: &[Channel]) -> Vec<Abut> {
+    let walls: Vec<(f64, f64)> = list.iter().map(Channel::walls).collect();
+    walls
+        .iter()
+        .map(|&(w0, w1)| Abut {
+            below: (0..walls.len()).filter(|&j| walls[j].1 == w0).collect(),
+            above: (0..walls.len()).filter(|&j| walls[j].0 == w1).collect(),
+        })
+        .collect()
 }
 
 impl ChannelGraph {
@@ -159,27 +216,38 @@ impl ChannelGraph {
     /// the walk. Wall coordinates come from one sweep-edge list, so the
     /// abutting test is exact equality, as in [`soften`].
     pub fn corridor(&self, axis: Axis, chan: usize, lo: f64, hi: f64) -> Corridor {
-        let list = match axis {
-            Axis::H => &self.h,
-            Axis::V => &self.v,
+        // Keyed on the raw bits, so the memo asks the same equality the walk
+        // does — two spellings of one float would only cost a second entry.
+        let key = (axis.index(), chan, lo.to_bits(), hi.to_bits());
+        if let Some(hit) = self.corridors.0.borrow().get(&key) {
+            return hit.clone();
+        }
+        let found = self.walk_corridor(axis, chan, lo, hi);
+        self.corridors.0.borrow_mut().insert(key, found.clone());
+        found
+    }
+
+    fn walk_corridor(&self, axis: Axis, chan: usize, lo: f64, hi: f64) -> Corridor {
+        let (list, abut) = match axis {
+            Axis::H => (&self.h, &self.h_abut),
+            Axis::V => (&self.v, &self.v_abut),
         };
         let (t0, t1) = list[chan].travel();
         let (lo, hi) = (lo.max(t0).min(t1), hi.min(t1).max(t0));
-        let covers = |c: &Channel| {
-            let (a, b) = c.travel();
+        let covers = |&j: &usize| {
+            let (a, b) = list[j].travel();
             a <= lo && hi <= b
         };
-        let mut chans = vec![chan];
+        // A corridor is a handful of channels; sizing for that keeps the
+        // hottest walk in routing from reallocating its way out.
+        let mut chans = Vec::with_capacity(4);
+        chans.push(chan);
         let (mut low, mut high) = (chan, chan);
-        while let Some(j) =
-            (0..list.len()).find(|&j| list[j].walls().1 == list[low].walls().0 && covers(&list[j]))
-        {
+        while let Some(&j) = abut[low].below.iter().find(|j| covers(j)) {
             low = j;
             chans.push(j);
         }
-        while let Some(j) =
-            (0..list.len()).find(|&j| list[j].walls().0 == list[high].walls().1 && covers(&list[j]))
-        {
+        while let Some(&j) = abut[high].above.iter().find(|j| covers(j)) {
             high = j;
             chans.push(j);
         }
@@ -268,11 +336,14 @@ impl ChannelGraph {
         }
 
         ChannelGraph {
+            h_abut: abutments(&h),
+            v_abut: abutments(&v),
             h,
             v,
             cells,
             edges,
             adj,
+            corridors: Memo::default(),
         }
     }
 }
