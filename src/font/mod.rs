@@ -185,7 +185,11 @@ impl Font {
         face.cap_height as f64 / face.upem as f64
     }
 
-    /// The numeric CSS weight (400/500/600/700).
+    /// The numeric CSS weight (400/500/600/700) — the subset key. Only the
+    /// outlining / embedding path spells a weight as a number (measurement
+    /// indexes the metrics tables directly), so it rides the `font` feature
+    /// like [`subset_bytes`] does.
+    #[cfg(feature = "font")]
     pub fn weight(&self) -> u16 {
         [400, 500, 600, 700][self.weight]
     }
