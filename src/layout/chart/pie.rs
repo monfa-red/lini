@@ -138,6 +138,14 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         if value < 0.0 {
             return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
         }
+        // A slice is one wedge — a nested ring is deferred [SPEC 24], and a
+        // dropped child is never silent [SPEC 20].
+        if s.children.iter().any(|c| c.kind != NodeKind::Text) {
+            return Err(Error::at(
+                s.span,
+                "a '|slice|' is one wedge — multi-ring pie / sunburst is deferred",
+            ));
+        }
         let color = fill_color(&s.attrs)
             .unwrap_or_else(|| ResolvedValue::live(format!("{}-soft", palette::hue(i))));
         let edge = fill_outline(&s.attrs, &color);

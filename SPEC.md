@@ -1907,7 +1907,7 @@ its frame, and the cascade styles a chart like any box.
 | `categories` | chart | quoted-string list — the x-axis (or spoke) labels | indices `1…N` |
 | `samples` | chart | integer — `fn:` sample count | `24` |
 | `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
-| `legend` | both | `top` · `right` · `bottom` · `none` ⌛ ([SPEC 24](#24-deferred)) | auto (shown when ≥ 2 entries) — built |
+| `legend` | both | `top` · `right` · `bottom` · `none` ⌛ ([SPEC 24](#24-deferred)) — writing it is an **error** until the reader lands | auto (shown when ≥ 2 entries) — built |
 | `tooltip` | both | `none` · `hover` · `auto` · `always` ([14.8](#148-tooltips)) | `auto` |
 | `gap` | both | number — clear space between the plot and the title / legend outside it | `10` |
 
@@ -2103,7 +2103,7 @@ One smart-label rule, placed by where the label sits: on the `|chart|` / `|pie|`
 swatch **mirroring its paint** (fill and edge); on an `|axis|` → the **axis title**; on a
 `|band|` → a **tick** tinted its `fill`; on a `|mark|` → the annotation's **label**. A
 legend appears automatically at ≥ 2 entries; `legend:` will position or
-suppress it ([SPEC 24](#24-deferred)). **`gap:`**
+suppress it — writing it is an error until then ([SPEC 24](#24-deferred)). **`gap:`**
 sets the plot-to-title/legend clearance (default 10; `gap: 0` ≈ touching). The chart sets its
 **chrome** — title and legend — in **semibold**, while its **data text** — axis ticks, per-datum labels,
 annotation labels — stays **normal** weight, so the numbers read quietly beneath the captions.
@@ -3563,7 +3563,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `stroke` | colour · `none` · gradient | `--stroke` (`--group-stroke` on group) |
 | `stroke-width` | number | 2 (`\|group\|` and a sequence frame: 1) |
 | `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` link-only by design; `center` / `phantom` on shapes and `\|line\|`s ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
-| `radius` | number | 0 (block/rect) · 8 (box/group) — rect + polyline join; non-rect ⌛ |
+| `radius` | number | 0 (block/rect) · 8 (box/group) — rect + polyline join; on a hex / diamond / slant / poly an **error** ⌛ |
 | `shadow` | `N` · `dx dy` · `dx dy blur` · `dx dy blur color` | off — tint `--shadow-color` |
 
 **Text** — all **inherit** ([SPEC 6](#6-paint-stroke--text)); text-valid on a bare string:
@@ -3572,7 +3572,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 |---|---|---|---|
 | `font-family` | ident · string · `--var` | `--font-family` | live |
 | `font-size` | number | 15 — chrome derives from it: a link label 11∕15, a caption 12∕15 ([SPEC 6](#6-paint-stroke--text)) | baked |
-| `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `medium` (500, `--font-weight`) | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); arbitrary 100–900 ⌛ |
+| `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `medium` (500, `--font-weight`) | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); another number is an **error**, arbitrary 100–900 ⌛ |
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
 | `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
 | `text-decoration` | `underline` · `overline` · `line-through` · `none` | `none` | live |
@@ -3996,6 +3996,12 @@ machine-applicable replacement where one exists.
 | Class defined, never worn | `class '.hot' is never worn` (warning) |
 | Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` · `'padding' takes one value, not a comma list` · `'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom` |
 | Legacy space-separated list | `'data' takes comma-separated values — 'data: 9, 15, 24'` ([SPEC 2](#2-lexical-syntax)) |
+| Deferred property | `'legend' is named but not built yet — see SPEC 24` — a named-but-unbuilt row ([SPEC 24](#24-deferred)) errors, so accepting it can never freeze the non-behaviour |
+| Property on a link that has no link meaning | `'routing' is a scope's strategy — one scope, one strategy; set it on the container` (per-link routing is deferred; `clearance:` **is** a link's, [ROUTING.md](ROUTING.md)) |
+| `radius` on a non-rect primitive | `'radius' rounds a rect or a polyline join — rounding a '\|hex\|' is deferred` ([SPEC 24](#24-deferred)) |
+| Arbitrary numeric `font-weight` | `'font-weight' takes normal, medium, semibold, bold, or 400, 500, 600, 700` (100–900 is deferred) |
+| Gradient in a text-colour slot | `'color' takes a flat colour — a gradient fills a shape, and gradient-on-text is deferred` |
+| `%` outside a colour component | `'width' takes a number — a '%' is a colour component` ([SPEC 2](#2-lexical-syntax)) |
 
 **Identity, cascade & statements**
 
@@ -4089,6 +4095,7 @@ machine-applicable replacement where one exists.
 | A second root topic | `a tree has one root — '\|topic\|' 'X' is a second` |
 | `side:` top/bottom in `bilateral` | `a bilateral tree grows left and right — 'side' takes left or right` |
 | `side:` in `row` / `column` | `'side' picks a bilateral branch's half — this tree has one growth direction` |
+| Unknown `direction:` | `unknown direction 'radial' — a tree grows column, row, or bilateral` (a ring-radial tree is deferred, [SPEC 24](#24-deferred)) |
 
 **Layout — sequence**
 
@@ -4107,6 +4114,7 @@ machine-applicable replacement where one exists.
 | Series / axis / band / mark outside a chart | `'\|bars\|' is a chart series — it belongs in a 'layout: chart'` · `'\|axis\|' belongs in a 'layout: chart'` |
 | `\|slice\|` outside a pie | `'\|slice\|' belongs in a 'layout: pie'` |
 | Pie given an axis or series | `a pie's children are '\|slice\|' only` |
+| A `\|slice\|` with children | `a '\|slice\|' is one wedge — multi-ring pie / sunburst is deferred` ([SPEC 24](#24-deferred)) |
 | Empty chart / pie | `a chart needs at least one series` / `a pie needs at least one '\|slice\|'` |
 | Series with both / neither `data:` `fn:` | `a series takes 'data' or 'fn', not both` / `a series needs 'data' or 'fn'` |
 | `arrow` / `crow` marker on a series | `'marker: arrow' has no centred form on a chart — use dot, circle, or diamond` |
@@ -4429,8 +4437,25 @@ elsewhere. The backtick `` ` `` is unused and reserved.
 
 Named in the language, not built yet; the syntax is stable.
 
+Every item below whose syntax is **reachable today is an error** — never silently
+accepted, never silently dropped ([SPEC 21](#21-errors)). That is what keeps each
+one a free option: a refusal can be relaxed in any later release, a quiet
+acceptance could not. The repo's `tests/deferred.rs` pins one test per reachable
+slot, in this section's order, so the two can be diffed item by item.
+
 **Core**
 
+- **per-link routing** — `routing:` selects a **scope's** strategy (one scope,
+  one strategy — [SPEC 11](#11-the-layout-model), [ROUTING.md](ROUTING.md)); on a
+  link's own block or a `\|-\|` rule it is an error. (`clearance:` *is* a link's.)
+- **flow / grid callouts** — the one-ended leader (`a <- "THRU"`) is a drawing's
+  ([SPEC 15.7](#157-leaders-notes--line-conventions)); the same shape in a flow or
+  a schematic is an error.
+- **balloon-capsule leaders** — an inline capsule endpoint
+  (`p -> \|note\| "x"`) in a drawing, which never invents an endpoint
+  ([SPEC 15](#15-drawing)).
+- **fractional / `fr` grid tracks** — a track is a size, `auto`, or
+  `repeat(N[, size])`; equal tracks are `repeat(N)` ([SPEC 12](#12-flow-grid--tree)).
 - **a standalone hollow-circle endpoint** (marker and operator) — today `circle`
   is a larger *filled* `dot`, and the hollow ring appears only inside the ER
   cardinality glyphs ([SPEC 7](#7-nodes), [SPEC 9](#9-links)).

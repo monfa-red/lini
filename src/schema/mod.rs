@@ -459,7 +459,8 @@ pub fn reference_md() -> String {
     out.push_str(
         "Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a \
          bare text leaf · `baked` compiled into positions, never live CSS · \
-         `hard-gate` errors out of scope · `deferred` reader partly built · \
+         `hard-gate` errors out of scope · `deferred` named but not built — \
+         writing it errors ([SPEC 24](../SPEC.md#24-deferred)) · \
          `dual-channel` cascades two ways (`format`).\n\n",
     );
     out.push_str("| property | owners | shape | default | inherit | flags |\n");

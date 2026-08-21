@@ -112,6 +112,7 @@ pub(crate) fn validate(file: &File) -> Result<(), Error> {
     let root_tree = matches!(root_ident(&file.stylesheet, "layout"), Some(l) if l == "tree");
     if root_tree {
         check_root_count(&file.instances, Span::empty())?;
+        check_direction(root_ident(&file.stylesheet, "direction"), Span::empty())?;
     }
     // The scene's own topic children are the root (depth 0) of a root tree.
     let ctx = root_tree.then(|| TreeCtx {
@@ -153,6 +154,9 @@ fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error
     let tree = is_tree_style(&n.style);
     if tree {
         check_root_count(&n.children, n.span)?;
+    }
+    if tree || mindmap {
+        check_direction(ident_of(&n.style, "direction"), n.span)?;
     }
     // A tree container opens depth 0; a topic deepens its own context (a
     // stand-alone mindmap *is* depth 0, so its topic children are first-level
@@ -205,6 +209,19 @@ fn check_side(n: &Node, c: TreeCtx) -> Result<(), Error> {
                 "a bilateral tree grows left and right — 'side' takes left or right",
             )),
         },
+    }
+}
+
+/// A tree grows `column`, `row`, or `bilateral` [SPEC 12]. Anything else — a
+/// chart's `radial` among them, since a true ring-radial tree is deferred
+/// [SPEC 24] — errors rather than reading as the default.
+fn check_direction(ident: Option<&str>, span: Span) -> Result<(), Error> {
+    match ident {
+        None | Some("column" | "row" | "bilateral") => Ok(()),
+        Some(other) => Err(Error::at(
+            span,
+            format!("unknown direction '{other}' — a tree grows column, row, or bilateral"),
+        )),
     }
 }
 

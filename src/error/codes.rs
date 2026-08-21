@@ -185,6 +185,7 @@ catalog! {
     Validate 8 ACTIVATION_OUTSIDE_SEQUENCE "activation-outside-sequence";
     Validate 9 WAVY_OUTLINE "wavy-outline";
     Validate 10 INVALID_COLOR "invalid-color";
+    Validate 11 DEFERRED_PROPERTY "deferred-property";
 
     // ── Layout [SPEC 11–15] ──
     Layout 0 LAYOUT "layout";

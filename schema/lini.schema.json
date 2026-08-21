@@ -2558,7 +2558,7 @@
       "baked": false,
       "deferred": true,
       "dualChannel": false,
-      "example": "|chart| { categories: \"a\", \"b\"; legend: bottom; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]"
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]"
     },
     {
       "name": "tooltip",
@@ -3390,9 +3390,6 @@
       "name": "routing",
       "owners": [
         {
-          "kind": "link"
-        },
-        {
           "kind": "root"
         }
       ],
@@ -3405,7 +3402,7 @@
       "baked": false,
       "deferred": false,
       "dualChannel": false,
-      "example": "|box#a| \"A\"\n|box#b| \"B\"\na -> b { routing: orthogonal; }"
+      "example": "{ routing: natural; }\n|box#a| \"A\"\n|box#b| \"B\"\na -> b"
     },
     {
       "name": "along",

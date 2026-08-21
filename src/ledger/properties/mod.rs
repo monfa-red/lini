@@ -127,7 +127,8 @@ pub enum Gate {
 /// One property row. `text` marks the subset valid on a bare text leaf's own
 /// `{ }` [SPEC 3]; `baked` the baked-spacing text props that compile into
 /// glyph / line positions and are never live CSS [SPEC 6]; `deferred` a row
-/// honoured only in part — its full reader is deferred ([SPEC 24]), so the
+/// the language names whose reader is not built ([SPEC 24]) — validation errors
+/// on it, so accepting it silently can never freeze the non-behaviour, and the
 /// generated schema surfaces it as a deferred flag.
 // `default` and `gate` are data for schema generation and later validation
 // depth; today the tests pin them.
@@ -208,7 +209,7 @@ impl Property {
         self.gate = Gate::Hard;
         self
     }
-    /// Mark a partly-honoured row whose full reader is deferred [SPEC 24].
+    /// Mark a row whose reader is deferred [SPEC 24] — writing it errors.
     const fn deferred(mut self) -> Self {
         self.deferred = true;
         self
@@ -564,8 +565,9 @@ pub static PROPERTIES: &[Property] = &[
     row("hole", &[Type("pie")], One(Kind::Number), Engine, No),
     // The auto-legend (≥ 2 entries) is built [SPEC 14.6]; the `legend:`
     // placement / suppression reader is deferred [SPEC 24], so the row is
-    // marked `deferred` — the schema states it truthfully. Building the reader
-    // is a later minor's work.
+    // marked `deferred` — the schema states it truthfully and validation
+    // refuses the decl, keeping the placement values free for the minor that
+    // builds them.
     row(
         "legend",
         &[Type("chart"), Type("pie")],
@@ -877,13 +879,10 @@ pub static PROPERTIES: &[Property] = &[
         Bundles,
         ScopeLink,
     ),
-    row(
-        "routing",
-        &[Link, Root],
-        One(Kind::Ident),
-        Engine,
-        ScopeLink,
-    ),
+    // `routing:` picks a **scope's** strategy — one scope, one strategy
+    // [SPEC 11, ROUTING]. It reaches a link through the scope-link channel, so
+    // it is not a link's own property: per-link routing is deferred [SPEC 24].
+    row("routing", &[Root], One(Kind::Ident), Engine, ScopeLink),
     row("along", &[Link], List(Kind::Number), Engine, No),
     // A wire's corner rounding radius [SPEC 16.5/17]: `auto` (the default) is
     // the clearance-derived cap; a schematic scope's link default sets 0. Read

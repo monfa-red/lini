@@ -50,6 +50,7 @@ V007 place-outside-sequence
 V008 activation-outside-sequence
 V009 wavy-outline
 V010 invalid-color
+V011 deferred-property
 Y000 layout
 Y001 missing-required-property
 Y002 chart-data

@@ -11,7 +11,10 @@
 //!   warns only when it is dead for *every* wearer, and a defined class no one
 //!   wears warns too;
 //! - a **malformed value** the ledger shape can judge statically (arity,
-//!   range) is an error, wearer-independent.
+//!   range) is an error, wearer-independent;
+//! - a row the ledger marks **deferred** — named in the language, reader not
+//!   built ([SPEC 24]) — is an error wherever it is written, so accepting it
+//!   silently can never freeze the non-behaviour.
 //!
 //! The pass runs on the parsed file, before desugar, so it sees exactly what
 //! the user wrote; the handful of attr names desugar/layout generate
@@ -89,11 +92,14 @@ enum Wearer<'a> {
         parent_layout: Option<&'a str>,
     },
     /// A link (`|-|` / `(-)` rules, a link's own block) — polymorphic between
-    /// wires, dimensions, and mates, so only name/value checks apply.
+    /// wires, dimensions, and mates, so the owner check is the link's own set.
     Link,
     /// A bare text leaf — resolve enforces text validity with its own message;
-    /// only name/value checks apply here.
+    /// beyond name/value checks only the text-specific gates apply here.
     Text,
+    /// A wearer that isn't statically known (a class or id rule's tail) — the
+    /// wearer-independent name and value checks only [SPEC 17].
+    Unknown,
 }
 
 struct Ctx<'a> {
@@ -239,7 +245,7 @@ impl<'a> Ctx<'a> {
             }
             None => {
                 for d in &r.decls {
-                    self.check_decl(d, &Wearer::Text, out); // name + value checks only
+                    self.check_decl(d, &Wearer::Unknown, out); // name + value checks only
                 }
             }
         }
@@ -292,6 +298,19 @@ impl<'a> Ctx<'a> {
             out.push(diag);
             return;
         };
+        // A row the language names but has not built [SPEC 24]: accepting it
+        // silently would freeze the non-behaviour, so it is an error until its
+        // reader lands — the deferred feature stays a free option.
+        if prop.deferred {
+            out.push(
+                Diagnostic::error(
+                    d.span,
+                    format!("'{}' is named but not built yet — see SPEC 24", d.name),
+                )
+                .code(Code::DEFERRED_PROPERTY),
+            );
+            return;
+        }
         self.check_value(d, prop, wearer, out);
         let Wearer::Node {
             shown,
@@ -301,8 +320,16 @@ impl<'a> Ctx<'a> {
             parent_layout,
         } = wearer
         else {
-            if matches!(wearer, Wearer::Root) {
-                self.check_root_decl(d, prop, out);
+            match wearer {
+                Wearer::Root => self.check_root_decl(d, prop, out),
+                // A link's own block / a `|-|` / `(-)` rule wears the link's
+                // owner set — the same reading `check_unworn_classes` gives a
+                // class's link side [SPEC 17].
+                Wearer::Link if !link_accepts(prop) => out.push(
+                    Diagnostic::error(d.span, misuse_message(&d.name, "a link", prop))
+                        .code(Code::MISUSED_PROPERTY),
+                ),
+                _ => {}
             }
             return;
         };
@@ -326,6 +353,20 @@ impl<'a> Ctx<'a> {
                     "'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom",
                 )
                 .code(Code::WAVY_OUTLINE),
+            );
+        }
+        // `radius` rounds a rect's corners and a polyline's joins [SPEC 17];
+        // rounding the other primitives is deferred [SPEC 24], so a value that
+        // would be silently dropped errors instead.
+        if d.name == "radius" && matches!(*kind, "hex" | "slant" | "diamond" | "poly") {
+            out.push(
+                Diagnostic::error(
+                    d.span,
+                    format!(
+                        "'radius' rounds a rect or a polyline join — rounding a '|{shown}|' is deferred"
+                    ),
+                )
+                .code(Code::MISUSED_PROPERTY),
             );
         }
         // Layout-owned placement props hard-error out of context only where the
@@ -517,7 +558,41 @@ impl<'a> Ctx<'a> {
                     out.push(Diagnostic::error(d.span, msg).code(Code::MALFORMED_VALUE));
                 }
             }
+            // The built face set [SPEC 6]: the four keywords and their numbers.
+            // Arbitrary 100–900 is deferred [SPEC 24] — measurement would read
+            // the nearest built static while the emitted CSS asked for another,
+            // so a number outside the set errors instead of drifting.
+            "font-weight" => {
+                if let Some(Value::Number(n)) = single_value(d)
+                    && !matches!(*n as u16, 400 | 500 | 600 | 700)
+                {
+                    out.push(
+                        Diagnostic::error(
+                            d.span,
+                            "'font-weight' takes normal, medium, semibold, bold, or 400, 500, 600, 700",
+                        )
+                        .code(Code::MALFORMED_VALUE),
+                    );
+                }
+            }
             _ => {}
+        }
+        // A `%` is a colour component and nothing else [SPEC 2] — inside
+        // `rgb()` / `hsl()` / `oklch()` it rides the call (whose own reader
+        // range-checks it); written bare in any slot it would flow through to
+        // the output unread, so it errors here.
+        if d.groups
+            .iter()
+            .flatten()
+            .any(|v| matches!(v, Value::Percent(_)))
+        {
+            out.push(
+                Diagnostic::error(
+                    d.span,
+                    format!("'{}' takes a number — a '%' is a colour component", d.name),
+                )
+                .code(Code::MALFORMED_VALUE),
+            );
         }
         // A colour slot takes a colour [SPEC 2/10]: the ledger's `Colour` /
         // `Paint` kinds are what says a value *is* one, so the name check hangs
@@ -527,7 +602,26 @@ impl<'a> Ctx<'a> {
             prop.shape,
             Shape::One(Kind::Colour) | Shape::One(Kind::Paint)
         ) {
+            // Gradients fill a shape, never text [SPEC 10.3] — so a flat-colour
+            // slot (`color:`, the text colour of a whole subtree) and a text
+            // leaf's own paint both refuse one; gradient-on-text is deferred
+            // [SPEC 24].
+            let text_slot =
+                matches!(prop.shape, Shape::One(Kind::Colour)) || matches!(wearer, Wearer::Text);
             for v in d.groups.iter().flatten() {
+                if text_slot && is_gradient(v) {
+                    out.push(
+                        Diagnostic::error(
+                            d.span,
+                            format!(
+                                "'{}' takes a flat colour — a gradient fills a shape, and gradient-on-text is deferred",
+                                d.name
+                            ),
+                        )
+                        .code(Code::MALFORMED_VALUE),
+                    );
+                    continue;
+                }
                 check_colour(v, d.span, out);
             }
         }
@@ -670,9 +764,13 @@ fn node_accepts(prop: &Property, kind: &str, chain: &[String], own_layout: Optio
     })
 }
 
-/// Whether a link wearer can use the property (a class's link side).
+/// Whether a link wearer can use the property — a class's link side, and a
+/// link's own block / `|-|` / `(-)` rule. The text channel dresses a link's
+/// labels [SPEC 9]; everything else the link must own. A scope-config property
+/// reaches a link through the scope-link channel, not off the link's own block,
+/// so it is *not* accepted here (`routing:` — one scope, one strategy).
 fn link_accepts(prop: &Property) -> bool {
-    if prop.inherit != Inherit::No {
+    if prop.inherit == Inherit::Text {
         return true;
     }
     prop.owners.iter().any(|o| match o {
@@ -706,8 +804,15 @@ fn role_accepts(role: &str, kind: &str, chain: &[String]) -> bool {
 /// The contextual correction for a misused property [SPEC 21]: where it *does*
 /// read, phrased per owner kind.
 fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
-    if name == "density" {
-        return "'density' is scene config — set it in the root block".to_string();
+    // Scene config: the correction is where to *put* it, not a list of owners.
+    // `routing:` is the scope's strategy — one scope, one strategy [SPEC 11,
+    // ROUTING]; per-link routing is deferred [SPEC 24].
+    match name {
+        "density" => return "'density' is scene config — set it in the root block".to_string(),
+        "routing" => {
+            return "'routing' is a scope's strategy — one scope, one strategy; set it on the container".to_string();
+        }
+        _ => {}
     }
     let mut homes: Vec<String> = Vec::new();
     for o in prop.owners {
@@ -729,7 +834,9 @@ fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
             homes.push(home);
         }
     }
-    let wearer = if wearer.starts_with("the ") {
+    // A prose wearer ("the root block", "a link") reads as written; a bare type
+    // name is spelled as the author wrote it.
+    let wearer = if wearer.starts_with("the ") || wearer.starts_with("a ") {
         wearer.to_string()
     } else {
         format!("'|{wearer}|'")
@@ -863,6 +970,14 @@ fn check_colour(v: &Value, span: Span, out: &mut Vec<Diagnostic>) {
         }
         _ => {}
     }
+}
+
+/// Whether a value is one of the gradient paints [SPEC 10.3].
+fn is_gradient(v: &Value) -> bool {
+    matches!(v, Value::Call(c) if matches!(
+        c.name.as_str(),
+        "gradient" | "linear-gradient" | "radial-gradient"
+    ))
 }
 
 fn single_value(d: &Decl) -> Option<&Value> {

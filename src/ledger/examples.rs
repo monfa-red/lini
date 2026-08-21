@@ -200,9 +200,11 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "hole",
         "|pie| { hole: 0.5; } [\n  |slice| { value: 3; }\n  |slice| { value: 7; }\n]",
     ),
+    // Deferred [SPEC 24]: writing `legend:` errors, so the example shows what
+    // the row *does* today — the automatic legend two labelled series draw.
     (
         "legend",
-        "|chart| { categories: \"a\", \"b\"; legend: bottom; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]",
+        "|chart| { categories: \"a\", \"b\"; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]",
     ),
     (
         "tooltip",
@@ -355,9 +357,10 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "clearance",
         "|box#a| \"A\"\n|box#b| \"B\"\na -> b { clearance: 24; }",
     ),
+    // A scope's strategy, never a link's own [SPEC 11, ROUTING].
     (
         "routing",
-        "|box#a| \"A\"\n|box#b| \"B\"\na -> b { routing: orthogonal; }",
+        "{ routing: natural; }\n|box#a| \"A\"\n|box#b| \"B\"\na -> b",
     ),
     (
         "along",

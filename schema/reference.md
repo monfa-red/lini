@@ -103,7 +103,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 
 ## Properties
 
-Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare text leaf · `baked` compiled into positions, never live CSS · `hard-gate` errors out of scope · `deferred` reader partly built · `dual-channel` cascades two ways (`format`).
+Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare text leaf · `baked` compiled into positions, never live CSS · `hard-gate` errors out of scope · `deferred` named but not built — writing it errors ([SPEC 24](../SPEC.md#24-deferred)) · `dual-channel` cascades two ways (`format`).
 
 | property | owners | shape | default | inherit | flags |
 |---|---|---|---|---|---|
@@ -212,6 +212,6 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `shape` | \|label\| | `one:ident` | `bundles` | — | — |
 | `pins` | \|J\| | `one:number` | `none` | — | — |
 | `clearance` | link, root, dimension (role) | `one:number` | `bundles` | scope-link | — |
-| `routing` | link, root | `one:ident` | `engine` | scope-link | — |
+| `routing` | root | `one:ident` | `engine` | scope-link | — |
 | `along` | link | `list:number` | `engine` | — | — |
 | `corner-radius` | link | `one:any` | `engine` | — | — |
