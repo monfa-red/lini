@@ -23,6 +23,28 @@ fn json_clean_file_is_empty() {
     insta::assert_snapshot!(json("|box#a| \"hi\"\n"));
 }
 
+/// The other two record shapes the schema promises [SPEC 21]: a **warning**
+/// severity beside the errors, and a `related` span — the second declaration's
+/// record pointing back at the first.
+#[test]
+fn json_warning_and_related_span() {
+    let src = "{ .hot { fill: red; } }\n|box#a| \"one\"\n|box#a| \"two\"\n";
+    insta::assert_snapshot!(json(src));
+}
+
+/// …and the layout/routing tail of the pipeline, which only runs on a file
+/// that validates clean: an impossible link reports as a warning with its own
+/// phase code [ROUTING.md].
+#[test]
+fn json_routing_warning() {
+    let src = "{ layout: grid; columns: repeat(2, 60); rows: repeat(2, 60); gap: 8; clearance: 10 }\n\
+               |box#w| { cell: 1 1; width: 60; height: 60 }\n\
+               |box#a| { cell: 2 1; width: 60; height: 60 }\n\
+               |box#b| { cell: 2 2; width: 60; height: 60 }\n\
+               a:left -> b\n";
+    insta::assert_snapshot!(json(src));
+}
+
 /// The machine-applicable contract [ROADMAP 3.8]: the JSON advertises a
 /// verbatim replacement over a span; applying it to the source yields a file
 /// that compiles clean.

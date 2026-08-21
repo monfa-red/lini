@@ -246,8 +246,8 @@ fn the_dimension_tier_states_its_chrome_paint_as_compound_rules() {
         "{{ (-) {{ stroke: blue }} }}\n{CHROME}"
     )));
     for rule in [
-        ".lini .lini-dim-line.lini-dim { stroke: blue; }",
-        ".lini .lini-ext-line.lini-dim { stroke: blue; }",
+        ".lini .lini-dim-line.lini-dim { stroke: blue; stroke-width: 1; }",
+        ".lini .lini-ext-line.lini-dim { stroke: blue; stroke-width: 1; }",
         ".lini .lini-marker-dim.lini-dim { fill: blue; }",
     ] {
         assert!(css.contains(rule), "missing {rule}: {css}");

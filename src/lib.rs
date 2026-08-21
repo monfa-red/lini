@@ -324,6 +324,39 @@ pub mod testing {
             .map_err(|e| e.display_with_source(src, filename).to_string())
     }
 
+    /// Every **type** a source may wear as a `lini-{type}` class [SPEC 18] —
+    /// the primitives, the built-in templates, and the file's own `define`s
+    /// (each link of a define chain is itself one of the three). The hook
+    /// inventory (`tests/hooks.rs`) reads it to tell a type class apart from
+    /// generated chrome, so the two can never be confused by a name alone.
+    pub fn type_class_names(src: &str) -> Vec<String> {
+        let mut out: Vec<String> = crate::resolve::NodeKind::ALL
+            .iter()
+            .map(|k| k.as_str().to_string())
+            .collect();
+        out.extend(
+            crate::desugar::types::TEMPLATES
+                .iter()
+                .map(|(name, _)| (*name).to_string()),
+        );
+        if let Ok(tokens) = crate::lexer::lex(src)
+            && let Ok(file) = crate::syntax::parser::parse(src, &tokens)
+        {
+            out.extend(file.stylesheet.iter().filter_map(|it| match it {
+                crate::syntax::ast::StyleItem::Define(d) => Some(d.name.clone()),
+                _ => None,
+            }));
+        }
+        out
+    }
+
+    /// The hue names the mindmap walk mints `lini-hue-{name}` from [SPEC 8/18]
+    /// — the palette's own walk order, so the inventory checks the parameter
+    /// rather than waving the family through.
+    pub fn hue_class_names() -> Vec<String> {
+        crate::palette::walk_hues().map(str::to_string).collect()
+    }
+
     /// The showroom sheets [SPEC 19] plus the routing-oracle fixtures — the one
     /// corpus every sweep walks, sorted so failures report in a stable order.
     ///

@@ -617,7 +617,10 @@ pub enum SchChrome {
     SymbolSolid,
     /// A label's symbol linework (gnd, power, …) — the tag ink.
     TagLine,
-    /// A label symbol's solid detail, in the tag ink.
+    /// A label symbol's solid detail, in the tag ink. The tag half of the same
+    /// line/solid split the part symbols take — no built-in label symbol
+    /// carries filled detail today, so nothing wears it and SPEC 18 lists no
+    /// hook for it; a filled one lands here rather than in a second mechanism.
     TagSolid,
     /// A pin's stub lead.
     PinStub,

@@ -166,12 +166,12 @@ pub(super) fn build_shape_rules(
     }
     // The drawing dimension anatomy [SPEC 15.6] states its constant paint
     // once: dimension / leader linework at the drafting thin weight, and the
-    // extension lines a step lighter so the geometry reads first. The tones
-    // are the document's own annotation paint ([`annotation_tones`]) — a
-    // sheet that recolours its `|-|` states the colour here, once, instead of
-    // on every chrome node [SPEC 18]. After the shape rules, so they win the
-    // same-specificity tie.
-    let (dim_tone, ext_tone) = annotation_tones(laid, vars, opts);
+    // extension lines a step lighter so the geometry reads first. Tone *and*
+    // weight are the document's own annotation paint ([`annotation_paint`]) —
+    // a sheet that recolours or re-weights its `|-|` states it here, once,
+    // instead of on every chrome node [SPEC 18]. After the shape rules, so
+    // they win the same-specificity tie.
+    let (dim_tone, ext_tone, chrome_width) = annotation_paint(laid, vars, opts);
     emit_generated_default(
         rules,
         laid,
@@ -180,7 +180,7 @@ pub(super) fn build_shape_rules(
         vec![
             ("fill".into(), "none".into()),
             ("stroke".into(), dim_tone),
-            ("stroke-width".into(), "1".into()),
+            ("stroke-width".into(), chrome_width.clone()),
         ],
     );
     emit_generated_default(
@@ -191,7 +191,7 @@ pub(super) fn build_shape_rules(
         vec![
             ("fill".into(), "none".into()),
             ("stroke".into(), ext_tone),
-            ("stroke-width".into(), "1".into()),
+            ("stroke-width".into(), chrome_width),
         ],
     );
     // Annotation text reads at the caption size [SPEC 15.6/17]: stated once
@@ -696,7 +696,7 @@ pub(super) fn build_marker_rules(
     // The drafting heads read the document's annotation tone [SPEC 10.1/15.6]:
     // the slender dim arrow and the datum triangle fill with the linework
     // colour, after `.lini-marker` so the variant wins the same-specificity tie.
-    let (dim_tone, _) = annotation_tones(laid, vars, opts);
+    let (dim_tone, _, _) = annotation_paint(laid, vars, opts);
     // A leader's own head (`*-`'s dot, `->`'s arrow) is a *core* marker emitted
     // inside its `.lini-dim-line` `<g>`, not a lowered head node — so it takes
     // the linework tone through the same companion the wire's heads do, stated
@@ -746,19 +746,32 @@ pub(super) fn build_dim_tier_rules(
     opts: &Options,
 ) {
     let tier = crate::layout::drawing::annotate::DIM_TIER;
-    let (dim_tone, ext_tone) = tier_tones(laid, vars, opts);
-    // Role → the property that role paints with, and its tone: linework
-    // strokes, a head fills, an extension line takes the support tone.
-    for (role, prop, value) in [
-        ("dim-line", "stroke", &dim_tone),
-        ("ext-line", "stroke", &ext_tone),
-        ("marker-dim", "fill", &dim_tone),
-        ("marker-datum", "fill", &dim_tone),
+    let (dim_tone, ext_tone, width) = tier_paint(laid, vars, opts);
+    // Role → the paint that role wears: linework strokes at the tier's weight
+    // (an extension line in the support tone), a head fills. Each rule states
+    // the role's whole tier paint, so no chrome node inlines any of it.
+    for (role, props) in [
+        (
+            "dim-line",
+            vec![
+                ("stroke".to_string(), dim_tone.clone()),
+                ("stroke-width".to_string(), width.clone()),
+            ],
+        ),
+        (
+            "ext-line",
+            vec![
+                ("stroke".to_string(), ext_tone),
+                ("stroke-width".to_string(), width),
+            ],
+        ),
+        ("marker-dim", vec![("fill".to_string(), dim_tone.clone())]),
+        ("marker-datum", vec![("fill".to_string(), dim_tone)]),
     ] {
         if dim_roles.contains(role) {
             rules.push(Rule {
                 class: format!("lini-{role}.lini-{tier}"),
-                props: vec![(prop.into(), value.clone())],
+                props,
             });
         }
     }
@@ -831,28 +844,30 @@ fn link_default_stroke(laid: &LaidOut, vars: &VarTable, opts: &Options) -> Strin
         .unwrap_or_else(|| live("stroke", vars, opts))
 }
 
-/// The document's default drawing-annotation tones — `(linework, extension
-/// line)` — formatted for CSS. Read from the **one** place that decides a
-/// statement's chrome paint ([`crate::layout::drawing::annotate::default_paint`]),
-/// applied to a statement dressed by nothing but the document's `|-|`
-/// defaults; so the emitted chrome rules say exactly what a default statement
-/// paints and its wearers diff to nothing [SPEC 18].
-fn annotation_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String) {
-    tones(&laid.sheet.link_defaults, vars, opts)
+/// The document's default drawing-annotation paint — `(linework tone,
+/// extension-line tone, stroke width)` — formatted for CSS. Read from the
+/// **one** place that decides a statement's chrome paint
+/// ([`crate::layout::drawing::annotate::default_paint`]), applied to a
+/// statement dressed by nothing but the document's `|-|` defaults; so the
+/// emitted chrome rules say exactly what a default statement paints — tone
+/// *and* weight — and its wearers diff to nothing [SPEC 18].
+fn annotation_paint(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String, String) {
+    chrome_paint(&laid.sheet.chrome_defaults, vars, opts)
 }
 
-/// The same reading one cascade tier up: the tones a **dimension** dressed by
-/// nothing but the document's `(-)` rule paints — what the tier's compound
+/// The same reading one cascade tier up: the paint a **dimension** dressed by
+/// nothing but the document's `(-)` rule carries — what the tier's compound
 /// rules state [SPEC 4/15.6].
-fn tier_tones(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String) {
-    tones(&laid.sheet.dim_defaults, vars, opts)
+fn tier_paint(laid: &LaidOut, vars: &VarTable, opts: &Options) -> (String, String, String) {
+    chrome_paint(&laid.sheet.dim_defaults, vars, opts)
 }
 
-fn tones(defaults: &AttrMap, vars: &VarTable, opts: &Options) -> (String, String) {
-    let (dim, ext) = crate::layout::drawing::annotate::default_paint(defaults);
+fn chrome_paint(defaults: &AttrMap, vars: &VarTable, opts: &Options) -> (String, String, String) {
+    let (dim, ext, sw) = crate::layout::drawing::annotate::default_paint(defaults);
     (
         format_value(&dim, vars, opts),
         format_value(&ext, vars, opts),
+        num(sw),
     )
 }
 

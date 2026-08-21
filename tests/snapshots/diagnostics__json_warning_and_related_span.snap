@@ -1,0 +1,46 @@
+---
+source: tests/diagnostics.rs
+assertion_line: 32
+expression: json(src)
+---
+{
+  "file": "test.lini",
+  "diagnostics": [
+    {
+      "code": "V004",
+      "family": "class-never-worn",
+      "severity": "warning",
+      "message": "class '.hot' is never worn",
+      "span": {
+        "start": 2,
+        "end": 21,
+        "line": 1,
+        "col": 3,
+        "endLine": 1,
+        "endCol": 22
+      }
+    },
+    {
+      "code": "R003",
+      "family": "duplicate-id",
+      "severity": "error",
+      "message": "duplicate id 'a'",
+      "span": {
+        "start": 38,
+        "end": 51,
+        "line": 3,
+        "col": 1,
+        "endLine": 3,
+        "endCol": 14
+      },
+      "related": {
+        "start": 24,
+        "end": 37,
+        "line": 2,
+        "col": 1,
+        "endLine": 2,
+        "endCol": 14
+      }
+    }
+  ]
+}

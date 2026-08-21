@@ -39,9 +39,16 @@ pub struct SheetInputs {
     pub descendant_rules: Vec<(String, String, AttrMap)>,
     /// The link layer's defaults (the `.lini-link` rule).
     pub link_defaults: AttrMap,
-    /// The same recipe one tier further up: the **dimension** layer's defaults
-    /// — `link_defaults` with the `(-)` element rule layered over it [SPEC 4,
-    /// 15.6]. A drawing's chrome rules read it so a document that recolours
+    /// The same recipe read **in a drawing scope** [SPEC 15.1]: what a
+    /// statement dressed by nothing but the document's `|-|` paints there —
+    /// the thin annotation weight and caption size a drawing seats below every
+    /// user rule. The `.lini-dim-line` / `.lini-ext-line` / drafting-head
+    /// rules state it, so a `|drawing|` nested in a page has its chrome ride
+    /// those rules instead of inlining the difference on every node [SPEC 18].
+    pub chrome_defaults: AttrMap,
+    /// …and one tier further up: the **dimension** layer's defaults —
+    /// `chrome_defaults` with the `(-)` element rule layered over it [SPEC 4,
+    /// 15.6]. A drawing's tier rules read it so a document that recolours
     /// `(-)` alone states the tier's paint once, instead of on every dimension
     /// chrome node [SPEC 18].
     pub dim_defaults: AttrMap,

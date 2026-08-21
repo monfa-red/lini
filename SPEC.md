@@ -2987,8 +2987,10 @@ chart's `axis:`); the marker's *kind* decides what the view captures:
   **re-lays the marker's host view** at the detail's scale — a plain 2D re-render, no
   projection — keeping the **geometry**, **dropping the source's annotations**, shifted
   to centre the region and **clipped to the circle**, with the circle drawn as its
-  **boundary** (geometry weight; `stroke:` / `stroke-width:` restyle it,
-  [SPEC 18](#18-svg-output)). The detail's own `[ ]` annotations dimension the re-laid
+  **boundary** — the marker's own thin chrome paint, since the rim is the marker's
+  other half: both wear `.lini-magnifier`, so restyling the marker (`|magnifier| { … }`,
+  or the instance's block) carries the rim with it and neither inlines a thing
+  ([SPEC 18](#18-svg-output)). The detail's own `[ ]` annotations dimension the re-laid
   copies (by the ids the clones carry from the source); only the detail's own links may
   reach them. A detail re-renders a **base** view — `of:` can't name a marker inside
   another sourced view.
@@ -3820,14 +3822,21 @@ families:
 | sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
-| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` / `-solid` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+| marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--anchors--satellites)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
-(`lini-align-*` / `lini-justify-*` carry layout, not paint — they emit no CSS
-rule, the one `lini-` family host CSS cannot restyle. Generated **ids** are
-prefixed too, each tagged with a hash of what it names: `lini-aHHHHHHHH-` for
-embedded assets, `lini-shadow-HHHHHHHH` / `lini-clip-…` / `lini-gradient-…` /
-`lini-hatch-…` / `lini-label-cut-…` in `<defs>`.) A
-detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
+The last family is the odd one out: its classes carry **structure, not paint**.
+They emit no CSS rule and there is nothing in them for host CSS to restyle —
+the engine reads them back off the chain, and they are listed so nothing a
+figure emits is undocumented. Every other family above is a paint hook.
+
+Generated **ids** are prefixed too, each tagged with what it names:
+`lini-aHHHHHHHH-` for embedded assets, `lini-shadow-HHHHHHHH` / `lini-clip-…` /
+`lini-gradient-…` / `lini-hatch-…` / `lini-label-cut-…` / `lini-halo-…` in
+`<defs>`. The single unprefixed family is the `--static` **glyph def**,
+`lg{kind}{weight}-{gid}` — content-addressed like the rest (an outline is
+equal whenever those three are), and short because a page repeats it once per
+drawn glyph. A detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
 clips to its region with one interned `<clipPath>` in `<defs>` and a `clip-path=` on
 its group.
 
@@ -3977,6 +3986,16 @@ registry is the authority for code assignment** — this section's tables and
 their ordering carry no codes and never will. The human form above stays code-free; `lini --json`
 ([SPEC 20](#20-cli)) emits the structured record — code, severity, span, related span, and a
 machine-applicable replacement where one exists.
+
+**What the `--json` document freezes.** `{ "file", "diagnostics": [ … ] }`, each
+entry `code` · `family` · `severity` (`error` / `warning`) · `message` ·
+`span`, then `related` and `suggestion` (`span` · `replacement` ·
+`applicability`) where the diagnostic has them; every span carries
+`start` · `end` (byte offsets) and 1-based `line` · `col` · `endLine` ·
+`endCol`. A tool may rely on **that shape and those codes**; a `message`
+may be reworded to read better, and a later release may add fields — never
+rename or drop one. A clean file emits an empty `diagnostics` array, not an
+error.
 
 **Lexing**
 
@@ -4466,6 +4485,15 @@ slot, in this section's order, so the two can be diffed item by item.
 - arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
   **kerning-aware measurement** — the metrics ship without shaping (≈ 1 % on a
   proportional line, [SPEC 5](#5-the-box-model)).
+- **bidirectional text (RTL)** — measurement and outlining walk a string in the
+  order it was written: no Unicode bidi reordering, no shaping, and no `dir`
+  knob to ask for either. A live figure hands its `<text>` to the renderer,
+  which may reorder an Arabic or Hebrew run visually — against a box measured
+  without having done so; `--static` outlines the glyphs in written order, so
+  the run reads left-to-right and unjoined. There is nothing to refuse here
+  (the syntax reserves no surface for it), and nothing built: a right-to-left
+  scene is not supported today, and full bidi + shaping can land whole in any
+  later release.
 - a solid (`fill`-weight) icon variant (the built-in set is Phosphor duotone,
   behind a default-on `icons` cargo feature).
 - `aria-label`.

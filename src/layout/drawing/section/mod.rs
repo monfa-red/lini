@@ -171,7 +171,7 @@ pub(in crate::layout) fn layout_detail(
         inst.attrs.number("scale").unwrap_or(1.0),
     );
 
-    let mut kids = vec![clip_group, boundary_circle(inst, r)];
+    let mut kids = vec![clip_group, boundary_circle(marker, r)];
     kids.append(&mut annotations);
     kids.append(&mut own_kids);
     Ok(kids)
@@ -196,27 +196,16 @@ pub(in crate::layout) fn fill_of_title(
 }
 
 /// The detail's boundary circle [SPEC 15.8]: an unfilled ring at the clip
-/// radius, drawn over the clipped geometry. Default the geometry weight
-/// (`--stroke-dark`, width 2 — a `|drawing|` is frameless, so its default
-/// `stroke: none` is *not* the boundary's); an explicit `stroke:` / `stroke-width:`
-/// on the view restyles it (`{ of: c; stroke: red }` → a red ring).
-fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
-    // The rim wears `.lini-magnifier` — it is the marker's other half, and one
-    // rule keeps the pair's paint in lockstep [SPEC 15.8]: the thin light
-    // stroke of a view boundary (ISO draws it thin — it is chrome, not part
-    // geometry), never the part stroke. An authored `stroke`/`stroke-width`
-    // on the detail still wins as an inline diff.
-    let light = ResolvedValue::live("stroke-light");
-    let stroke = match inst.attrs.get("stroke") {
-        Some(ResolvedValue::Ident(s)) if s == "none" => light,
-        Some(v) => v.clone(),
-        None => light,
-    };
-    let width = inst
-        .attrs
-        .number("stroke-width")
-        .filter(|w| *w > 0.0)
-        .unwrap_or(1.0);
+/// radius, drawn over the clipped geometry.
+///
+/// The rim is **the marker's other half** — the `|magnifier|` is the single
+/// source of truth for the region — so it takes the marker's own resolved
+/// paint and wears `.lini-magnifier` beside it. One rule keeps the pair in
+/// lockstep and the default ring inlines nothing [SPEC 18]: the thin light
+/// stroke ISO draws a view boundary with (chrome, not part geometry). A
+/// restyled marker (`|magnifier| { stroke: red }`, or the instance's own
+/// block) carries its rim with it.
+fn boundary_circle(marker: &ResolvedInst, r: f64) -> PlacedNode {
     let mut c = prim::oval(
         0.0,
         0.0,
@@ -224,8 +213,11 @@ fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
         2.0 * r,
         ResolvedValue::Ident("none".into()),
     );
-    c.attrs.insert("stroke", stroke);
-    c.attrs.insert("stroke-width", ResolvedValue::Number(width));
+    for prop in ["stroke", "stroke-width"] {
+        if let Some(v) = marker.attrs.get(prop) {
+            c.attrs.insert(prop, v.clone());
+        }
+    }
     c.attrs.insert("fill", ResolvedValue::Ident("none".into()));
     c.type_chain.push("magnifier".to_string());
     c

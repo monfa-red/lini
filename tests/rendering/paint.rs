@@ -309,7 +309,7 @@ fn a_recoloured_dimension_tier_emits_no_inline_style() {
         "{ |-| { stroke: green }\n  (-) { stroke: blue } }\n|drawing#d| { unit: mm } [\n  |rect#p| { width: 40; height: 20 }\n  p:left (-) p:right\n  p:top (-) p:bottom { side: left }\n  p:top <- \"note\"\n]\n",
     );
     assert!(
-        svg.contains(".lini .lini-dim-line.lini-dim { stroke: blue; }"),
+        svg.contains(".lini .lini-dim-line.lini-dim { stroke: blue; stroke-width: 1; }"),
         "the tier states its linework once: {svg}"
     );
     assert!(

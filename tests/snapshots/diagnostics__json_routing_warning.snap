@@ -1,0 +1,24 @@
+---
+source: tests/diagnostics.rs
+assertion_line: 45
+expression: json(src)
+---
+{
+  "file": "test.lini",
+  "diagnostics": [
+    {
+      "code": "T001",
+      "family": "impossible-link",
+      "severity": "warning",
+      "message": "impossible (a -> b): no legal route: every side entry or channel is closed at this layout",
+      "span": {
+        "start": 220,
+        "end": 231,
+        "line": 5,
+        "col": 1,
+        "endLine": 5,
+        "endCol": 12
+      }
+    }
+  ]
+}

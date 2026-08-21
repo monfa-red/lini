@@ -493,8 +493,9 @@ fn build_sheet_inputs(
     // steps, in the same order, that [`links::resolve_link`]'s ladder walks for
     // a dimension, so the emitted chrome rules say exactly what a default
     // dimension paints.
-    let dress = |owner, tier: bool| {
-        let (base, _) = link_scope::link_scope(baked, root_attrs, &[], owner);
+    let dress = |scope_attrs: &AttrMap, tier: bool| {
+        let owner = link_scope::statement_owner(&[], scope_attrs);
+        let (base, _) = link_scope::link_scope(baked, scope_attrs, &[], owner);
         let mut ordered = base;
         ordered.extend(sheet.class_decls(links::LINK_CLASS));
         if tier {
@@ -502,19 +503,29 @@ fn build_sheet_inputs(
         }
         collapse(&ordered)
     };
-    let root_owner = link_scope::statement_owner(&[], root_attrs);
-    let link_defaults = dress(root_owner, false);
-    let dim_defaults = dress(root_owner, true);
+    let link_defaults = dress(root_attrs, false);
+    // The drawing chrome's dress reads the same ladder **in a drawing scope**
+    // [SPEC 15.1]: a drawing's links thin to 1 and read at the caption size, so
+    // a `|drawing|` nested in a page would otherwise have its chrome rules
+    // state the document's wire weight and every chrome node inline the
+    // difference [SPEC 18]. The scope's own dress is the one a default
+    // statement in it actually paints with.
+    let mut drawing_attrs = root_attrs.clone();
+    drawing_attrs.insert("layout", ResolvedValue::Ident("drawing".into()));
+    let chrome_defaults = dress(&drawing_attrs, false);
+    let dim_defaults = dress(&drawing_attrs, true);
     // …and the same recipe once more for a schematic scope written inside the
     // file: its wires wear `SCHEMATIC_WIRE_CLASS`, so the dress states itself
     // as the one `.lini-links .lini-schematic-wire` rule the renderer emits
     // for a generated class a wire wears — never a `style=` per wire
     // [SPEC 16.5/18].
     if nested_sheet {
+        let mut sheet_attrs = root_attrs.clone();
+        sheet_attrs.insert("layout", ResolvedValue::Ident("schematic".into()));
         descendant_rules.push((
             "lini-links".to_string(),
             link_scope::SCHEMATIC_WIRE_CLASS.to_string(),
-            dress(links::Owner::Sheet, false),
+            dress(&sheet_attrs, false),
         ));
     }
     // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
@@ -532,6 +543,7 @@ fn build_sheet_inputs(
         class_rules,
         descendant_rules,
         link_defaults,
+        chrome_defaults,
         dim_defaults,
         root_font_size,
         root_text,

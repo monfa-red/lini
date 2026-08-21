@@ -152,26 +152,27 @@ impl Paint {
 /// emits no rule for it and the class is never worn without one.
 pub(crate) const DIM_TIER: &str = "dim";
 
-/// The tones a document's drawing chrome defaults to — `(linework, extension
-/// line)` — for a statement dressed by nothing but the document's `|-|`
-/// defaults. The renderer states these in the `.lini-dim-line` /
-/// `.lini-ext-line` / drafting-head rules, so a sheet that recolours its
-/// annotations says it once in CSS rather than on every chrome node
-/// [SPEC 18]. Read through [`Paint::of`], the one place the tone is decided,
-/// so the rule and its wearers can never disagree.
-pub(crate) fn default_paint(link_defaults: &AttrMap) -> (ResolvedValue, ResolvedValue) {
+/// The paint a document's drawing chrome defaults to — `(linework tone,
+/// extension-line tone, stroke width)` — for a statement dressed by nothing
+/// but the document's `|-|` defaults. The renderer states these in the
+/// `.lini-dim-line` / `.lini-ext-line` / drafting-head rules, so a sheet that
+/// recolours **or re-weights** its annotations says it once in CSS rather than
+/// on every chrome node [SPEC 18]. Read through [`Paint::of`], the one place a
+/// statement's chrome paint is decided, so the rule and its wearers can never
+/// disagree.
+pub(crate) fn default_paint(link_defaults: &AttrMap) -> (ResolvedValue, ResolvedValue, f64) {
     let paint = Paint::of(link_defaults);
-    (paint.stroke, paint.light)
+    (paint.stroke, paint.light, paint.sw)
 }
 
 /// Whether the `(-)` tier repaints a drawing's chrome [SPEC 4/15.6/18] — the
-/// dimension layer's tones against the document's. The **one** test the tier
+/// dimension layer's paint against the document's. The **one** test the tier
 /// class and its rules both key on: layout mints [`DIM_TIER`] on a dimension's
 /// chrome only when this holds, and the renderer emits the tier's compound
 /// rules only for the roles that then wear it — so an unstyled document grows
 /// neither a class nor a rule.
 pub(crate) fn dim_tier_repaints(sheet: &crate::resolve::SheetInputs) -> bool {
-    default_paint(&sheet.dim_defaults) != default_paint(&sheet.link_defaults)
+    default_paint(&sheet.dim_defaults) != default_paint(&sheet.chrome_defaults)
 }
 
 /// Lower every non-mate link of a drawing scope. Leaders, callouts, and

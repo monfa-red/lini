@@ -344,8 +344,8 @@ input_file: samples/drawing_screw.lini
             </g>
           </g>
         </g>
-        <g class="lini-node lini-magnifier lini-oval" style="stroke-width: 2" transform="translate(0,10)">
-          <ellipse cx="0" cy="0" rx="101" ry="101"/>
+        <g class="lini-node lini-magnifier lini-oval" transform="translate(0,10)">
+          <ellipse cx="0" cy="0" rx="101.5" ry="101.5"/>
         </g>
         <g class="lini-node lini-dim-line lini-line" transform="translate(0,10)">
           <polyline points="0,-15.7715 0,-116 8,-116"/>
