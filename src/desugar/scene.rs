@@ -78,13 +78,27 @@ pub fn auto_created_ids(links: &[&Link], declared: &HashSet<String>) -> Vec<(Str
 /// unknown id there is a typo or a net name, so the first would-be creation is
 /// an error naming the quoted form it most likely meant. The refusal lives here,
 /// beside the creation it refuses, so the root walk and every body ask it once.
+///
+/// `minted` is what the scope's ref pass just stamped on its anonymous parts
+/// ([`super::schematic::mint_refs`]): a display ref is **not** an id [SPEC
+/// 16.2], so wiring one lands here — and says so, rather than reading as a
+/// stray net name.
 pub fn to_create(
     links: &[&Link],
     declared: &HashSet<String>,
     schematic: bool,
+    minted: &HashSet<String>,
 ) -> Result<Vec<(String, Span)>, Error> {
     let out = auto_created_ids(links, declared);
     match (schematic, out.first()) {
+        (true, Some((id, span))) if minted.contains(id) => Err(Error::at(
+            *span,
+            format!(
+                "link endpoint '{id}' not found — a minted ref is display-only; \
+                 give the part an id to wire it"
+            ),
+        )
+        .code(Code::UNKNOWN_ENDPOINT)),
         (true, Some((id, span))) => Err(Error::at(
             *span,
             format!(

@@ -189,6 +189,20 @@ pub(super) fn endpoint_error(
         )
         .code(Code::UNKNOWN_ENDPOINT);
     }
+    // A dot-path into a **terminal** [SPEC 16.4/21]: a `|label|` is its own
+    // connection point, so `n1.p1` names a pin that cannot exist — say that,
+    // not "not found at <scope>" with nothing to suggest.
+    if ep.path.len() > 1 {
+        let head: Vec<String> = scope
+            .iter()
+            .cloned()
+            .chain(ep.path[..ep.path.len() - 1].iter().cloned())
+            .collect();
+        if paths.is_terminal(&head.join(".")) {
+            return Error::at(ep.span, "a label is its own terminal — it has no pins")
+                .code(Code::UNKNOWN_ENDPOINT);
+        }
+    }
     let where_ = if scope.is_empty() {
         "at scene root".to_string()
     } else {

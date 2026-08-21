@@ -66,10 +66,7 @@ const BARE_TYPES: &[&str] = &["pin", "junction"];
 /// stamped on, never a type the author could have written.
 pub(crate) fn schematic_type<S: AsRef<str>>(chain: &[S]) -> Option<&str> {
     let member = |t: &str| sch_kind(&[t]).is_some() || BARE_TYPES.contains(&t);
-    let written = chain
-        .iter()
-        .map(|t| t.as_ref())
-        .find(|t| !crate::desugar::classes::is_utility_class(t))?;
+    let written = crate::desugar::classes::written_type(chain)?;
     chain.iter().any(|t| member(t.as_ref())).then_some(written)
 }
 

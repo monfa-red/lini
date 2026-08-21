@@ -310,6 +310,12 @@ fn resolve_call(
     if c.name == "oklch" {
         return resolve_oklch(&args, span);
     }
+    // The component colour calls [SPEC 2/10.1] pass through to CSS verbatim, so
+    // their channels are judged here — beside `oklch`'s own range gate — rather
+    // than shipping a renderer a colour it silently drops.
+    if matches!(c.name.as_str(), "rgb" | "rgba" | "hsl" | "hsla") {
+        validate_components(&c.name, &args, span)?;
+    }
     // Gradients [SPEC 10.3] stay a Call for the renderer to intern as a `url(#…)`
     // def; validate the shape here so a malformed one errors with a span rather than
     // emitting invalid CSS.
@@ -323,6 +329,41 @@ fn resolve_call(
         name: c.name.clone(),
         args,
     }))
+}
+
+/// `rgb()` / `rgba()` / `hsl()` / `hsla()` channel ranges [SPEC 2/21]: a
+/// percentage is 0..100 everywhere; a bare number is 0..255 for an RGB channel,
+/// 0..100 for a saturation / lightness, 0..1 for an alpha — and a hue is an
+/// angle, which wraps. A channel that is neither a number nor a percentage (a
+/// `--var`) is not this pass's to judge.
+fn validate_components(name: &str, args: &[ResolvedValue], span: Span) -> Result<(), Error> {
+    let hsl = name.starts_with("hsl");
+    let ok = |i: usize, v: &ResolvedValue| match v {
+        ResolvedValue::Percent(p) => (0.0..=100.0).contains(p),
+        ResolvedValue::Number(n) => match (hsl, i) {
+            (_, 3) => (0.0..=1.0).contains(n),
+            (true, 0) => true,
+            (true, _) => (0.0..=100.0).contains(n),
+            (false, _) => (0.0..=255.0).contains(n),
+        },
+        _ => true,
+    };
+    if args.iter().enumerate().all(|(i, v)| ok(i, v)) {
+        return Ok(());
+    }
+    let spelled: Vec<String> = args
+        .iter()
+        .map(|a| match a {
+            ResolvedValue::Number(n) => crate::render::values::num(*n),
+            ResolvedValue::Percent(p) => format!("{}%", crate::render::values::num(*p)),
+            _ => "…".to_string(),
+        })
+        .collect();
+    Err(Error::at(
+        span,
+        format!("{name}({}): component out of range", spelled.join(",")),
+    )
+    .code(crate::error::Code::COLOR_RANGE))
 }
 
 /// A gradient needs ≥ 2 colour stops; `linear-gradient` additionally takes a

@@ -237,12 +237,6 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
             Some("band") => bands.push(child),
             Some("mark") => marks.push(child),
             Some("bubble") => bubbles.push(child),
-            Some("slice") => {
-                return Err(Error::at(
-                    child.span,
-                    "'|slice|' belongs in a 'layout: pie'",
-                ));
-            }
             Some(other) => {
                 return Err(Error::at(
                     child.span,
@@ -258,6 +252,37 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
         }
     }
     Ok((series, axes, bands, marks, bubbles, title))
+}
+
+/// The series types [SPEC 14.2] — the tags that carry the fuller out-of-scope
+/// message; `|line|` is the reused primitive and never gated.
+const SERIES_TAGS: &[&str] = &["bars", "dots", "area", "bubble"];
+
+/// **The out-of-scope reading for the chart family** [SPEC 21], asked once per
+/// node by the shared type gate ([`crate::layout::gates`]): a series, `|axis|`,
+/// `|band|`, `|mark|` or `|bubble|` belongs in a `layout: chart`, a `|slice|`
+/// in a `layout: pie`. `None` when the node is no chart type, or when the scope
+/// it sits in owns it — inside a chart or pie the layout's own child reader
+/// judges what it holds.
+///
+/// A `|line|` is exempt: it is the core primitive [SPEC 7], legal anywhere, and
+/// a chart line *is* that primitive.
+pub(crate) fn out_of_scope(inst: &ResolvedInst, chart: bool, pie: bool) -> Option<Error> {
+    let role = tag(inst).filter(|t| *t != "line")?;
+    let written = crate::desugar::classes::written_type(&inst.type_chain)?;
+    let message = if role == "slice" {
+        if pie {
+            return None;
+        }
+        format!("'|{written}|' belongs in a 'layout: pie'")
+    } else if chart || pie {
+        return None;
+    } else if SERIES_TAGS.contains(&role) {
+        format!("'|{written}|' is a chart series — it belongs in a 'layout: chart'")
+    } else {
+        format!("'|{written}|' belongs in a 'layout: chart'")
+    };
+    Some(Error::at(inst.span, message).code(crate::error::Code::CHART_TYPE))
 }
 
 /// The chart type tag a child carries — its `type_chain` entry, or `line` for the

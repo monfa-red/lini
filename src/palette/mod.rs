@@ -7,6 +7,7 @@
 //! Re-tuning the whole palette is editing two tables: [`HUES`] (one seed per hue) and
 //! [`TIERS`] (the lightness/chroma targets per tier per mode). The data is the design.
 
+pub(crate) mod css;
 pub(crate) mod oklch;
 
 use crate::resolve::{ResolvedCall, ResolvedValue};

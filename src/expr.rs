@@ -478,6 +478,12 @@ fn eval_call(
     }
 }
 
+/// Whether the name is a math-library call — the parser's reading of the
+/// call-glue law [SPEC 2], asked off the one table that defines the library.
+pub(crate) fn is_math_call(name: &str) -> bool {
+    math_arity(name).is_some()
+}
+
 /// Fixed arity of a math builtin, or `None` for the variadic / user case.
 /// `min` / `max` (variadic) and `clamp` (3) are handled in `eval_math`.
 fn math_arity(name: &str) -> Option<Arity> {

@@ -144,6 +144,8 @@ catalog! {
     Parse 3 INVALID_ID "invalid-id";
     Parse 4 DECL_OUTSIDE_BLOCK "declaration-outside-block";
     Parse 5 STYLESHEET_ORDER "stylesheet-after-canvas";
+    Parse 6 TEXT_CHILDREN "text-carries-children";
+    Parse 7 CALL_GLUE "spaced-call-paren";
 
     // ── Resolve [SPEC 6/8] — desugar/lowering counts as resolve. ──
     Resolve 0 RESOLVE "resolve";
@@ -169,6 +171,7 @@ catalog! {
     Resolve 20 SCHEMATIC_INVENT "schematic-invent";
     Resolve 21 SCHEMATIC_ARITY "schematic-arity";
     Resolve 22 DUPLICATE_WIRE "duplicate-wire";
+    Resolve 23 COLOR_RANGE "color-component-out-of-range";
 
     // ── Validate [SPEC 17/21] ──
     Validate 0 VALIDATE "validate";
@@ -181,6 +184,7 @@ catalog! {
     Validate 7 PLACE_OUTSIDE_SEQUENCE "place-outside-sequence";
     Validate 8 ACTIVATION_OUTSIDE_SEQUENCE "activation-outside-sequence";
     Validate 9 WAVY_OUTLINE "wavy-outline";
+    Validate 10 INVALID_COLOR "invalid-color";
 
     // ── Layout [SPEC 11–15] ──
     Layout 0 LAYOUT "layout";
@@ -192,6 +196,7 @@ catalog! {
     Layout 6 SIDE_ON_TERMINAL "side-on-terminal";
     Layout 7 SCHEMATIC_SEAT "schematic-seat";
     Layout 8 SCHEMATIC_TYPE "schematic-type";
+    Layout 9 CHART_TYPE "chart-type";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

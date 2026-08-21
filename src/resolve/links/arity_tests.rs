@@ -69,6 +69,23 @@ fn a_label_is_its_own_terminal() {
 }
 
 #[test]
+fn a_dot_path_into_a_label_says_a_label_has_no_pins() {
+    // [SPEC 16.4/21] the terminal *is* the label, so `n1.p1` names a pin that
+    // cannot exist — the endpoint error says so instead of listing nothing.
+    let src = sheet(&(part("u1", 2) + "|label#n1| \"VCC\"\nu1.a - n1.p1\n"));
+    assert_eq!(
+        err(&src).message,
+        "a label is its own terminal — it has no pins"
+    );
+    // Its symbol-form defines answer the same way.
+    let gnd = sheet(&(part("u1", 2) + "|gnd#g1|\nu1.a - g1.p1\n"));
+    assert_eq!(
+        err(&gnd).message,
+        "a label is its own terminal — it has no pins"
+    );
+}
+
+#[test]
 fn a_two_pin_part_takes_the_next_free_pin_in_pin_order() {
     // [SPEC 16.5] p1 then p2, in the type's own pin order.
     let src = sheet(&(part("u1", 2) + "|R#r1|\nu1.a - r1\nu1.b - r1\n"));

@@ -679,15 +679,25 @@ pub(crate) fn join_path(prefix: &[String], id: &str) -> String {
 /// auto-create [SPEC 9].
 pub struct PathIndex {
     paths: Vec<String>,
+    /// The paths that are **terminals** — a `|label|` is its own connection
+    /// point [SPEC 16.4], so it has no pins for a dot-path to reach. Collected
+    /// on the same walk, so the endpoint error can say why the path failed.
+    terminals: Vec<String>,
 }
 
 impl PathIndex {
     pub fn build(nodes: &[ResolvedInst]) -> Self {
         let mut paths = Vec::new();
+        let mut terminals = Vec::new();
         for n in nodes {
-            walk_paths(n, &mut Vec::new(), &mut paths);
+            walk_paths(n, &mut Vec::new(), &mut paths, &mut terminals);
         }
-        Self { paths }
+        Self { paths, terminals }
+    }
+
+    /// Whether the path names a terminal — a node nothing addresses *into*.
+    pub fn is_terminal(&self, path: &str) -> bool {
+        self.terminals.iter().any(|p| p == path)
     }
 
     pub fn contains(&self, path: &str) -> bool {
@@ -797,13 +807,23 @@ where
     found
 }
 
-fn walk_paths(n: &ResolvedInst, stack: &mut Vec<String>, out: &mut Vec<String>) {
+fn walk_paths(
+    n: &ResolvedInst,
+    stack: &mut Vec<String>,
+    out: &mut Vec<String>,
+    terminals: &mut Vec<String>,
+) {
     if let Some(id) = &n.id {
         stack.push(id.clone());
         out.push(stack.join("."));
+        if crate::desugar::schematic::sch_kind(&n.type_chain)
+            == Some(crate::desugar::schematic::SchKind::Label)
+        {
+            terminals.push(stack.join("."));
+        }
     }
     for c in &n.children {
-        walk_paths(c, stack, out);
+        walk_paths(c, stack, out, terminals);
     }
     if n.id.is_some() {
         stack.pop();

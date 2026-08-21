@@ -232,6 +232,28 @@ fn a_name_value_stays_a_bare_ident() {
         .expect("a bare name value resolves");
 }
 
+#[test]
+fn a_colour_component_out_of_range_errors() {
+    // [SPEC 2/21] `rgb()` / `hsl()` reach CSS verbatim, so their channels are
+    // judged here — the `oklch()` range gate's twin.
+    let err = |src: &str| lini::check(src).expect_err("out of range").message;
+    assert_eq!(
+        err("|box#x| { fill: rgb(300, 0, 0) }\n"),
+        "rgb(300,0,0): component out of range"
+    );
+    assert_eq!(
+        err("|box#x| { fill: hsl(200, 150%, 50%) }\n"),
+        "hsl(200,150%,50%): component out of range"
+    );
+    assert_eq!(
+        err("|box#x| { fill: rgba(0, 0, 0, 4) }\n"),
+        "rgba(0,0,0,4): component out of range"
+    );
+    // In range — including a hue past 360, which wraps like any angle.
+    lini::check("|box#x| { fill: rgb(200, 10, 0); stroke: hsl(400, 50%, 50%) }\n")
+        .expect("channels in range");
+}
+
 // ─────────────────────────── Drawing gates [SPEC 15, 20] ───────────────────────────
 //
 // Stage 1 (DRAWING-0.16.md): the whole drawing vocabulary parses and resolves; the ops,

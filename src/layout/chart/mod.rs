@@ -31,6 +31,7 @@ mod scale;
 mod tint;
 mod tooltip;
 
+pub(super) use model::out_of_scope;
 pub(super) use pie::{is_pie, layout_pie};
 
 use crate::error::Error;

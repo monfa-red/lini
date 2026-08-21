@@ -30,6 +30,13 @@ impl<'a> Parser<'a> {
         self.pos += 1;
         let classes = self.parse_classes()?;
         let (style, style_span) = self.opt_style()?;
+        // Text is a leaf [SPEC 3/21]: it wears classes and carries a style
+        // block, but a `[ ]` needs a box to hold it.
+        if matches!(self.kind(), Some(TokKind::LBracket)) {
+            return Err(self
+                .err("text content takes no '[ ]' — wrap it in '|block|' to give it children")
+                .code(Code::TEXT_CHILDREN));
+        }
         Ok(TextNode {
             text,
             classes,

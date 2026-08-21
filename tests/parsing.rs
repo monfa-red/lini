@@ -67,6 +67,38 @@ fn err_link_body_holds_only_labels() {
 }
 
 #[test]
+fn err_text_carries_children() {
+    // [SPEC 3/21] a string is a leaf: it wears classes and takes a style block,
+    // but children need a box.
+    assert_parse_error(
+        "\"hello\" [ \"x\" ]\n",
+        "text content takes no '[ ]' — wrap it in '|block|' to give it children",
+    );
+    assert_parse_error(
+        "|box#b| [ \"hello\" [ \"x\" ] ]\n",
+        "text content takes no '[ ]' — wrap it in '|block|' to give it children",
+    );
+    // The tail a text leaf *does* take.
+    lini::check_parse("|box#b| [ \"hello\" .quiet { color: red } ]\n").expect("a styled leaf");
+}
+
+#[test]
+fn err_spaced_call_paren() {
+    // [SPEC 2/21] a call's '(' glues to its name — the rule that keeps
+    // `move(-2, 5)`, `(8 * 2)`, and `pin (o)` apart.
+    assert_parse_error(
+        "|box#a| { fill: rgb (1, 2, 3) }\n",
+        "a call's '(' glues to its name — write 'rgb(…)'",
+    );
+    assert_parse_error(
+        "|box#a| { width: min (3, 4) }\n",
+        "a call's '(' glues to its name — write 'rgb(…)'",
+    );
+    // A free-standing group is still a math group.
+    lini::check_parse("|box#a| { width: (8 * 2) }\n").expect("a math group");
+}
+
+#[test]
 fn lini_var_value_parses_anywhere() {
     // SPEC §11.2: `--name` is a first-class value form.
     lini::check_parse("{ --gap: --my-gap; }\n|box#cat|\n").expect("--gap parses");

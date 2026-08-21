@@ -737,3 +737,75 @@ fn pie_errors_speak_spec() {
         assert!(e.contains(want), "{src:?}\n  wanted {want:?}, got {e:?}");
     }
 }
+
+/// **The out-of-scope type gate** [SPEC 21], the schematic family's twin: every
+/// chart type is an error outside its layout, reported by the type the author
+/// wrote — and legal the moment its scope encloses it.
+#[test]
+fn every_chart_type_is_gated_and_named_as_written() {
+    for (part, message) in [
+        (
+            "|bars| { data: 1, 2 }",
+            "'|bars|' is a chart series — it belongs in a 'layout: chart'",
+        ),
+        (
+            "|dots| { data: 1, 2 }",
+            "'|dots|' is a chart series — it belongs in a 'layout: chart'",
+        ),
+        (
+            "|area| { data: 1, 2 }",
+            "'|area|' is a chart series — it belongs in a 'layout: chart'",
+        ),
+        (
+            "|bubble| { at: 1 2; value: 3 }",
+            "'|bubble|' is a chart series — it belongs in a 'layout: chart'",
+        ),
+        ("|axis| \"x\"", "'|axis|' belongs in a 'layout: chart'"),
+        (
+            "|band| { range: 0 1 }",
+            "'|band|' belongs in a 'layout: chart'",
+        ),
+        ("|mark| { at: 1 }", "'|mark|' belongs in a 'layout: chart'"),
+    ] {
+        // Bare on the canvas, and two ordinary containers deeper — the gate is
+        // carried down the walk, not read off the parent. (Inside a chart or a
+        // pie the type exists; what it may sit *among* is that layout's own
+        // reading — `|bars|` in a pie is "a pie's children are '|slice|' only".)
+        for src in [
+            format!("{part}\n"),
+            format!("|group#g| [\n  {part}\n]\n"),
+            format!("|group#g| [\n  |row#r| [\n    {part}\n  ]\n]\n"),
+        ] {
+            assert_eq!(layout_err(&src), message, "{src}");
+        }
+    }
+    // A `|slice|` belongs in a pie — including inside a chart, which is not it.
+    for src in [
+        "|slice| { value: 1 }\n",
+        "|group#g| [\n  |slice| { value: 1 }\n]\n",
+        "|chart| [\n  |slice| { value: 1 }\n]\n",
+    ] {
+        assert_eq!(
+            layout_err(src),
+            "'|slice|' belongs in a 'layout: pie'",
+            "{src}"
+        );
+    }
+    // …and each is legal in its own scope.
+    for src in [
+        "|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 1, 2 }\n  |axis#v| { side: left }\n  |band| { range: 0 1 }\n  |mark| { axis: v; at: 1 }\n]\n",
+        "|chart| [\n  |axis#v| { side: left }\n  |bubble| { at: 1 2; value: 3 }\n]\n",
+        "|pie| [\n  |slice| { value: 1 }\n]\n",
+    ] {
+        crate::layout::layout(&crate::testutil::program(src))
+            .unwrap_or_else(|e| panic!("{src}: {}", e.message));
+    }
+    // A define over a chart type reports the name its author wrote.
+    assert_eq!(
+        layout_err("{ |revenue::bars| { } }\n|revenue| { data: 1, 2 }\n"),
+        "'|revenue|' is a chart series — it belongs in a 'layout: chart'"
+    );
+    // `|line|` is the core primitive [SPEC 7] — never gated.
+    crate::layout::layout(&crate::testutil::program("|line| { points: 0 0, 10 10 }\n"))
+        .expect("a standalone line");
+}

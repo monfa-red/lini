@@ -11,7 +11,8 @@
 //! Placement does **not** cascade [SPEC 16]: a nested `|row|` / `|grid|` inside
 //! a schematic places its own children, exactly as in a drawing. The scope's
 //! **laws** do reach them, and reaching is carried, never read back off a path
-//! — [`check_types`] is the one place that says so on this side of resolve.
+//! — [`crate::layout::gates`] is the one place that says so on this side of
+//! resolve, for this family and every other.
 
 use super::ir::{Bbox, PlacedNode};
 use super::{Ctx, child_path, layout_inst, prim, primitives};
@@ -50,58 +51,6 @@ pub(in crate::layout) use tag::fill as fill_tag;
 /// twin in [`crate::resolve`], because the link pass carries the same reading
 /// down the scope chain one stage earlier [SPEC 16.5].
 pub(super) use crate::resolve::is_schematic;
-
-/// **The out-of-scope type gate** [SPEC 16/21]: a schematic type belongs in a
-/// `layout: schematic`, and this is the one place that says so — swept once
-/// over the resolved tree before anything places, beside the sequence's own
-/// pre-layout check.
-///
-/// The scope is **carried down the walk**, not read back off a dot-path: an
-/// anonymous container contributes no path segment [SPEC 9], so an anonymous
-/// `|schematic|` — or an anonymous part inside one — is invisible to a path
-/// predicate and plain to this. Desugar carries the same law the same way
-/// ([`crate::desugar::Nest`]), which is what makes the two stages agree.
-///
-/// Placement still does not cascade — a nested `|row|` runs its own engine —
-/// but the *laws* reach it, so `|R|` inside a row inside a sheet is legal.
-///
-/// **This walk is not sealed, and the statement laws are** — deliberately.
-/// A nested `|sequence|` or `|drawing|` stops the *reading of statements*
-/// (`desugar::seals_schematic_scope`, `link_scope::statement_owner`),
-/// because that engine already owns its body's links: a leader stays a leader,
-/// and a pinless landing there is not the sheet's to resolve. **Existence** is
-/// a different question: a part is drawn by the family wherever it sits, and
-/// what SPEC 21 forbids is a schematic type *outside the scope* — a `|R|`
-/// participating in a sequence drawn on a sheet is still on the sheet. Sealing
-/// this walk too would make it an error, which is a language change no law
-/// asks for.
-///
-/// A part inside a sealed engine is still a **landing**, for the same reason
-/// the sheet's own laws are endpoint-decided: being an addressed part is the
-/// proof of scope, so a wire written outside the sheet lands on its pins like
-/// any wire (`a_wire_from_outside_lands_on_a_sealed_engines_pin`). What the
-/// seal stops is the *reading* of the statement, never the address.
-///
-/// Everything downstream trusts this gate: past it a schematic part exists
-/// only inside a schematic scope, so the router's fixed ports and `:side` ban
-/// key on the **part** and never re-ask the scope
-/// ([`crate::routing::ortho::request`]).
-pub(super) fn check_types(program: &Program) -> Result<(), Error> {
-    walk_types(&program.scene.nodes, is_schematic(&program.scene.attrs))
-}
-
-fn walk_types(nodes: &[ResolvedInst], schematic: bool) -> Result<(), Error> {
-    for n in nodes {
-        if !schematic && let Some(ty) = crate::desugar::schematic::schematic_type(&n.type_chain) {
-            return Err(
-                Error::at(n.span, format!("'|{ty}|' belongs in a 'layout: schematic'"))
-                    .code(crate::error::Code::SCHEMATIC_TYPE),
-            );
-        }
-        walk_types(&n.children, schematic || is_schematic(&n.attrs))?;
-    }
-    Ok(())
-}
 
 /// A `|schematic|` **node** [SPEC 16]: place its children and return the
 /// container carrying them.

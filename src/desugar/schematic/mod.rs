@@ -405,10 +405,15 @@ fn tag_flag(shape: &str) -> Node {
 /// Mint per-scope display refs [SPEC 16.2]: every part (component lineage or
 /// discrete) gains a `.lini-ref` readout — its id verbatim, or a minted
 /// `prefix + N` (declaration order, skipping taken names). Display-only:
-/// minted refs never become ids, so wiring one stays an unknown endpoint.
+/// minted refs never become ids, so wiring one stays an unknown endpoint —
+/// **the minted names are returned** so the scope's auto-create refusal can
+/// say exactly that ([`crate::desugar::scene::to_create`]).
 /// Idempotent — a part already carrying its readout is skipped, so re-desugar
 /// (and hand-mixed lowered sources) never double-mint.
-pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) -> Result<(), Error> {
+pub(super) fn mint_refs(
+    cx: &Lower,
+    children: &mut [Child],
+) -> Result<std::collections::HashSet<String>, Error> {
     let taken: std::collections::HashSet<String> = children
         .iter()
         .filter_map(|c| match c {
@@ -417,6 +422,7 @@ pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) -> Result<(), Error>
         })
         .collect();
     let mut counters: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut minted = std::collections::HashSet::new();
     for c in children.iter_mut() {
         let Child::Box(part) = c else { continue };
         let chain = lowered_chain(part);
@@ -450,11 +456,14 @@ pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) -> Result<(), Error>
                 }
             }
         };
+        if part.id.is_none() {
+            minted.insert(text.clone());
+        }
         let readout = readout(&text, anchor, dx, dy);
         part.children
             .push(lowered_chrome(cx, &readout, "lini-ref")?);
     }
-    Ok(())
+    Ok(minted)
 }
 
 fn has_ref(part: &Node) -> bool {

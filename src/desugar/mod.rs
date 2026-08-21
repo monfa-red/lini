@@ -11,7 +11,7 @@
 
 mod autopose;
 mod capsule;
-mod classes;
+pub(crate) mod classes;
 mod drawing;
 mod gather;
 mod labels;
@@ -244,14 +244,16 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     // Display refs [SPEC 16.2]: parts read their id as the drawn ref;
     // anonymous ones mint prefix + N, per scope.
-    schematic::mint_refs(&cx, &mut instances)?;
+    let minted_refs = schematic::mint_refs(&cx, &mut instances)?;
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
     if !root_nest.drawing {
         let declared = scene::declared_ids(&instances);
         let mut root_msgs: Vec<&Link> = root_links.iter().collect();
         root_msgs.extend(gather_frame_messages(&instances));
-        for (id, span) in scene::to_create(&root_msgs, &declared, root_nest.schematic)? {
+        for (id, span) in
+            scene::to_create(&root_msgs, &declared, root_nest.schematic, &minted_refs)?
+        {
             instances.push(Child::Box(lower_node(
                 &cx,
                 &scene::auto_box(&id, span),
@@ -683,7 +685,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
 
     // Display refs [SPEC 16.2], per scope — after the gather, so a capsule
     // part reads its declaration.
-    schematic::mint_refs(cx, &mut children)?;
+    let minted_refs = schematic::mint_refs(cx, &mut children)?;
     // The body's links, rewritten by the gather (capsules hoisted, label wires
     // minted), each lowering as before: head label folded into the label list,
     // auto-`along:` filled.
@@ -724,7 +726,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
         let to_create = {
             let mut msgs: Vec<&Link> = scope.own_links().iter().collect();
             msgs.extend(gather_frame_messages(&children));
-            scene::to_create(&msgs, &declared, child_nest.schematic)?
+            scene::to_create(&msgs, &declared, child_nest.schematic, &minted_refs)?
         };
         for (auto_id, auto_span) in to_create {
             let created = lower_node(cx, &scene::auto_box(&auto_id, auto_span), Nest::NONE)?;

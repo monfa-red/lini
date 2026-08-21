@@ -211,6 +211,50 @@ fn a_comma_list_on_a_one_value_property_errors() {
     );
 }
 
+#[test]
+fn an_unknown_color_name_errors() {
+    // [SPEC 2/21] a bare word in a colour slot is a CSS colour name; the Lini
+    // palette's hues are `--vars`, so a bare `rose` is not one.
+    insta::assert_snapshot!(
+        diags("|box#a| { fill: xyzzy; }\n"),
+        @"test.lini:1:11: error: invalid color 'xyzzy'"
+    );
+    insta::assert_snapshot!(
+        diags("|box#a| { color: rose; }\n"),
+        @"test.lini:1:11: error: invalid color 'rose'"
+    );
+    // A stop inside a paint is judged like any colour.
+    insta::assert_snapshot!(
+        diags("|box#a| { fill: gradient(xyzzy, red); }\n"),
+        @"test.lini:1:11: error: invalid color 'xyzzy'"
+    );
+    // The forms that *are* colours stay silent — a CSS name (any case), the
+    // paint keywords, a palette var, a hex.
+    assert_silent(
+        "|box#a| { fill: darkslategray; stroke: currentColor; color: none }\n         |box#b| { fill: --rose-soft; stroke: #f80 }\n",
+    );
+}
+
+#[test]
+fn pins_and_number_take_counts() {
+    // [SPEC 16.2/21] both are counts — a non-number, a fraction, or a pin
+    // count below 1 is a value-shape error.
+    insta::assert_snapshot!(
+        diags("|schematic#s| [ |J#j1| { pins: 0 } ]\n"),
+        @"test.lini:1:26: error: 'pins' takes a count ≥ 1"
+    );
+    insta::assert_snapshot!(
+        diags("|schematic#s| [ |J#j1| { pins: two } ]\n"),
+        @"test.lini:1:26: error: 'pins' takes a count ≥ 1"
+    );
+    insta::assert_snapshot!(
+        diags("|schematic#s| [ |component#u1| [ |pin#a| { number: 1.5 } ] ]\n"),
+        @"test.lini:1:44: error: 'number' takes an integer"
+    );
+    assert_silent("|schematic#s| [ |J#j1| { pins: 4 } ]\n");
+    assert_silent("|schematic#s| [ |component#u1| [ |pin#a| { number: 3 } ] ]\n");
+}
+
 // ── The auto-create near-miss warning [SPEC 3/20] ──
 
 #[test]

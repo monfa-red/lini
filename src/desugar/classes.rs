@@ -143,6 +143,18 @@ pub(crate) fn is_utility_class(bare: &str) -> bool {
             .any(|c| c.class_name() == bare)
 }
 
+/// The type a chain names **as the author spelled it** — its most-derived
+/// entry, generated utility dress skipped. The subject every out-of-scope type
+/// gate reports ([`crate::layout::gates`]): a `|gnd|` says `'|gnd|'`, a
+/// `|myres::R|` says `'|myres|'`. Takes the chain most-derived first — a
+/// lowered node's `type_chain`.
+pub(crate) fn written_type<S: AsRef<str>>(chain: &[S]) -> Option<&str> {
+    chain
+        .iter()
+        .map(|t| t.as_ref())
+        .find(|t| !is_utility_class(t))
+}
+
 fn align_class_rule(name: &str, prop: &str, value: &str) -> Rule {
     Rule {
         selector: Selector {

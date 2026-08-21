@@ -19,7 +19,7 @@
 
 use crate::desugar::types::{self, Types};
 use crate::error::{Code, Diagnostic};
-use crate::ledger::properties::{self, Gate, Inherit, Owner, Property, Shape};
+use crate::ledger::properties::{self, Gate, Inherit, Kind, Owner, Property, Shape};
 use crate::span::Span;
 use crate::suggest;
 use crate::syntax::ast::{
@@ -499,7 +499,37 @@ impl<'a> Ctx<'a> {
                     );
                 }
             }
+            // A connector's generated pin count and a pin's number [SPEC 16.2]
+            // — counts, judged here like any other value shape.
+            "pins" | "number" => {
+                let count = match single_value(d) {
+                    Some(Value::Number(n)) => Some(*n),
+                    _ => None,
+                };
+                let pins = d.name == "pins";
+                let ok = count.is_some_and(|n| n.fract() == 0.0 && (!pins || n >= 1.0));
+                if !ok {
+                    let msg = if pins {
+                        "'pins' takes a count ≥ 1"
+                    } else {
+                        "'number' takes an integer"
+                    };
+                    out.push(Diagnostic::error(d.span, msg).code(Code::MALFORMED_VALUE));
+                }
+            }
             _ => {}
+        }
+        // A colour slot takes a colour [SPEC 2/10]: the ledger's `Colour` /
+        // `Paint` kinds are what says a value *is* one, so the name check hangs
+        // off them — the component-range check rides the builder call itself,
+        // one stage on ([`crate::resolve::value`]).
+        if matches!(
+            prop.shape,
+            Shape::One(Kind::Colour) | Shape::One(Kind::Paint)
+        ) {
+            for v in d.groups.iter().flatten() {
+                check_colour(v, d.span, out);
+            }
         }
     }
 
@@ -807,6 +837,32 @@ fn with_worn_types(chain: &[String], classes: &[String]) -> Vec<String> {
         }
     }
     out
+}
+
+/// One value in a colour slot [SPEC 2/21]: a bare word must name a colour, and
+/// a paint that *contains* colours (a gradient's stops, a hatch's line colour)
+/// is judged stop by stop. Everything else — a hex (the lexer validated it), a
+/// `--var`, a number, a folded expression, a builder call whose own reader owns
+/// it — passes here.
+fn check_colour(v: &Value, span: Span, out: &mut Vec<Diagnostic>) {
+    match v {
+        Value::Ident(name) if !crate::palette::css::is_color_name(name) => out.push(
+            Diagnostic::error(span, format!("invalid color '{name}'")).code(Code::INVALID_COLOR),
+        ),
+        Value::Call(c) => {
+            let stops = match c.name.as_str() {
+                // A `linear-gradient`'s leading angle is a number, so it needs
+                // no slicing — a non-ident is never judged.
+                "gradient" | "linear-gradient" | "radial-gradient" | "light-dark" => &c.args[..],
+                "hatch" => c.args.get(2..).unwrap_or(&[]),
+                _ => &[],
+            };
+            for stop in stops {
+                check_colour(stop, span, out);
+            }
+        }
+        _ => {}
+    }
 }
 
 fn single_value(d: &Decl) -> Option<&Value> {

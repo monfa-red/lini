@@ -4104,7 +4104,7 @@ machine-applicable replacement where one exists.
 
 | Condition | Message |
 |---|---|
-| Series / axis / band / mark outside a chart | `'\|bars\|' is a chart series — it belongs in a 'layout: chart'` |
+| Series / axis / band / mark outside a chart | `'\|bars\|' is a chart series — it belongs in a 'layout: chart'` · `'\|axis\|' belongs in a 'layout: chart'` |
 | `\|slice\|` outside a pie | `'\|slice\|' belongs in a 'layout: pie'` |
 | Pie given an axis or series | `a pie's children are '\|slice\|' only` |
 | Empty chart / pie | `a chart needs at least one series` / `a pie needs at least one '\|slice\|'` |

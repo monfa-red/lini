@@ -25,7 +25,7 @@ pub(crate) use build::build;
 pub use types::*;
 
 // Helpers reused by the sibling `pie.rs` (reached as `model::…`).
-pub(crate) use build::{read_gap, tag};
+pub(crate) use build::{out_of_scope, read_gap, tag};
 pub(crate) use paint::{fill_color, fill_outline, label_of};
 
 // Model-internal helpers shared across the submodules (each reaches them via

@@ -227,7 +227,7 @@ impl Types {
         if visiting.iter().any(|n| n == name) {
             return Err(Error::at(
                 span,
-                format!("cycle in '{} -> {}'", visiting.join(" -> "), name),
+                format!("cycle in '{} → {}'", visiting.join(" → "), name),
             )
             .code(Code::INHERIT_CYCLE));
         }
@@ -331,7 +331,12 @@ mod tests {
 
     #[test]
     fn cycle_and_shadow_error() {
-        assert!(build_err("{ |a::b| { }\n|b::a| { } }\n").contains("cycle"));
+        // The cycle spells its chain with `→`, the one arrow every cycle
+        // message uses [SPEC 21] (the theme's define cycle prints it too).
+        assert_eq!(
+            build_err("{ |a::b| { }\n|b::a| { } }\n"),
+            "cycle in 'a → b → a'"
+        );
         assert!(build_err("{ |rect::oval| { } }\n").contains("shadows a built-in"));
     }
 }

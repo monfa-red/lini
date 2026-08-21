@@ -1602,6 +1602,23 @@ fn a_schematic_scope_never_invents_a_box() {
 }
 
 #[test]
+fn a_minted_ref_is_not_an_endpoint() {
+    // [SPEC 16.2/21] an anonymous part's display ref is drawn, never an id, so
+    // wiring one is an unknown endpoint — and says why, rather than reading as
+    // a stray net name.
+    let err = lini::check("{ layout: schematic }\n|R| \"1k\"\n|C| \"100n\"\nR1 - C1\n")
+        .expect_err("a minted ref is display-only");
+    assert_eq!(
+        err.message,
+        "link endpoint 'R1' not found — a minted ref is display-only; \
+         give the part an id to wire it"
+    );
+    // Giving the part an id is the fix the message names.
+    lini::check("{ layout: schematic }\n|R#r1| \"1k\"\n|C#c1| \"100n\"\nr1 - c1\n")
+        .expect("an id is wirable");
+}
+
+#[test]
 fn a_mindmap_inside_a_sheet_seals_the_carrier_by_its_type() {
     // [SPEC 8/16] A `|mindmap|` declares no `layout:` of its own — the tree
     // seat stamps `layout: tree` on its scope *after* this body lowers — so

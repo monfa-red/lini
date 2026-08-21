@@ -60,6 +60,16 @@ impl<'a> Parser<'a> {
                     unreachable!("parse_call returns Value::Call");
                 }
                 Ok(call)
+            } else if matches!(self.kind(), Some(TokKind::LParen))
+                && (crate::ledger::properties::is_builder_call(&name)
+                    || crate::expr::is_math_call(&name))
+            {
+                // A known call one space from its parens [SPEC 2/21]: the glue
+                // rule is what keeps `move(-2, 5)`, `(8 * 2)`, and `pin (o)`
+                // apart, so a spaced call is named, never read as a group.
+                Err(self
+                    .err("a call's '(' glues to its name — write 'rgb(…)'")
+                    .code(Code::CALL_GLUE))
             } else {
                 Ok(Value::Ident(name))
             };
