@@ -37,6 +37,7 @@ struct Committed {
     fan: Option<usize>,
 }
 
+#[derive(Clone)]
 pub(crate) struct Ledger {
     clearance: f64,
     /// Committed runs per `(world, axis, channel)`.

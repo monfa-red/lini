@@ -687,6 +687,36 @@ fn uncontended_fan_ports_take_their_side_centres() {
     }
 }
 
+/// A fan's shared side is the fan's, not the lead sibling's (ROUTING.md
+/// Special nodes / Law 3): the source sits level between two stacked targets,
+/// so the lead alone is one turn cheaper leaving the **top** — and its sibling
+/// then pays three turns coming back down past the source. Priced over the
+/// group, the **right** side wins and the fan draws the tidy T.
+#[test]
+fn a_fans_shared_side_is_priced_over_the_whole_fan() {
+    let src = "{ direction: row; gap: 40; clearance: 12; |group| { gap: 36 } }\n\
+               |oval#cat| \"Cat\"\n\
+               |group#k| [\n  |box#bowl| \"Bowl\"\n  |box#water| \"Water\"\n]\n\
+               cat -> k.bowl & k.water\n";
+    let r = routes(src);
+    let laid = route_sample(src, 12.0);
+    let cat = node_rect(&laid, "cat").expect("placed");
+    let (top, right) = (cat.1, cat.2);
+    for to in ["k.bowl", "k.water"] {
+        let p = path(&r, "cat", to);
+        orthogonal(p);
+        assert!(
+            (p[0].0 - right).abs() < 1e-9,
+            "{to} leaves the fan-optimal right side, not {:?}: {p:?}",
+            p[0]
+        );
+        assert!(p[0].1 > top, "{to} leaves below the top corner: {p:?}");
+        // Two turns each — out, across the gutter, in. The top-side fan cost
+        // its second sibling three.
+        assert_eq!(turns(p), 2, "{to}: {p:?}");
+    }
+}
+
 // ── Root-layout scopes: nested ordinary wires route [SPEC 11/13/15, M6] ──
 
 #[test]

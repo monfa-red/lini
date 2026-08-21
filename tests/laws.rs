@@ -37,8 +37,10 @@ fn every_sample_satisfies_the_laws() {
 
 /// Strays are honest, not regressions: at native attributes every sample
 /// draws whole — zero impossibles, pinned. (`links_hard` carried four at
-/// gap 30; the sample now ships at gap 32 so the showcase always renders
-/// complete.)
+/// gap 30; the sample ships wider so the showcase always renders complete —
+/// bumped to 32, then to 38 when fan-total side pricing spent the corridor
+/// beside the hub that `east -> west` used to squeeze through. Widening `gap`
+/// is the contract's own lever for a scene at its capacity edge.)
 #[test]
 fn impossible_links_are_exactly_the_known_capacity_truths() {
     for path in sample_paths() {

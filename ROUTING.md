@@ -206,7 +206,10 @@ Checkable on the output with no knowledge of the router:
 3. **Economy.** Each link takes the cheapest legal route, where
    **cost = length + 2·clearance per turn + 4·clearance per crossing**, given
    every earlier link's committed route — earlier links never move. Routing
-   order is declaration order; the constants are part of this contract. A
+   order is declaration order; the constants are part of this contract. What a
+   fan shares is priced as a fan, not as its lead sibling's link
+   (§Special nodes) — the trunk is one line, so one wire may not buy its own
+   economy with its siblings'. A
    crossing is worth a `4·clearance` detour, no more: long orbits never beat
    short crossings, and turns cost real length, so straight beats dogleg
    beats staircase.
@@ -249,7 +252,11 @@ Six steps. Each decides once; none revisits an earlier step's answer.
 4. **Search.** Per bundle, in order: enter the graph by a perpendicular
    **punch** from each permitted side (a forced side prunes to one; the punch
    crosses transparent ancestor walls, never a solid keep-out); run weighted
-   Dijkstra over cells with the Law-3 cost. Length is the L1 estimate through
+   Dijkstra over cells with the Law-3 cost. A fan's shared side is settled
+   once, at the first of its siblings to route, by pricing each permitted side
+   over the whole group (§Special nodes) — one search per sibling per
+   candidate side, against the ledger as it stands then; from that point the
+   settled side prunes every sibling's entries exactly as a forced side does. Length is the L1 estimate through
    the entered cells; turns count axis changes, plus the end jog when the two
    ports' windows cannot meet on one track; crossings count the committed
    perpendicular runs whose spans the candidate sweeps. A channel span whose
@@ -323,7 +330,15 @@ them:
 ## Special nodes
 
 - **Fan** (`a -> b & c`): siblings share one port and one end segment on the
-  shared end; the shared side and port are the first sibling's. Along the
+  shared end. The trunk is one drawn line, so the side it leaves on is the
+  **fan's** decision, never the lead sibling's private one: the shared side is
+  the permitted side of least **fan total** — the sum of every sibling's
+  cheapest legal route under it, each priced against the ledger as it stands
+  before the fan commits — and a side no sibling can route from is not a
+  candidate. Ties break on the fixed side rank. The **port** on that side is
+  the first sibling's, and siblings still route in declaration order. (Price
+  the side per sibling instead and the lead saves one turn by charging its
+  siblings three — the one fan decision left unpriced as a fan.) Along the
   common prefix — the **trunk** — siblings are one drawn line; past the split
   each is a full link under every law. Being one line has three consequences,
   all of them the same sentence:

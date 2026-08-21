@@ -120,6 +120,394 @@ pub(crate) fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side,
     (sa != sb).then_some((sa, sb))
 }
 
+/// What one bundle's search settled on: the world it routed in, the winning
+/// route, and the two ends' offered entries (the route indexes into them).
+struct Solved {
+    w: usize,
+    route: search::Route,
+    starts: Vec<Entry>,
+    goals: Vec<Entry>,
+}
+
+/// One bundle's walk down the world ladder (ROUTING.md model step 4) under a
+/// given pair of forced sides: entries per side, weighted search, whole-run
+/// admission, retrying one world up when the inner one has no legal route.
+///
+/// It reads the committed state and mutates nothing, so the fan's side
+/// pricing ([`fan_side`]) can ask the same question of every sibling before
+/// any of them commits — one mechanism answers "what would this bundle do?",
+/// whether the caller means to keep the answer or only to price it. The flag
+/// alongside reports a fixed port no punch could reach, for the named stray.
+#[allow(clippy::too_many_arguments)]
+fn solve(
+    index: &SceneIndex,
+    worlds: &[World],
+    chains: &[Option<Chain>],
+    ledger: &Ledger,
+    rep: &EdgeReq,
+    link: usize,
+    forced: [Option<Side>; 2],
+    fan: [Option<usize>; 2],
+    fan_pick: &[Option<Side>],
+    fan_landed: &[bool],
+    k: usize,
+    c: f64,
+) -> (Option<Solved>, bool) {
+    let self_loop = rep.a_path == rep.b_path;
+    // Members fanned at both ends are literal duplicates riding one drawn
+    // line: they occupy a single track and a single port pair.
+    let k_eff = if fan[0].is_some() && fan[1].is_some() {
+        1
+    } else {
+        k
+    };
+    // The trunks this bundle rides: a sibling's committed lead is the very
+    // line this wire draws out of the shared port, so the ledger is read
+    // without it (ROUTING.md Special nodes).
+    let trunks: Vec<usize> = fan.into_iter().flatten().collect();
+    let held = ledger.read(&trunks);
+
+    let a_contains_b = index.geo_contains(&rep.a_path, &rep.b_path);
+    let b_contains_a = index.geo_contains(&rep.b_path, &rep.a_path);
+    let solids = index.solid_rects_for([&rep.a_path, &rep.b_path]);
+    let base: Vec<Rect> = solids.iter().map(|r| r.inflate(c)).collect();
+
+    let mut fixed_blocked = false;
+    // Innermost world first; a transparent ancestor lets the link route one
+    // world up when the inner one has no legal route.
+    for wkey in world_ladder(index, &rep.a_path, &rep.b_path) {
+        let w = worlds
+            .iter()
+            .position(|x| x.key == wkey)
+            .expect("world built");
+        let graph = &worlds[w].graph;
+        let end_entries = |path: &str,
+                           rect: Rect,
+                           stub: f64,
+                           inward: bool,
+                           partner: (Rect, bool),
+                           fan: Option<usize>,
+                           forced: Option<Side>,
+                           fixed: Option<f64>| {
+            let mut blockers = base.clone();
+            if !partner.1 && !self_loop {
+                blockers.push(partner.0.inflate(c));
+            }
+            let forced = fan.and_then(|g| fan_pick[g]).map_or(forced, Some);
+            // A side must hold the whole landing: k ports, one for a fan
+            // group (its side is settled for the group and its port slot
+            // spent by the first sibling to land, costing nothing after).
+            let need = match fan {
+                Some(g) => usize::from(!fan_landed[g]),
+                None => k,
+            };
+            let offered = entry::entries(graph, rect, stub, c, forced, fixed, &blockers, inward);
+            let any = !offered.is_empty();
+            let kept = offered
+                .into_iter()
+                .filter(|e| need == 0 || ledger.side_free(path, e.side, rect) >= need)
+                .collect::<Vec<Entry>>();
+            (kept, any)
+        };
+        let (starts, starts_any) = end_entries(
+            &rep.a_path,
+            rep.a_rect,
+            rep.stub_a,
+            a_contains_b,
+            (rep.b_rect, b_contains_a),
+            fan[0],
+            forced[0],
+            rep.port_a,
+        );
+        let (goals, goals_any) = end_entries(
+            &rep.b_path,
+            rep.b_rect,
+            rep.stub_b,
+            b_contains_a,
+            (rep.a_rect, a_contains_b),
+            fan[1],
+            forced[1],
+            rep.port_b,
+        );
+        if starts.is_empty() || goals.is_empty() {
+            // A fixed port whose landing no punch can reach — covered by a
+            // keep-out, or off its side — is a named failure, not a generic
+            // closure (ROUTING.md Fixed ports).
+            fixed_blocked |=
+                (rep.port_a.is_some() && !starts_any) || (rep.port_b.is_some() && !goals_any);
+            continue;
+        }
+        // Admission runs whole-span: the search prices edge by edge, but a
+        // merged run needs one ordinate lawful over its entire travel — its
+        // corridor's intersection, which a junction-fed edge can overstate. A
+        // failed run's span becomes a learned closure and the same world
+        // searches again around it, until a route holds whole or the world is
+        // exhausted — never an unlawful squeeze.
+        let mut deny: Vec<search::Deny> = Vec::new();
+        let mut last: Option<search::Route> = None;
+        while let Some(route) = search::cheapest(graph, w, &starts, &goals, &held, &deny, k_eff, c)
+        {
+            // A closure that changed nothing (an end run's channel no edge
+            // consults) can't make progress; neither can unbounded learning.
+            // Both give up on the world, honestly.
+            if deny.len() > 32 || last.as_ref() == Some(&route) {
+                break;
+            }
+            let (se, ge) = (&starts[route.start], &goals[route.goal]);
+            let ends =
+                [(se, &rep.a_rect, fan[0]), (ge, &rep.b_rect, fan[1])].map(|(e, r, fan)| EndInfo {
+                    side: e.side,
+                    rect: *r,
+                    window: e.window,
+                    fan,
+                });
+            let probe =
+                geometry::chain(graph, w, &held, &route.cells, se, ge, ends, link, k_eff, c);
+            let blocked = probe
+                .runs
+                .iter()
+                .find(|run| held.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff)
+                .map(|run| (run.axis, run.chan, run.span))
+                .or_else(|| admit::admits(worlds, chains, &probe, k_eff, c));
+            match blocked {
+                None => {
+                    return (
+                        Some(Solved {
+                            w,
+                            route,
+                            starts,
+                            goals,
+                        }),
+                        fixed_blocked,
+                    );
+                }
+                Some(run) => {
+                    deny.push(run);
+                    last = Some(route);
+                }
+            }
+        }
+    }
+    (None, fixed_blocked)
+}
+
+/// Keep a bundle's won route: the landing sides (a fan group's shared port
+/// counts once, when its first sibling lands, and the side it lands on stands
+/// for the group), a chain per member, and the route's runs in the ledger —
+/// each carrying the fan group whose trunk it draws, so the ledger counts one
+/// line once however many siblings ride it.
+///
+/// The fan pricing ([`fan_side`]) commits through this same function into
+/// throwaway state, so a candidate side is judged against the load its own
+/// earlier siblings really lay down, not against the fan's absence.
+#[allow(clippy::too_many_arguments)]
+fn commit_bundle(
+    worlds: &[World],
+    reqs: &[EdgeReq],
+    fans: &request::Fans,
+    members: &[usize],
+    solved: &Solved,
+    fan: [Option<usize>; 2],
+    k: usize,
+    c: f64,
+    ledger: &mut Ledger,
+    chains: &mut [Option<Chain>],
+    fan_pick: &mut [Option<Side>],
+    fan_landed: &mut [bool],
+) {
+    let Solved {
+        w,
+        route,
+        starts,
+        goals,
+    } = solved;
+    let (w, m0) = (*w, members[0]);
+    let rep = &reqs[m0];
+    let self_loop = rep.a_path == rep.b_path;
+    let k_eff = if fan[0].is_some() && fan[1].is_some() {
+        1
+    } else {
+        k
+    };
+    let trunks: Vec<usize> = fan.into_iter().flatten().collect();
+    let (se, ge) = (&starts[route.start], &goals[route.goal]);
+
+    for (entry, fan, path) in [(se, fan[0], &rep.a_path), (ge, fan[1], &rep.b_path)] {
+        match fan {
+            Some(g) if fan_landed[g] => {}
+            Some(g) => {
+                fan_pick[g] = Some(entry.side);
+                fan_landed[g] = true;
+                ledger.commit_port(path, entry.side, 1);
+            }
+            None => ledger.commit_port(path, entry.side, k),
+        }
+    }
+
+    // Every member rides the one route — reversed for members declared
+    // against the bundle's representative direction.
+    for &m in members {
+        let mreq = &reqs[m];
+        let flipped = !self_loop && mreq.a_path == rep.b_path;
+        let (es, eg) = if flipped { (ge, se) } else { (se, ge) };
+        let cells: Vec<usize> = if flipped {
+            route.cells.iter().rev().copied().collect()
+        } else {
+            route.cells.clone()
+        };
+        let ends = [(End::A, es), (End::B, eg)].map(|(end, e)| EndInfo {
+            side: e.side,
+            rect: match end {
+                End::A => mreq.a_rect,
+                End::B => mreq.b_rect,
+            },
+            window: e.window,
+            fan: if self_loop {
+                None
+            } else {
+                fans.group_at(m, end)
+            },
+        });
+        chains[m] = Some(geometry::chain(
+            &worlds[w].graph,
+            w,
+            &ledger.read(&trunks),
+            &cells,
+            es,
+            eg,
+            ends,
+            m,
+            k_eff,
+            c,
+        ));
+    }
+    let chain = chains[m0].as_ref().expect("chain built");
+    for (ri, run) in chain.runs.iter().enumerate() {
+        ledger.commit_run(
+            w,
+            run.axis,
+            run.chan,
+            run.span,
+            k_eff,
+            &worlds[w].graph,
+            cluster::fan_of(chain, ri),
+        );
+    }
+}
+
+/// A fan's shared side (ROUTING.md Special nodes): the permitted side of least
+/// **fan total** — the siblings routed in declaration order under that side,
+/// each committing as it wins, their costs summed. The trunk is one drawn
+/// line, so the side it leaves on is the fan's decision, not the lead
+/// sibling's private one; pricing it per sibling is how a lead saves one turn
+/// and charges its siblings three.
+///
+/// The siblings commit into throwaway state through the same
+/// [`commit_bundle`] the real pass uses, so the branches a candidate side
+/// sends down one corridor are priced against each other, not through each
+/// other.
+///
+/// `None` means no single side serves the whole group (or the group is one
+/// bundle, which is just a link): the caller falls back to the lead sibling's
+/// own free choice, and the rest follow it. Ties break on the fixed side rank
+/// — `Side::RANK` order with a strict improvement test — then, inside a side,
+/// on the search's own tie-break, so Law 4 is untouched.
+#[allow(clippy::too_many_arguments)]
+fn fan_side(
+    index: &SceneIndex,
+    worlds: &[World],
+    chains: &[Option<Chain>],
+    ledger: &Ledger,
+    reqs: &[EdgeReq],
+    bundles: &[request::Bundle],
+    fans: &request::Fans,
+    reasons: &[Option<&'static str>],
+    fan_pick: &[Option<Side>],
+    fan_landed: &[bool],
+    group: usize,
+    c: f64,
+) -> Option<Side> {
+    // One entry per bundle holding a member of the group: its representative
+    // and the bundle it speaks for.
+    let mut sharers: Vec<(usize, usize)> = Vec::new();
+    for (b, bundle) in bundles.iter().enumerate() {
+        let m0 = bundle.members[0];
+        if reasons[m0].is_some() || reqs[m0].a_path == reqs[m0].b_path {
+            continue;
+        }
+        let Some(end) = [End::A, End::B]
+            .into_iter()
+            .find(|&e| fans.group_at(m0, e) == Some(group))
+        else {
+            continue;
+        };
+        // A forced side prunes to one (model step 4), and a fan's key carries
+        // that side, so every sharer agrees: there is nothing to price, and
+        // the fan may never talk its members off a side they were given.
+        if reqs[m0].side(end).is_some() {
+            return None;
+        }
+        sharers.push((b, m0));
+    }
+    if sharers.len() < 2 {
+        return None;
+    }
+    let mut best: Option<(f64, Side)> = None;
+    for side in Side::RANK {
+        // Route the whole group with the shared side pinned here, in
+        // declaration order, against state that starts where the real pass
+        // stands. One sibling with no route rules the side out for the fan.
+        let mut pick = fan_pick.to_vec();
+        pick[group] = Some(side);
+        let mut landed = fan_landed.to_vec();
+        let mut trial_ledger = ledger.clone();
+        let mut trial_chains = chains.to_vec();
+        let mut total = 0.0;
+        for &(b, m0) in &sharers {
+            let rep = &reqs[m0];
+            let fan = [fans.group_at(m0, End::A), fans.group_at(m0, End::B)];
+            let k = bundles[b].members.len();
+            let (solved, _) = solve(
+                index,
+                worlds,
+                &trial_chains,
+                &trial_ledger,
+                rep,
+                m0,
+                [rep.side_a, rep.side_b],
+                fan,
+                &pick,
+                &landed,
+                k,
+                c,
+            );
+            let Some(solved) = solved else {
+                total = f64::INFINITY;
+                break;
+            };
+            total += solved.route.cost;
+            commit_bundle(
+                worlds,
+                reqs,
+                fans,
+                &bundles[b].members,
+                &solved,
+                fan,
+                k,
+                c,
+                &mut trial_ledger,
+                &mut trial_chains,
+                &mut pick,
+                &mut landed,
+            );
+        }
+        if total.is_finite() && best.is_none_or(|(bt, _)| total < bt) {
+            best = Some((total, side));
+        }
+    }
+    best.map(|(_, s)| s)
+}
+
 fn impossible(req: &EdgeReq, detail: &str) -> Violation {
     Violation {
         rule: Rule::Impossible,
@@ -154,7 +542,10 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
 
     let fans = request::fan_groups(reqs, Strategy::Orthogonal);
     let bundles = request::bundles(reqs);
+    // A fan group's settled shared side, and whether its one port slot has
+    // been spent by the sibling that landed first (ROUTING.md Special nodes).
     let mut fan_pick: Vec<Option<Side>> = vec![None; fans.groups.len()];
+    let mut fan_landed: Vec<bool> = vec![false; fans.groups.len()];
     let mut ledger = Ledger::new(c);
     let mut chains: Vec<Option<Chain>> = Vec::new();
     chains.resize_with(reqs.len(), || None);
@@ -228,142 +619,53 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         } else {
             (fans.group_at(m0, End::A), fans.group_at(m0, End::B))
         };
-        // Members fanned at both ends are literal duplicates riding one
-        // drawn line: they occupy a single track and a single port pair.
-        let k_eff = if fan_a.is_some() && fan_b.is_some() {
-            1
-        } else {
-            k
-        };
-        // The trunks this bundle rides: a sibling's committed lead is the
-        // very line this wire draws out of the shared port, so the ledger is
-        // read without it (ROUTING.md Special nodes).
-        let trunks: Vec<usize> = [fan_a, fan_b].into_iter().flatten().collect();
+        let fan = [fan_a, fan_b];
+        let trunks: Vec<usize> = fan.into_iter().flatten().collect();
 
-        let a_contains_b = index.geo_contains(&rep.a_path, &rep.b_path);
-        let b_contains_a = index.geo_contains(&rep.b_path, &rep.a_path);
-        let solids = index.solid_rects_for([&rep.a_path, &rep.b_path]);
-        let base: Vec<Rect> = solids.iter().map(|r| r.inflate(c)).collect();
-
-        // Innermost world first; a transparent ancestor lets the link route
-        // one world up when the inner one has no legal route.
-        let mut picked = None;
-        let mut fixed_blocked = false;
-        for wkey in world_ladder(index, &rep.a_path, &rep.b_path) {
-            let w = worlds
-                .iter()
-                .position(|x| x.key == wkey)
-                .expect("world built");
-            let graph = &worlds[w].graph;
-            let end_entries = |path: &str,
-                               rect: Rect,
-                               stub: f64,
-                               inward: bool,
-                               partner: (Rect, bool),
-                               fan: Option<usize>,
-                               forced: Option<Side>,
-                               fixed: Option<f64>| {
-                let mut blockers = base.clone();
-                if !partner.1 && !self_loop {
-                    blockers.push(partner.0.inflate(c));
-                }
-                let forced = fan.and_then(|g| fan_pick[g]).map_or(forced, Some);
-                // A side must hold the whole landing: k ports, one for a fan
-                // group (its side is bound by the first-routed sibling and
-                // costs nothing once landed).
-                let need = match fan {
-                    Some(g) => usize::from(fan_pick[g].is_none()),
-                    None => k,
-                };
-                let offered =
-                    entry::entries(graph, rect, stub, c, forced, fixed, &blockers, inward);
-                let any = !offered.is_empty();
-                let kept = offered
-                    .into_iter()
-                    .filter(|e| need == 0 || ledger.side_free(path, e.side, rect) >= need)
-                    .collect::<Vec<Entry>>();
-                (kept, any)
-            };
-            let (starts, starts_any) = end_entries(
-                &rep.a_path,
-                rep.a_rect,
-                rep.stub_a,
-                a_contains_b,
-                (rep.b_rect, b_contains_a),
-                fan_a,
-                forced[0],
-                rep.port_a,
-            );
-            let (goals, goals_any) = end_entries(
-                &rep.b_path,
-                rep.b_rect,
-                rep.stub_b,
-                b_contains_a,
-                (rep.a_rect, a_contains_b),
-                fan_b,
-                forced[1],
-                rep.port_b,
-            );
-            if starts.is_empty() || goals.is_empty() {
-                // A fixed port whose landing no punch can reach — covered by
-                // a keep-out, or off its side — is a named failure, not a
-                // generic closure (ROUTING.md Fixed ports).
-                fixed_blocked |=
-                    (rep.port_a.is_some() && !starts_any) || (rep.port_b.is_some() && !goals_any);
-                continue;
-            }
-            // Admission runs whole-span: the search prices edge by edge, but
-            // a merged run needs one ordinate lawful over its entire travel
-            // — its corridor's intersection, which a junction-fed edge can
-            // overstate. A failed run's span becomes a learned closure and
-            // the same world searches again around it, until a route holds
-            // whole or the world is exhausted — never an unlawful squeeze.
-            let mut deny: Vec<search::Deny> = Vec::new();
-            let mut last: Option<search::Route> = None;
-            let held = ledger.read(&trunks);
-            while let Some(route) =
-                search::cheapest(graph, w, &starts, &goals, &held, &deny, k_eff, c)
-            {
-                // A closure that changed nothing (an end run's channel no
-                // edge consults) can't make progress; neither can unbounded
-                // learning. Both give up on the world, honestly.
-                if deny.len() > 32 || last.as_ref() == Some(&route) {
-                    break;
-                }
-                let (se, ge) = (&starts[route.start], &goals[route.goal]);
-                let ends =
-                    [(se, &rep.a_rect, fan_a), (ge, &rep.b_rect, fan_b)].map(|(e, r, fan)| {
-                        EndInfo {
-                            side: e.side,
-                            rect: *r,
-                            window: e.window,
-                            fan,
-                        }
-                    });
-                let probe =
-                    geometry::chain(graph, w, &held, &route.cells, se, ge, ends, m0, k_eff, c);
-                let blocked = probe
-                    .runs
-                    .iter()
-                    .find(|run| held.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff)
-                    .map(|run| (run.axis, run.chan, run.span))
-                    .or_else(|| admit::admits(&worlds, &chains, &probe, k_eff, c));
-                match blocked {
-                    None => {
-                        picked = Some((w, route, starts, goals));
-                        break;
-                    }
-                    Some(run) => {
-                        deny.push(run);
-                        last = Some(route);
-                    }
-                }
-            }
-            if picked.is_some() {
-                break;
+        // ROUTING.md Special nodes: a fan's shared side belongs to the fan,
+        // not to whichever sibling routes first — settle it here, once, by
+        // pricing every permitted side over the whole group before any member
+        // commits. An unsettled group falls through to the lead's own choice.
+        for g in trunks.iter().copied() {
+            if fan_pick[g].is_none() {
+                fan_pick[g] = fan_side(
+                    index,
+                    &worlds,
+                    &chains,
+                    &ledger,
+                    reqs,
+                    &bundles,
+                    &fans,
+                    &reasons,
+                    &fan_pick,
+                    &fan_landed,
+                    g,
+                    c,
+                );
             }
         }
-        let Some((w, route, starts, goals)) = picked else {
+
+        let (picked, fixed_blocked) = solve(
+            index,
+            &worlds,
+            &chains,
+            &ledger,
+            rep,
+            m0,
+            forced,
+            fan,
+            &fan_pick,
+            &fan_landed,
+            k,
+            c,
+        );
+        let Some(Solved {
+            w,
+            route,
+            starts,
+            goals,
+        }) = picked
+        else {
             let why = if fixed_blocked {
                 FIXED_PORT_BLOCKED
             } else {
@@ -375,79 +677,32 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             continue;
         };
 
-        // Commit the landing sides: a fan group's shared port counts once,
-        // when its first sibling routes. A fixed landing also records its
-        // ordinate for the too-close check above.
+        // A fixed landing records its ordinate for the too-close check above.
         let (se, ge) = (&starts[route.start], &goals[route.goal]);
-        for (entry, fan, path, port) in [
-            (se, fan_a, &rep.a_path, rep.port_a),
-            (ge, fan_b, &rep.b_path, rep.port_b),
-        ] {
+        for (entry, path, port) in [(se, &rep.a_path, rep.port_a), (ge, &rep.b_path, rep.port_b)] {
             if let Some(p) = port {
                 landed_ports.push((path.to_string(), entry.side.index(), p));
             }
-            match fan {
-                Some(g) if fan_pick[g].is_some() => {}
-                Some(g) => {
-                    fan_pick[g] = Some(entry.side);
-                    ledger.commit_port(path, entry.side, 1);
-                }
-                None => ledger.commit_port(path, entry.side, k),
-            }
         }
-
-        // Every member rides the one route — reversed for members declared
-        // against the bundle's representative direction.
-        for &m in &bundle.members {
-            let mreq = &reqs[m];
-            let flipped = !self_loop && mreq.a_path == rep.b_path;
-            let (es, eg) = if flipped { (ge, se) } else { (se, ge) };
-            let cells: Vec<usize> = if flipped {
-                route.cells.iter().rev().copied().collect()
-            } else {
-                route.cells.clone()
-            };
-            let ends = [(End::A, es), (End::B, eg)].map(|(end, e)| EndInfo {
-                side: e.side,
-                rect: match end {
-                    End::A => mreq.a_rect,
-                    End::B => mreq.b_rect,
-                },
-                window: e.window,
-                fan: if self_loop {
-                    None
-                } else {
-                    fans.group_at(m, end)
-                },
-            });
-            chains[m] = Some(geometry::chain(
-                &worlds[w].graph,
+        commit_bundle(
+            &worlds,
+            reqs,
+            &fans,
+            &bundle.members,
+            &Solved {
                 w,
-                &ledger.read(&trunks),
-                &cells,
-                es,
-                eg,
-                ends,
-                m,
-                k_eff,
-                c,
-            ));
-        }
-        // The route commits run by run, each carrying the fan group whose
-        // trunk it draws — the ledger counts that line once, however many
-        // siblings ride it.
-        let chain = chains[m0].as_ref().expect("chain built");
-        for (ri, run) in chain.runs.iter().enumerate() {
-            ledger.commit_run(
-                w,
-                run.axis,
-                run.chan,
-                run.span,
-                k_eff,
-                &worlds[w].graph,
-                cluster::fan_of(chain, ri),
-            );
-        }
+                route,
+                starts,
+                goals,
+            },
+            fan,
+            k,
+            c,
+            &mut ledger,
+            &mut chains,
+            &mut fan_pick,
+            &mut fan_landed,
+        );
     }
 
     place::place(&worlds, &mut chains, c);
