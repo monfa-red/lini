@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/drawing_screw.lini
 ---
@@ -130,7 +129,7 @@ input_file: samples/drawing_screw.lini
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" data-id="screw" transform="translate(0,0)">
       <rect x="-840" y="-594" width="1680" height="1188" rx="0" ry="0"/>
-      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-183,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-199,0)">
         <rect x="-234.5" y="-67" width="469" height="134" rx="0" ry="0"/>
         <g class="lini-node lini-sketch" data-id="body" transform="translate(70,-0.5)">
           <path d="M -300 0 L -300 -16 L -101.879 -16 A 20 20 0 0 0 -98.291 -16.325 A 120 120 0 0 1 -23.974 -6.039 A 20 20 0 0 0 -15.176 -4 L 156 -4 L 160 0 L 160 24 L 160 -24 L 160 0 L 156 4 L -15.176 4 A 20 20 0 0 0 -23.974 6.039 A 120 120 0 0 1 -98.291 16.325 A 20 20 0 0 0 -101.879 16 L -300 16 Z" fill-rule="evenodd"/>
@@ -324,7 +323,7 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(315.5,0)">
+      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(331.5,0)">
         <rect x="-102" y="-112" width="204" height="224" rx="0" ry="0"/>
         <g class="lini-node lini-block" clip-path="url(#lini-clip-5d742ffa)" transform="translate(0,10)">
           <rect x="-102" y="-102" width="204" height="204" rx="0" ry="0"/>

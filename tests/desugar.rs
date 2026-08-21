@@ -342,7 +342,7 @@ fn a_tree_keeps_topic_nesting_wears_level_classes_and_fans_branches() {
         out.contains("a:bottom - a.b:top & a.c:top"),
         "branch fan: {out}"
     );
-    // The default gap is injected (the generic 20 is unroutable at clearance 16).
+    // The default gap is injected (the generic 36 is too tight for a tree's generations).
     assert!(out.contains("gap: 64 48"), "{out}");
     // The topic template is a generated class.
     assert!(out.contains(".lini-topic {"), "{out}");

@@ -76,7 +76,7 @@
         "stroke": "none",
         "stroke-width": "2",
         "padding": "0",
-        "gap": "20"
+        "gap": "36"
       }
     },
     {
@@ -1165,7 +1165,7 @@
   "sceneDefaults": {
     "layout": "flow",
     "padding": "20",
-    "gap": "20",
+    "gap": "36",
     "font-size": "15"
   },
   "linkDefaults": {

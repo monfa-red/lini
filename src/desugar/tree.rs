@@ -792,7 +792,7 @@ fn has_level_class(n: &Node) -> bool {
 }
 
 /// Inject the tree's default `gap` (generation, sibling) when the scope authors
-/// none — the generic `20` is too tight for the branch connectors [SPEC 12].
+/// none — the generic `36` is too tight for the branch connectors [SPEC 12].
 pub(crate) fn ensure_gap(style: &mut Vec<Decl>) {
     if style.iter().any(|d| d.name == "gap") {
         return;

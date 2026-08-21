@@ -11,21 +11,21 @@ use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
 /// A sequence's default `gap: row col` [SPEC 13] — the message pitch (rows) and the
-/// participant spacing (columns), larger than the generic `20` so the time axis breathes.
+/// participant spacing (columns) — a time axis's own rhythm, not the flow gutter's `36`.
 /// Shared by the `|sequence|` template and the root `{ layout: sequence }` form.
 pub(crate) const SEQ_GAP_ROW: f64 = 32.0;
 pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 
 /// A tree's default `gap: generation sibling` [SPEC 12] — the generation
-/// distance and sibling separation. Wider than the generic `20`: an org chart
+/// distance and sibling separation. Wider than the generic `36`: an org chart
 /// breathes, and its branch connectors need room to clear the cards at the
-/// default link clearance (the SPEC's plain `20` is unroutable there). Injected
+/// default link clearance (the flow gutter is too tight there). Injected
 /// on a `layout: tree` scope that authors no `gap`; the user's own `gap` wins.
 pub(crate) const TREE_GAP_GEN: f64 = 64.0;
 pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 
 /// A schematic's default `gap` [SPEC 16.1] — the spacing between the scope's
-/// tracks. Wider than the generic `20`: a part's stubs, its seated satellites,
+/// tracks. Wider than the generic `36`: a part's stubs, its seated satellites,
 /// and the wires running between two tracks all live in that space. Shared by
 /// the `|schematic|` template and the root `{ layout: schematic }` form.
 pub(crate) const SCH_GAP: f64 = 60.0;
@@ -107,7 +107,7 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
             n("stroke-width", 2.0),
             n("padding", 20.0),
             // A shape's children are card content (an icon beside a label),
-            // not arranged nodes — tighter than the container default 20.
+            // not arranged nodes — tighter than the container default 36.
             n("gap", 12.0),
         ]
     };
@@ -122,7 +122,7 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
             id("stroke", "none"),
             n("stroke-width", 2.0),
             n("padding", 0.0),
-            n("gap", 20.0),
+            n("gap", 36.0),
         ],
         Oval | Hex | Cyl | Diamond => sized(),
         Slant => {
@@ -232,12 +232,12 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // exactly as `table` is `grid + gap-fill`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
         // `gap` is the clear space between the plot and the title / legend that sit
-        // outside it [SPEC 14.6], overriding the `|block|` base `gap: 20`; the
+        // outside it [SPEC 14.6], overriding the `|block|` base `gap: 36`; the
         // user tunes it (`gap: 0` ≈ touching).
         "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
         "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
         // Sequences [SPEC 13]: the layout preset + the message pitch / participant spacing
-        // (`gap`, larger than the generic 20 to breathe), plus the note / frame / separator
+        // (`gap`, a time axis's own rhythm, not the flow gutter), plus the note / frame / separator
         // looks, all reusing scene role variables (no new ones). Participants are ordinary
         // boxes and keep their own type's paint. (A root `{ layout: sequence }` picks up the
         // same `gap` default in `desugar`.)
@@ -264,7 +264,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("radius", 8.0),
             pair("padding", 8.0, 14.0),
             // A topic's children are card content (a title's icon/badge), not
-            // arranged nodes — tighter than the block default 20.
+            // arranged nodes — tighter than the block default 36.
             n("gap", 12.0),
         ],
         // The mindmap root card [SPEC 8]: the node **is** the visible root
@@ -750,7 +750,7 @@ pub fn root_defaults() -> Vec<Decl> {
     vec![
         id("layout", "flow"),
         n("padding", 20.0),
-        n("gap", 20.0),
+        n("gap", 36.0),
         n("font-size", consts::ROOT_FONT_SIZE),
     ]
 }
@@ -846,7 +846,7 @@ mod tests {
         // The bare primitive: frameless, no padding, just the container gap.
         let block = primitive_bundle(NodeKind::Block);
         assert_eq!(num(&block, "padding"), Some(0.0));
-        assert_eq!(num(&block, "gap"), Some(20.0));
+        assert_eq!(num(&block, "gap"), Some(36.0));
         assert!(!has(&block, "radius"));
         // The |box| template lifts the framed-card paint back on top.
         let boxt = template_bundle("box");

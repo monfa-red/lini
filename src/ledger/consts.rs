@@ -142,7 +142,7 @@ pub(crate) const NET_LABEL_RUN: f64 = 2.0 * PIN_PITCH;
 /// clear `2 × SCH_CLEARANCE`. SPEC 10.5's 10 leaves no channel at the
 /// schematic's own clearance 10 and every lead strays; one pin pitch does,
 /// which also puts satellites on the sheet grid. (The same reasoning
-/// widened the tree's `gap` past SPEC's plain 20.)
+/// widened the tree's `gap` past SPEC's plain 36.)
 pub(crate) const LABEL_SEAT: f64 = 25.0;
 /// The schematic scope's link `clearance` [SPEC 10.5/16.6] — tighter than the
 /// routing 16, so a sheet's short leads and pin pitch have room. Cascades

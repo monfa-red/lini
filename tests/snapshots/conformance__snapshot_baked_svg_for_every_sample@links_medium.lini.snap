@@ -1,10 +1,9 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/links_medium.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-269.98 -127 544.96 270.5" width="544.96" height="270.5" class="lini lini-scope-4af237e1">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-269.98 -135 544.96 286.5" width="544.96" height="286.5" class="lini lini-scope-4af237e1">
   <style>
     .lini-scope-4af237e1 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini-scope-4af237e1 .lini-canvas { fill: white; }
@@ -62,7 +61,7 @@ input_file: samples/links_medium.lini
     <path id="lini-g1500-310" d="…"/>
     <path id="lini-g1500-335" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-269.98" y="-127" width="544.96" height="270.5"/>
+  <rect class="lini-canvas" x="-269.98" y="-135" width="544.96" height="286.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-oval" data-id="cat" transform="translate(-216.425,0)">
       <ellipse cx="0" cy="0" rx="32.555" ry="27.5"/>
@@ -73,8 +72,8 @@ input_file: samples/links_medium.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="kitchen" transform="translate(-79.8975,0)">
-      <rect x="-62.4725" y="-87" width="124.945" height="174" rx="8" ry="8"/>
-      <g class="lini-node lini-treat lini-box lini-block" data-id="bowl" transform="translate(0,-38.5)">
+      <rect x="-62.4725" y="-95" width="124.945" height="190" rx="8" ry="8"/>
+      <g class="lini-node lini-treat lini-box lini-block" data-id="bowl" transform="translate(0,-46.5)">
         <rect x="-36.9425" y="-27.5" width="73.885" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-27" transform="translate(-16.9425 5.37) scale(0.015 -0.015)"/>
@@ -83,7 +82,7 @@ input_file: samples/links_medium.lini
           <use href="#lini-g1500-259" transform="translate(13.4475 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-treat lini-box lini-block" data-id="water" transform="translate(0,38.5)">
+      <g class="lini-node lini-treat lini-box lini-block" data-id="water" transform="translate(0,46.5)">
         <rect x="-41.4725" y="-27.5" width="82.945" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-157" transform="translate(-21.4725 5.37) scale(0.015 -0.015)"/>
@@ -93,7 +92,7 @@ input_file: samples/links_medium.lini
           <use href="#lini-g1500-299" transform="translate(15.5475 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-41.9405,-101)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-41.9405,-109)">
         <rect x="-20.532" y="-6" width="41.064" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1400-79" transform="translate(-20.532 4.296) scale(0.012 -0.012)"/>
@@ -107,8 +106,8 @@ input_file: samples/links_medium.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="garden" transform="translate(79.0425,0)">
-      <rect x="-55.4675" y="-87" width="110.935" height="174" rx="8" ry="8"/>
-      <g class="lini-node lini-treat lini-box lini-block" data-id="dog" transform="translate(0,-38.5)">
+      <rect x="-55.4675" y="-95" width="110.935" height="190" rx="8" ry="8"/>
+      <g class="lini-node lini-treat lini-box lini-block" data-id="dog" transform="translate(0,-46.5)">
         <rect x="-34.4675" y="-27.5" width="68.935" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-34" transform="translate(-14.4675 5.37) scale(0.015 -0.015)"/>
@@ -116,7 +115,7 @@ input_file: samples/links_medium.lini
           <use href="#lini-g1500-233" transform="translate(5.3475 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-treat lini-box lini-block" data-id="bird" transform="translate(0,38.5)">
+      <g class="lini-node lini-treat lini-box lini-block" data-id="bird" transform="translate(0,46.5)">
         <rect x="-33.965" y="-27.5" width="67.93" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-27" transform="translate(-13.965 5.37) scale(0.015 -0.015)"/>
@@ -125,7 +124,7 @@ input_file: samples/links_medium.lini
           <use href="#lini-g1500-209" transform="translate(4.755 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-34.9055,-101)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-34.9055,-109)">
         <rect x="-20.562" y="-6" width="41.124" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1400-57" transform="translate(-20.562 4.296) scale(0.012 -0.012)"/>
@@ -159,66 +158,66 @@ input_file: samples/links_medium.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-style-loud" data-from="cat" data-to="kitchen.bowl">
-      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 0 -162.87 -12 L -162.87 -26.5 A 12 12 0 0 1 -150.87 -38.5 L -121.34 -38.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-117.34,-38.5 -126.34,-34 -126.34,-43"/>
+      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 0 -162.87 -12 L -162.87 -34.5 A 12 12 0 0 1 -150.87 -46.5 L -121.34 -46.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-117.34,-46.5 -126.34,-42 -126.34,-51"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="cat" data-to="kitchen.water">
-      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 1 -162.87 12 L -162.87 26.5 A 12 12 0 0 0 -150.87 38.5 L -125.87 38.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-121.87,38.5 -130.87,43 -130.87,34"/>
+      <path d="M -182.87 0 L -174.87 0 A 12 12 0 0 1 -162.87 12 L -162.87 34.5 A 12 12 0 0 0 -150.87 46.5 L -125.87 46.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-121.87,46.5 -130.87,51 -130.87,42"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="cat" data-to="roof">
-      <path d="M -216.425 28.5 L -216.425 111.5 A 12 12 0 0 0 -204.425 123.5 L 188.495 123.5 A 36 36 0 0 0 224.495 87.5 L 224.495 32"/>
-      <polygon class="lini-marker lini-marker-arrow" points="224.495,28 228.995,37 219.995,37"/>
+      <path d="M -216.425 28.5 L -216.425 119.5 A 12 12 0 0 0 -204.425 131.5 L 200.495 131.5 A 36 36 0 0 0 236.495 95.5 L 236.495 32"/>
+      <polygon class="lini-marker lini-marker-arrow" points="236.495,28 240.995,37 231.995,37"/>
     </g>
     <g class="lini-link lini-style-loud" data-from="kitchen.bowl" data-to="garden.dog">
-      <mask id="lini-label-cut-fb146bc1" maskUnits="userSpaceOnUse" x="-43.955" y="-57" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-57" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
-      <path d="M -41.955 -55 L 40.075 -55" mask="url(#lini-label-cut-fb146bc1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="44.075,-55 35.075,-50.5 35.075,-59.5"/>
+      <mask id="lini-label-cut-a4492179" maskUnits="userSpaceOnUse" x="-43.955" y="-65" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-65" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-70.15" width="13.409" height="14.3"/></mask>
+      <path d="M -41.955 -63 L 40.075 -63" mask="url(#lini-label-cut-a4492179)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="44.075,-63 35.075,-58.5 35.075,-67.5"/>
       <g class="lini-link-label">
-        <use href="#lini-g1400-162" transform="translate(-15.424 -51.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-162" transform="translate(-15.424 -59.062) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link lini-style-loud" data-from="kitchen.bowl" data-to="garden.dog">
-      <mask id="lini-label-cut-5082586d" maskUnits="userSpaceOnUse" x="-43.955" y="-50.4" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-50.4" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-62.15" width="13.409" height="14.3"/></mask>
-      <path d="M -41.955 -48.4 L 40.075 -48.4" mask="url(#lini-label-cut-5082586d)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="44.075,-48.4 35.075,-43.9 35.075,-52.9"/>
+      <mask id="lini-label-cut-9225d244" maskUnits="userSpaceOnUse" x="-43.955" y="-58.4" width="89.53" height="4"><rect class="lini-cut-bg" x="-43.955" y="-58.4" width="89.53" height="4"/><rect class="lini-cut" x="-18.724" y="-70.15" width="13.409" height="14.3"/></mask>
+      <path d="M -41.955 -56.4 L 40.075 -56.4" mask="url(#lini-label-cut-9225d244)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="44.075,-56.4 35.075,-51.9 35.075,-60.9"/>
     </g>
     <g class="lini-link lini-link-dotted lini-style-quiet" data-from="kitchen.water" data-to="garden.dog">
-      <path d="M -33.925 22 L -16.925 22 A 12 12 0 0 0 -4.925 10 L -4.925 -22 A 19.8 19.8 0 0 1 14.875 -41.8 L 43.575 -41.8"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-37.925,22 -28.925,17.5 -28.925,26.5"/>
+      <path d="M -33.925 30 L -16.925 30 A 12 12 0 0 0 -4.925 18 L -4.925 -30 A 19.8 19.8 0 0 1 14.875 -49.8 L 43.575 -49.8"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-37.925,30 -28.925,25.5 -28.925,34.5"/>
     </g>
     <g class="lini-link lini-style-quiet" data-from="kitchen.water" data-to="garden.dog">
-      <path d="M -33.925 33 L -18.425 33 A 21.5 21.5 0 0 0 3.075 11.5 L 3.075 -22 A 13.2 13.2 0 0 1 16.275 -35.2 L 43.575 -35.2"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-37.925,33 -28.925,28.5 -28.925,37.5"/>
+      <path d="M -33.925 41 L -18.425 41 A 21.5 21.5 0 0 0 3.075 19.5 L 3.075 -30 A 13.2 13.2 0 0 1 16.275 -43.2 L 43.575 -43.2"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-37.925,41 -28.925,36.5 -28.925,45.5"/>
     </g>
     <g class="lini-link lini-style-quiet" data-from="kitchen.water" data-to="garden.dog">
-      <path d="M -33.925 44 L -19.925 44 A 31 31 0 0 0 11.075 13 L 11.075 -22 A 6.6 6.6 0 0 1 17.675 -28.6 L 43.575 -28.6"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-37.925,44 -28.925,39.5 -28.925,48.5"/>
+      <path d="M -33.925 52 L -19.925 52 A 31 31 0 0 0 11.075 21 L 11.075 -30 A 6.6 6.6 0 0 1 17.675 -36.6 L 43.575 -36.6"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-37.925,52 -28.925,47.5 -28.925,56.5"/>
     </g>
     <g class="lini-link" data-from="garden.bird" data-to="roof">
-      <path d="M 114.0075 32.5 L 137.01 32.5 A 12 12 0 0 0 149.01 20.5 L 149.01 16.5 A 22.5 22.5 0 0 1 171.51 -6 L 171.51 -6"/>
-      <polygon class="lini-marker lini-marker-arrow" points="175.51,-6 166.51,-1.5 166.51,-10.5"/>
+      <path d="M 114.0075 40.5 L 179.995 40.5 A 8.5 8.5 0 0 0 188.495 32 L 188.495 32"/>
+      <polygon class="lini-marker lini-marker-arrow" points="188.495,28 192.995,37 183.995,37"/>
     </g>
     <g class="lini-link" data-from="garden.bird" data-to="roof">
-      <path d="M 114.0075 44.5 L 137.01 44.5 A 24 24 0 0 0 161.01 20.5 L 161.01 16.5 A 10.5 10.5 0 0 1 171.51 6 L 171.51 6"/>
-      <polygon class="lini-marker lini-marker-arrow" points="175.51,6 166.51,10.5 166.51,1.5"/>
-    </g>
-    <g class="lini-link lini-style-quiet" data-from="kitchen.water" data-to="garden.bird">
-      <path d="M -33.925 55 L 40.5775 55"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-37.925,55 -28.925,50.5 -28.925,59.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="44.5775,55 35.5775,59.5 35.5775,50.5"/>
-    </g>
-    <g class="lini-link lini-style-happy" data-from="kitchen.water" data-to="roof">
-      <path d="M -73.8975 67 L -73.8975 87.5 A 12 12 0 0 0 -61.8975 99.5 L 188.495 99.5 A 12 12 0 0 0 200.495 87.5 L 200.495 32"/>
+      <path d="M 114.0075 52.5 L 179.995 52.5 A 20.5 20.5 0 0 0 200.495 32 L 200.495 32"/>
       <polygon class="lini-marker lini-marker-arrow" points="200.495,28 204.995,37 195.995,37"/>
     </g>
+    <g class="lini-link lini-style-quiet" data-from="kitchen.water" data-to="garden.bird">
+      <path d="M -33.925 63 L 40.5775 63"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-37.925,63 -28.925,58.5 -28.925,67.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="44.5775,63 35.5775,67.5 35.5775,58.5"/>
+    </g>
     <g class="lini-link lini-style-happy" data-from="kitchen.water" data-to="roof">
-      <path d="M -85.8975 67 L -85.8975 87.5 A 24 24 0 0 0 -61.8975 111.5 L 188.495 111.5 A 24 24 0 0 0 212.495 87.5 L 212.495 32"/>
+      <path d="M -73.8975 75 L -73.8975 95.5 A 12 12 0 0 0 -61.8975 107.5 L 200.495 107.5 A 12 12 0 0 0 212.495 95.5 L 212.495 32"/>
       <polygon class="lini-marker lini-marker-arrow" points="212.495,28 216.995,37 207.995,37"/>
     </g>
+    <g class="lini-link lini-style-happy" data-from="kitchen.water" data-to="roof">
+      <path d="M -85.8975 75 L -85.8975 95.5 A 24 24 0 0 0 -61.8975 119.5 L 200.495 119.5 A 24 24 0 0 0 224.495 95.5 L 224.495 32"/>
+      <polygon class="lini-marker lini-marker-arrow" points="224.495,28 228.995,37 219.995,37"/>
+    </g>
     <g class="lini-link lini-style-loud" data-from="garden" data-to="kitchen.bowl">
-      <path d="M 23.075 -22 C 22.0727 -22 21.0872 -22.3335 20.145 -22.6751 C 19.2094 -23.0142 18.0197 -22.6878 17.215 -22.1024 C 16.3285 -21.4574 15.3778 -20.6964 14.285 -20.6085 C 13.2346 -20.524 12.2081 -21.1769 11.355 -21.7955 C 10.4566 -22.447 9.525 -23.2296 8.425 -23.3766 C 7.3943 -23.5142 6.3408 -22.9104 5.495 -22.3054 C 4.5821 -21.6523 3.6685 -20.8511 2.565 -20.6458 C 1.5556 -20.4581 0.4754 -21.0056 -0.365 -21.5954 C -1.2933 -22.2468 -2.1916 -23.0625 -3.295 -23.3245 C -4.282 -23.5589 -5.3878 -23.0746 -6.225 -22.5017 C -7.1694 -21.8554 -8.0552 -21.0286 -9.155 -20.7122 C -10.1194 -20.4349 -11.2487 -20.8492 -12.085 -21.4039 C -13.0461 -22.0414 -13.9218 -22.8765 -15.015 -23.2441 C -15.9573 -23.5609 -17.1071 -23.2224 -17.945 -22.6873 C -18.9231 -22.0626 -19.7912 -21.2214 -20.875 -20.8063 C -21.7963 -20.4534 -22.9629 -20.7111 -23.805 -21.2253 C -24.8003 -21.8329 -25.6628 -22.6783 -26.735 -23.1369 C -27.637 -23.5228 -28.816 -23.3498 -29.665 -22.8581 C -30.6771 -22.2719 -31.5264 -21.4032 -32.595 -20.9277 C -33.5071 -20.5218 -34.631 -21.1037 -35.525 -21.548 C -36.41 -21.9878 -37.4668 -22 -38.455 -22"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-42.455,-22 -33.455,-26.5 -33.455,-17.5"/>
+      <path d="M 23.075 -30 C 22.0727 -30 21.0872 -30.3335 20.145 -30.6751 C 19.2094 -31.0142 18.0197 -30.6878 17.215 -30.1024 C 16.3285 -29.4574 15.3778 -28.6964 14.285 -28.6085 C 13.2346 -28.524 12.2081 -29.1769 11.355 -29.7955 C 10.4566 -30.447 9.525 -31.2296 8.425 -31.3766 C 7.3943 -31.5142 6.3408 -30.9104 5.495 -30.3054 C 4.5821 -29.6523 3.6685 -28.8511 2.565 -28.6458 C 1.5556 -28.4581 0.4754 -29.0056 -0.365 -29.5954 C -1.2933 -30.2468 -2.1916 -31.0625 -3.295 -31.3245 C -4.282 -31.5589 -5.3878 -31.0746 -6.225 -30.5017 C -7.1694 -29.8554 -8.0552 -29.0286 -9.155 -28.7122 C -10.1194 -28.4349 -11.2487 -28.8492 -12.085 -29.4039 C -13.0461 -30.0414 -13.9218 -30.8765 -15.015 -31.2441 C -15.9573 -31.5609 -17.1071 -31.2224 -17.945 -30.6873 C -18.9231 -30.0626 -19.7912 -29.2214 -20.875 -28.8063 C -21.7963 -28.4534 -22.9629 -28.7111 -23.805 -29.2253 C -24.8003 -29.8329 -25.6628 -30.6783 -26.735 -31.1369 C -27.637 -31.5228 -28.816 -31.3498 -29.665 -30.8581 C -30.6771 -30.2719 -31.5264 -29.4032 -32.595 -28.9277 C -33.5071 -28.5218 -34.631 -29.1037 -35.525 -29.548 C -36.41 -29.9878 -37.4668 -30 -38.455 -30"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-42.455,-30 -33.455,-34.5 -33.455,-25.5"/>
     </g>
   </g>
 </svg>

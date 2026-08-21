@@ -1518,7 +1518,7 @@ properties. This part is the family; each section states just its delta.
 | `schematic` | circuit sheet | anchors on tracks + satellites at pins ([SPEC 16](#16-schematic)) | orthogonal router, fixed ports | no — arranges in place |
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
-`direction: column` and `gap: 20` (a shape's or a `|topic|`'s children are card
+`direction: column` and `gap: 36` (a shape's or a `|topic|`'s children are card
 content, so those default to `12`); padding defaults per [SPEC 10.5](#105-layout-constants-baked),
 the root's framing the whole rendered scene — links and labels included — out to the
 SVG edge.
