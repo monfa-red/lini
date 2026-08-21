@@ -9,8 +9,9 @@
 //!   gen-schema            Regenerate `schema/lini.schema.json` + `schema/reference.md`
 //!                         from the property ledger (guarded byte-identical by
 //!                         `tests/schema.rs`).
-//!   gen-grammars          Regenerate the VS Code + Zed editor grammars from the
-//!                         same ledger (guarded byte-identical by `tests/grammar.rs`).
+//!   gen-grammars          Regenerate the VS Code + Zed editor grammars and the
+//!                         playground tokenizer's word lists from the same word
+//!                         source (guarded byte-identical by `tests/grammar.rs`).
 //!   wasm                  Build the browser artifact into `crates/lini-wasm/pkg/`
 //!                         (guarded byte-identical to the binary by `tests/wasm.rs`).
 
@@ -60,7 +61,8 @@ fn gen_schema() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-/// Write the ledger-generated editor grammars into `editors/`.
+/// Write the three generated grammar homes: both editor grammars whole, and the
+/// marked word-list region of the playground tokenizer.
 fn gen_grammars() -> ExitCode {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -85,6 +87,17 @@ fn gen_grammars() -> ExitCode {
         fs::write(&dest, body).expect("write grammar artifact");
         eprintln!("wrote {}", dest.display());
     }
+
+    let page = root.join("src/serve/playground.html");
+    let src = match fs::read_to_string(&page) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("cannot read {}: {e}", page.display());
+            return ExitCode::FAILURE;
+        }
+    };
+    fs::write(&page, lini::splice_playground(&src)).expect("write playground tokenizer");
+    eprintln!("wrote {}", page.display());
     ExitCode::SUCCESS
 }
 

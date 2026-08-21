@@ -1,12 +1,15 @@
 # Lini editor grammars
 
-Syntax highlighting for `.lini` files. Both editors' **keyword lists — types,
-templates, properties, value builders, and layout names — are generated from the
-same property ledger the compiler reads** (`cargo xtask gen-grammars`), so a new
-type or property highlights the moment it has a row. `tests/grammar.rs` regenerates
-both files in memory and asserts byte-equality with what is committed here, exactly
-as the schema is guarded — a stale checkout fails CI. Never hand-edit the generated
-files; edit `src/grammar/mod.rs` and regenerate.
+Syntax highlighting for `.lini` files. Both editors' **word lists — types,
+templates, properties, value builders, marker glyphs, sides, and layout names —
+are generated from the same tables the compiler reads** (`cargo xtask
+gen-grammars`), so a new type or property highlights the moment it has a row.
+The playground tokenizer (`src/serve/playground.html`) is the third home and
+takes the same lists, so the grammar is written down once and rendered three
+ways. `tests/grammar.rs` regenerates all three in memory and asserts
+byte-equality with what is committed, exactly as the schema is guarded — a stale
+checkout fails CI. Never hand-edit a generated file; edit `src/grammar/vocab.rs`
+and regenerate.
 
 ## VS Code (`vscode/`)
 

@@ -401,23 +401,31 @@ pub enum MarkerKind {
 }
 
 impl MarkerKind {
+    /// Every marker-glyph spelling, in authoring order — the one table
+    /// [`MarkerKind::parse`] reads and the grammars' value-keyword set draws
+    /// from, so a new glyph highlights the moment it parses. `many` is an alias
+    /// of `crow`; the ER cardinality family closes the list ([SPEC 7]).
+    pub const NAMES: &'static [(&'static str, MarkerKind)] = &[
+        ("none", Self::None),
+        ("arrow", Self::Arrow),
+        ("dot", Self::Dot),
+        ("circle", Self::Circle),
+        ("diamond", Self::Diamond),
+        ("datum", Self::Datum),
+        ("crow", Self::Crow),
+        ("many", Self::Crow),
+        ("one", Self::One),
+        ("exactly-one", Self::ExactlyOne),
+        ("zero-or-one", Self::ZeroOrOne),
+        ("one-or-many", Self::OneOrMany),
+        ("zero-or-many", Self::ZeroOrMany),
+    ];
+
     pub fn parse(s: &str) -> Option<Self> {
-        Some(match s {
-            "none" => Self::None,
-            "arrow" => Self::Arrow,
-            "dot" => Self::Dot,
-            "circle" => Self::Circle,
-            "diamond" => Self::Diamond,
-            "datum" => Self::Datum,
-            // The ER cardinality family ([SPEC 7]); `many` is an alias of `crow`.
-            "crow" | "many" => Self::Crow,
-            "one" => Self::One,
-            "exactly-one" => Self::ExactlyOne,
-            "zero-or-one" => Self::ZeroOrOne,
-            "one-or-many" => Self::OneOrMany,
-            "zero-or-many" => Self::ZeroOrMany,
-            _ => return None,
-        })
+        Self::NAMES
+            .iter()
+            .find(|(name, _)| *name == s)
+            .map(|(_, kind)| *kind)
     }
 
     /// An open-stroked marker (the ER family) paints via `stroke: inherit` off the

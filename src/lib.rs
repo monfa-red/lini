@@ -40,11 +40,12 @@ pub use fmt::format as format_source;
 pub use ledger::examples::EXAMPLES as schema_examples;
 pub use schema::{reference_md, schema_json};
 
-/// The generated editor grammars [ROADMAP 3.8, Stage 4]: the VS Code TextMate
-/// bundle and the Zed tree-sitter highlight query, keyword lists fed from the
-/// same ledger. `cargo xtask gen-grammars` writes them; `tests/grammar.rs`
-/// guards them byte-identical.
-pub use grammar::{vscode_grammar, zed_highlights};
+/// The generated grammar homes [SPEC 22 / 23]: the VS Code TextMate bundle, the
+/// Zed tree-sitter highlight query, and the playground tokenizer's word-list
+/// region — all three fed from one word source over the ledger and the parse
+/// tables. `cargo xtask gen-grammars` writes them; `tests/grammar.rs` guards
+/// them byte-identical.
+pub use grammar::{splice_playground, vscode_grammar, zed_highlights};
 
 /// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
 /// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
