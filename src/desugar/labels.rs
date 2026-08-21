@@ -24,8 +24,6 @@ pub(super) struct Smart {
     /// A schematic part's pose [SPEC 16.1] — its value readout seats off the
     /// axis a turned part's wire runs down.
     pose: Pose,
-    /// A table/entity's column count — an entity's title spans them.
-    cols: Option<usize>,
 }
 
 impl Smart {
@@ -36,7 +34,6 @@ impl Smart {
         is_drawing: bool,
         sch: Option<schematic::SchKind>,
         pose: Pose,
-        cols: Option<usize>,
     ) -> Smart {
         Smart {
             is_icon: kind == NodeKind::Icon,
@@ -49,7 +46,6 @@ impl Smart {
             ),
             sch,
             pose,
-            cols,
         }
     }
 }
@@ -79,8 +75,11 @@ pub(super) fn lower_smart(
             }
             style.push(symbol_decl(&label.text, node.span));
         } else if what.is_entity {
-            // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
-            let title = header_node(label, Some(what.cols.unwrap_or(2)));
+            // An entity's label is its title: the `|header|` at the grid's
+            // top-left [SPEC 8]. It spans every column — a width the resolved
+            // `columns:` gives it (`crate::resolve::tables`), never a count
+            // read off the source here.
+            let title = header_node(label);
             children.insert(0, Child::Box(lower_node(cx, &title, Nest::NONE)?));
         } else if what.is_drawing {
             // A drawing's smart label is its title, lowered to a |footnote|

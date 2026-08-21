@@ -40,8 +40,8 @@ use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 pub(crate) use nest::{Nest, STATEMENT_ENGINES};
 use nest::{in_drawing_scope, is_drawing_body, is_schematic_body, seals_schematic_scope};
 use std::collections::{BTreeSet, HashMap};
-pub(crate) use tables::column_count;
-use tables::{distribute_cell_alignment, header_node, wrap_body_cells, wrap_header_row};
+pub(crate) use tables::declared_column_count;
+use tables::{header_node, wrap_body_cells};
 use types::{Types, is_template};
 
 type Bodies = HashMap<String, (Vec<Child>, Vec<Link>)>;
@@ -292,6 +292,17 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         .any(|t| schematic::schematic_type(std::slice::from_ref(t)).is_some())
     {
         present.insert("junction".to_string());
+    }
+    // A `|table|`'s header band and its per-column alignment are worn at
+    // resolve, from the resolved column count [SPEC 8] — so no source node
+    // wears `.lini-header` / `.lini-align-*` here, yet their rules must exist
+    // for that pass to have anything to apply (and for `|header| { … }` to
+    // reach the band). A table is what makes them live.
+    if present.contains("table") {
+        present.insert("header".to_string());
+        for (name, ..) in classes::ALIGN_CLASSES {
+            present.insert(name.to_string());
+        }
     }
 
     // ── Assemble the new stylesheet (a canonical order, so re-desugar is stable):
@@ -557,42 +568,19 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
         }
     }
 
-    // Table / entity structure [SPEC 8]. `cols` is the grid column count, driving both
-    // a `|table|`'s auto-header (its first row → `|header|` cells, below) and an
-    // `|entity|`'s title span (its label → a spanning header, in the smart-label block).
+    // Table / entity structure [SPEC 8], the count-free half: wrap every
+    // bare-text body cell in a `|cell|` (the box that carries the cell
+    // padding). Everything the grid's **column count** decides — the
+    // auto-header row, the per-column alignment, an entity's full-width
+    // bands — waits for the cascade to settle `columns:` and runs at resolve
+    // (`crate::resolve::tables`).
     let is_entity = info.chain.iter().any(|n| n == "entity");
-    let is_table = !is_entity && info.chain.iter().any(|n| n == "table");
-    let cols = column_count(&node.style, &info.chain);
-    if is_table && let Some(cols) = cols {
-        wrap_header_row(cx, &mut children, cols)?;
-    }
-    // Wrap every remaining bare-text body cell in a `|cell|` (the box that carries
-    // the cell padding, [SPEC 8]). The entity title (a spanning header) is inserted
-    // after this, already a box.
-    if is_table || is_entity {
+    let is_table = is_entity || info.chain.iter().any(|n| n == "table");
+    if is_table {
         wrap_body_cells(cx, &mut children)?;
     }
-    // Distribute the table's per-column `align`/`justify` onto its cells [SPEC 8]:
-    // every cell fills its track (the |table| bundle forces `stretch`), so the
-    // user's align/justify instead place each cell's text — carried to the cell in
-    // its own column. The table's own align/justify are dropped below so `stretch`
-    // stands. Only auto-flow cells are covered (the assumption the header sugar
-    // already makes); `cell:`/`span:` cells keep the column default.
-    if (is_table || is_entity)
-        && let Some(cols) = cols
-    {
-        distribute_cell_alignment(&mut children, &node.style, cols, is_entity)?;
-    }
 
-    // A table/entity's own `align`/`justify` are consumed above (distributed to its
-    // cells), so drop them here — the bundle's `stretch` fills the cells.
-    let mut style: Vec<Decl> = if is_table || is_entity {
-        node.style
-            .iter()
-            .filter(|d| d.name != "align" && d.name != "justify")
-            .cloned()
-            .collect()
-    } else if let Some(expanded) = page_style {
+    let mut style: Vec<Decl> = if let Some(expanded) = page_style {
         expanded
     } else {
         node.style.clone()
@@ -662,7 +650,7 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
         cx,
         node,
         label,
-        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, pose, cols),
+        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, pose),
         &mut style,
         &mut children,
     )?;
@@ -690,21 +678,6 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
                 )?;
             }
             None => {}
-        }
-    }
-
-    // In an entity, header / footer cells span every column [SPEC 8]: the title above
-    // carries its own span; a hand-written `|footer|` (or `|header|`) gets one here.
-    if is_entity && let Some(cols) = cols {
-        for child in &mut children {
-            if let Child::Box(n) = child
-                && n.classes
-                    .iter()
-                    .any(|c| c == "lini-header" || c == "lini-footer")
-                && !n.style.iter().any(|d| d.name == "span")
-            {
-                n.style.push(decl("span", vec![Value::Number(cols as f64)]));
-            }
         }
     }
 

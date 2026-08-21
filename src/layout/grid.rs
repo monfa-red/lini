@@ -15,14 +15,9 @@ use super::ir::{Bbox, Gutter, PlacedNode};
 use super::primitives;
 use super::values::as_pair;
 use crate::error::{Code, Error};
+use crate::resolve::tracks::{self, Track};
 use crate::resolve::{AttrMap, NodeKind, ResolvedValue};
 use crate::span::Span;
-
-#[derive(Clone, Copy)]
-enum Track {
-    Fixed(f64),
-    Auto,
-}
 
 /// Lay out a grid; returns the content bbox plus the interior gutter rects the
 /// container fills with its `gap-fill` (span-aware, per-axis). Empty when
@@ -39,7 +34,7 @@ pub fn lay_out_grid(
     let (gap_y, gap_x) = primitives::gap(attrs, span)?;
 
     let col_tracks = match attrs.get("columns") {
-        Some(v) => parse_tracks(v, span)?,
+        Some(v) => tracks::parse(v, span)?,
         None => {
             return Err(
                 Error::at(span, "'layout: grid' requires 'columns'").code(Code::MISSING_REQUIRED)
@@ -51,7 +46,7 @@ pub fn lay_out_grid(
         return Err(Error::at(span, "'columns' needs at least one track"));
     }
     let row_tracks: Option<Vec<Track>> = match attrs.get("rows") {
-        Some(v) => Some(parse_tracks(v, span)?),
+        Some(v) => Some(tracks::parse(v, span)?),
         None => None,
     };
 
@@ -232,49 +227,6 @@ pub fn lay_out_grid(
 }
 
 // ───────────────────────── Track lists ─────────────────────────
-
-fn parse_tracks(value: &ResolvedValue, span: Span) -> Result<Vec<Track>, Error> {
-    let mut out = Vec::new();
-    match value {
-        // The comma law [SPEC 2]: a track list is comma-separated.
-        ResolvedValue::List(items) => {
-            for item in items {
-                push_track(&mut out, item, span)?;
-            }
-        }
-        single => push_track(&mut out, single, span)?,
-    }
-    Ok(out)
-}
-
-fn push_track(out: &mut Vec<Track>, v: &ResolvedValue, span: Span) -> Result<(), Error> {
-    match v {
-        ResolvedValue::Ident(s) if s == "auto" => out.push(Track::Auto),
-        ResolvedValue::Call(c) if c.name == "repeat" => {
-            let n = c
-                .args
-                .first()
-                .and_then(ResolvedValue::as_number)
-                .filter(|n| *n >= 1.0 && n.fract() == 0.0)
-                .ok_or_else(|| Error::at(span, "repeat() needs a positive integer count"))?
-                as usize;
-            let size = c.args.get(1).and_then(ResolvedValue::as_number);
-            for _ in 0..n {
-                out.push(size.map_or(Track::Auto, Track::Fixed));
-            }
-        }
-        other => match other.as_number() {
-            Some(n) => out.push(Track::Fixed(n)),
-            None => {
-                return Err(Error::at(
-                    span,
-                    "a track is a size, 'auto', or repeat(N[, size])",
-                ));
-            }
-        },
-    }
-    Ok(())
-}
 
 #[derive(Clone, Copy)]
 enum Axis {

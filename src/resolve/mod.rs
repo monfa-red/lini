@@ -7,7 +7,9 @@
 //! [`program`] orchestrates them over the [`defaults`] table; [`merge`] folds
 //! resolved declarations and extracts markers; [`ir`] is the resolved form.
 //! [`pattern`] states the `pattern:` call's law once, for value resolution
-//! and layout alike.
+//! and layout alike; [`tracks`] reads a grid's track list and [`tables`] runs
+//! the table / entity structure that its **resolved** column count decides
+//! [SPEC 8].
 
 pub(crate) mod assets;
 mod cascade;
@@ -18,6 +20,8 @@ mod merge;
 pub(crate) mod pattern;
 mod program;
 pub(crate) mod scene;
+mod tables;
+pub(crate) mod tracks;
 pub(crate) mod value;
 
 pub use assets::AssetEnv;

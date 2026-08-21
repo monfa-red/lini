@@ -92,11 +92,7 @@ pub fn read_pin(attrs: &AttrMap, span: Span) -> Result<Option<Pin>, Error> {
 /// Whether a child is pinned — `pin` present and not `none`. A cheap check for
 /// paint order; [`read_pin`] is the validating reader.
 pub fn is_pinned(attrs: &AttrMap) -> bool {
-    match attrs.get("pin") {
-        Some(ResolvedValue::Ident(s)) => s != "none",
-        Some(_) => true,
-        None => false,
-    }
+    crate::resolve::pins_out_of_flow(attrs.get("pin"))
 }
 
 /// Classify a child from its positioning attrs.

@@ -318,9 +318,25 @@ pub fn resolve_node(
         validate_finish(&attrs, node.span)?;
     }
 
+    // The table / entity structure the resolved column count decides
+    // [SPEC 8] — the header row, the per-column alignment, the entity's
+    // full-width bands. It runs here, before the children resolve, because
+    // `columns:` is only knowable once the cascade has collapsed
+    // (`super::tables`).
+    let decorated = super::tables::decorate(
+        ctx.sheet,
+        ancestors,
+        &facts,
+        &type_chain,
+        &node.children,
+        &mut attrs,
+        node.span,
+    )?;
+    let own_children = decorated.as_deref().unwrap_or(&node.children);
+
     ancestors.push(facts);
     let mut children = Vec::new();
-    for child in &node.children {
+    for child in own_children {
         children.push(resolve_child(
             child,
             ctx,

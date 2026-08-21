@@ -3870,7 +3870,10 @@ shadowing a built-in) surface here.
    numbers / points ([SPEC 10.7](#107-expressions--functions)).
 2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
    layer properties per the [cascade](#4-selectors-cascade--specificity); lift internal
-   links; build the path index.
+   links; build the path index. A `|table|`/`|entity|`'s structure settles here, once
+   its `columns:` has: the first row becomes the header band, the table's
+   `align`/`justify` carry onto its cells, and an entity's `|header|`/`|footer|`
+   take their full-width span ([SPEC 8](#8-templates)).
 3. *Links:* resolve endpoints by scoped path walk with suggestion errors; merge link
    properties through the link's ladder ([SPEC 4](#4-selectors-cascade--specificity));
    cartesian-expand fan groups into one resolved link per pair; the
@@ -3949,6 +3952,12 @@ re-renders byte-identically. A chart's or sequence's *type* desugars here (a `|c
 is a `|block|` wearing `.lini-chart`); its geometric primitive subtree is a layout-phase
 artefact ([SPEC 19](#19-compile-pipeline)), like a routed link's geometry. A
 teaching/debugging view; prints to stdout, never rewrites, comments not preserved.
+A `|table|`'s header band and its per-column alignment are likewise **not**
+shown: both are decided from the *resolved* `columns:`, which a class, a
+descendant or id rule, or a user template can set ([SPEC 8](#8-templates)), so
+they are a cascade-phase artefact — the structure desugar does show (each cell
+in its `|cell|`, an entity's label as its title `|header|`) is the part that
+needs no column count.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2 I/O ·
 3 invalid CLI.

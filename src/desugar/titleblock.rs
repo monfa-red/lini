@@ -39,7 +39,7 @@ pub(super) fn has_fields(style: &[Decl]) -> bool {
 /// spans **the grid the block actually has** — an authored `columns:` sets the
 /// count, and the span must follow it or exceed the track list [SPEC 21].
 pub(super) fn expand_fields(style: &mut Vec<Decl>, span: Span) -> Vec<Node> {
-    let cols = super::tables::column_count(style, &[]).unwrap_or(COLUMNS);
+    let cols = super::tables::declared_column_count(style, &[]).unwrap_or(COLUMNS);
     let cells: Vec<Node> = FIELDS
         .iter()
         .filter_map(|(key, cap)| {

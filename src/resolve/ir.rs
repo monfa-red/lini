@@ -233,6 +233,18 @@ impl AttrMap {
 /// Whether resolved `attrs` set `layout: drawing` [SPEC 15] — the one check for
 /// "this is a drawing scope," shared by the resolve link pass and the layout
 /// dispatch.
+/// Whether a resolved `pin:` value takes its wearer **out of the flow**
+/// [SPEC 5] — `none` (or unset) keeps it in. The one reading: layout asks it of
+/// a placed child, and the table sugar asks it of a child's tiers, to know
+/// which children hold a track [SPEC 8].
+pub fn pins_out_of_flow(value: Option<&ResolvedValue>) -> bool {
+    match value {
+        Some(ResolvedValue::Ident(s)) => s != "none",
+        Some(_) => true,
+        None => false,
+    }
+}
+
 pub fn is_drawing(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
 }

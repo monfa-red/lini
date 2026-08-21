@@ -6,7 +6,7 @@
 //! their id column (the bars line up), and a plain group aligns its type column
 //! too (the labels). Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
-use crate::desugar::{column_count, types::Types};
+use crate::desugar::{declared_column_count, types::Types};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
@@ -407,7 +407,7 @@ impl Emitter<'_> {
             .and_then(|(t, ty)| t.resolve(ty, node.span).ok())
             .map(|i| i.chain)
             .unwrap_or_default();
-        column_count(&node.style, &chain)
+        declared_column_count(&node.style, &chain)
     }
 
     /// Emit bare-text cells as aligned rows: each column padded to its widest
