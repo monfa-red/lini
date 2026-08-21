@@ -19,7 +19,7 @@ fn points(d: &str) -> Vec<(f64, f64)> {
         .split_whitespace()
         .filter_map(|t| t.parse().ok())
         .collect();
-    n.chunks_exact(2).map(|c| (c[0], c[1])).collect()
+    n.as_chunks::<2>().0.iter().map(|c| (c[0], c[1])).collect()
 }
 
 /// A path's `(width, height)`.

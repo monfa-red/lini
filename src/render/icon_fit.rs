@@ -129,7 +129,11 @@ fn points_attr(frag: &str) -> Vec<(f64, f64)> {
         .split([' ', ','])
         .filter_map(|t| t.trim().parse().ok())
         .collect();
-    nums.chunks_exact(2).map(|c| (c[0], c[1])).collect()
+    nums.as_chunks::<2>()
+        .0
+        .iter()
+        .map(|c| (c[0], c[1]))
+        .collect()
 }
 
 // ── Affine transform (only `translate` / `rotate` appear in the set) ─────────
