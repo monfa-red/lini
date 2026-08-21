@@ -149,11 +149,7 @@ pub(in crate::layout) fn layout_detail(
     // The detail's own annotations, against the clones — dims stack outside the
     // region **circle**, not the clipped-away part.
     let circle = Bbox::centered(2.0 * r, 2.0 * r);
-    let links: Vec<&ResolvedLink> = if inst.id.is_some() {
-        program.links.iter().filter(|w| w.scope == path).collect()
-    } else {
-        Vec::new()
-    };
+    let links: Vec<&ResolvedLink> = crate::layout::scope_links(program, path, Some(inst.span));
     let mut annotations =
         super::annotate::lower(&clones, &links, path, own, Some(circle), &[], program)?;
 

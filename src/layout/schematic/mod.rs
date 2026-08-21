@@ -110,7 +110,14 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    let (children, body) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    let (children, body) = arrange(
+        &inst.attrs,
+        &inst.children,
+        path,
+        program,
+        inst.span,
+        Some(inst.span),
+    )?;
     // Border-box, `width`/`height` a floor over the placed sheet [SPEC 5/17] —
     // the one sizing mechanism, the same a `|drawing|` node runs through. A
     // schematic's interior is sheet-space, so it sizes at scale 1 [SPEC 16.6].
@@ -128,6 +135,7 @@ pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), 
         "",
         program,
         Span::empty(),
+        None,
     )?;
     let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
     Ok((
@@ -147,6 +155,7 @@ fn arrange(
     path: &str,
     program: &Program,
     span: Span,
+    owner: Option<Span>,
 ) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     // A schematic's interior is sheet-space [SPEC 15.1/16.6] — its chrome is
     // baked in sheet px and never inherits an enclosing drawing's view scale.
@@ -158,7 +167,7 @@ fn arrange(
     // off [SPEC 16.1]; the engine only *reads* them, the router still draws
     // every one [SPEC 16.7].
     let links: Vec<&crate::resolve::ResolvedLink> =
-        program.links.iter().filter(|w| w.scope == path).collect();
+        crate::layout::scope_links(program, path, owner);
     let body = place::arrange(&mut children, attrs, span, &links, path)?;
     // Centre the placed sheet on the scope's origin — the tracks already sit
     // there, but a spanning chain or a flowed-out satellite can hang the body

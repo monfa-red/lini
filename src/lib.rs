@@ -515,8 +515,7 @@ pub mod testing {
                 matches!(
                     w.routing,
                     crate::resolve::Strategy::Orthogonal | crate::resolve::Strategy::Natural
-                ) && !layout::sequence::is_sequence_scope(&prog, &w.scope)
-                    && !layout::drawing::is_drawing_scope(&prog, &w.scope)
+                ) && !w.written_in.consumes_links()
             })
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()

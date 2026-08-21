@@ -184,6 +184,10 @@ pub fn resolve_with_env(
             carried,
         )?;
         dress_wires(owner, &mut resolved);
+        let written_in = link_scope::written_in(&[], &root_attrs);
+        for w in &mut resolved {
+            w.written_in = written_in.clone();
+        }
         owners.resize(owners.len() + resolved.len(), owner);
         link_list.extend(resolved);
     }
@@ -221,6 +225,10 @@ pub fn resolve_with_env(
             carried,
         )?;
         dress_wires(owner, &mut resolved);
+        let written_in = link_scope::written_in(&lw.chain, &root_attrs);
+        for w in &mut resolved {
+            w.written_in = written_in.clone();
+        }
         owners.resize(owners.len() + resolved.len(), owner);
         link_list.extend(resolved);
     }

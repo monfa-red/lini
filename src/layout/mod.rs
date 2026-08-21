@@ -276,6 +276,24 @@ pub(crate) fn scope_attrs<'a>(
     }
 }
 
+/// The links a container scope **owns** [SPEC 9] — the statements written in
+/// that very container, which its `layout:` then realises ([SPEC 11] seam 2).
+/// `owner` is the container's own span (`None` at the scene root), the identity
+/// resolve stamped on each link: a dot-path cannot serve, because an anonymous
+/// container shares its parent's — scope-transparency is about names, not
+/// geometry. The path still tells define-inlined twins of one container apart.
+pub(crate) fn scope_links<'a>(
+    program: &'a Program,
+    path: &str,
+    owner: Option<crate::span::Span>,
+) -> Vec<&'a crate::resolve::ResolvedLink> {
+    program
+        .links
+        .iter()
+        .filter(|w| w.scope == path && w.written_in.span == owner)
+        .collect()
+}
+
 /// The scene instance at a dot-path (`""` → `None`: the root is not an instance).
 /// Walks by id, like an endpoint path — descending through **anonymous**
 /// containers, which are scope-transparent [SPEC 9]. Used by the scope

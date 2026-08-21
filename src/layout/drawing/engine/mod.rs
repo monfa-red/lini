@@ -39,7 +39,7 @@ pub(in crate::layout) fn layout_node(
                 program,
                 own,
                 inst.span,
-                inst.id.is_some(),
+                Some(inst.span),
             )?;
             if let Some(super::section::OfView::Section { letter }) = of {
                 super::section::fill_of_title(&mut c, "section", &letter, ratio_of(&inst.attrs));
@@ -74,7 +74,7 @@ pub(in crate::layout) fn layout_node(
 /// stay in scene coordinates — the root's padding frames them in `finish`.
 pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
-    let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty(), true)?;
+    let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty(), None)?;
     let extent = flow_extent(&children);
     anchors::place_pinned(&mut children, extent)?;
     Ok((children, extent))
@@ -92,7 +92,7 @@ fn lay_out(
     program: &Program,
     own: f64,
     span: Span,
-    owns_links: bool,
+    owner: Option<Span>,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
         scale: own,
@@ -117,14 +117,11 @@ fn lay_out(
     }
 
     // The scope's links, in source order: mates seat parts first, and the
-    // annotations measure the seated result [SPEC 15.10]. An **anonymous**
-    // drawing node is scope-transparent [SPEC 9]: its path is its parent's and
-    // its links resolved there — consuming by path would steal the parent's.
-    let mut links: Vec<&ResolvedLink> = if owns_links {
-        program.links.iter().filter(|w| w.scope == path).collect()
-    } else {
-        Vec::new()
-    };
+    // annotations measure the seated result [SPEC 15.10]. The owner is the
+    // drawing's own identity, not its path — an anonymous one shares its
+    // parent's path, and taking links by path would steal the parent's
+    // [SPEC 9].
+    let mut links: Vec<&ResolvedLink> = super::super::scope_links(program, path, owner);
     links.sort_by_key(|w| w.span.start);
     let (mates, annotations): (Vec<&ResolvedLink>, Vec<&ResolvedLink>) =
         links.iter().partition(|w| w.kind == LinkKind::Mate);

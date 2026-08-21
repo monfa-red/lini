@@ -1161,13 +1161,17 @@ that edge is forced.
 An **anonymous** container opens no scope: it is **scope-transparent** — its
 children belong to its parent's scope (ids stay unique across it), a dot-path
 never names it, and its own `[ ]` links resolve in the parent's scope. Name a
-container to give it a scope of its own — a scope-owning body (a `|drawing|`'s
-mates, a `|sequence|`'s messages) therefore wants an id. A sequence frame is
+container to give its children a dot-path of their own. A sequence frame is
 transparent the same way ([SPEC 13](#13-sequence)). Scope-transparency is
 about **names**, not geometry: the router sees the container itself, so links
-route inside an anonymous group exactly as inside a named one, and its scene
+route inside an anonymous group exactly as inside a named one; its scene
 config (`clearance:`, `routing:`) cascades onto the links written in it
-([ROUTING.md](ROUTING.md) Model step 1).
+([ROUTING.md](ROUTING.md) Model step 1); and a **layout-owning** container
+realises the statements written in it whether or not it is named — an
+anonymous `|drawing|` draws its own dimensions, an anonymous `|sequence|` lays
+its own messages on the time axis. The wiring strategy follows the container
+that *wrote* the statement ([SPEC 11](#11-the-layout-model), seam 2), never the
+dot-path its endpoints resolve against.
 
 ### Internal links in a body
 

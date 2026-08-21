@@ -25,7 +25,7 @@ use crate::resolve::Program;
 pub(in crate::layout) fn seat_hints(laid: &LaidOut, program: &Program) -> Vec<Diagnostic> {
     let mut out = Vec::new();
     if super::is_schematic(&program.scene.attrs) {
-        report(&laid.nodes, "", program, &mut out);
+        report(&laid.nodes, "", None, program, &mut out);
     }
     walk(&laid.nodes, "", program, &mut out);
     out
@@ -41,20 +41,26 @@ fn walk(nodes: &[PlacedNode], prefix: &str, program: &Program, out: &mut Vec<Dia
             None => prefix.to_string(),
         };
         if super::is_schematic(&n.attrs) {
-            report(&n.children, &path, program, out);
+            report(&n.children, &path, Some(n.span), program, out);
         }
         walk(&n.children, &path, program, out);
     }
 }
 
-fn report(children: &[PlacedNode], scope: &str, program: &Program, out: &mut Vec<Diagnostic>) {
+fn report(
+    children: &[PlacedNode],
+    scope: &str,
+    owner: Option<crate::span::Span>,
+    program: &Program,
+    out: &mut Vec<Diagnostic>,
+) {
     let roles: Vec<Role> = children.iter().map(role).collect();
     let satellite: Vec<bool> = roles.iter().map(|r| *r == Role::Satellite).collect();
     if !satellite.contains(&true) {
         return;
     }
     let links: Vec<&crate::resolve::ResolvedLink> =
-        program.links.iter().filter(|w| w.scope == scope).collect();
+        crate::layout::scope_links(program, scope, owner);
     for chain in chains(&satellite, &super::seat::edges(children, &links, scope)) {
         // Held is exactly what the seat pass calls held — the same placed-end
         // filter, so a chain cannot flow, or lose an end, silently.

@@ -65,14 +65,7 @@ pub(super) fn layout_node(
         .into_iter()
         .map(place)
         .collect::<Result<Vec<_>, _>>()?;
-    // An **anonymous** sequence node is scope-transparent [SPEC 9]: its path is
-    // its parent's, and its (mis-scoped) messages resolved there — consuming by
-    // path here would steal the parent's links instead.
-    let messages = if inst.id.is_some() {
-        messages_for(program, path)
-    } else {
-        Vec::new()
-    };
+    let messages = messages_for(program, path, Some(inst.span));
     let (children, bbox, wires) = lay_out(
         &inst.attrs,
         participants,
@@ -106,7 +99,7 @@ pub(super) fn layout_root(
     // The notes among them — inside the frames' placed boxes too [SPEC 13].
     let mut notes = Vec::new();
     notes::collect(rest, &mut notes);
-    let messages = messages_for(program, "");
+    let messages = messages_for(program, "", None);
     let (children, bbox, wires) = lay_out(
         &program.scene.attrs,
         participants,
@@ -119,16 +112,17 @@ pub(super) fn layout_root(
     Ok((bbox, wires))
 }
 
-/// Whether the container at `scope` is a `layout: sequence` — so the router skips its links
-/// (they are drawn as time-row arrows here). Shared with the link partition (`bundle`).
-pub(crate) fn is_sequence_scope(program: &Program, scope: &str) -> bool {
-    super::scope_attrs(program, scope).is_some_and(is_sequence)
-}
-
-/// This sequence scope's messages — the resolved links written in it — in time (source)
-/// order. The router never sees them ([`bundle`] skips a sequence scope).
-fn messages_for<'a>(program: &'a Program, scope: &str) -> Vec<&'a ResolvedLink> {
-    let mut msgs: Vec<&ResolvedLink> = program.links.iter().filter(|w| w.scope == scope).collect();
+/// This sequence scope's messages — the resolved links **written in** it — in
+/// time (source) order. `owner` is the sequence node's own span (`None` at the
+/// scene root): an anonymous sequence shares its parent's path, so the path
+/// alone cannot say whose messages these are [SPEC 9]. The router never sees
+/// them ([`bundle`] skips a scope whose owner consumes its links).
+fn messages_for<'a>(
+    program: &'a Program,
+    scope: &str,
+    owner: Option<crate::span::Span>,
+) -> Vec<&'a ResolvedLink> {
+    let mut msgs = crate::layout::scope_links(program, scope, owner);
     msgs.sort_by_key(|w| w.span.start);
     msgs
 }
@@ -408,6 +402,22 @@ mod tests {
         assert!(s.contains(">User</text>"), "participant header: {s}");
         assert!(s.contains(">Store</text>"), "participant header: {s}");
         assert!(s.contains("lini-line"), "a lifeline per participant: {s}");
+    }
+
+    /// A sequence owns the messages **written in** it, named or not [SPEC 9].
+    /// An anonymous container is scope-transparent for *names*, not for
+    /// geometry: its dot-path is its parent's, so its messages would otherwise
+    /// fall through to the orthogonal router and draw as ordinary wires.
+    #[test]
+    fn an_anonymous_sequence_owns_its_messages() {
+        let body = "|box#a| \"A\"\n  |box#b| \"B\"\n  a -> b \"hi\"\n";
+        // The named form additionally carries its `data-id`; nothing else may differ.
+        let strip = |s: String| s.replace(" data-id=\"s\"", "");
+        assert_eq!(
+            strip(svg(&format!("|sequence| [\n  {body}]\n"))),
+            strip(svg(&format!("|sequence#s| [\n  {body}]\n"))),
+            "the anonymous sequence lays its message out on the time axis too"
+        );
     }
 
     #[test]

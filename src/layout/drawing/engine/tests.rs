@@ -661,3 +661,29 @@ fn wires_still_route_into_anonymous_groups() {
     let l = laid("|group| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\na -> b\n");
     assert_eq!(l.links.len(), 1);
 }
+
+// ── Link ownership [SPEC 9] ──
+
+/// A drawing owns the statements **written in** it whether or not it is named.
+/// An anonymous container is scope-transparent for *names*, not for geometry —
+/// its dot-path is its parent's, so ownership rides the link, not the path.
+#[test]
+fn an_anonymous_drawing_owns_its_dimensions() {
+    let body = "|rect#p| { width: 60; height: 30 }\np:left (-) p:right\n";
+    let value = |src: String| {
+        super::super::testutil::texts(&laid(&src).nodes)
+            .into_iter()
+            .map(|(t, ..)| t)
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        value(format!("{{ density: 1 }}\n|drawing| [\n{body}]\n")),
+        value(format!("{{ density: 1 }}\n|drawing#d| [\n{body}]\n")),
+        "the anonymous drawing measures exactly as the named one"
+    );
+    assert_eq!(
+        value(format!("{{ density: 1 }}\n|drawing| [\n{body}]\n")),
+        vec!["60".to_string()],
+        "and the dimension is drawn, not silently dropped"
+    );
+}

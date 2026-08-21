@@ -130,6 +130,25 @@ pub(super) fn statement_owner(chain: &[ScopeStep], root_attrs: &AttrMap) -> link
     owner
 }
 
+/// The container a statement was **written in** [SPEC 9] — the chain's
+/// innermost step (anonymous ones included), else the scene root. Its span is
+/// the identity a layout engine collects its own links by and its `layout:` the
+/// scope's wiring strategy; both are answered here, once, because a dot-path
+/// cannot answer either for an anonymous container ([`LinkOwner`]).
+pub(super) fn written_in(chain: &[ScopeStep], root_attrs: &AttrMap) -> crate::resolve::LinkOwner {
+    let (span, attrs) = match chain.last() {
+        Some(step) => (Some(step.span), &step.attrs),
+        None => (None, root_attrs),
+    };
+    crate::resolve::LinkOwner {
+        span,
+        layout: match attrs.get("layout") {
+            Some(ResolvedValue::Ident(l)) => Some(l.clone()),
+            _ => None,
+        },
+    }
+}
+
 /// Whether a container's own engine owns the reading of its body's statements
 /// — the resolved-attrs twin of `desugar::seals_schematic_scope`, over the one
 /// engine list.

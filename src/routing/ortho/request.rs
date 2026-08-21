@@ -99,14 +99,13 @@ impl EdgeReq {
 /// row y) and lowers each wire through the `straight` strategy itself — they
 /// are never requests; the router likewise only ever routes wires, and a
 /// drawing scope owns *all* its links — measures, mates, and its annotation
-/// arrows alike. The label pass must walk `program.links` with **this same
-/// filter** or its statement numbering drifts off the requests' and labels
-/// land on the wrong wire.
-pub fn is_routed(program: &Program, w: &crate::resolve::ResolvedLink) -> bool {
-    w.kind == crate::resolve::LinkKind::Wire
-        && !w.projection
-        && !crate::layout::sequence::is_sequence_scope(program, &w.scope)
-        && !crate::layout::drawing::is_drawing_scope(program, &w.scope)
+/// arrows alike. The owning scope is the one that **wrote** the statement,
+/// carried on the link, never re-read from its dot-path — an anonymous
+/// container has none of its own [SPEC 9]. The label pass must walk
+/// `program.links` with **this same filter** or its statement numbering drifts
+/// off the requests' and labels land on the wrong wire.
+pub fn is_routed(_program: &Program, w: &crate::resolve::ResolvedLink) -> bool {
+    w.kind == crate::resolve::LinkKind::Wire && !w.projection && !w.written_in.consumes_links()
 }
 
 pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, Error> {

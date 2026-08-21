@@ -353,8 +353,9 @@ pub fn resolve_link(
             carried: std::mem::take(&mut carried),
             one_ended,
             projection: false,
-            // Stamped by the caller, which walked the scope chain.
+            // Both stamped by the caller, which walked the scope chain.
             sheet: false,
+            written_in: Default::default(),
             span: w.span,
         });
     }

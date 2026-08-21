@@ -30,12 +30,15 @@ pub struct LiftedLink {
 }
 
 /// One container on a link's written chain: its selector identity, resolved
-/// attrs (the scope-config source), and display type (drawing diagnostics).
+/// attrs (the scope-config source), display type (drawing diagnostics), and
+/// its own declaration span — the container's **identity** as a link owner,
+/// which a dot-path cannot supply for an anonymous one [SPEC 9].
 #[derive(Clone)]
 pub struct ScopeStep {
     pub facts: NodeFacts,
     pub attrs: AttrMap,
     pub display_type: String,
+    pub span: Span,
 }
 
 /// Everything node resolution reads but does not mutate.
@@ -277,6 +280,7 @@ pub fn resolve_node(
             .first()
             .cloned()
             .unwrap_or_else(|| kind.as_str().to_string()),
+        span: node.span,
     });
     if let Some(step) = own_step.clone() {
         steps.push(step);

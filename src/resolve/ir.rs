@@ -473,6 +473,33 @@ pub enum MeasureOp {
     Angle,
 }
 
+/// The container a link statement was **written in** — its identity and its
+/// `layout:`, both carried rather than re-derived from [`ResolvedLink::scope`]
+/// later (as `sheet` is).
+///
+/// The two are one concept: the scope that wrote a statement is the scope whose
+/// engine realises it ([SPEC 11] seam 2). A dot-path cannot name it, because
+/// **scope-transparency is about names, not geometry** [SPEC 9] — an anonymous
+/// container shares its parent's path, so a path-keyed lookup answers for the
+/// parent and an anonymous `|drawing|`'s dimensions or `|sequence|`'s messages
+/// fall between the two owners.
+#[derive(Clone, Default, PartialEq)]
+pub struct LinkOwner {
+    /// The container node's own declaration span; `None` at the scene root.
+    pub span: Option<Span>,
+    /// Its `layout:` — the scope's **wiring strategy**: `sequence` and
+    /// `drawing` consume their own links, so the router never sees them.
+    pub layout: Option<String>,
+}
+
+impl LinkOwner {
+    /// Whether the writing scope's engine consumes its own links — the one
+    /// reading the router, the label pass, and the edge count all share.
+    pub fn consumes_links(&self) -> bool {
+        matches!(self.layout.as_deref(), Some("sequence") | Some("drawing"))
+    }
+}
+
 /// `Clone` for one reason [SPEC 16.5]: a schematic chain that reaches resolve
 /// whole is cut into a link per hop there — a threaded part leaves by its other
 /// pin, which one endpoint list cannot spell.
@@ -487,6 +514,8 @@ pub struct ResolvedLink {
     /// strategy: a `sequence` scope draws its links as time-row arrows and skips the
     /// orthogonal router [SPEC 13].
     pub scope: String,
+    /// The container that **wrote** this statement [SPEC 9] — see [`LinkOwner`].
+    pub written_in: LinkOwner,
     /// The operator's line part (`->` solid · `-->` dashed · `~>` wavy) — the
     /// message's *kind* in a sequence (call / return / async), read here rather than
     /// from `stroke-style`, which a `link-style:` override can change [SPEC 13].

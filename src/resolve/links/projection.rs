@@ -140,6 +140,7 @@ pub(super) fn try_projection(
         one_ended: false,
         projection: true,
         sheet: false,
+        written_in: Default::default(),
         span: w.span,
     }]))
 }
