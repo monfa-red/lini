@@ -157,6 +157,21 @@ battle-test findings (chunk 7) feed it — write it after.
 
 ---
 
+## Log
+
+- **Chunks 1–6 landed 2026-08-21** (`415fd51`, `90548c0`, `0088cbc`, `74b96e5`
+  + `e59d642`, `4c7e5e0`, `c884ff3` + `46dbc0a`). Chunk 6's decision: container
+  `gap` 20 → **36**, `clearance` stays 16 — the wider gutter turns orbiting
+  routes into straight drops. Landing it surfaced and fixed a **contract flaw**:
+  a fan's shared side was priced by its lead sibling alone; ROUTING.md now
+  prices it by fan total (§Special nodes, Law 3).
+- **New findings, each worth its own round**: the admission's **cross-window
+  blind spot** — a crowded cluster can fall to placement's infeasible fallback
+  and breach Law 1 where the search should have priced the squeeze (pre-existing;
+  `links_hard` documents it, widened 34 → 38 to stay clean); a **schematic
+  body's pin stack rides the generic flow gutter**, so the flow `gap` default
+  leaks into component height — give the body stack its own scoped default.
+
 ## Not in this plan
 
 - **Samples redo/consolidation** — its own session (existing backlog item);
