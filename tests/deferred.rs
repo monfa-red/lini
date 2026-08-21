@@ -37,26 +37,15 @@
 //! - *Beyond 1.0*: view-letter arrows on sheets; animation; native PNG / WebP
 //!   export (a CLI surface, not a language one).
 
-use lini::Level;
-
-/// The refusal a source draws, rendered as the CLI prints it: the first
-/// error-level validation diagnostic if the ledger pass fires, else the resolve
-/// / layout error a full compile hits. One entry point, so the ledger below
-/// reads as one table whatever phase owns the refusal — and a slot that turns
-/// lenient fails here loudly rather than quietly passing.
+/// The refusal a source draws, rendered as the CLI prints it — the shared
+/// `compile_verdict` read the other way round. One entry point, so the ledger
+/// below reads as one table whatever phase owns the refusal, and a slot that
+/// turns lenient fails here loudly rather than quietly passing.
 #[track_caller]
 fn refusal(src: &str) -> String {
-    match lini::lint_str(src) {
-        Err(e) => return e.display_with_source(src, "test.lini").to_string(),
-        Ok(ds) => {
-            if let Some(d) = ds.iter().find(|d| d.level == Level::Error) {
-                return d.display_with_source(src, "test.lini").to_string();
-            }
-        }
-    }
-    match lini::compile_str(src) {
-        Err(e) => e.display_with_source(src, "test.lini").to_string(),
-        Ok(_) => panic!("expected a refusal; the source compiled clean:\n{src}"),
+    match lini::testing::compile_verdict(src, "test.lini") {
+        Err(msg) => msg,
+        Ok(()) => panic!("expected a refusal; the source compiled clean:\n{src}"),
     }
 }
 
@@ -64,17 +53,9 @@ fn refusal(src: &str) -> String {
 /// slot and nothing else.
 #[track_caller]
 fn compiles(src: &str) {
-    lini::compile_str(src).unwrap_or_else(|e| panic!("expected a clean compile: {}", e.message));
-    let diags = lini::lint_str(src).expect("parse");
-    assert!(
-        !diags.iter().any(|d| d.level == Level::Error),
-        "expected no error diagnostics, got:\n{}",
-        diags
-            .iter()
-            .map(|d| d.display_with_source(src, "test.lini").to_string())
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
+    if let Err(msg) = lini::testing::compile_verdict(src, "test.lini") {
+        panic!("expected a clean compile, got:\n{msg}");
+    }
 }
 
 // ───────────────────────────────── Core ─────────────────────────────────

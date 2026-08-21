@@ -300,6 +300,30 @@ pub mod testing {
     pub use crate::layout::LaidOut;
     pub use crate::layout::ir::PlacedNode;
 
+    /// **Does this source compile clean?** — one verdict over the whole front
+    /// end: `Ok(())` when the property/lint pass [SPEC 17/21] raises no
+    /// error-level diagnostic *and* the full compile succeeds, else the first
+    /// refusal rendered the way the CLI prints it.
+    ///
+    /// The two suites that judge a whole source by whether it compiles — the
+    /// deferred-surface ledger (`tests/deferred.rs`) and the SPEC fenced-block
+    /// guard (`tests/spec_blocks.rs`) — read the verdict from here, so
+    /// "compiles clean" means one thing and a lint-phase gate can never hide
+    /// behind a clean render.
+    pub fn compile_verdict(src: &str, filename: &str) -> Result<(), String> {
+        match crate::lint_str(src) {
+            Err(e) => return Err(e.display_with_source(src, filename).to_string()),
+            Ok(diags) => {
+                if let Some(d) = diags.iter().find(|d| d.level == crate::Level::Error) {
+                    return Err(d.display_with_source(src, filename).to_string());
+                }
+            }
+        }
+        crate::compile_str(src)
+            .map(|_| ())
+            .map_err(|e| e.display_with_source(src, filename).to_string())
+    }
+
     /// The showroom sheets [SPEC 19] plus the routing-oracle fixtures — the one
     /// corpus every sweep walks, sorted so failures report in a stable order.
     ///

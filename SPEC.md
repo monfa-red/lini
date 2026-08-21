@@ -2008,8 +2008,10 @@ call: the resolver would fold a call with `x` unbound. Locals chain derivations 
 
 ```
 { ramp(s) = min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2); }
-|area| "Steel"    { fn: (ramp(1)) }
-|line| "Aluminum" { fn: (ramp(1/0.7)) }
+|chart| [
+  |area| "Steel"    { fn: (ramp(1)) }
+  |line| "Aluminum" { fn: (ramp(1/0.7)) }
+]
 ```
 
 **The formula ceiling.** `fn:` expresses a function of `x`, not a recurrence: a numeric
@@ -3358,7 +3360,7 @@ defines; a power net is a one-line define with intrinsic text
 ([SPEC 8](#8-templates)):
 
 ```
-{ |vm::label| { symbol: power } [ "VM" ] }
+{ layout: schematic; |vm::label| { symbol: power } [ "VM" ] }
 c24.p2 - |gnd|
 U7.VS  - |vm|
 ```
