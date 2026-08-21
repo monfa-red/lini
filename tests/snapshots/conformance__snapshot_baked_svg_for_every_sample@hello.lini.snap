@@ -13,22 +13,22 @@ input_file: samples/hello.lini
     .lini-scope-1d7409d4 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs>
-    <path id="lg1500-0" d="…"/>
-    <path id="lg1500-213" d="…"/>
-    <path id="lg1500-238" d="…"/>
-    <path id="lg1500-259" d="…"/>
-    <path id="lg1500-271" d="…"/>
+    <path id="lini-g1500-0" d="…"/>
+    <path id="lini-g1500-213" d="…"/>
+    <path id="lini-g1500-238" d="…"/>
+    <path id="lini-g1500-259" d="…"/>
+    <path id="lini-g1500-271" d="…"/>
   </defs>
   <rect class="lini-canvas" x="-57.665" y="-48.5" width="115.33" height="97"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
       <rect x="-36.665" y="-27.5" width="73.33" height="55" rx="8" ry="8"/>
       <g class="lini-text">
-        <use href="#lg1500-238" transform="translate(-16.665 5.37) scale(0.015 -0.015)"/>
-        <use href="#lg1500-213" transform="translate(-7.95 5.37) scale(0.015 -0.015)"/>
-        <use href="#lg1500-259" transform="translate(0.63 5.37) scale(0.015 -0.015)"/>
-        <use href="#lg1500-259" transform="translate(4.125 5.37) scale(0.015 -0.015)"/>
-        <use href="#lg1500-271" transform="translate(7.62 5.37) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-238" transform="translate(-16.665 5.37) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-213" transform="translate(-7.95 5.37) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-259" transform="translate(0.63 5.37) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-259" transform="translate(4.125 5.37) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-271" transform="translate(7.62 5.37) scale(0.015 -0.015)"/>
       </g>
     </g>
   </g>

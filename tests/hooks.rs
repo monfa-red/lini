@@ -22,6 +22,10 @@
 //! (a primitive, a built-in template, or one of the file's own `define`s), a
 //! hue must be one the palette walk mints. A family the doc grows that the test
 //! has no recogniser for fails loudly rather than waving the class through.
+//!
+//! The **ids** get the same treatment, one law shorter: SPEC 18 reserves the
+//! `lini-` prefix for generated names, so every id a figure writes carries it —
+//! in both output modes, `--static`'s glyph defs included.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -254,6 +258,46 @@ fn every_emitted_class_is_documented() {
         seen.len() > 100,
         "the sweep saw only {} classes — did the samples stop compiling?",
         seen.len()
+    );
+}
+
+/// **Every generated id carries the `lini-` prefix** [SPEC 18] — the reservation
+/// an author's own id is refused for ("an id may not begin 'lini-'",
+/// [SPEC 21](SPEC.md)) is only worth something if the engine spends it. Both
+/// output modes: `--static` mints the glyph defs, by far the most numerous
+/// family, and they are the ones a short spelling tempts.
+#[test]
+fn every_generated_id_carries_the_prefix() {
+    let mut bare: BTreeMap<String, String> = BTreeMap::new();
+    for path in lini::testing::samples() {
+        let src = lini::testing::read_sample(&path);
+        let name = path.file_name().unwrap().to_string_lossy().to_string();
+        for static_mode in [false, true] {
+            let opts = lini::Options {
+                static_mode,
+                ..lini::testing::sample_opts()
+            };
+            let Ok(svg) = lini::compile_str_with(&src, &opts) else {
+                continue;
+            };
+            for (i, _) in svg.match_indices(" id=\"") {
+                let rest = &svg[i + 5..];
+                let Some(end) = rest.find('"') else { continue };
+                let id = &rest[..end];
+                if !id.starts_with("lini-") {
+                    bare.insert(id.to_string(), name.clone());
+                }
+            }
+        }
+    }
+    assert!(
+        bare.is_empty(),
+        "{} generated id(s) go without the reserved 'lini-' prefix:\n{}",
+        bare.len(),
+        bare.iter()
+            .map(|(id, s)| format!("  {id}  (first seen in {s})"))
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }
 

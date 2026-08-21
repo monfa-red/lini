@@ -19,17 +19,17 @@ input_file: samples/desugar.lini
   </style>
   <defs>
     <filter id="lini-shadow-803f42a2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <path id="lg1400-0" d="…"/>
-    <path id="lg1400-1" d="…"/>
-    <path id="lg1400-65" d="…"/>
-    <path id="lg1400-119" d="…"/>
-    <path id="lg1400-334" d="…"/>
-    <path id="lg1400-1654" d="…"/>
-    <path id="lg1500-0" d="…"/>
-    <path id="lg1500-79" d="…"/>
-    <path id="lg1500-94" d="…"/>
-    <path id="lg1500-202" d="…"/>
-    <path id="lg1500-209" d="…"/>
+    <path id="lini-g1400-0" d="…"/>
+    <path id="lini-g1400-1" d="…"/>
+    <path id="lini-g1400-65" d="…"/>
+    <path id="lini-g1400-119" d="…"/>
+    <path id="lini-g1400-334" d="…"/>
+    <path id="lini-g1400-1654" d="…"/>
+    <path id="lini-g1500-0" d="…"/>
+    <path id="lini-g1500-79" d="…"/>
+    <path id="lini-g1500-94" d="…"/>
+    <path id="lini-g1500-202" d="…"/>
+    <path id="lini-g1500-209" d="…"/>
   </defs>
   <rect class="lini-canvas" x="-117.855" y="-88.5" width="235.71" height="157.5"/>
   <g class="lini-scene">
@@ -38,16 +38,16 @@ input_file: samples/desugar.lini
       <g class="lini-node lini-chip lini-box lini-block" data-id="health" transform="translate(0,0)">
         <rect x="-31.145" y="-27.5" width="62.29" height="55" rx="12" ry="12"/>
         <g class="lini-text">
-          <use href="#lg1500-94" transform="translate(-11.145 5.37) scale(0.015 -0.015)"/>
-          <use href="#lg1500-79" transform="translate(1.305 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-94" transform="translate(-11.145 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-79" transform="translate(1.305 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-43.223,-62.5)">
         <rect x="-8.922" y="-6" width="17.844" height="12" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg1400-1" transform="translate(-8.922 4.296) scale(0.012 -0.012)"/>
-          <use href="#lg1400-119" transform="translate(-0.882 4.296) scale(0.012 -0.012)"/>
-          <use href="#lg1400-65" transform="translate(6.006 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1400-1" transform="translate(-8.922 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1400-119" transform="translate(-0.882 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1400-65" transform="translate(6.006 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
       <g class="lini-node lini-badge lini-block" transform="translate(46.469,-47)">
@@ -55,8 +55,8 @@ input_file: samples/desugar.lini
           <rect x="-11.676" y="-7.5" width="23.352" height="15" rx="8" ry="8"/>
         </g>
         <g class="lini-text">
-          <use href="#lg1400-334" transform="translate(-5.676 3.938) scale(0.011 -0.011)"/>
-          <use href="#lg1400-1654" transform="translate(-0.088 3.938) scale(0.011 -0.011)"/>
+          <use href="#lini-g1400-334" transform="translate(-5.676 3.938) scale(0.011 -0.011)"/>
+          <use href="#lini-g1400-1654" transform="translate(-0.088 3.938) scale(0.011 -0.011)"/>
         </g>
       </g>
     </g>
@@ -64,8 +64,8 @@ input_file: samples/desugar.lini
       <path d="M -29.21 -22 L -29.21 22 A 29.21 5.5 0 0 0 29.21 22 L 29.21 -22 A 29.21 5.5 0 0 0 -29.21 -22 Z"/>
       <ellipse cx="0" cy="-22" rx="29.21" ry="5.5"/>
       <g class="lini-text">
-        <use href="#lg1500-209" transform="translate(-9.21 7.08) scale(0.015 -0.015)"/>
-        <use href="#lg1500-202" transform="translate(0 7.08) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-209" transform="translate(-9.21 7.08) scale(0.015 -0.015)"/>
+        <use href="#lini-g1500-202" transform="translate(0 7.08) scale(0.015 -0.015)"/>
       </g>
     </g>
   </g>

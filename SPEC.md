@@ -3830,13 +3830,12 @@ They emit no CSS rule and there is nothing in them for host CSS to restyle —
 the engine reads them back off the chain, and they are listed so nothing a
 figure emits is undocumented. Every other family above is a paint hook.
 
-Generated **ids** are prefixed too, each tagged with what it names:
-`lini-aHHHHHHHH-` for embedded assets, `lini-shadow-HHHHHHHH` / `lini-clip-…` /
-`lini-gradient-…` / `lini-hatch-…` / `lini-label-cut-…` / `lini-halo-…` in
-`<defs>`. The single unprefixed family is the `--static` **glyph def**,
-`lg{kind}{weight}-{gid}` — content-addressed like the rest (an outline is
-equal whenever those three are), and short because a page repeats it once per
-drawn glyph. A detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
+Generated **ids** are prefixed too — **every one, without exception** — each
+tagged with what it names: `lini-aHHHHHHHH-` for embedded assets,
+`lini-shadow-HHHHHHHH` / `lini-clip-…` / `lini-gradient-…` / `lini-hatch-…` /
+`lini-label-cut-…` / `lini-halo-…` in `<defs>`, and `--static`'s **glyph defs**
+`lini-g{kind}{weight}-{gid}` (an outline is equal whenever those three are, so
+two figures share the def rather than collide). A detail view (`|drawing| { of: <magnifier> }`, [SPEC 15.8](#158-assemblies-views-sheets--titles))
 clips to its region with one interned `<clipPath>` in `<defs>` and a `clip-path=` on
 its group.
 

@@ -152,10 +152,11 @@ fn static_output_outlines_text_to_glyph_uses() {
     )
     .expect("compile");
     assert!(!svg.contains("<text"), "no live text under --static: {svg}");
-    // lg1500: the proportional face (1) at the medium default weight
-    // (`--lini-font-weight: 500`), and the outlines follow.
+    // lini-g1500: the proportional face (1) at the medium default weight
+    // (`--lini-font-weight: 500`), and the outlines follow. The `lini-` prefix
+    // is the generated-id reservation [SPEC 18] — glyph defs are no exception.
     assert!(
-        svg.contains("<use href=\"#lg1500-") && svg.contains("<path id=\"lg1500-"),
+        svg.contains("<use href=\"#lini-g1500-") && svg.contains("<path id=\"lini-g1500-"),
         "glyph defs + uses: {svg}"
     );
 }

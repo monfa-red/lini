@@ -131,9 +131,14 @@ mod enabled {
         }
     }
 
-    /// A registered glyph's stable def id.
+    /// A registered glyph's stable def id — `lini-g{kind}{weight}-{gid}`,
+    /// content-addressed like every other generated name [SPEC 18] (an outline
+    /// is equal whenever those three are, so two figures in one document share
+    /// the def rather than collide). The `lini-` prefix is reserved for exactly
+    /// this, so no generated id may go without it, however often a page repeats
+    /// one.
     pub fn glyph_ref(f: Font, gid: u16) -> String {
-        format!("lg{}{}-{}", kind_tag(f.kind), f.weight(), gid)
+        format!("lini-g{}{}-{}", kind_tag(f.kind), f.weight(), gid)
     }
 
     struct PathSink(String);

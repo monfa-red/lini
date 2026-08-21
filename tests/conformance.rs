@@ -25,7 +25,7 @@ use lini::{Options, OutputFormat};
 /// cut, that it is deduped, and every `<use>` that places it; only the curve
 /// data is elided. The curves themselves are pinned byte-for-byte once, by
 /// `glyph_outlines_are_pinned_once`.
-const GLYPH_OUTLINES: (&str, &str) = (r#"(<path id="lg[^"]*" d=")[^"]*""#, "${1}…\"");
+const GLYPH_OUTLINES: (&str, &str) = (r#"(<path id="lini-g[^"]*" d=")[^"]*""#, "${1}…\"");
 
 fn baked_opts() -> Options {
     Options {
