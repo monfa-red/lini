@@ -102,6 +102,14 @@ section-view beat (see below).
 - Phase 3: backport winners into `samples/` (replace weak showroom files),
   `cargo test` + insta review; README picks its images from the same set.
 
+## Log
+
+- **2026-08-25 — wall complete.** All ten cards + the cmp_bush beat landed in
+  lini-website (figures in `design/hero/figures/src/`, WALL row wired in
+  `content.rs`, `render.sh` re-pointed, all SVGs regenerated on current lini —
+  schematic fixes included). Page verified in the browser. Remaining: playground
+  wasm refresh (phase 2), samples/ backport (phase 3), carousel touch-ups.
+
 ## Decisions (2026-08-25)
 
 - New row: **line + donut + table** (radar and org-tree passed on).
