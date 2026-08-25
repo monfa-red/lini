@@ -159,6 +159,26 @@ fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
 }
 
 #[test]
+fn chains_turning_onto_one_ray_from_opposite_sides_keep_their_own_lanes() {
+    // [SPEC 16.1] the lane ladder exists so no two leads cross — but a chain
+    // turning **left** off a left pin and one turning **right** off a right pin
+    // stand on opposite sides of the part and can never cross, so neither may
+    // be stepped past the other's reach. Laddered together, the second-sorted
+    // chain seated visibly farther out than its mirror for no reason a reader
+    // can see.
+    let nodes = laid(&scope(
+        "",
+        &(sided("u1") + "  |gnd#ga|\n  |gnd#gb|\n  u1.a - ga\n  u1.b - gb\n"),
+    ));
+    let left = tip(&nodes, "a", false) - at(&nodes, "ga").0;
+    let right = at(&nodes, "gb").0 - tip(&nodes, "b", true);
+    assert!(
+        close(left, right),
+        "mirror chains stand off their pins alike: {left} vs {right}"
+    );
+}
+
+#[test]
 fn a_lane_answers_to_the_symbol_not_to_the_name_beside_it() {
     // [SPEC 16.1] the seat gap is measured on what a wire arrives at — a
     // flag's symbol — and the name beside it only may not reach back over the

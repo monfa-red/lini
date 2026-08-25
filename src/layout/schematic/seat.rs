@@ -61,7 +61,9 @@ struct Seat {
 /// read off it — struck once in [`Seats::build`], because [`growth`] answers
 /// the ray and the pin together and neither pass may ask a second time.
 struct Growing {
-    /// Its (anchor, ray) ladder — chains on one ray compete for lanes.
+    /// Its (anchor, ray, turn side) ladder — chains turning onto one ray from
+    /// the same side compete for lanes; opposite-side chains stand on opposite
+    /// sides of the part and can never cross, so they never share a ladder.
     group: usize,
     ray: Side,
     /// The pin it hangs from, in the anchor's own frame.
@@ -143,10 +145,16 @@ impl Seats {
             packers[i].obstruct(drawn(c));
         }
         let mut held: Vec<Growing> = Vec::new();
-        // The rays seen so far — an (anchor, growth direction) pair. A ray owns
-        // its own ladder of lanes, so the rays keep the order they were
-        // declared in and only the chains within one are reordered.
-        let mut rays: Vec<(usize, Side)> = Vec::new();
+        // The rays seen so far — an (anchor, growth direction, turn side)
+        // triple. A ray splits into one ladder per side it is entered from:
+        // a chain turning left off a left pin and one turning right off a
+        // right pin grow down the same ray on opposite sides of the part,
+        // where their leads can never cross — laddering them together would
+        // step one past the other's reach for nothing. Straight-growing
+        // chains (`lead == 0`) take no lane, so their side is moot. The rays
+        // keep the order they were declared in and only the chains within one
+        // are reordered.
+        let mut rays: Vec<(usize, Side, i8)> = Vec::new();
         for chain in chains(&satellite, &edges(children, links, scope)) {
             let ends = placed_ends(&chain, roles);
             // One anchor holds it → grow off that pin; two → span between them;
@@ -156,14 +164,16 @@ impl Seats {
                 (Some(one), _) => {
                     let one = one.clone();
                     let (ray, pin) = growth(children, &chain, &one);
-                    let key = (one.child, ray);
+                    let frame = Frame::outward(ray.normal());
+                    let depth = frame.cross(pin.at);
+                    let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
+                    // f64::signum maps 0.0 to 1.0, so the no-turn side is spelled out.
+                    let side = if lead == 0.0 { 0 } else { lead.signum() as i8 };
+                    let key = (one.child, ray, side);
                     let group = rays.iter().position(|r| *r == key).unwrap_or_else(|| {
                         rays.push(key);
                         rays.len() - 1
                     });
-                    let frame = Frame::outward(ray.normal());
-                    let depth = frame.cross(pin.at);
-                    let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
                     held.push(Growing {
                         group,
                         ray,
