@@ -18,8 +18,12 @@ const { default: init, compile } = await import(
 await init({ module_or_path: readFileSync(`${pkgDir}/lini_wasm_bg.wasm`) });
 
 let failed = 0;
-for (const path of samples) {
-  const name = basename(path).replace(/\.lini$/, "");
+for (const [i, path] of samples.entries()) {
+  // Keyed by position in the argument list — the one fact the Rust side
+  // shares — because basenames collide: the corpus carries a samples/ sheet
+  // and a tests/fixtures/routing/ fixture both named links_hard.lini, and a
+  // flat name would let the later compile silently overwrite the earlier.
+  const name = `${i}-${basename(path).replace(/\.lini$/, "")}`;
   try {
     writeFileSync(`${outDir}/${name}.svg`, compile(readFileSync(path, "utf8")));
   } catch (e) {

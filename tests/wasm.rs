@@ -80,10 +80,16 @@ fn wasm_matches_the_binary_on_every_sample() {
     );
 
     let mut drift = Vec::new();
-    for path in &samples {
-        let name = path.file_stem().unwrap().to_string_lossy().to_string();
+    for (i, path) in samples.iter().enumerate() {
+        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
+        // Outputs are keyed by list position, mirroring the driver: the
+        // corpus carries a samples/ sheet and a routing fixture that share
+        // the basename links_hard.lini, and a flat name once let the
+        // fixture's compile silently overwrite the sample's — the "drift"
+        // it then reported was two different sources, not two engines.
+        let name = format!("{i}-{stem}");
         let native = lini::compile_str(&lini::testing::read_sample(path))
-            .unwrap_or_else(|e| panic!("{name} does not compile natively: {e}"));
+            .unwrap_or_else(|e| panic!("{stem} does not compile natively: {e}"));
         let browser = std::fs::read_to_string(out.join(format!("{name}.svg")))
             .unwrap_or_else(|_| format!("<the driver wrote no output for {name}>"));
         if native != browser {
