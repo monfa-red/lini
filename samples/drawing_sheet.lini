@@ -6,7 +6,7 @@
 // build the grid, absent fields collapsing, and an authored |image| cell
 // carries the maker's mark after the generated fields.
 
-|page| { sheet: a4 landscape; gap: 50; align: origin; } [
+|page| { sheet: a5 landscape; gap: 50; clearance: 22; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 2; } [

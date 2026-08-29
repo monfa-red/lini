@@ -218,7 +218,7 @@ Each marker composes `[min][max]` — the ring `o` (zero) or bar `+` (one) hugs 
 
 ## Engineering drawings
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/drawing_turned.svg" alt="A Lini engineering drawing: a turned shaft on an ISO sheet with a thread callout, diameter and length dimensions, and a title block" width="760"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/drawing_sheet.svg" alt="A Lini engineering drawing: a DIN 912 socket cap screw on an ISO sheet — two views sharing an axis, a thread callout, hidden socket lines, dimensions, and a title block" width="760"></p>
 
 `layout: drawing` turns a profile drawn with a pen into a **dimensioned technical sheet** — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes.
 
