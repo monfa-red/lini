@@ -53,6 +53,7 @@
     "closed",
     "series",
     "mate",
+    "opening",
     "dimension",
     "title-block"
   ],
@@ -921,6 +922,136 @@
         "stroke": "--stroke",
         "stroke-width": "1",
         "fill": "none"
+      }
+    },
+    {
+      "name": "floorplan",
+      "primitive": "block",
+      "base": "drawing",
+      "chain": [
+        "drawing",
+        "floorplan"
+      ],
+      "defaults": {
+        "layout": "floorplan"
+      }
+    },
+    {
+      "name": "wall",
+      "primitive": "sketch",
+      "base": "sketch",
+      "chain": [
+        "wall"
+      ],
+      "defaults": {
+        "fill": "--stroke-dark",
+        "stroke": "none"
+      }
+    },
+    {
+      "name": "partition",
+      "primitive": "sketch",
+      "base": "wall",
+      "chain": [
+        "wall",
+        "partition"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "door",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "door"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "window",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "window"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "bed",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "bed"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
+      }
+    },
+    {
+      "name": "sofa",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "sofa"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
+      }
+    },
+    {
+      "name": "dining",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "dining"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
+      }
+    },
+    {
+      "name": "bath",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "bath"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
+      }
+    },
+    {
+      "name": "appliance",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "appliance"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
+      }
+    },
+    {
+      "name": "stairs",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "stairs"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg"
       }
     },
     {
@@ -1870,6 +2001,30 @@
         {
           "kind": "role",
           "name": "discrete"
+        },
+        {
+          "kind": "type",
+          "name": "door"
+        },
+        {
+          "kind": "type",
+          "name": "bed"
+        },
+        {
+          "kind": "type",
+          "name": "sofa"
+        },
+        {
+          "kind": "type",
+          "name": "dining"
+        },
+        {
+          "kind": "type",
+          "name": "bath"
+        },
+        {
+          "kind": "type",
+          "name": "appliance"
         }
       ],
       "shape": "one",
@@ -2624,6 +2779,10 @@
         {
           "kind": "type",
           "name": "plane"
+        },
+        {
+          "kind": "role",
+          "name": "opening"
         }
       ],
       "shape": "one",
@@ -3280,6 +3439,105 @@
       "deferred": false,
       "dualChannel": false,
       "example": "{ density: 4; }\n\n|drawing| [\n  |rect| { width: 40; height: 20; }\n]"
+    },
+    {
+      "name": "thickness",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "floorplan"
+        },
+        {
+          "kind": "type",
+          "name": "wall"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "engine",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|floorplan| { thickness: 150; } [\n  |wall| { draw: move(0, 0) right(4000):north down(3000):east; }\n]"
+    },
+    {
+      "name": "on",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "opening"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |window| { on: north; at: 1200; }\n  ]\n]"
+    },
+    {
+      "name": "hinge",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "door"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |door| { on: north; at: 1200; hinge: end; }\n  ]\n]"
+    },
+    {
+      "name": "swing",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "door"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |door| { on: north; at: 1200; swing: right; }\n  ]\n]"
+    },
+    {
+      "name": "steps",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "stairs"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; }\n  |stairs| { steps: 14; }\n]"
     },
     {
       "name": "number",

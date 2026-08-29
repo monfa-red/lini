@@ -231,13 +231,13 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
             other => Err(Error::at(
                 span,
                 format!(
-                    "unknown layout '{other}' — expected flow, grid, tree, sequence, drawing or schematic"
+                    "unknown layout '{other}' — expected flow, grid, tree, sequence, drawing, floorplan or schematic"
                 ),
             )),
         },
         Some(_) => Err(Error::at(
             span,
-            "'layout' expects an engine name — flow, grid, tree, sequence, drawing or schematic",
+            "'layout' expects an engine name — flow, grid, tree, sequence, drawing, floorplan or schematic",
         )),
     }
 }

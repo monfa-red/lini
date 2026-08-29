@@ -458,7 +458,7 @@ impl<'a> Ctx<'a> {
             // same misuse as `activation:` on a flow node [SPEC 21].
             Owner::Layout(l) => *l == self.root_layout,
             Owner::Link => false,
-            Owner::Type(t) => container_layout(t) == Some(self.root_layout.as_str()),
+            Owner::Type(t) => scope_reads_type(&self.root_layout, t),
             Owner::Role(_) => false,
         });
         if !ok {
@@ -556,6 +556,37 @@ impl<'a> Ctx<'a> {
                         "'number' takes an integer"
                     };
                     out.push(Diagnostic::error(d.span, msg).code(Code::MALFORMED_VALUE));
+                }
+            }
+            // A flight's tread count [SPEC 15.11] — an integer ≥ 2; one step
+            // is a threshold, not a stair.
+            "steps" => {
+                let ok = matches!(single_value(d), Some(Value::Number(n)) if n.fract() == 0.0 && *n >= 2.0);
+                if !ok {
+                    out.push(
+                        Diagnostic::error(d.span, "'steps' takes a tread count ≥ 2")
+                            .code(Code::MALFORMED_VALUE),
+                    );
+                }
+            }
+            // A door's two pose knobs [SPEC 15.11]: the hinge jamb along the
+            // segment's draw direction, and the side the leaf opens toward.
+            "hinge" | "swing" => {
+                let (words, message): (&[&str], &str) = if d.name == "hinge" {
+                    (
+                        &["start", "end"],
+                        "'hinge' hangs the leaf at the segment's start or end",
+                    )
+                } else {
+                    (
+                        &["left", "right"],
+                        "'swing' opens the leaf left or right of the pen's travel",
+                    )
+                };
+                let ok =
+                    matches!(single_value(d), Some(Value::Ident(s)) if words.contains(&s.as_str()));
+                if !ok {
+                    out.push(Diagnostic::error(d.span, message).code(Code::MALFORMED_VALUE));
                 }
             }
             // The built face set [SPEC 6]: the four keywords and their numbers.
@@ -737,6 +768,15 @@ fn container_layout(t: &str) -> Option<&'static str> {
     .map(String::as_str)
 }
 
+/// Whether a scope running `layout` reads a `Type(t)`-owned property [SPEC 17]
+/// — `t` owns that very layout, or the scope is a **dialect** of `t`'s engine
+/// ([`crate::resolve::layout_reads`]): a `layout: floorplan` root reads
+/// `unit:`, the `|drawing|`'s own, because a floorplan *is* a drawing
+/// [SPEC 15.11].
+fn scope_reads_type(layout: &str, t: &str) -> bool {
+    container_layout(t).is_some_and(|owner| crate::resolve::layout_reads(layout, owner))
+}
+
 /// Whether a node wearer can use the property at all [SPEC 17].
 fn node_accepts(prop: &Property, kind: &str, chain: &[String], own_layout: Option<&str>) -> bool {
     // The inheriting channels reach every node — text props cascade to every
@@ -758,7 +798,7 @@ fn node_accepts(prop: &Property, kind: &str, chain: &[String], own_layout: Optio
         Owner::Type(t) => {
             *t == kind
                 || chain.iter().any(|c| c == t)
-                || (own_layout.is_some() && container_layout(t) == own_layout)
+                || own_layout.is_some_and(|l| scope_reads_type(l, t))
         }
         Owner::Role(r) => role_accepts(r, kind, chain),
     })
@@ -795,6 +835,8 @@ fn role_accepts(role: &str, kind: &str, chain: &[String]) -> bool {
         "closed" => !in_chain(&["line", "image"]),
         // The discrete part family [SPEC 16.3] — one list, in the type table.
         "discrete" => in_chain(types::DISCRETES),
+        // A wall opening [SPEC 15.11] — the same, one list over.
+        "opening" => in_chain(types::OPENINGS),
         // Dimensions and mates are links, never nodes.
         "dimension" | "mate" => false,
         _ => false,
@@ -824,6 +866,7 @@ fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
             Owner::Role("title-block") => "the '|title-block|' fields".to_string(),
             Owner::Role("closed") => "closed shapes".to_string(),
             Owner::Role("discrete") => "the discrete parts ('|R|', '|C|', …)".to_string(),
+            Owner::Role("opening") => "a wall opening ('|door|' / '|window|')".to_string(),
             Owner::Role(r) => format!("'{r}'"),
             Owner::Link => "links".to_string(),
             Owner::Layout(l) => format!("a 'layout: {l}'"),

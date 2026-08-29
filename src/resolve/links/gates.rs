@@ -24,7 +24,7 @@ pub(super) fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Erro
                 return Err(Error::at(
                     w.span,
                     format!(
-                        "'{}' draws a dimension — it belongs in a 'layout: drawing'",
+                        "'{}' draws a dimension — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
                         d.as_str()
                     ),
                 ));
@@ -40,7 +40,7 @@ pub(super) fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Erro
                 }
                 return Err(Error::at(
                     w.span,
-                    "a mate seats a drawing's parts — '||' belongs in a 'layout: drawing'",
+                    "a mate seats a drawing's parts — '||' belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
                 ));
             }
             ChainOp::Wire(_) => {}
@@ -146,7 +146,7 @@ pub(super) fn resolve_point(
         Err(Error::at(
             p.span,
             format!(
-                "':{}' is a drawing anchor — it belongs in a 'layout: drawing'",
+                "':{}' is a drawing anchor — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
                 p.name
             ),
         ))

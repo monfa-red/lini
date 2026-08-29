@@ -42,6 +42,43 @@ Branch: `blueprint`. Do not push; the user merges.
    paint is involved). A floor plan that "compiles" but reads wrong — a swing
    arc on the wrong side, a wall seam showing — is a failed phase.
 
+### Reference sheet (user-supplied, `plans/refs-floorplan/` — untracked)
+
+Five symbol charts the user collected; Phases 3–4 **read these images**
+(Read tool renders them) before drawing chrome or fixtures, and settle
+visual-taste calls against them:
+
+- `floor-plan-symbols-1.jpg` — single door (jambs + leaf + arc) and window
+  (thin rect + centre line) exactly as SPEC lays them out.
+- `furniture-symbols-for-floor-plans.jpg` — bed (folded-corner + pillow
+  read), sofa/armchair/dining-chair anatomy, "dining table" as a plain rect
+  vs "table with chairs" as the drawn set — confirming `|dining|` = table
+  **with** chairs and bare tables = `|rect|`; wardrobe (rail line) stays
+  deferred.
+- `appliance-and-furniture-floor-plan-symbols.webp` — bathtub, shower
+  (X + drain circle), toilet (tank + oval bowl), sink (rect + oval basin),
+  stove (4 burners), fridge/washer/dryer as labelled boxes. Note the
+  industry also writes appliances as a plain box + abbreviation (REF, DW,
+  W) — if a pictorial variant reads poorly at 1:50, flag the inside-the-box
+  text convention to the user as a possible SPEC amendment before inventing
+  anything.
+- `stair-symbols-for-floor-plans.jpg` / `stair-floor-plan-symbols.webp` —
+  straight stairs = tread rects + direction arrow (our v1); winder / L / U /
+  spiral forms are deferred-list material, do not build them.
+- `20sw-b1.webp` and `158Front-1BD-D-10.pdf` — **real condo plans** (the
+  webp is exactly our solid-poché look). What they settle: stove = square +
+  4 circles, nothing more; fridge / dishwasher / washer read as near-plain
+  boxes with their letter **inside** (`F`, `DW`, `W/D` — SPEC 15.11 states
+  the appliance label centres in the body); kitchen counters and islands are
+  plain thin-outline rects; bed = rect + pillow rects + fold line; sofa /
+  tables are bare outlines; balcony sliders read as our `sliding` door.
+
+**The taste rule (user-set): MINIMAL.** Every fixture symbol is the fewest
+strokes that still reads at 1:50 — "4 circles in a square is good enough"
+for a stove. When the symbol charts above show more detail than the two real
+condo plans, follow the condo plans. No upholstery lines, no faucet handles,
+no burner grates.
+
 ### Repo state notes
 
 - A pre-existing dangling edit to `samples/links_hard.lini` (gap/clearance
@@ -200,33 +237,180 @@ yet (a `|wall|` may temporarily lower as its bare centreline sketch). At the
 end of this phase the §25 example *parses and resolves* (layout may be wrong;
 rendering is Phases 2–4).
 
-- [ ] The dialect predicate: one shared change in the drawing-scope family
+- [x] The dialect predicate: one shared change in the drawing-scope family
       (see invariants). Grep `is_drawing` / near-names; verify every caller
       via the greps, then prove with tests: a floorplan root hosts a
       `|sketch|` + dimension exactly as a drawing does.
-- [ ] Templates: `|floorplan|` (`|block|` + layout), `|wall|` (over
+- [x] Templates: `|floorplan|` (`|block|` + layout), `|wall|` (over
       `|sketch|`), `|partition|` (over `|wall|`, thickness 100), `|door|`,
       `|window|`, `|bed|`, `|sofa|`, `|dining|`, `|bath|`, `|appliance|`,
       `|stairs|` in `ledger/defaults.rs` with SPEC 15.11's defaults
       (true-size defaults stored as physical mm; conversion applied where
       read). Type classes in desugar (`.lini-wall` etc.).
-- [ ] Properties: `thickness` (inheritable — follow `unit:`'s inheritance
+- [x] Properties: `thickness` (inheritable — follow `unit:`'s inheritance
       path), `on`, `hinge`, `swing`, `steps` in `ledger/properties/`;
       extended owners for `at:` and `symbol:`; one `ledger/examples.rs` entry
       per new row; validation of value shapes (SPEC 17).
-- [ ] Gating: floorplan types outside the scope error (`'|wall|' belongs in a
+- [x] Gating: floorplan types outside the scope error (`'|wall|' belongs in a
       'layout: floorplan'` — every type, one mechanism, follow the schematic
       gate in `layout/gates.rs` / `resolve`); openings outside a wall's `[ ]`
       error; required `on:` / `steps:` error like missing `points`. All codes
       through `error/codes.rs::catalog!`.
-- [ ] `cargo xtask gen-schema` + `gen-grammars`; guards green.
-- [ ] `lini fmt` handles the new properties (should be free — verify with a
+- [x] `cargo xtask gen-schema` + `gen-grammars`; guards green.
+- [x] `lini fmt` handles the new properties (should be free — verify with a
       floorplan snippet through `fmt` tests).
-- [ ] Tests: gate errors both directions, template defaults present, desugar
+- [x] Tests: gate errors both directions, template defaults present, desugar
       fixed point over a floorplan snippet, schema/grammar guards.
 
 ### Execution log
+
+2026-08-28, one session. Baseline 1410 passed / **1 pre-existing failure**
+(below); after: 1418 passed / the same 1 failure. `cargo fmt`, `cargo clippy
+--all-targets` clean.
+
+**The dialect predicate — where it landed.** `src/resolve/ir.rs` now holds the
+**only** place the two layout names sit together:
+
+```rust
+pub fn is_drawing_layout(name: &str) -> bool { matches!(name, "drawing" | "floorplan") }
+pub fn is_floorplan_layout(name: &str) -> bool { name == "floorplan" }
+pub fn layout_reads(scope: &str, owner: &str) -> bool     // the dialect reads its parent engine's surface
+pub fn is_drawing(attrs)  -> uses is_drawing_layout        // unchanged callers
+pub fn is_floorplan(attrs)-> the vocabulary gate's twin
+```
+
+Every site in the predicate family was reconciled through it (greps
+`is_drawing`, `is_drawing_scope`, `is_drawing_body`, `is_drawing_node`,
+`scope_is_drawing`, `container_layout`, `read_layout_mode`, plus a literal
+`"drawing"` sweep):
+
+| Site | How it now answers |
+|---|---|
+| `resolve/ir.rs is_drawing` | `is_drawing_layout` — so `layout/drawing/mod.rs is_drawing_scope`, `resolve/program/link_scope.rs scope_is_drawing`, the layout dispatch (`layout/mod.rs` root + `layout_inst`), `frames.rs`, `collect_datum_nodes` and `enclosing_view` all followed for free |
+| `resolve/ir.rs LinkOwner::consumes_links` | `sequence` **or** `is_drawing_layout` — a floorplan consumes its own links |
+| `resolve/scene.rs root_facts` | a drawing-family root now wears its **template chain** (`lini-floorplan` + `lini-drawing`), derived by walking `template_base` — so `\|drawing\|`-scoped rules (the `\|drawing\| \|note\|` pair, chrome dress) reach a root floorplan exactly as they reach the node form |
+| `desugar/nest.rs is_drawing_body` | `is_drawing_layout` on the style; the type-chain arm needed nothing — `\|floorplan\|`'s chain **contains** `drawing` |
+| `desugar/nest.rs STATEMENT_ENGINES` | `"floorplan"` added (it reads its own body's statements) — feeds `seals_schematic_scope` and `link_scope::seals_schematic` |
+| `desugar/mod.rs` root `Nest.drawing` | `is_drawing_layout` (this also drives the `scale::fold` root flag) |
+| `lint.rs` `is_drawing_node` / `root_opaque` | `types::derives_from(t, "drawing")` (new, in `desugar/types.rs`) + `is_drawing_layout` |
+| `validate.rs` `Owner::Type` satisfaction (node **and** root block) | new `scope_reads_type` → `container_layout(t)` + `layout_reads` — this is what lets `{ layout: floorplan; unit: m }` (the §25 form) validate |
+| `layout/arrange.rs read_layout_mode` | unreachable for a floorplan (the engine intercepts first), but its two enumerations now name `floorplan` |
+| `desugar/classes.rs scoped_note_rules` | **no change needed** — it emits `.lini-drawing .lini-note`, which the dialect wears |
+
+**Decisions made (log them, they bind later phases):**
+
+1. **True-size defaults are never class rules.** SPEC 8's table states
+   `\|partition\| thickness: 100`, `\|door\| width: 900`, `hinge: start`,
+   `swing: left` — but a template bundle lowers to a `.lini-*` **class rule**,
+   and a rule-borne value cannot be told from an authored one. That breaks two
+   laws at once: the mm value would read as drawing units (a 100 m partition at
+   `unit: m`), and the sliding-door gate ("`hinge:`/`swing:` on a sliding door
+   errors") would fire on every sliding door. So the bundles carry **paint and
+   engine name only**; `|partition|`, `|window|` and `|door|` carry **no
+   bundle at all**, and their defaults are the reader's (`DefaultRef::Engine`
+   in the ledger). Phase 2/3/4 supply them at the read site through the one
+   conversion function. `.lini-wall { fill: --stroke-dark; stroke: none }` and
+   the fixtures' `stroke: --stroke-dark; stroke-width: 1; fill: --bg` are real
+   bundles — they are paint, not size.
+2. **The one conversion function** is `desugar::scale::mm_to_units(mm,
+   unit_mm)`, beside `read_unit` (the only place a scope's millimetres-per-unit
+   is known). It carries `#[cfg_attr(not(test), allow(dead_code))]` until
+   Phase 2 wires the first reader (repo precedent: `font/mod.rs`), and a unit
+   test pins 200 mm → 200 / 20 / 0.2 at `mm` / `cm` / `m`.
+3. **One gate, one walk.** `src/layout/floorplan/mod.rs` is the family home
+   (`FpKind` + `fp_kind` + `check`), driven from `layout/gates.rs` — which now
+   carries a `floorplan` flag **and the host's type chain**, since "an opening
+   rides in its wall's `[ ]`" is a parent question. Five laws, one pass: type
+   out of scope, opening host, required `on:`, `translate:` on an opening,
+   `hinge:`/`swing:` on `symbol: sliding`; plus `|stairs|` requiring `steps:`.
+   Value *shapes* (`hinge` start|end, `swing` left|right, `steps` ≥ 2 integer)
+   ride `validate.rs::check_value` beside `pins`/`number` — the existing home
+   for wearer-independent malformed values.
+4. **New codes** (stable): `Y010 floorplan-type`, `Y011 opening-host`,
+   `Y012 opening-placed`, `Y013 sliding-door-leaf`. Missing `on:` / `steps:`
+   reuse `Y001 missing-required-property`, as SPEC 21 asks.
+5. **Type lists** live beside `DISCRETES` in `desugar/types.rs`: `OPENINGS`
+   (door, window) and `FIXTURES` (the six). `Role("opening")` is a new
+   validation role (`at:`, `on:`); `symbol:` lists its five variant-bearing
+   fixtures explicitly rather than a role, because SPEC 17 excludes
+   `|stairs|` from it.
+6. **SPEC 21's widened drawing-gate wording applied**: every
+   `belongs in a 'layout: drawing'` message now reads `… (or its 'floorplan'
+   dialect)` (11 sites, incl. `resolve/links/gates.rs`, `links/mod.rs`,
+   `layout/mod.rs`, `drawing/frames.rs`, `drawing/symbols.rs`), and the
+   unknown-layout enumeration names `floorplan`.
+
+**No file needed splitting** (the touched ones grew by tens of lines);
+`layout/floorplan/mod.rs` is 145 LOC, `tests.rs` 120.
+
+**Surprises / findings:**
+
+- **The tree was already red when this phase started, and still is** —
+  `tests/hooks.rs::every_documented_class_is_worn` fails on the five classes
+  Phase 0 documented in SPEC 18 (`lini-door-leaf`, `lini-door-swing`,
+  `lini-window-sill`, `lini-stair-tread`, `lini-stair-arrow`). Nothing emits
+  them until Phases 3–4. It is **not fixable inside Phase 1** and must not be
+  papered over: the test's `UNSAMPLED` ledger demands a scene that actually
+  renders the class (a twin test proves it), so an entry there would fail too.
+  **Phase 3 closes the first three, Phase 4 the last two** — check this test
+  the moment door/window/stairs chrome lands.
+- **The §25 example does not resolve as written** — `outer:west (-) entry (-)
+  outer:east` names the door **bare** from the root scope, but `entry` is
+  declared inside `outer`'s `[ ]`, and SPEC 9's sealed bodies make that
+  `outer.entry` (exactly as SPEC 15.4 writes `plate:left (-) plate.pin`).
+  With that one edit the whole §25 block parses, resolves **and renders**
+  today. The same shorthand appears in SPEC 15.11's Openings paragraph. This
+  is a SPEC-internal inconsistency, not an implementation gap — **left for the
+  user to rule on** (recommended: change both to `outer.entry`); Phase 5 can
+  not remove the `spec_blocks.rs` #57 row until it is settled.
+- A `|door|`'s `at:` had to join the `at:` homonym row; the misuse message for
+  `symbol:` is now long (ten homes) — accepted rather than blurring the owner
+  list.
+
 ### Carry-over notes
+
+**For Phase 2 (walls):**
+- Call `desugar::scale::mm_to_units` for the 200 mm / 100 mm thickness default
+  and drop its `allow(dead_code)`. The type→default split is
+  `fp_kind(...) == Wall` plus a `type_chain` test for `partition`; nothing
+  stores those numbers yet — **Phase 2 states them**, beside the reader.
+- `thickness:` is ledger-`Inherit::Engine` (nearest-wins **inside** the
+  engine, like `scale:`), owners `Type("floorplan")` + `Type("wall")`. The
+  inheritance walk is Phase 2's: `unit:`'s own path is the `ScaleCtx` carried
+  down `desugar::scale::walk`, which is the model to follow (and the place
+  that already knows `unit_mm`).
+- A `|wall|` lowers today as a plain `|sketch#w| .lini-wall.lini-sketch` whose
+  **centreline** path takes the poché fill — so the §25 render is a solid
+  black rectangle. That is the expected Phase-1 state; the offset outline
+  replaces it (SPEC 15.10 step 1, after the `draw:` fold, before the bboxes).
+- `layout/floorplan/mod.rs` is where the wall module lands (`wall.rs` beside
+  `mod.rs`); `FpKind` is already the dispatch to branch on.
+
+**For Phase 3 (openings):**
+- The gate already guarantees, before any geometry runs: an opening's parent
+  **is** a wall, `on:` is present, `translate:` is absent, and a sliding door
+  carries no pose. Phase 3 adds the segment/station laws (unknown segment,
+  curved segment, overrun, overlap) — put them in the same `check` pass if
+  they are resolved-tree facts, or in the wall lowering if they need folded
+  geometry (they do: the segment table comes from `SketchGeo`). Prefer the
+  lowering, and keep one law per site.
+- The opening's default `width:` (900 / 1200 mm) and its default pose
+  (`hinge: start`, `swing: left`) are **the reader's**, deliberately — read
+  `attrs`, fall back to the constant through `mm_to_units`.
+- An opening currently has no geometry at all, so a dimension chain through
+  one reads `0` — the jamb-to-jamb box (`width` × `thickness`) is what fixes
+  the §25 location chain.
+
+**For Phase 4 (fixtures):**
+- `symbol:` is accepted on `|bed| |sofa| |dining| |bath| |appliance|` only;
+  a `symbol:` on `|stairs|` is a *validation* misuse error already. The
+  variant tables belong beside `fp_kind`, following
+  `desugar/schematic/family.rs`'s `variants()` shape (default = first row).
+
+**For Phase 5:**
+- `tests/hooks.rs::every_documented_class_is_worn` must be green by then.
+- README.md / SKILL.md still enumerate the layouts without `floorplan`; the
+  in-code enumerations (`layout/arrange.rs`, the error messages) are done.
 
 ---
 
@@ -275,8 +459,10 @@ outline drawn.
       `swing: left|right` (walker's rule along the segment's draw direction);
       `symbol: single` (default) / `double` (two leaves, two arcs) /
       `sliding` (offset panel lines, no arc).
-- [ ] Window chrome: sill lines across the gap (pick the classic double-line
-      glazing read; log the exact anatomy chosen).
+- [ ] Window chrome: two sill lines at the thickness's thirds (SPEC 15.11);
+      compare against `plans/refs-floorplan/floor-plan-symbols-1.jpg` (the
+      reference draws rect + centre line — if that reads better at 1:50,
+      propose the SPEC tweak in the log rather than silently diverging).
 - [ ] Openings as geometry: an id'd opening anchors dimensions at its centre
       (`outer:west (-) entry (-) outer:east` renders the location chain).
 - [ ] Snapshot + **visual PNG check**: all four hinge/swing poses, each door
@@ -293,6 +479,8 @@ outline drawn.
 **Goal**: the six fixture types render true-size with their `symbol:`
 variants; `|stairs|` generates.
 
+- [ ] **Read the reference sheet first** (`plans/refs-floorplan/`, all five
+      images — the Read tool renders them); author every symbol against it.
 - [ ] Symbol path library on the mm grid (SPEC 15.11's table is the size
       law): bed double/single (mattress + pillow read), sofa three/two/corner
       (seat + back + arms), dining six/four/round (table **with chairs**),

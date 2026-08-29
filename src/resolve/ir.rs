@@ -237,9 +237,6 @@ impl AttrMap {
     }
 }
 
-/// Whether resolved `attrs` set `layout: drawing` [SPEC 15] — the one check for
-/// "this is a drawing scope," shared by the resolve link pass and the layout
-/// dispatch.
 /// Whether a resolved `pin:` value takes its wearer **out of the flow**
 /// [SPEC 5] — `none` (or unset) keeps it in. The one reading: layout asks it of
 /// a placed child, and the table sugar asks it of a child's tiers, to know
@@ -252,8 +249,44 @@ pub fn pins_out_of_flow(value: Option<&ResolvedValue>) -> bool {
     }
 }
 
+/// The **drawing family's `layout:` names** [SPEC 15/15.11] — `drawing` and
+/// `floorplan`, its architectural dialect, which *is* the drawing engine under
+/// another vocabulary. **The one place in the compiler that knows the two names
+/// together**: every drawing-scope reading — the resolve link pass, the layout
+/// dispatch, desugar's scope walk, the lint's opaque scopes, the validation
+/// matrix — asks through it, so a dialect can never satisfy one gate and slip
+/// past another.
+pub fn is_drawing_layout(name: &str) -> bool {
+    matches!(name, "drawing" | "floorplan")
+}
+
+/// Whether a `layout:` name is the **floorplan dialect** [SPEC 15.11] — for the
+/// vocabulary gate and the dialect's own chrome alone. Everything mechanical
+/// asks [`is_drawing_layout`]: a floorplan *is* a drawing.
+pub fn is_floorplan_layout(name: &str) -> bool {
+    name == "floorplan"
+}
+
+/// Whether a scope running `scope` reads what an `owner`-layout scope reads
+/// [SPEC 15.11] — the same engine, or the dialect reading its parent engine's
+/// surface: a floorplan is a drawing, so `unit:` and the rest of the drawing's
+/// scoped property surface land there too. Directional — a plain drawing does
+/// not gain the dialect's vocabulary.
+pub fn layout_reads(scope: &str, owner: &str) -> bool {
+    scope == owner || (is_floorplan_layout(scope) && is_drawing_layout(owner))
+}
+
+/// Whether resolved `attrs` open a **drawing scope** [SPEC 15] — the one check
+/// for "this is a drawing scope," shared by the resolve link pass and the
+/// layout dispatch. The `floorplan` dialect answers yes ([`is_drawing_layout`]).
 pub fn is_drawing(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if is_drawing_layout(l))
+}
+
+/// Whether resolved `attrs` open a **floorplan** scope [SPEC 15.11] — the
+/// vocabulary gate's container test, beside its drawing and schematic twins.
+pub fn is_floorplan(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if is_floorplan_layout(l))
 }
 
 /// Whether resolved `attrs` set `layout: schematic` [SPEC 16] — the one
@@ -514,8 +547,8 @@ pub enum MeasureOp {
 pub struct LinkOwner {
     /// The container node's own declaration span; `None` at the scene root.
     pub span: Option<Span>,
-    /// Its `layout:` — the scope's **wiring strategy**: `sequence` and
-    /// `drawing` consume their own links, so the router never sees them.
+    /// Its `layout:` — the scope's **wiring strategy**: `sequence` and the
+    /// drawing family consume their own links, so the router never sees them.
     pub layout: Option<String>,
 }
 
@@ -523,7 +556,9 @@ impl LinkOwner {
     /// Whether the writing scope's engine consumes its own links — the one
     /// reading the router, the label pass, and the edge count all share.
     pub fn consumes_links(&self) -> bool {
-        matches!(self.layout.as_deref(), Some("sequence") | Some("drawing"))
+        self.layout
+            .as_deref()
+            .is_some_and(|l| l == "sequence" || is_drawing_layout(l))
     }
 }
 

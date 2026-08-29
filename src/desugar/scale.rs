@@ -109,6 +109,22 @@ fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx, span: Span) -> Result<(), Error>
     Ok(())
 }
 
+/// **The** physical-millimetre → drawing-unit conversion [SPEC 15.11]: a
+/// floorplan type's true-size default — a wall's 200 mm thickness, a door's
+/// 900 mm clear width, every fixture body — is stated in physical millimetres
+/// and read through the scope's own `unit:` (`unit_mm` millimetres to the
+/// drawing unit, [`read_unit`]), so a bed is 1500 × 2000 mm whether the file
+/// drafts in `m` or `mm`. An **authored** value is drawing units like
+/// everything else and never passes through here.
+///
+/// It lives beside the `unit:` reader because that is where the scope's
+/// millimetres-per-unit is known; every true-size consumer calls this one
+/// function.
+#[cfg_attr(not(test), allow(dead_code))] // the wall / opening / fixture readers land in phases 2–4
+pub(crate) fn mm_to_units(mm: f64, unit_mm: f64) -> f64 {
+    mm / unit_mm
+}
+
 /// The nearest authored `unit:` as millimetres per drawing unit [SPEC 15.1].
 /// Only the fold's own scopes (root, pages, drawings) are read, so an
 /// `|axis|`'s quoted tick suffix never meets this enum.
@@ -160,5 +176,32 @@ fn number_decl(v: f64, span: Span) -> Decl {
         name: PX_PER_UNIT.into(),
         groups: vec![vec![Value::Number(v)]],
         span,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The true-size law [SPEC 15.11]: a physical millimetre default reads the
+    /// same size at every `unit:` — 200 mm is `200` drafting in mm, `0.2`
+    /// drafting in m, `20` in cm — while an authored value stays drawing units
+    /// and never meets this function.
+    #[test]
+    fn a_true_size_default_converts_through_the_scope_unit() {
+        let mm_per_unit = |src: &str| {
+            read_unit(&[Decl {
+                name: "unit".into(),
+                groups: vec![vec![Value::Ident(src.into())]],
+                span: Span::empty(),
+            }])
+            .expect("a known unit")
+            .expect("a value")
+        };
+        assert_eq!(mm_to_units(200.0, mm_per_unit("mm")), 200.0);
+        assert_eq!(mm_to_units(200.0, mm_per_unit("cm")), 20.0);
+        assert_eq!(mm_to_units(200.0, mm_per_unit("m")), 0.2);
+        // The scope default: no `unit:` at all is millimetres [SPEC 15.1].
+        assert_eq!(mm_to_units(900.0, 1.0), 900.0);
     }
 }

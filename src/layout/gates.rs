@@ -38,7 +38,7 @@
 //! ([`crate::routing::ortho::request`]); and a chart type exists only where its
 //! layout reads it, so each engine's child reader judges *composition* alone.
 
-use super::{chart, schematic};
+use super::{chart, floorplan, schematic};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, Program, ResolvedInst};
 
@@ -48,6 +48,7 @@ struct Scope {
     schematic: bool,
     chart: bool,
     pie: bool,
+    floorplan: bool,
 }
 
 impl Scope {
@@ -58,6 +59,7 @@ impl Scope {
             schematic: self.schematic || schematic::is_schematic(attrs),
             chart: self.chart || chart::is_chart(attrs),
             pie: self.pie || chart::is_pie(attrs),
+            floorplan: self.floorplan || floorplan::is_floorplan(attrs),
         }
     }
 }
@@ -67,12 +69,13 @@ pub(super) fn check_types(program: &Program) -> Result<(), Error> {
         schematic: false,
         chart: false,
         pie: false,
+        floorplan: false,
     }
     .enter(&program.scene.attrs);
-    walk(&program.scene.nodes, root)
+    walk(&program.scene.nodes, root, None)
 }
 
-fn walk(nodes: &[ResolvedInst], scope: Scope) -> Result<(), Error> {
+fn walk(nodes: &[ResolvedInst], scope: Scope, host: Option<&[String]>) -> Result<(), Error> {
     for n in nodes {
         if !scope.schematic
             && let Some(ty) = crate::desugar::schematic::schematic_type(&n.type_chain)
@@ -85,7 +88,13 @@ fn walk(nodes: &[ResolvedInst], scope: Scope) -> Result<(), Error> {
         if let Some(e) = chart::out_of_scope(n, scope.chart, scope.pie) {
             return Err(e);
         }
-        walk(&n.children, scope.enter(&n.attrs))?;
+        // The floorplan family reads its host too — an opening rides in its
+        // wall's `[ ]` [SPEC 15.11] — so the walk carries the container's chain
+        // beside the scope.
+        if let Some(e) = floorplan::check(n, scope.floorplan, host) {
+            return Err(e);
+        }
+        walk(&n.children, scope.enter(&n.attrs), Some(&n.type_chain))?;
     }
     Ok(())
 }

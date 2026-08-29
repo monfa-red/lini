@@ -49,7 +49,7 @@ fn type_owned_property_on_the_wrong_type_errors() {
 fn misuse_errors_in_an_element_rule_too() {
     insta::assert_snapshot!(
         diags("{ |box| { symbol: heart; } }\n|box#a|\n"),
-        @"test.lini:1:11: error: 'symbol' has no meaning on '|box|' — it reads on '|icon|' / '|surface-finish|' / '|label|' / the discrete parts ('|R|', '|C|', …)"
+        @"test.lini:1:11: error: 'symbol' has no meaning on '|box|' — it reads on '|icon|' / '|surface-finish|' / '|label|' / the discrete parts ('|R|', '|C|', …) / '|door|' / '|bed|' / '|sofa|' / '|dining|' / '|bath|' / '|appliance|'"
     );
 }
 
@@ -119,6 +119,30 @@ fn density_off_the_root_errors() {
 fn container_scoped_property_reads_on_a_matching_root() {
     // `unit:` is `|drawing|`-owned; a `layout: drawing` root is that scope.
     assert_silent("{ layout: drawing; unit: mm; }\n|rect#p| { width: 40; height: 20; }\n");
+}
+
+#[test]
+fn a_floorplan_scope_reads_the_drawing_surface_and_its_own() {
+    // A floorplan **is** a drawing [SPEC 15.11], so the `|drawing|`-owned
+    // scope properties read there — on the root form and on the node form —
+    // and its own `thickness:` reads beside them.
+    assert_silent(
+        "{ layout: floorplan; unit: m; scale: 0.02; thickness: 0.15; }\n\
+         |wall#w| { draw: move(0, 0) right(7.2):north; }\n",
+    );
+    assert_silent(
+        "|floorplan#f| { unit: m; thickness: 0.15; } [\n\
+         |wall#w| { draw: move(0, 0) right(7.2):north; thickness: 0.1; }\n]\n",
+    );
+    // The dialect's own vocabulary stays its own: a plain box cannot mean it.
+    insta::assert_snapshot!(
+        diags("|box#a| { thickness: 0.15; }\n"),
+        @"test.lini:1:11: error: 'thickness' has no meaning on '|box|' — it reads on '|floorplan|' / '|wall|'"
+    );
+    insta::assert_snapshot!(
+        diags("|box#a| { steps: 4; }\n"),
+        @"test.lini:1:11: error: 'steps' has no meaning on '|box|' — it reads on '|stairs|'"
+    );
 }
 
 #[test]

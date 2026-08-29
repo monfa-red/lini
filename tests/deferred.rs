@@ -271,7 +271,7 @@ fn mark_and_note_in_charts_at_data_coordinates() {
     // has no data-coordinate placement.
     insta::assert_snapshot!(
         refusal("|chart#c| [\n|bars| { data: 1, 2 }\n|note#n| \"hi\" { at: 1 1 }\n]\n"),
-        @"test.lini:3:17: error: 'at' has no meaning on '|note|' — it reads on '|mark|' / '|bubble|' / '|plane|'"
+        @"test.lini:3:17: error: 'at' has no meaning on '|note|' — it reads on '|mark|' / '|bubble|' / '|plane|' / a wall opening ('|door|' / '|window|')"
     );
 }
 
@@ -407,7 +407,7 @@ fn buses() {
 fn automatic_graph_dag_layout() {
     insta::assert_snapshot!(
         refusal("{ layout: graph }\n|box#a|\na -> b\n"),
-        @"test.lini:1:1: error: unknown layout 'graph' — expected flow, grid, tree, sequence, drawing or schematic"
+        @"test.lini:1:1: error: unknown layout 'graph' — expected flow, grid, tree, sequence, drawing, floorplan or schematic"
     );
 }
 

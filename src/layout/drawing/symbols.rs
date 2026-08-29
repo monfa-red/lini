@@ -409,7 +409,7 @@ mod tests {
     fn outside_a_drawing_the_type_errors() {
         assert_eq!(
             layout_err("|surface-finish| \"Ra 1.6\"\n|box#a|\n"),
-            "'|surface-finish|' annotates a drawing — it belongs in a 'layout: drawing'"
+            "'|surface-finish|' annotates a drawing — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)"
         );
     }
 

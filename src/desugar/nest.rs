@@ -48,10 +48,13 @@ impl Nest {
     };
 }
 
-/// Whether this container is **itself** a drawing scope, detected as frames are — by type chain (`|drawing|` or a
-/// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
+/// Whether this container is **itself** a drawing scope, detected as frames are
+/// — by type chain (`|drawing|`, a `|floorplan|`, or a define over either:
+/// the dialect's chain carries `drawing` [SPEC 8]) or an explicit drawing-family
+/// `layout:` on the instance [SPEC 15/15.11].
 pub(super) fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
-    chain.iter().any(|t| t == "drawing") || layout_of(style) == Some("drawing")
+    chain.iter().any(|t| t == "drawing")
+        || layout_of(style).is_some_and(crate::resolve::is_drawing_layout)
 }
 
 /// Whether this container is **itself** a `|page|` [SPEC 15.8] — the sheet
@@ -87,7 +90,16 @@ pub(super) fn is_schematic_body(cx: &Lower, chain: &[String], style: &[Decl]) ->
 /// The one list, two readers — one per stage that carries the schematic scope:
 /// [`seals_schematic_scope`] here (desugar's cascade slice) and
 /// `resolve::program::link_scope::statement_owner` (the resolved attrs).
-pub(crate) const STATEMENT_ENGINES: &[&str] = &["drawing", "sequence", "tree", "chart", "pie"];
+pub(crate) const STATEMENT_ENGINES: &[&str] = &[
+    "drawing",
+    // The architectural dialect is the drawing engine [SPEC 15.11] — its links
+    // are dimensions, leaders and mates just the same.
+    "floorplan",
+    "sequence",
+    "tree",
+    "chart",
+    "pie",
+];
 
 /// Whether a node **seals** an enclosing drawing scope [SPEC 15.1]: it owns a
 /// layout (a flow wrapper, a grid, an engine) and arranges its interior as

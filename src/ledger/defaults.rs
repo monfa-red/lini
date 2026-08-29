@@ -423,6 +423,31 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // ── Floorplans [SPEC 8/15.11] — the architectural dialect. The scope
+        // is the drawing container in another vocabulary, so it takes the
+        // `|drawing|` bundle whole and states only the engine name; every
+        // `|drawing|`-scoped rule still reaches it (the chain is
+        // `.lini-floorplan .lini-drawing .lini-block`).
+        "floorplan" => vec![id("layout", "floorplan")],
+        // A wall run: a `|sketch|` whose `draw:` traces the **centreline**, the
+        // outline it grows into taking the paint — solid `--stroke-dark`, the
+        // poché read. Its `thickness:` is not here: a true-size default is
+        // physical millimetres, converted through the scope's `unit:` where it
+        // is read, never a drawing-unit literal in a class rule [SPEC 15.11].
+        "wall" => vec![var("fill", "stroke-dark"), id("stroke", "none")],
+        // The openings [SPEC 15.11] carry no bundle at all. Their defaults are
+        // either true-size (`width:` 900 mm / 1200 mm) or a pose the reader
+        // falls back to (`hinge: start`, `swing: left`) — and a pose stated as
+        // a class rule could not be told from an authored one, which is exactly
+        // what the sliding-door gate has to read [SPEC 21].
+        // The six fixtures [SPEC 15.11]: a thin outline over the paper tone, so
+        // furniture masks what it overlaps. `symbol:` variants and their
+        // true-size bodies ride the family table, not a class rule.
+        "bed" | "sofa" | "dining" | "bath" | "appliance" | "stairs" => vec![
+            var("stroke", "stroke-dark"),
+            n("stroke-width", 1.0),
+            var("fill", "bg"),
+        ],
         // ── Schematics [SPEC 8/16] — the classic sheet's part looks, each a
         // `light-dark()` role variable so a theme retunes the whole family.
         // The generic pin-bearing part: an IC / module / relay body — pale

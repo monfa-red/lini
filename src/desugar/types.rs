@@ -103,6 +103,22 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("frame", "rect"),
     ("zone", "block"),
     ("tick", "line"),
+    // Floorplans [SPEC 15.11]: the architectural dialect of the drawing engine
+    // — the scope (a `|drawing|`, so `|drawing|`-scoped rules dress it too),
+    // the wall run and its thinner interior define, the two openings that ride
+    // a wall's `[ ]`, and the six symbol-bodied fixtures. Legal only in a
+    // `layout: floorplan` ([`crate::layout::floorplan`] is the gate).
+    ("floorplan", "drawing"),
+    ("wall", "sketch"),
+    ("partition", "wall"),
+    ("door", "block"),
+    ("window", "block"),
+    ("bed", "block"),
+    ("sofa", "block"),
+    ("dining", "block"),
+    ("bath", "block"),
+    ("appliance", "block"),
+    ("stairs", "block"),
     // Schematics [SPEC 16]: the scope, the pin-bearing part and its terminal,
     // the net tag and its built-in defines, the junction dot, the connector /
     // amplifier presets, and the discrete family (the type is the ref family,
@@ -140,6 +156,17 @@ pub const DISCRETES: &[&str] = &[
     "R", "C", "L", "D", "LED", "Q", "Y", "F", "FB", "SW", "BT", "V", "I",
 ];
 
+/// The wall **openings** [SPEC 15.11] — the two types that ride a `|wall|`'s
+/// `[ ]`, stationed on one of its segments. One list; the vocabulary gate, the
+/// `at:` / `on:` owner columns and the validation role key off it.
+pub const OPENINGS: &[&str] = &["door", "window"];
+
+/// The floorplan **fixtures** [SPEC 15.11] — the six symbol-bodied furniture
+/// families, true-size and stretched to their resolved box. One list, read the
+/// way [`DISCRETES`] is; `|stairs|` takes no `symbol:` (it generates from
+/// `steps:`), which is the one thing its readers split on.
+pub const FIXTURES: &[&str] = &["bed", "sofa", "dining", "bath", "appliance", "stairs"];
+
 pub fn is_template(name: &str) -> bool {
     TEMPLATES.iter().any(|(n, _)| *n == name)
 }
@@ -147,6 +174,21 @@ pub fn is_template(name: &str) -> bool {
 /// The base a built-in template builds on; `None` for a primitive or non-template.
 pub fn template_base(name: &str) -> Option<&'static str> {
     TEMPLATES.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
+}
+
+/// Whether a written type name **is, or builds on,** `base` through the table
+/// above — the type-chain reading available before [`Types`] exists (the raw
+/// AST) and wherever only a name is in hand. A user define over one is caught
+/// downstream, where the resolved chain is known.
+pub fn derives_from(name: &str, base: &str) -> bool {
+    let mut walk = Some(name);
+    while let Some(n) = walk {
+        if n == base {
+            return true;
+        }
+        walk = template_base(n);
+    }
+    false
 }
 
 /// A define may not take the name of a primitive, a template, the `link` rule

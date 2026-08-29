@@ -3,6 +3,7 @@ mod arrange;
 pub(crate) mod chart;
 pub(crate) mod drawing;
 mod flex;
+pub(crate) mod floorplan;
 mod frame;
 mod gates;
 pub(crate) mod geom;
@@ -491,7 +492,9 @@ fn layout_inst(
         if !ctx.drawing {
             return Err(Error::at(
                 inst.span,
-                format!("'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing'"),
+                format!(
+                    "'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)"
+                ),
             ));
         }
         return drawing::symbols::layout_node(inst, ty, path, program);

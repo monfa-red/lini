@@ -66,6 +66,17 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `frame` | `block` | `box` → `rect` → `frame` |
 | `zone` | `block` | `zone` |
 | `tick` | `line` | `tick` |
+| `floorplan` | `block` | `drawing` → `floorplan` |
+| `wall` | `sketch` | `wall` |
+| `partition` | `sketch` | `wall` → `partition` |
+| `door` | `block` | `door` |
+| `window` | `block` | `window` |
+| `bed` | `block` | `bed` |
+| `sofa` | `block` | `sofa` |
+| `dining` | `block` | `dining` |
+| `bath` | `block` | `bath` |
+| `appliance` | `block` | `appliance` |
+| `stairs` | `block` | `stairs` |
 | `schematic` | `block` | `schematic` |
 | `component` | `block` | `component` |
 | `pin` | `block` | `pin` |
@@ -95,7 +106,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 
 ## Roles
 
-`discrete` `closed` `series` `mate` `dimension` `title-block`
+`discrete` `closed` `series` `mate` `opening` `dimension` `title-block`
 
 ## Value builders
 
@@ -143,7 +154,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `samples` | \|line\|, \|poly\|, \|chart\| | `one:number` | `engine` | — | — |
 | `path` | \|path\| | `one:string` | `none` | — | — |
 | `src` | \|image\| | `one:string` | `none` | — | — |
-| `symbol` | \|icon\|, \|surface-finish\|, \|label\|, discrete (role) | `one:ident` | `none` | — | — |
+| `symbol` | \|icon\|, \|surface-finish\|, \|label\|, discrete (role), \|door\|, \|bed\|, \|sofa\|, \|dining\|, \|bath\|, \|appliance\| | `one:ident` | `none` | — | — |
 | `fit` | \|icon\|, \|image\| | `one:ident` | `bundles` | — | — |
 | `skew` | \|slant\| | `one:number` | `bundles` | — | — |
 | `stack` | closed (role) | `one:number` | `none` | — | — |
@@ -176,7 +187,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `legend` | \|chart\|, \|pie\| | `one:any` | `engine` | — | deferred |
 | `tooltip` | \|chart\|, \|pie\|, series (role) | `one:any` | `engine` | — | — |
 | `value` | \|slice\|, \|bubble\| | `one:number` | `none` | — | — |
-| `at` | \|mark\|, \|bubble\|, \|plane\| | `one:any` | `none` | — | — |
+| `at` | \|mark\|, \|bubble\|, \|plane\|, opening (role) | `one:any` | `none` | — | — |
 | `side` | \|axis\|, \|topic\|, \|pin\|, \|label\|, link, dimension (role) | `one:ident` | `engine` | — | — |
 | `range` | \|axis\|, \|band\| | `one:number` | `none` | — | — |
 | `step` | \|axis\| | `one:number` | `none` | — | — |
@@ -207,6 +218,11 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `document-type` | title-block (role) | `one:string` | `none` | — | — |
 | `status` | title-block (role) | `one:string` | `none` | — | — |
 | `density` | root | `one:number` | `engine` | — | — |
+| `thickness` | \|floorplan\|, \|wall\| | `one:number` | `engine` | engine | — |
+| `on` | opening (role) | `one:ident` | `none` | — | — |
+| `hinge` | \|door\| | `one:ident` | `engine` | — | — |
+| `swing` | \|door\| | `one:ident` | `engine` | — | — |
+| `steps` | \|stairs\| | `one:number` | `none` | — | — |
 | `number` | \|pin\| | `one:number` | `none` | — | — |
 | `prefix` | \|component\|, discrete (role) | `one:string` | `bundles` | — | — |
 | `shape` | \|label\| | `one:ident` | `bundles` | — | — |

@@ -789,7 +789,9 @@ mod tests {
         for ty in ["feature-control", "control", "datum"] {
             assert_eq!(
                 layout_err(&format!("|{ty}| \"A\"\n|box#a|\n")),
-                format!("'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing'")
+                format!(
+                    "'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)"
+                )
             );
         }
     }

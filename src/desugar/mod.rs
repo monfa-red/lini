@@ -196,7 +196,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    messages inside any root-sequence frame, since a frame opens no scope and its
     //    endpoints resolve against the scene's participants [SPEC 13]. ──
     let root_nest = Nest {
-        drawing: layout_of(&user_root) == Some("drawing"),
+        drawing: layout_of(&user_root).is_some_and(crate::resolve::is_drawing_layout),
         schematic: layout_of(&user_root) == Some("schematic"),
     };
     let cx = Lower {

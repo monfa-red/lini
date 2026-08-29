@@ -85,17 +85,32 @@ pub fn resolve_instances(
 }
 
 /// The synthetic cascade identity of a `{ layout: sequence }` / `{ layout:
-/// drawing }` / `{ layout: schematic }` root — the engines whose scoped rules
-/// select by container type. Links share it: a root drawing's `|-|`s match
-/// `|drawing| |-|` exactly as a `|drawing#x|`'s do, and a root schematic's
-/// wires match `|schematic| |-|` [SPEC 16.6].
+/// drawing }` / `{ layout: floorplan }` / `{ layout: schematic }` root — the
+/// engines whose scoped rules select by container type. Links share it: a root
+/// drawing's `|-|`s match `|drawing| |-|` exactly as a `|drawing#x|`'s do, and
+/// a root schematic's wires match `|schematic| |-|` [SPEC 16.6].
+///
+/// The identity is the engine type's **whole chain**, exactly as an instance
+/// wears it: a root floorplan is a `|floorplan|`, which is a `|drawing|`
+/// [SPEC 8/15.11], so `|drawing|`-scoped rules dress it as they dress the node
+/// form.
 pub(super) fn root_facts(root_attrs: &AttrMap) -> Option<NodeFacts> {
     match root_attrs.get("layout") {
-        Some(ResolvedValue::Ident(l)) if l == "sequence" || l == "drawing" || l == "schematic" => {
-            Some(NodeFacts {
-                classes: vec![format!("lini-{l}")],
-                id: None,
-            })
+        Some(ResolvedValue::Ident(l))
+            if l == "sequence" || crate::resolve::is_drawing_layout(l) || l == "schematic" =>
+        {
+            // Most-derived first, exactly as a node wears its chain [SPEC 18].
+            let mut classes: Vec<String> = Vec::new();
+            let mut ty = Some(l.as_str());
+            while let Some(name) = ty {
+                classes.push(format!("lini-{name}"));
+                ty = crate::desugar::types::template_base(name);
+                // The primitive base is the node's `kind`, never a type class.
+                if ty.is_some_and(|b| crate::resolve::NodeKind::parse(b).is_some()) {
+                    break;
+                }
+            }
+            Some(NodeFacts { classes, id: None })
         }
         _ => None,
     }

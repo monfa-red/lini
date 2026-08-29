@@ -89,8 +89,8 @@ fn lint_auto_create_shadows(file: &File, out: &mut Vec<Diagnostic>) {
     for c in &file.instances {
         collect_paths(c, &mut Vec::new(), &mut id_paths);
     }
-    let root_opaque =
-        matches!(root_ident(&file.stylesheet, "layout"), Some(l) if l == "drawing" || l == "tree");
+    let root_opaque = matches!(root_ident(&file.stylesheet, "layout"),
+        Some(l) if crate::resolve::is_drawing_layout(l) || l == "tree");
     shadow_scope(
         &file.instances,
         &file.links,
@@ -203,15 +203,18 @@ fn near_miss<'a>(id: &str, known: impl Iterator<Item = &'a str> + Clone) -> Opti
         .copied()
 }
 
-/// Whether a node opens a drawing scope [SPEC 15] — a `|drawing|` / `|detail|`
-/// (or a define over one, caught by the type name) or an explicit
-/// `layout: drawing`. The lint's twin of desugar's `is_drawing_body`, on the
-/// raw AST (no resolved type chain) — so it reads the written type and style.
+/// Whether a node opens a drawing scope [SPEC 15] — a `|drawing|` (or a
+/// `|floorplan|`, or a template over either) or an explicit drawing-family
+/// `layout:` [SPEC 15.11]. The lint's twin of desugar's `is_drawing_body`, on
+/// the raw AST (no resolved type chain) — so it reads the written type and
+/// style.
 fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
-    n.ty.as_deref() == Some("drawing")
+    n.ty
+        .as_deref()
+        .is_some_and(|t| crate::desugar::types::derives_from(t, "drawing"))
         // A lowered instance (`lini desugar` output) wears its type as a class.
         || n.classes.iter().any(|c| c == "lini-drawing")
-        || layout_of(&n.style) == Some("drawing")
+        || layout_of(&n.style).is_some_and(crate::resolve::is_drawing_layout)
 }
 
 /// A scope whose bare link endpoints the shadow/auto-create lint must not judge

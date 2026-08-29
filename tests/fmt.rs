@@ -149,3 +149,33 @@ fn fmt_spaces_a_glued_capsule_op() {
     let out = lini::format_source("a -|gnd|- b\n").expect("fmt");
     assert_eq!(out, "a - |gnd| - b\n");
 }
+
+#[test]
+fn fmt_round_trips_the_floorplan_vocabulary() {
+    // The dialect adds types and properties, no syntax [SPEC 15.11] — so the
+    // canonical spelling is the ordinary one, and fmt carries it byte-for-byte:
+    // the wall's pen with its named segments, the openings stationed in its
+    // `[ ]`, the fixture poses, and a dimension over the whole thing.
+    let src = "\
+{
+  layout: floorplan; unit: m; scale: 0.02; thickness: 0.15;
+}
+
+|wall#outer| {
+  draw: move(0, 0) right(7.2):north down(4.8):east left(7.2):south close():west;
+} [
+  |door#entry| { on: south; at: 3; swing: right; }
+  |window#w1| { on: north; at: 0.9; width: 1.8; }
+]
+|partition#bathwall| { draw: move(4.9, 0) down(2.2) right(2.3):side; } [
+  |door| { on: side; at: 0.6; hinge: end; symbol: sliding; }
+]
+|bed| { translate: 1.2 1.2; rotate: 90; }
+|stairs| { steps: 14; translate: 6 3; }
+
+outer:west (-) outer:east { side: top; }
+";
+    let once = lini::format_source(src).expect("fmt");
+    assert_eq!(once, src, "canonical form changed");
+    assert_eq!(lini::format_source(&once).expect("fmt twice"), once);
+}

@@ -3269,10 +3269,11 @@ errors ([SPEC 21](#21-errors)).
 
 **Fixtures.** Six symbol-bodied types — the discretes' pattern
 ([SPEC 16.3](#163-discretes)), their **smart label beside the body like a
-discrete's value** (an opening's is its schedule tag beside the gap; a
-`|floorplan|`'s is the drawing title it inherits,
-[15.8](#158-assemblies-views-sheets--titles); a `|wall|`'s keeps the sketch's
-centred read). `width` / `height` are floors as everywhere
+discrete's value** — except an `|appliance|`'s, which centres **in** its
+body: the labelled-box convention (`"F"`, `"DW"`, `"W/D"`). (An opening's is
+its schedule tag beside the gap; a `|floorplan|`'s is the drawing title it
+inherits, [15.8](#158-assemblies-views-sheets--titles); a `|wall|`'s keeps
+the sketch's centred read.) `width` / `height` are floors as everywhere
 ([SPEC 5](#5-the-box-model)) and the body **stretches** to the resolved box;
 `symbol:` picks the variant:
 

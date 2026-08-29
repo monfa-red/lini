@@ -267,7 +267,7 @@ fn drawing_ops_need_a_drawing_scope() {
     assert_resolve_error("|box#a|\n|box#b|\na (<) b\n", "'(<)' draws a dimension");
     assert_resolve_error(
         "|box#a|\n|box#b|\na || b\n",
-        "'||' belongs in a 'layout: drawing'",
+        "'||' belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
     );
     // Inside a layout-owning child of a drawing the flow already decided every
     // position — the gate names the container [SPEC 21].

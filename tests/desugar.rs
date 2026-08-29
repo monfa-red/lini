@@ -611,6 +611,10 @@ fn every_sugar_lowers_to_a_byte_fixed_point() {
         "{ layout: tree; }\n|topic#r| \"R\" [\n  |topic#a| \"A\"\n  |topic#b| \"B\"\n]\n",
         // A mindmap's own arms.
         "|mindmap#m| \"M\" [\n  |topic#a| \"A\" [ |topic| \"A1\" ]\n  |topic#b| \"B\" { side: left }\n  |topic| \"C\"\n]\n",
+        // The floorplan dialect [SPEC 15.11], in both scope forms — the node
+        // and the root, whose `unit:` the scale fold reads.
+        "|floorplan#f| [\n  |wall#w| { draw: move(0, 0) right(4000):north; } [\n    |door#d| { on: north; at: 900 }\n  ]\n  |stairs| { steps: 12 }\n]\n",
+        "{ layout: floorplan; unit: m; scale: 0.02 }\n|wall#w| { draw: move(0, 0) right(7.2):north down(4.8):east; }\n|bed| { translate: 1.2 1.2 }\nw:north (-) w:east { side: top }\n",
     ] {
         let once = desugar_source(src).unwrap();
         let twice = desugar_source(&once).unwrap();
@@ -835,6 +839,54 @@ fn schematic_lowerings_are_byte_fixed_points() {
         // …and the lowering itself is deterministic.
         assert_eq!(once, desugar_source(src).unwrap(), "unstable: {src}");
     }
+}
+
+/// The floorplan dialect [SPEC 15.11] lowers like the drawing it is: the scope
+/// keeps its own engine name while wearing the `|drawing|` chain, a `|wall|` is
+/// its centreline `|sketch|`, an opening rides its wall's `[ ]`, and the scale
+/// fold reaches the scope through the same `unit:` a drawing folds.
+#[test]
+fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
+    let out = desugar_source(
+        "|floorplan#f| [\n  |wall#w| { draw: move(0, 0) right(4000):north; }\n  |bed#b|\n]\n",
+    )
+    .unwrap();
+    // The class chain SPEC 8 states, so `|drawing|`-scoped rules dress it.
+    assert!(
+        out.contains("|block#f| .lini-floorplan.lini-drawing.lini-block"),
+        "{out}"
+    );
+    assert!(
+        out.contains(".lini-drawing { layout: drawing; padding: 0; }")
+            && out.contains(".lini-floorplan { layout: floorplan; }"),
+        "the dialect states only its engine over the drawing bundle: {out}"
+    );
+    // The wall is a sketch on the centreline, painted as poché.
+    assert!(out.contains("|sketch#w| .lini-wall.lini-sketch"), "{out}");
+    assert!(
+        out.contains(".lini-wall { fill: --stroke-dark; stroke: none; }"),
+        "{out}"
+    );
+    assert!(
+        out.contains(".lini-bed { stroke: --stroke-dark; stroke-width: 1; fill: --bg; }"),
+        "{out}"
+    );
+    // A true-size default is never a class-rule literal [SPEC 15.11] — the
+    // reader converts it through the scope's `unit:`, so nothing here states a
+    // thickness, a door width, or a hinge.
+    for baked in ["thickness:", "hinge:", "swing:"] {
+        assert!(
+            !out.contains(baked),
+            "{baked} must not bake into a rule: {out}"
+        );
+    }
+    // The scale fold reaches a floorplan scope: 1:50 in metres at density 4.
+    let root = desugar_source(
+        "{ layout: floorplan; unit: m; scale: 0.02 }\n\
+         |wall#w| { draw: move(0, 0) right(7.2):north; }\n",
+    )
+    .unwrap();
+    assert!(root.contains("px-per-unit: 80;"), "{root}");
 }
 
 #[test]

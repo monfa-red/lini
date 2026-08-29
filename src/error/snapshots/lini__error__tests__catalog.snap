@@ -61,6 +61,10 @@ Y006 side-on-terminal
 Y007 schematic-seat
 Y008 schematic-type
 Y009 chart-type
+Y010 floorplan-type
+Y011 opening-host
+Y012 opening-placed
+Y013 sliding-door-leaf
 T000 route
 T001 impossible-link
 T002 law-breach

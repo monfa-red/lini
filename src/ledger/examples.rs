@@ -337,6 +337,28 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "density",
         "{ density: 4; }\n\n|drawing| [\n  |rect| { width: 40; height: 20; }\n]",
     ),
+    // ── Floorplan ── every one inside its scope, and every opening inside its
+    // wall's `[ ]`: a floorplan type elsewhere is an error [SPEC 15.11/21].
+    (
+        "thickness",
+        "|floorplan| { thickness: 150; } [\n  |wall| { draw: move(0, 0) right(4000):north down(3000):east; }\n]",
+    ),
+    (
+        "on",
+        "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |window| { on: north; at: 1200; }\n  ]\n]",
+    ),
+    (
+        "hinge",
+        "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |door| { on: north; at: 1200; hinge: end; }\n  ]\n]",
+    ),
+    (
+        "swing",
+        "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; } [\n    |door| { on: north; at: 1200; swing: right; }\n  ]\n]",
+    ),
+    (
+        "steps",
+        "|floorplan| [\n  |wall| { draw: move(0, 0) right(4000):north; }\n  |stairs| { steps: 14; }\n]",
+    ),
     // ── Schematic ── every one inside its scope: a schematic type outside a
     // `layout: schematic` is an error [SPEC 16/21].
     (

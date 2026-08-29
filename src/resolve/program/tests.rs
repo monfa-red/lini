@@ -329,7 +329,7 @@ fn a_copy_index_leaks_no_ids_and_needs_a_drawing() {
     let e = rv4_err("|box#a|\n|box#b|\na.2 -> b\n");
     assert_eq!(
         e,
-        "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing'"
+        "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)"
     );
 }
 

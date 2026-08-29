@@ -108,7 +108,7 @@ pub fn resolve_link(
     // A sheet-scope link whose ends dot-path into views is the one legalized
     // cross-view form [SPEC 15.8] — classified and lowered here, ahead of the
     // ordinary statement gates (a cross-view measure / mate wants its own
-    // message, not the generic "belongs in a 'layout: drawing'").
+    // message, not the generic "belongs in a 'layout: drawing' (or its 'floorplan' dialect)").
     if let Some(links) = projection::try_projection(
         w,
         ctx,
@@ -183,13 +183,13 @@ pub fn resolve_link(
         if !drawing_scope && attrs.get("tol").is_some() {
             return Err(Error::at(
                 w.span,
-                "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
+                "'tol' composes a dimension's text — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
             ));
         }
         if !drawing_scope && attrs.get("project").is_some() {
             return Err(Error::at(
                 w.span,
-                "'project' picks a dimension's axis — it belongs in a 'layout: drawing'",
+                "'project' picks a dimension's axis — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
             ));
         }
         // The drafting dash conventions are shape / |line| values [SPEC 7]; a
@@ -296,7 +296,7 @@ pub fn resolve_link(
             if ep.copy.is_some() && !drawing_scope {
                 return Err(Error::at(
                     ep.span,
-                    "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing'",
+                    "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)",
                 ));
             }
             let (side, point) = resolve_point(&ep, drawing_scope)?;

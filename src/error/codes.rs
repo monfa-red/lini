@@ -198,6 +198,10 @@ catalog! {
     Layout 7 SCHEMATIC_SEAT "schematic-seat";
     Layout 8 SCHEMATIC_TYPE "schematic-type";
     Layout 9 CHART_TYPE "chart-type";
+    Layout 10 FLOORPLAN_TYPE "floorplan-type";
+    Layout 11 OPENING_HOST "opening-host";
+    Layout 12 OPENING_PLACED "opening-placed";
+    Layout 13 SLIDING_LEAF "sliding-door-leaf";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

@@ -369,7 +369,9 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // `symbol` is a homonym [SPEC 17]: the icon's Phosphor name, the finish
     // vee variant on `|surface-finish|` ([SPEC 15.9]), a `|label|`'s schematic
-    // symbol, and a discrete's variant ([SPEC 16.3/16.4]).
+    // symbol, a discrete's variant ([SPEC 16.3/16.4]), and a floorplan
+    // variant — a `|door|`'s leaf form and each fixture's family, `|stairs|`
+    // excepted (it generates from `steps:`, [SPEC 15.11]).
     row(
         "symbol",
         &[
@@ -377,6 +379,12 @@ pub static PROPERTIES: &[Property] = &[
             Type("surface-finish"),
             Type("label"),
             Role("discrete"),
+            Type("door"),
+            Type("bed"),
+            Type("sofa"),
+            Type("dining"),
+            Type("bath"),
+            Type("appliance"),
         ],
         One(Kind::Ident),
         DefaultRef::None,
@@ -590,9 +598,12 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // Homonym: a `|mark|`'s / `|bubble|`'s data coordinate [SPEC 14.5], a
+    // `|plane|`'s station [SPEC 15.8], and an opening's station along its
+    // `on:` segment [SPEC 15.11].
     row(
         "at",
-        &[Type("mark"), Type("bubble"), Type("plane")],
+        &[Type("mark"), Type("bubble"), Type("plane"), Role("opening")],
         One(Kind::Any),
         DefaultRef::None,
         No,
@@ -840,6 +851,42 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // The root's px-per-mm for sheets [SPEC 15.1] — scene config only.
     row("density", &[Root], One(Kind::Number), Engine, No),
+    // ── Floorplan [SPEC 15.11] — the drawing engine's architectural dialect ──
+    // A wall's poché depth, **inherited nearest-wins** like `unit:` (scope →
+    // wall) and read inside the engine, not through resolve's channels. Its
+    // 200 mm default is true-size, so it lives with the reader that knows the
+    // scope's `unit:`, never as a drawing-unit literal in a class rule.
+    row(
+        "thickness",
+        &[Type("floorplan"), Type("wall")],
+        One(Kind::Number),
+        Engine,
+        Inherit::Engine,
+    ),
+    // The wall `:segment` an opening stations on — bare, the `thread:` shape
+    // [SPEC 15.3/15.11]; required.
+    row(
+        "on",
+        &[Role("opening")],
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    ),
+    // A door's hinge jamb (by the segment's draw direction) and the side its
+    // leaf opens toward (the pen-travel convention [SPEC 15.5]). Their
+    // `start` / `left` defaults are the reader's, not a class rule's: the
+    // sliding-door gate reads whether the pose was *authored* [SPEC 21].
+    row("hinge", &[Type("door")], One(Kind::Ident), Engine, No),
+    row("swing", &[Type("door")], One(Kind::Ident), Engine, No),
+    // A flight's tread count [SPEC 15.11] — required, ≥ 2; the treads and the
+    // up arrow generate from it.
+    row(
+        "steps",
+        &[Type("stairs")],
+        One(Kind::Number),
+        DefaultRef::None,
+        No,
+    ),
     // ── Schematic [SPEC 16] ──
     // A pin's number, drawn outside beside the stub [SPEC 16.2].
     row(
