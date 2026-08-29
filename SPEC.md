@@ -4046,7 +4046,7 @@ their `along:` fractions (auto-distributed when unset).
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
-lini serve [--port N] [--static] [PATH]
+lini serve [--port N] [--static] [--theme NAME|FILE|A/B] [PATH]
 lini theme [NAME]
 ```
 
@@ -4731,10 +4731,10 @@ cycles); a true ring-radial tree and forest (multi-root) trees
 marker composing "VIEW A (2:1)" — an arrow defines no capture, so it is title sugar
 over a view's smart label; construction links are built,
 [SPEC 15.8](#158-assemblies-views-sheets--titles)); imports / modules / namespaces
-for shared themes and part libraries; a built-in **`blueprint` theme** — white
-linework on Prussian blue for `--theme blueprint` ([SPEC 20](#20-cli)) and the web
-runtime, applicable to any diagram (a floorplan's default stays black-on-white);
-animation; native PNG / WebP export.
+for shared themes and part libraries; animation; native PNG / WebP export.
+(The **`blueprint` theme** — white linework on Prussian blue, any diagram —
+shipped as a `--theme` builtin, [SPEC 20](#20-cli); a floorplan's default
+stays black-on-white.)
 
 ---
 
