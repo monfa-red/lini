@@ -532,9 +532,10 @@ fn layout_inst(
     let mut sketch_geo = None;
     // A fixture's body is authored geometry on the true-size mm grid
     // [SPEC 15.11] — it sizes the node, so it is drawn before the bbox picks.
-    let fixture = match part {
-        true => floorplan::fixtures::plan(inst, own)?,
-        false => None,
+    let fixture = if part {
+        floorplan::fixtures::plan(inst, own)?
+    } else {
+        None
     };
     let bbox = if let Some(f) = &fixture {
         f.bbox

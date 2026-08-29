@@ -510,6 +510,9 @@ fn build_sheet_inputs(
     // state the document's wire weight and every chrome node inline the
     // difference [SPEC 18]. The scope's own dress is the one a default
     // statement in it actually paints with.
+    // `drawing` names the whole family here: the floorplan dialect *is* the
+    // drawing engine [SPEC 15.11] and adds no dress of its own, so probing the
+    // parent engine answers for both.
     let mut drawing_attrs = root_attrs.clone();
     drawing_attrs.insert("layout", ResolvedValue::Ident("drawing".into()));
     let chrome_defaults = dress(&drawing_attrs, false);

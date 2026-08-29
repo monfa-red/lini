@@ -444,11 +444,12 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
-        // The openings [SPEC 15.11] carry no bundle at all. Their defaults are
-        // either true-size (`width:` 900 mm / 1200 mm) or a pose the reader
-        // falls back to (`hinge: start`, `swing: left`) — and a pose stated as
-        // a class rule could not be told from an authored one, which is exactly
-        // what the sliding-door gate has to read [SPEC 21].
+        // (`|door|` / `|window|` are deliberately absent — an opening's
+        // defaults are either true-size (`width:` 900 mm / 1200 mm) or a pose
+        // the reader falls back to (`hinge: start`, `swing: left`), and a pose
+        // stated as a class rule could not be told from an authored one, which
+        // is exactly what the sliding-door gate reads [SPEC 21].)
+        //
         // The six fixtures [SPEC 15.11]: a thin outline over the paper tone, so
         // furniture masks what it overlaps. `symbol:` variants and their
         // true-size bodies ride the family table, not a class rule.
