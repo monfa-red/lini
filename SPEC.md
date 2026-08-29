@@ -4917,8 +4917,8 @@ db      --> api     "record"
 |sofa| { symbol: corner; translate: 2.0 3.3 }
 |bath| { symbol: toilet; translate: 5.5 0.5 }
 |bath| { symbol: shower; translate: 6.6 1.6 }
-|appliance| { symbol: fridge; translate: 0.5 4.3 }
-"STUDIO 27 m²" { translate: 2.6 2.4 }
+|appliance| { symbol: fridge; translate: 4.2 0.5 }
+"STUDIO 27 m²" { translate: 4.0 3.4 }
 
 outer:west (-) outer:east { side: top }                       // → 7.2 — centreline to centreline
 outer:west (-) outer.entry (-) outer:east { side: bottom }    // the door's location chain
