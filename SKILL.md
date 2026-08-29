@@ -152,7 +152,7 @@ Templates (all overridable; extend with `|name::base| { … }`):
 | `\|entity\|` | ER card: label = centred title, rows = `"field" "type"` (3 columns for a key gutter) |
 | `\|note\|` | folded-corner callout card (works in every layout) |
 | `\|topic\|` / `\|mindmap\|` | tree structure node / the full mindmap preset |
-| `\|chart\|` / `\|pie\|` / `\|sequence\|` / `\|drawing\|` / `\|schematic\|` | layout presets (below) |
+| `\|chart\|` / `\|pie\|` / `\|sequence\|` / `\|drawing\|` / `\|floorplan\|` / `\|schematic\|` | layout presets (below) |
 
 Shape extras: `stack: N` (offset duplicate behind — "a pile"), `shadow: dx dy blur`,
 `stroke-style: solid|dashed|dotted` (+ drafting `center`/`phantom` on shapes,
@@ -237,8 +237,9 @@ from the inherited size, so one root `font-size:` scales everything.
 ## Layout engines
 
 `layout:` on any container (the root included): `flow` (default) · `grid` ·
-`tree` · `sequence` · `chart` · `pie` · `drawing` · `schematic`. Everything
-core — cascade, paint, palette, links syntax — works identically inside each.
+`tree` · `sequence` · `chart` · `pie` · `drawing` · `floorplan` · `schematic`.
+Everything core — cascade, paint, palette, links syntax — works identically
+inside each.
 
 ### Tables & entities
 
@@ -385,6 +386,65 @@ plate.pin.2 <- "THRU"                          // leader to the 2nd pattern copy
   (two-ended) the value. `scale: 2` on a drawing = 2:1 view that still
   measures true. Sheets: `|page| { sheet: a4 }` + `|title-block| { title: "…";
   drawing-number: "…"; }`; multi-view rows share axes with `align: origin`.
+
+### Floorplan (architectural)
+
+`layout: floorplan` is the drawing engine in an architect's vocabulary —
+same datum, `scale:`/`unit:`, anchors and dimensions. Build it in four passes:
+**walls → openings → fixtures → dimensions**. Sizes you type are drawing units;
+every *built-in* size is true physical mm converted through `unit:`.
+
+```
+{ layout: floorplan; unit: m; scale: 0.02; density: 5 }   // 1:50, ~100 px per metre
+
+|wall#outer| {                                  // draw: is the CENTRELINE
+  draw: move(0, 0) point():nw right(7.2):north down(4.8):east
+        left(7.2):south point():sw close():west;
+} [                                             // openings ride the wall's [ ]
+  |door#entry| { on: south; at: 3; swing: right }        // width: 900 mm default
+  |window|     { on: north; at: 0.9; width: 1.8 }
+  |door|       { on: west; at: 1.2; width: 2.4; symbol: sliding }
+]
+|partition#bathwall| { draw: move(4.9, 0) down(2.2) right(2.3):side } [
+  |door| { on: side; at: 0.6; hinge: end }
+]
+
+|rect#counter| { width: 2.4; height: 0.6; translate: 5.9 0.3;
+                 fill: --bg; stroke: --stroke-dark; stroke-width: 1 }
+|bed|  { translate: 1.2 1.2; rotate: 90 }
+|sofa| { symbol: corner; translate: 2 3.3 }
+|appliance| "F" { symbol: fridge; translate: 0.5 4.3 }
+"KITCHEN" { translate: 6 1.4 }                  // room names are plain sheet text
+
+outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centreline
+```
+
+- **Walls.** `|wall|` is a `|sketch|` whose `draw:` traces the centreline;
+  `thickness:` (200 mm default, inherits nearest-wins) offsets it into the
+  mitred, solid-filled **poché** outline that takes the paint. `|partition|`
+  is the 100 mm interior define. `fill: --bg; stroke: --stroke-dark` is the
+  hollow double-line look, `fill: hatch(45)` the section convention. Walls bend
+  with `arc()`; `curve()` errors. Draw meeting walls as **separate nodes** —
+  paint order merges them seamlessly.
+- **Openings.** A `|door|` / `|window|` must sit in its wall's `[ ]`, stationed
+  `on:` a **straight named segment**, `at:` the near jamb's distance from that
+  segment's start (mind the draw direction — a `left(...)` run measures from its
+  east end). They clip the wall and generate their chrome: `hinge: start|end` ×
+  `swing: left|right` (left of the pen's travel), `symbol: single | double |
+  sliding` (a slider takes no `hinge:`/`swing:`). `translate:` on one is an error.
+- **Fixtures.** `|bed|` (double·single) · `|sofa|` (three·two·corner) ·
+  `|dining|` (six·four·round — table *with* chairs) · `|bath|`
+  (tub·shower·toilet·sink) · `|appliance|` (stove·fridge·washer·dishwasher) ·
+  `|stairs|` (`steps: N` required). `width`/`height` are floors that **stretch**
+  the body. Each fills `--bg`, so furniture masks the floor under it. Two label
+  seats: a fixture's smart label hangs **below** the body — leave air there —
+  but an `|appliance|`'s centres **inside** it (write `"F"` / `"DW"` / `"W/D"`).
+- **Everything else** is plain geometry: counters, islands, desks and coffee
+  tables are `|rect|`s; a balcony deck, a north arrow or a scale bar is a
+  `|sketch|`; room names and areas are sheet text placed with `translate:`.
+- **Dimensions** read the centreline, where architects measure. Anchor them on
+  `point():name` corner stations — an extension line off a corner runs away from
+  the plan instead of down a wall and through an opening.
 
 ### Schematic
 

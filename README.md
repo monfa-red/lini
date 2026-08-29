@@ -25,7 +25,7 @@ One line is a complete figure: three boxes, two arrows, sensible spacing. You pl
 
 <p align="center"><em>Thirty-odd lines of Lini — <a href="https://github.com/monfa-red/lini/blob/main/samples/hero.lini"><code>samples/hero.lini</code></a>.</em></p>
 
-<p align="center"><sub>flowcharts · mindmaps · charts · sequences · ER schemas · engineering drawings · circuit schematics</sub></p>
+<p align="center"><sub>flowcharts · mindmaps · charts · sequences · ER schemas · engineering drawings · floor plans · circuit schematics</sub></p>
 
 ---
 
@@ -34,7 +34,7 @@ One line is a complete figure: three boxes, two arrows, sensible spacing. You pl
 A compiler: plain text in, clean themeable SVG out. You decide where things go, and the parts you'd rather not do by hand — routing a wire through the gaps, measuring a dimension, picking a palette — are done for you.
 
 - **You place, Lini routes.** Arrange nodes in rows, grids, or by anchor; name any two and it finds an orthogonal path between them, clear of everything in the way, keeping a clearance it won't cross — force a side to steer one.
-- **One language, every kind of figure.** Charts, sequences, trees, mindmaps, ER schemas, engineering drawings, and schematics are layouts over the same nodes and links. The same grammar draws all of them, so theming, baking, and diffing work identically in each.
+- **One language, every kind of figure.** Charts, sequences, trees, mindmaps, ER schemas, engineering drawings, floor plans, and schematics are layouts over the same nodes and links. The same grammar draws all of them, so theming, baking, and diffing work identically in each.
 - **The look is yours.** Sizes, anchors, strokes, shadows, rotation, gradients, and raw SVG paths render exactly as set, never filtered through a theme.
 - **Measured, not drawn.** In a drawing, a dimension reads its value from the geometry: change the model and the numbers stay true.
 - **A small language.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a figure. `(…)` adds compile-time math, baked to literals.
@@ -221,6 +221,27 @@ Each marker composes `[min][max]` — the ring `o` (zero) or bar `+` (one) hugs 
 `layout: drawing` turns a profile drawn with a pen into a **dimensioned technical sheet** — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes.
 
 Parts *mate* against each other, holes and patterns punch through, a half-profile *revolves* into a turned part (every shoulder drawing its edge line), `thread:` dresses a surface with ISO minor lines and composes its own `M20×1.5` callout, and a long bar *breaks* to fit. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums (`>-`), and hatched sections for the rest. **GD&T** is first-class: `|control|` rows carry `tol:` / `zone:` / `datums:` with the ISO modifier glyphs, plus `|feature-control|`, `|surface-finish|`, and datum triangles that plant against the geometry. Views project from one another, and an ISO 5457 `|page|` (frame, zone references, seated ISO 7200 `|title-block|`) hosts them at true millimetre scale. [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)
+
+---
+
+## Floor plans
+
+`layout: floorplan` is the same drawing engine under an architect's vocabulary — the datum, `scale:` / `unit:`, anchors, dimensions and leaders all work unchanged, and the dialect adds the words a plan needs.
+
+```
+{ layout: floorplan; unit: m; scale: 0.02 }      // 1 : 50
+
+|wall#outer| {
+  draw: move(0, 0) right(7.2):north down(4.8):east left(7.2):south close():west;
+} [
+  |door#entry| { on: south; at: 3; swing: right }   // 900 mm, the default
+  |window|     { on: north; at: 0.9; width: 1.8 }
+]
+|bed| { translate: 1.2 1.2; rotate: 90 }
+outer:west (-) outer:east { side: top }             // → 7.2, centreline to centreline
+```
+
+A `|wall|` traces its **centreline** and `thickness:` (200 mm; a `|partition|` is the 100 mm interior define) grows it into the mitred poché outline that takes the paint. `|door|` / `|window|` ride the wall's `[ ]`, stationed `on:` a named segment `at:` a distance — they clip the outline at the jambs and draw their own leaf, quarter swing arc (`hinge:` × `swing:`, `symbol: single | double | sliding`) and sill pair. Six symbol-bodied fixtures — `|bed| |sofa| |dining| |bath| |appliance| |stairs|` — draw at **true size in physical millimetres**, converted through the scope's `unit:`, so a tub is 1700 × 750 mm whether the file drafts in `m` or `mm`. Counters and islands are plain `|rect|`s; anything else is a `|sketch|` define. [`SPEC.md` §15.11](https://github.com/monfa-red/lini/blob/main/SPEC.md#1511-floorplan--the-architectural-dialect)
 
 ---
 
