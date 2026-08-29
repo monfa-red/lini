@@ -64,9 +64,14 @@
   // box (the F / DW / W/D convention), every other fixture's reads beside it.
   |appliance| { symbol: stove; translate: 6.4 0.4; }
   |appliance| "F" { symbol: fridge; translate: 8.1 0.4; }
-  |appliance| "DW" { symbol: dishwasher; translate: 7.55 2; }
+  |appliance| "DW" { symbol: dishwasher; translate: 7.7 2; }
   |appliance| "W/D" { symbol: washer; translate: 5.2 6.4; }
-  |bath| { symbol: sink; translate: 6.8 2; }
+  |bath| { symbol: double-sink; translate: 6.8 2; }
+  // the kitchen run's bowl — one unit, two basins
+  |sofa| { symbol: stool; translate: 6.7 2.65; }
+  |sofa| { symbol: stool; translate: 7.2 2.65; }
+  |sofa| { symbol: stool; translate: 7.7 2.65; }
+  // three ⌀400 stools pulled up to the island's open side
   |sofa| { translate: 2 0.55; }
   |dining| { translate: 4.3 2.6; }
   |bed| { translate: 1.8 4.85; }

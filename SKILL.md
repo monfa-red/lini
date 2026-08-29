@@ -433,9 +433,10 @@ outer:north (-) outer:south { side: left }      // → 4.8, centreline to centre
   `swing: left|right` (left of the pen's travel), `symbol: single | double |
   sliding` (a slider takes no `hinge:`/`swing:`). `translate:` on one is an error.
 - **Fixtures.** `|bed|` (queen·king·double·single) · `|sofa|`
-  (three·two·one·corner — `one` is the armchair) · `|dining|`
-  (six·four·round — table *with* chairs) · `|bath|`
-  (tub·shower·toilet·sink) · `|appliance|` (stove·fridge·washer·dishwasher) ·
+  (three·two·one·corner·stool — `one` is the armchair, `stool` the ⌀400 bar
+  seat) · `|dining|` (six·four·round — table *with* chairs) · `|bath|`
+  (tub·shower·toilet·sink·double-sink — the last is one unit, two basins) ·
+  `|appliance|` (stove·fridge·washer·dishwasher) ·
   `|stairs|` (`steps: N` required). `width`/`height` are floors that **stretch**
   the body. Each fills `--bg`, so furniture masks the floor under it. Two label
   seats: a fixture's smart label hangs **below** the body — leave air there —

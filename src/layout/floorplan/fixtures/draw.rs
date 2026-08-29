@@ -35,6 +35,7 @@ pub(super) fn symbol(ty: &str, variant: &str, size: (f64, f64)) -> Sym {
     match ty {
         "bed" => bed(size, variant == "single"),
         "sofa" if variant == "corner" => corner_sofa(size),
+        "sofa" if variant == "stool" => stool(size),
         "sofa" => sofa(size),
         "dining" if variant == "round" => round_table(size),
         "dining" => dining(size, if variant == "four" { 2 } else { 3 }),
@@ -109,6 +110,15 @@ fn corner_sofa((w, h): (f64, f64)) -> Sym {
     )
 }
 
+/// The bar stool: a plain round seat, the one stroke it takes. Nothing else
+/// reads at 1:50, and a ring of them round an island is what says "island".
+fn stool((w, h): (f64, f64)) -> Sym {
+    Sym::new((w, h), vec![Shape::Oval(0.0, 0.0, w / 2.0, h / 2.0)])
+}
+
+/// How many chords the toilet pan's half-round nose is stated as.
+const PAN_STEPS: usize = 6;
+
 /// A chair, plan-side: a plain square — the seat's own outline is the symbol.
 const CHAIR: f64 = 450.0;
 
@@ -149,19 +159,36 @@ fn bath(variant: &str, (w, h): (f64, f64)) -> Sym {
             Shape::Line(vec![(x1, y0), (x0, y1)], SHARP),
             Shape::Oval(0.0, 0.0, 70.0, 70.0),
         ],
-        // The cistern across the back and the bowl filling the rest of the
-        // footprint, running **into** it. The bowl is narrower than the pan is
-        // wide, so the tank keeps a shoulder either side — what makes the pair
-        // read as a toilet at 1:50 rather than an oval on a sliver.
+        // **One** silhouette [SPEC 15.11]: the cistern across the back, its
+        // shoulders stepping in and flowing forward into the rounded pan —
+        // exactly the outline the condo plan draws, and never two outlines
+        // crossing each other. The nose is stated as three chords the one
+        // fillet emitter rounds into the bowl.
         "toilet" => {
-            const TANK: f64 = 220.0;
-            const LAP: f64 = 80.0;
-            const SHOULDER: f64 = 55.0;
-            let (back, wide) = (x0 + TANK - LAP, h / 2.0 - SHOULDER);
-            vec![
-                rect(x0, y0, x0 + TANK, y1, SHARP),
-                rect(back, -wide, x1, wide, wide * 0.8),
-            ]
+            const TANK: f64 = 180.0;
+            const SHOULDER: f64 = 35.0;
+            const STEP: f64 = 45.0;
+            let (back, base, wide) = (x0 + TANK, x0 + TANK + STEP, y1 - SHOULDER);
+            // The pan: straight flanks off the shoulders into a half-round
+            // nose of their own half-width — sampled through the circle's
+            // rational parametrization, so it needs no trigonometry and the
+            // samples crowd where the nose turns hardest. The one fillet
+            // emitter takes the facets off.
+            let nose = |i: usize| {
+                let p = i as f64 / PAN_STEPS as f64;
+                let q = 1.0 + p * p;
+                (x1 - wide + wide * (1.0 - p * p) / q, wide * 2.0 * p / q)
+            };
+            let mut pts = vec![(x0, y0), (back, y0), (base, -wide)];
+            pts.extend((0..=PAN_STEPS).rev().map(|i| {
+                let (x, y) = nose(i);
+                (x, -y)
+            }));
+            pts.extend((1..=PAN_STEPS).map(nose));
+            pts.push((base, wide));
+            pts.push((back, y1));
+            pts.push((x0, y1));
+            vec![Shape::Poly(pts, 45.0)]
         }
         // The basin **is** the sink: the counter or vanity it drops into is the
         // author's own `|rect|` [SPEC 15.11], so drawing a second rim here
@@ -170,6 +197,17 @@ fn bath(variant: &str, (w, h): (f64, f64)) -> Sym {
             rect(x0, y0, x1, y1, 60.0),
             Shape::Oval(0.0, 0.0, 45.0, 45.0),
         ],
+        // …and the kitchen run's double bowl is **one unit**: its own rim, and
+        // two square-ish basins dropped in it — not two sinks side by side.
+        "double-sink" => {
+            const RIM: f64 = 60.0;
+            let (bw, bh) = ((w - 3.0 * RIM) / 2.0, h - 2.0 * RIM);
+            vec![
+                rect(x0, y0, x1, y1, 40.0),
+                box_at(-(bw + RIM) / 2.0, 0.0, bw, bh, 50.0),
+                box_at((bw + RIM) / 2.0, 0.0, bw, bh, 50.0),
+            ]
+        }
         // The tub: the rim, the rounded basin inside it, and the drain at the
         // tap end — the one detail that says which way it lies.
         _ => {

@@ -125,11 +125,11 @@ fn variants(ty: &str) -> &'static [Variant] {
             v!("queen" 1500.0 2000.0, "king" 1800.0 2000.0, "double" 1350.0 1900.0, "single" 900.0 2000.0)
         }
         "sofa" => {
-            v!("three" 2200.0 900.0, "two" 1600.0 900.0, "one" 900.0 900.0, "corner" 2400.0 2400.0)
+            v!("three" 2200.0 900.0, "two" 1600.0 900.0, "one" 900.0 900.0, "corner" 2400.0 2400.0, "stool" 400.0 400.0)
         }
         "dining" => v!("six" 1800.0 900.0, "four" 1200.0 800.0, "round" 1200.0 1200.0),
         "bath" => {
-            v!("tub" 1700.0 750.0, "shower" 900.0 900.0, "toilet" 700.0 400.0, "sink" 500.0 400.0)
+            v!("tub" 1700.0 750.0, "shower" 900.0 900.0, "toilet" 700.0 400.0, "sink" 500.0 400.0, "double-sink" 800.0 450.0)
         }
         "appliance" => {
             v!("stove" 600.0 600.0, "fridge" 600.0 600.0, "washer" 600.0 600.0, "dishwasher" 600.0 600.0)

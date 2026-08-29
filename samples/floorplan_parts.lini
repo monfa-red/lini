@@ -118,31 +118,39 @@
 
   // One anatomy at four widths — outline, then the run tracing arm → back →
   // arm; `one` is the armchair, `corner` folds the same two strokes round an L.
+  // The bar `stool` is the family's one-stroke member: a plain round seat.
   |head| { translate: -3.7 12.2; } [ "SOFAS" ]
   |sofa| "three" { translate: 0 12.95; }
   |sofa| "two" { symbol: two; translate: 2.7 12.95; }
   |sofa| "one" { symbol: one; translate: 5.4 12.95; }
   |sofa| "corner" { symbol: corner; translate: 8.1 12.2; }
+  |sofa| "stool" { symbol: stool; translate: 10.8 13.2; }
 
   // A `|dining|` is sized by its **tabletop**; the chairs extend the bbox.
-  |head| { translate: -3.7 15.4; } [ "DINING · BATH" ]
+  |head| { translate: -3.7 15.4; } [ "DINING" ]
   |dining| "six" { translate: 0 15.5; }
   |dining| "four" { symbol: four; translate: 2.7 15.55; }
   |dining| "round" { symbol: round; translate: 5.4 15.35; }
-  |bath| "tub" { translate: 8.1 16.025; }
-  |bath| "shower" { symbol: shower; translate: 10.8 15.95; }
-  |bath| "toilet" { symbol: toilet; translate: 13.5 16.2; }
-  |bath| "sink" { symbol: sink; translate: 16.2 16.2; }
+
+  // The sanitaryware. A toilet is **one** silhouette — the cistern's shoulders
+  // flowing into the rounded pan — and `double-sink` is one unit with two
+  // basins, the kitchen run's, never two sinks side by side.
+  |head| { translate: -3.7 17.45; } [ "BATH" ]
+  |bath| "tub" { translate: 0 17.525; }
+  |bath| "shower" { symbol: shower; translate: 2.7 17.45; }
+  |bath| "toilet" { symbol: toilet; translate: 5.4 17.7; }
+  |bath| "sink" { symbol: sink; translate: 8.1 17.7; }
+  |bath| "double-sink" { symbol: double-sink; translate: 10.8 17.675; }
 
   // ── …and the kitchen boxes, whose label is the one that centres **in** the
   // body — the F / W / DW convention every real plan writes.
-  |head| { translate: -3.7 17.9; } [ "APPLIANCES" ]
-  |appliance| { symbol: stove; translate: 0 17.9; }
-  |appliance| "F" { symbol: fridge; translate: 2.7 17.9; }
-  |appliance| "W" { symbol: washer; translate: 5.4 17.9; }
-  |appliance| "DW" { symbol: dishwasher; translate: 8.1 17.9; }
-  |cap| { translate: 0 18.55; } [ "stove" ]
-  |cap| { translate: 2.7 18.55; } [ "fridge" ]
-  |cap| { translate: 5.4 18.55; } [ "washer" ]
-  |cap| { translate: 8.1 18.55; } [ "dishwasher" ]
+  |head| { translate: -3.7 18.9; } [ "APPLIANCES" ]
+  |appliance| { symbol: stove; translate: 0 18.9; }
+  |appliance| "F" { symbol: fridge; translate: 2.7 18.9; }
+  |appliance| "W" { symbol: washer; translate: 5.4 18.9; }
+  |appliance| "DW" { symbol: dishwasher; translate: 8.1 18.9; }
+  |cap| { translate: 0 19.55; } [ "stove" ]
+  |cap| { translate: 2.7 19.55; } [ "fridge" ]
+  |cap| { translate: 5.4 19.55; } [ "washer" ]
+  |cap| { translate: 8.1 19.55; } [ "dishwasher" ]
 ]

@@ -122,13 +122,41 @@ fn a_fillet_turns_with_the_corner_it_rounds() {
     assert_eq!(sweeps, ["1", "1", "0", "1", "1", "1"], "{outline}");
 }
 
+/// The bar stool is one round stroke; the double sink is **one unit** with two
+/// basins (never two sinks side by side); and the toilet is **one** continuous
+/// silhouette — the cistern's shoulders flowing into the rounded pan, with no
+/// second outline crossing it [SPEC 15.11].
+#[test]
+fn the_stool_the_double_sink_and_the_one_piece_toilet() {
+    let drawn = |src: &str| {
+        let l = laid(&plan(src));
+        let f = by_id(&l.nodes, "f");
+        (body(f), path(f).matches('M').count())
+    };
+    assert_eq!(
+        drawn("|sofa#f| { symbol: stool }\n"),
+        ((400.0, 400.0), 1),
+        "a plain round seat"
+    );
+    assert_eq!(
+        drawn("|bath#f| { symbol: double-sink }\n"),
+        ((800.0, 450.0), 3),
+        "the unit and its two basins"
+    );
+    assert_eq!(
+        drawn("|bath#f| { symbol: toilet }\n"),
+        ((700.0, 400.0), 1),
+        "one silhouette, tank shoulders into pan"
+    );
+}
+
 /// An unknown variant names its family's whole set — the discretes' wording,
 /// through the one shared builder.
 #[test]
 fn an_unknown_symbol_names_the_variants() {
     assert_eq!(
         layout_err(&plan("|sofa#f| { symbol: sectional }\n")),
-        "unknown symbol 'sectional' on '|sofa|' — its variants are three, two, one, corner"
+        "unknown symbol 'sectional' on '|sofa|' — its variants are three, two, one, corner, stool"
     );
     assert_eq!(
         layout_err(&plan("|appliance#f| { symbol: oven }\n")),

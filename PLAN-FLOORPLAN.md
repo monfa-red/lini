@@ -1589,7 +1589,7 @@ rounding's reversal.
 **Goal**: the user ruled on both open engine calls (fix both, SPEC updated)
 and asked for four more part refinements. SPEC edits are already in.
 
-- [ ] **Extension-line origin** (SPEC 15.2/15.6 updated): an **edge**
+- [x] **Extension-line origin** (SPEC 15.2/15.6 updated): an **edge**
       anchor's extension line springs from the edge's end nearest the
       dimension line, never the midpoint; point anchors and every measured
       value unchanged. One mechanism in the dims lowering. Re-bless every
@@ -1598,29 +1598,245 @@ and asked for four more part refinements. SPEC edits are already in.
       the `point()` corner-workarounds where they became redundant in both
       floorplan samples and simplify SKILL.md's note; SPEC §25 benefits
       as-is.
-- [ ] **Upright labels** (SPEC 15.11 updated): floorplan fixture + opening
+- [x] **Upright labels** (SPEC 15.11 updated): floorplan fixture + opening
       labels share dimension text's ISO-aligned rule (readable from the
       bottom or right, never upside-down) — find where dim text implements
       it and REUSE it, no second walker. Re-bless the catalog's `D1`.
-- [ ] **Schedule tags return to the showpiece** — Phase 7 built and
+- [x] **Schedule tags return to the showpiece** — Phase 7 built and
       reverted them because of the upside-down defect; with it fixed, add
       the door/window tags (and the small corner schedule `|table|` if it
       composes without crowding — MINIMAL wins if they fight).
-- [ ] **`sofa: stool`** — the bar stool, ⌀400: a plain round seat (circle;
+- [x] **`sofa: stool`** — the bar stool, ⌀400: a plain round seat (circle;
       try a squircle side-by-side and keep what reads better — user is happy
       with either). Two or three at the showpiece island.
-- [ ] **`bath: double-sink`** — 800 × 450, ONE unit with two small
+- [x] **`bath: double-sink`** — 800 × 450, ONE unit with two small
       square(ish) basins (not two sink symbols); it replaces the island's
       single `sink` in the showpiece.
-- [ ] **Toilet silhouette merge** — the pan and cistern outlines currently
+- [x] **Toilet silhouette merge** — the pan and cistern outlines currently
       cross; merge into one continuous silhouette (tank shoulders flowing
       into the pan) that still reads as a toilet — the user likes the
       rounded pan, dislikes the crossing lines.
-- [ ] Catalog rows gain `stool` + `double-sink`; captions on the shared
+- [x] Catalog rows gain `stool` + `double-sink`; captions on the shared
       baseline; re-bless after LOOKING (full + thumb, light + dark);
       finals refreshed in `plans/refs-floorplan/final-renders/`.
-- [ ] Regen artifacts if variant data changed; wasm pkg rebuild if needed;
+- [x] Regen artifacts if variant data changed; wasm pkg rebuild if needed;
       `fmt`/`test`/`clippy` clean.
 
 ### Execution log
+
+2026-08-29, one session. Baseline **1461 passed / 0 failed** → after **1464 /
+0** (three new tests); `cargo fmt --all --check`, `cargo clippy --all-targets`,
+`lini fmt --check` and `--strict` over both samples: clean. `cargo xtask
+gen-schema` / `gen-grammars` produce **no diff** (a variant table is layout
+data, not ledger data); `cargo xtask wasm` rebuilt — the parity test fails
+misleadingly on any sample or `src/` change.
+
+#### 1 · The extension-line origin — and why it cost nothing to adopt
+
+**Where it landed.** `anchors::Anchor::edge_ends()` offers a **named edge**'s
+two ends in the drawing frame (`None` for every other anchor); `Stacked.edges`
+carries the pair per anchor; `dims::foot` picks the end whose cross-coordinate
+is nearer the seated dim line. That is the **one** place an extension line is
+built (`paint.ext` has exactly one call site), so the `(o)` readings — which
+never anchor on an edge — pass `[None, None]` and are untouched. Nothing else
+moved: `plan()`, the arrows, the row interval and every measured value still
+read the **representative points**, exactly as SPEC 15.2 says.
+
+**"Edge anchor" means a named pen edge, not a bbox side.** SPEC 15.2's own
+measurement bullet separates the readings — "a point is itself, **an edge or
+arc** its midpoint, **a bbox name** its bbox point" — so `:left` / `:top-right`
+keep the midpoint / corner they always had, and only `Segment::Edge` moves. The
+motivating defect (a witness line travelling a wall face and showing through an
+opening) is a `:segment` one. See the carry-over if the user wants bbox sides in
+too — that is a second ruling and would move every drawing snapshot.
+
+**The before / after look, sample by sample.** Only **two** pre-existing
+snapshots moved, both re-rendered at 2× before and after and diffed pixel by
+pixel:
+
+| Sample | What moved | Verdict |
+|---|---|---|
+| `drawing_sheet.lini` | `screw:k` (`down(2.5):k`, the head underside) — both `screw:left (-) screw:k` and `screw:k (-) screw:right` now spring from the shoulder's **lower** end: `y1` −39 → −29 | **Renders pixel-identically.** The 10 px it no longer draws sat *inside* the revolved body, where the halo already erased it. |
+| `drawing_turned.lini` | `body:sh1` / `sh2` / `sh3` on the barrel's 14 · 7 chain: −40.5 → −39 and −38 → −34 | **Renders pixel-identically**, same reason. Looked at whole: the chain reads exactly as before. |
+
+So the convention is **free** on the engineering samples — the midpoint start
+was never visible there — and it is what makes the architectural case work.
+`drawing_annotations`, `drawing_assembly`, `drawing_gdt`, `drawing_screw`,
+`drawing_section` and `sketch` were rendered before and after too and are
+byte-identical: their `(-)` dims anchor on bbox sides, `point()` stations,
+corners or holes.
+
+**The workarounds are gone, and the proof is byte-identity.**
+`samples/floorplan.lini` dropped all six `point()` stations (`:nw` `:ne` `:se`
+`:sw` on the shell, `:foot`, `:tee`) — each served the dimension strings and
+nothing else (checked) — and the four rows re-anchored on the walls' own runs:
+
+```
+outer:west  (-) outer:east                    { side: top }      // 9.6
+outer:west  (-) bedwall:side (-) outer:east   { side: bottom }   // 4.6 · 5.0
+outer:north (-) bathwall:head (-) outer:south { side: right }    // 4.0 · 2.8
+outer:north (-) outer:south                   { side: right }    // 6.8
+```
+
+The rendered SVG is **byte-identical** to the `point()` version — the corner a
+station named by hand *is* the end the new rule picks. `floorplan_parts.lini`
+never carried a workaround (no `point()` in it). SKILL.md's idiom bullet now
+teaches the run-anchored form, with the one gotcha an author needs: an edge
+dimensions **across** itself, so a horizontal span names the two *vertical*
+runs.
+
+**SPEC §25 verified.** Its `outer:west (-) outer:east { side: top }` used to
+draw two witness lines down the west and east wall faces and through the north
+windows; they now run `y = −3 … −17` — wholly outside the plan. Rendered and
+read, light and dark.
+
+#### 2 · Upright labels — one normalizer, two entry points
+
+`geometry::iso_text_angle(dir)` was split: the fold into [−90, 90) is now
+`geometry::iso_upright(deg)` and `iso_text_angle` is `iso_upright(atan2 …)`. It
+is a pure refactor (`180 % 180 == 0`, and the two branch bounds are unchanged),
+so no dim text moved. `floorplan::label::upright(children, rot)` is the one
+consumer: it rides the text leaf's own **`rotate` attribute** — the same
+attribute `render::text` turns dim text with, and it turns text about its own
+centre, so the seat never moves. Two callers, no second walker:
+
+- `label::seat` uprights after seating — so a **fixture's** beside-the-body
+  label and an **opening's** schedule tag both get it, sharing the one seat
+  Phase 6 built;
+- `fixtures::finish` calls `upright` directly for an `|appliance|`, whose label
+  keeps `|block|`'s centred seat but must still read.
+
+Pinned by `a_schedule_tag_on_a_right_to_left_wall_still_reads_upright` (a wall
+drawn east → west turns the opening 180° and the tag takes −180 back) and one
+assertion on a `rotate: 180` appliance. **No snapshot moved**: the catalog's
+`"D1"` rides an east-running wall, bearing 0.
+
+#### 3 · Schedule tags — five kept, two dropped, no table
+
+`D1` (entry) · `D2` (balcony slider) · `D3` (bedroom) · `D4` (bathroom) · `W1`
+(the south window) all read upright in the render, light and dark — the
+uprighting closes Phase 7's problem (a). **`W1`/`W2` on the north wall stay
+untagged**: Phase 7's problem (b) is a *seating* fact, not a rotation one — an
+opening's tag seats on the face the leaf never sweeps, which for those windows
+is inside the flat, under the sofa and the kitchen counter that stand against
+the same face. Renaming the south window `W1` keeps the marks contiguous.
+Problem (c) turned out not to bite: `D1` on the east wall's outer face sits
+cleanly between the poché and the first dimension row now that the scene sets
+`clearance: 14`.
+
+**The corner schedule `|table|` was built and rejected.** A 2-column MARK /
+CLEAR table (D1–D4, W1) in the sheet's one spare column collides with the north
+arrow and reads cramped at `font-size: 9` — the crop is
+`plans/refs-floorplan/final-renders/` (looked at, then reverted). The left
+column holds one piece of chrome or the other, not both; MINIMAL wins, and the
+tags already carry the schedule read.
+
+#### 4 · The stool: **circle**, logged
+
+Both were rendered side by side at 1:50 under a `radius: 4` island, three of
+each. The **circle** won and is what landed: against square casework and square
+dining chairs the round seat is the only thing on the plan that is round, so it
+reads as *stool* instantly, while the squircle reads as another small box and
+competes with the 450 chairs. It is also literally what SPEC's table says ("a
+plain round seat"). One `Oval` at the body extent — one stroke, the alphabet's
+smallest symbol. Three of them sit at the showpiece island on a 0.5 m pitch,
+0.05 m clear of its south edge (pulled up to the bar).
+
+#### 5 · `double-sink` — one unit, two basins
+
+`rect(800 × 450, r 40)` for the unit plus two `box_at` basins at `r 50`, a
+60 mm rim all round and between: three strokes, the
+`appliance-and-furniture-floor-plan-symbols.webp` DOUBLE SINK with the user's
+square basins instead of ovals. It is **not** the single `sink` twice — that
+one is a rimless basin by Phase 7's ruling (the counter under it is the
+author's `|rect|`), whereas a double bowl *is* a unit, and the rim is what says
+so. It replaces the showpiece island's single sink; the dishwasher slid
+7.55 → 7.7 so the island's two margins are 0.2 m each again.
+
+#### 6 · The toilet — three iterations to one silhouette
+
+The old body was `rect(tank)` + `rect(pan, big r)` overlapping: two outlines
+crossing, the user's complaint. It is now **one** `Shape::Poly`.
+
+| Try | Shape | Read |
+|---|---|---|
+| 1 | tank + a straight-flanked taper to a chorded nose, `r 55` | one outline, but the nose read as a lumpy bulge — rejected |
+| 2 | tank + a half-**ellipse** pan (520 × 155) | one outline, but 3.4 : 1 makes a torpedo, not a toilet — rejected |
+| 3 | **kept**: tank 180 deep at full width, a 45 mm diagonal shoulder stepping in 35 mm, straight flanks, and a half-round nose *of the flank's own half-width* | the condo plan's own outline — block at the back flowing into a domed pan |
+
+The nose is stated as `PAN_STEPS = 6` chords through the circle's **rational
+parametrization** (`c = (1−p²)∕(1+p²)`, `s = 2p∕(1+p²)`): no trigonometry (the
+libm determinism test forbids `f64::sin`/`cos` and this needs no wrapper
+either), and because `dX/dp → 0` at the tip the samples crowd exactly where the
+nose turns hardest. `shape::fillet` at `r 45` takes the facets off. Judged at
+6× against `plans/refs-floorplan/20sw-b1.webp`'s own toilet cropped at the same
+size, then at plan scale (700 mm = 70 px at `density: 5`, so the 35 mm shoulder
+is 3.5 px and reads).
+
+#### 7 · The catalog re-tile
+
+`SOFAS` takes `stool` as its fifth cell (column 10.8, body bottom on the row's
+13.4 baseline → centre 13.2). `DINING · BATH` **split**, exactly as Phase 8's
+carry-over ruled and for the same reason — `double-sink` would have made it
+eight cells in a seven-column sheet:
+
+| Row | Head | Baseline | Cells |
+|---|---|---|---|
+| `DINING` | 15.4 | 16.4 | six · four · round |
+| `BATH` | 17.45 | 17.9 | tub · shower · toilet · sink · double-sink |
+| `APPLIANCES` | 18.9 | 19.2 | stove · fridge · washer · dishwasher (caps 19.55) |
+
+Every row still seats its bodies on **one bottom line** so the smart labels
+share a caption baseline (Phase 7's mechanism, untouched); the row gaps land at
+0.33 / 0.43 m, the same rhythm `BEDS → SOFAS` already had. The sheet grew 1.0 m
+taller and kept its seven-column edge.
+
+#### Visual pass
+
+`--static` → `resvg`, read by eye: both samples full size and at `--zoom 0.3`
+thumbnail, **light and dark** (eight PNGs); SPEC §25's block the same way (four
+more); 2× before/after pairs of `drawing_sheet` and `drawing_turned` (plus the
+six other drawing-family samples' before/after SVG diffs); 6× crops of the
+toilet / double-sink / sink / stool through three toilet iterations; a
+side-by-side circle-vs-squircle stool sheet at 1:50; 3.5× crops of the
+showpiece island and its toilet against the reference crop; and the rejected
+schedule-table sheet. Finals overwritten in
+`plans/refs-floorplan/final-renders/` — `fp-*`, `parts-*`, `spec25-*`, plus
+`crop-island.png` and `crop-toilet.png` (Phase 7's superseded `crop-toilet2`
+removed).
+
+**SPEC vs built.** Implemented as written, no contradiction found and no SPEC
+edit made or owed: 15.2's amended anchor bullet (edge anchors only,
+measurement untouched), 15.6's amended extension sentence, 15.11's amended
+label sentence and its two new table rows — `stool` ⌀400 and `double-sink`
+800 × 450, one unit with two square basins.
+
 ### Carry-over notes
+
+- **A bbox side anchor still springs from its midpoint.** That is deliberate —
+  SPEC 15.2 words the new rule for an **edge** and lists a bbox name as a
+  separate reading — but the drafting argument ("the witness line leaves the
+  corner") applies to `plate:left (-) plate:right` just as well. Extending it
+  is a one-line change in `dims::foot`'s caller (`Anchor::edge_ends` would also
+  answer for `Spot::Side`), but it **moves every drawing snapshot**, so it
+  needs the user's call exactly as this one did.
+- **An opening's schedule tag has no side control.** It seats on the face the
+  leaf never sweeps, which is why the showpiece's two north windows carry no
+  tag (their face is the room side, under the sofa and the counter). If tags
+  should be author-placeable, `side:` on an opening is the shape it would take
+  — SPEC states no such property today.
+- **The corner door/window schedule is not in the sample** (built, looked at,
+  rejected for crowding). If the user wants one, the sheet needs a real spare
+  column: move the north arrow into the top-left gap beside the balcony and the
+  bottom-left becomes free.
+- **The bed is still the one hard-cornered soft furnishing** (Phase 8's note
+  stands verbatim): `rect(…, 60.0)` + `box_at(…, 40.0)` in `draw::bed`, plus a
+  re-bless, if the user wants it soft.
+- Nothing user-reserved was touched: `mirror:` on a wall (finding A), a
+  negative `width:` (B), `scale:` inheritance into a nested drawing scope (C),
+  the chrome-count boundary (D), `radius:` being sheet-space pixels and
+  `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
+  6–8 left them.
+- `draw.rs` is 262 LOC and `dims.rs` 480 — both still inside the ~500 LOC line,
+  though `dims.rs` is now close enough that the next feature there should plan
+  the split.
