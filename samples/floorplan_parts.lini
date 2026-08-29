@@ -44,7 +44,9 @@
   // `swing:` the side the leaf opens toward — `left` is the left of the pen's
   // travel, so on these east-running walls it opens north. The chrome is
   // generated: a leaf at 90° open plus its quarter arc, two mirrored halves for
-  // `double`, and two overlapping panels for `sliding`, which hangs no leaf.
+  // `double`, and two overlapping panels for `sliding`, which hangs no leaf. An
+  // opening's own text is its **schedule tag**, seated beside the gap on the
+  // face the leaf never sweeps — the last cell wears one.
   |head| { translate: -3.7 2.9; } [ "DOORS" ]
   |wall| { draw: move(-1.2, 2.9) right(2.4):run; } [
     |door| { on: run; at: 0.75; hinge: start; swing: left; }
@@ -65,7 +67,7 @@
     |door| { on: run; at: 0.3; width: 1.8; symbol: sliding; }
   ]
   |partition| { draw: move(15, 2.9) right(2.4):run; } [
-    |door| { on: run; at: 0.75; }
+    |door| "D1" { on: run; at: 0.75; }
   ]
   |cap| { translate: 0 4.25; } [ "start · left" ]
   |cap| { translate: 2.7 4.25; } [ "start · right" ]
@@ -73,7 +75,7 @@
   |cap| { translate: 8.1 4.25; } [ "end · right" ]
   |cap| { translate: 10.8 4.25; } [ "symbol: double" ]
   |cap| { translate: 13.5 4.25; } [ "symbol: sliding" ]
-  |cap| { translate: 16.2 4.25; } [ "in a |partition|" ]
+  |cap| { translate: 16.2 4.25; } [ "|partition| · schedule tag" ]
 
   // ── A window draws its sill pair across the gap at the thickness's thirds;
   // openings share a run freely as long as they never overlap. A flight draws

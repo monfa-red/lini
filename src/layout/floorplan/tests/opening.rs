@@ -303,6 +303,58 @@ fn an_opening_anchors_the_location_chain_at_its_centre() {
     text_at(&l.nodes, "3.45");
 }
 
+/// An opening's smart label is its **schedule tag beside the gap** [SPEC
+/// 15.11] — the fixture label's own seat, shared: clear of the wall face by
+/// the readout gap, on the face the leaf never sweeps.
+#[test]
+fn a_schedule_tag_seats_beside_the_gap() {
+    let tag = |style: &str| {
+        let src = one(&format!(
+            "|door#d| \"D1\" {{ on: run; at: 3; width: 4; {style} }}"
+        ));
+        let l = laid(&src);
+        let d = by_id(&l.nodes, "d");
+        let t = d
+            .children
+            .iter()
+            .find(|c| c.kind == crate::resolve::NodeKind::Text)
+            .expect("the schedule tag");
+        (t.cy, t.bbox.h())
+    };
+    // The wall is 2 units thick, so its faces sit at ±1; the tag's near edge
+    // stands one `READOUT_GAP` (8) clear of the far face — never on the wall
+    // line, where `|block|`'s centred read would put it.
+    let (cy, h) = tag("");
+    assert_eq!(cy - h / 2.0, 9.0, "default swing: left opens −y, tag at +y");
+    let (cy, h) = tag("swing: right");
+    assert_eq!(
+        cy + h / 2.0,
+        -9.0,
+        "…and the tag changes face with the leaf"
+    );
+}
+
+/// The chrome **count** is the authored decls' [SPEC 15.7], so a filler reads
+/// the children it was given and never re-derives the count from the cascade:
+/// a rule-borne `symbol: double` draws the single door desugar generated, not
+/// half of a double one.
+#[test]
+fn a_rule_borne_symbol_never_half_draws_a_door() {
+    let ruled = laid(
+        "{ layout: floorplan; density: 1; thickness: 2;\n\
+         \x20 |door| { symbol: double; }\n\
+         }\n\
+         |wall#w| { draw: move(0, 0) right(10):run; } [\n\
+         \x20 |door#d| { on: run; at: 3; width: 4 }\n\
+         ]\n",
+    );
+    let plain = laid(&one("|door#d| { on: run; at: 3; width: 4 }"));
+    assert_eq!(
+        chrome(by_id(&ruled.nodes, "d")),
+        chrome(by_id(&plain.nodes, "d"))
+    );
+}
+
 /// The clip is **geometry**, so it holds under every wall paint [SPEC 15.11]:
 /// the hollow double-line and the hatched section cut open the same gap the
 /// solid poché does.

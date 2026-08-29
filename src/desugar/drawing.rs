@@ -98,11 +98,7 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         // Two cut edges per comma group, indexed in authored order — the pen
         // fills their geometry from the clipped profile [SPEC 15.3].
         for idx in 0..breaks.groups.len() * 2 {
-            out.push(chrome_group(
-                "breakline",
-                vec![Value::Ident("break".into()), Value::Number(idx as f64)],
-                node,
-            ));
+            out.push(indexed(node, "breakline", "break", idx));
         }
     }
     out
@@ -186,6 +182,10 @@ fn single(d: &Decl) -> Option<&Value> {
     }
 }
 
+/// One piece of a producer that emits several at once — a break's cut edges, an
+/// opening's leaves, a flight's risers. The `(kind, index)` marker is the
+/// parent's instruction for filling it at layout
+/// ([`crate::layout::drawing::chrome::indexed`] reads it back).
 fn indexed(at: &Node, ty: &str, kind: &str, i: usize) -> Node {
     chrome_group(
         ty,

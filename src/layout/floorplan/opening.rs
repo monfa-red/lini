@@ -145,6 +145,10 @@ pub(super) fn place(children: &mut [PlacedNode], stations: &[Station], thickness
         node.rotation = st.bearing;
         node.bbox = Bbox::centered(st.width, thickness);
         chrome(node, st.width, thickness);
+        // The schedule tag stands **beside** the gap [SPEC 15.11], on the face
+        // the leaf never sweeps — the fixture label's own seat, shared.
+        let (_, swing) = pose(node);
+        super::label::seat(&mut node.children, thickness / 2.0, -swing);
     }
 }
 
@@ -235,7 +239,16 @@ fn pose(node: &PlacedNode) -> (f64, f64) {
 /// trades the arc for a second panel), a window's two sill lines.
 fn chrome(node: &mut PlacedNode, width: f64, thickness: f64) {
     let (hinge, swing) = pose(node);
-    let double = matches!(node.attrs.get("symbol"), Some(ResolvedValue::Ident(s)) if s == "double");
+    // Two leaves *are* the `double` symbol: the count is the one desugar
+    // emitted, never re-read off `symbol:` here — the marker mechanism's law
+    // ([`crate::layout::drawing::chrome`]), and what keeps a rule-borne
+    // `symbol:` from drawing half a door.
+    let double = node
+        .children
+        .iter()
+        .filter(|c| marker(c).is_some_and(|(kind, _)| kind == "leaf"))
+        .count()
+        > 1;
     let (half, face) = (width / 2.0, swing * thickness / 2.0);
     // Where each leaf hangs and how far it reaches: one hinged leaf the full
     // clear width, or — `double` — a half-width leaf off each jamb.
@@ -248,13 +261,9 @@ fn chrome(node: &mut PlacedNode, width: f64, thickness: f64) {
         }
     };
     for child in node.children.iter_mut() {
-        let Some(ResolvedValue::Tuple(items)) = child.attrs.get("chrome") else {
+        let Some((kind, i)) = marker(child) else {
             continue;
         };
-        let [ResolvedValue::Ident(kind), ResolvedValue::Number(i)] = items.as_slice() else {
-            continue;
-        };
-        let i = *i;
         match kind.as_str() {
             // The leaf stands 90° open on the swing-side face, hinged at its
             // jamb…
@@ -287,6 +296,12 @@ fn chrome(node: &mut PlacedNode, width: f64, thickness: f64) {
             _ => {}
         }
     }
+}
+
+/// The indexed chrome marker on a child, if it wears one — the one reader, so
+/// the leaf count and the fill agree by construction.
+fn marker(child: &PlacedNode) -> Option<(String, f64)> {
+    crate::layout::drawing::chrome::indexed(&child.attrs)
 }
 
 fn line(child: &mut PlacedNode, a: P, b: P) {

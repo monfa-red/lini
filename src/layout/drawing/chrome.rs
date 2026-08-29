@@ -7,9 +7,19 @@
 //! |---|---|---|
 //! | `x-axis` / `y-axis` / a bearing | `\|centerline\|` | the axis line through the parent's datum, spanning its geometry + overhang |
 //! | `ring` | `\|pitch-circle\|` | the circle through a radial pattern's copies — sized by `pattern::expand` |
+//! | `(kind, index)` | the floorplan's leaves, sills, risers | the parent fills the `index`-th piece of that `kind` ([`indexed`], [SPEC 15.11]) |
 //!
 //! The parent's shape decides the geometry, so a chrome child lays out as an
 //! empty placeholder and is filled here, after the parent is sized.
+//!
+//! **The count is the author's, the geometry the cascade's.** Desugar reads the
+//! **authored** decls to decide *how many* chrome children a producer emits,
+//! while the layout fills them from the resolved cascade — so a `pattern:`, a
+//! `break:`, a door's `symbol:` or a flight's `steps:` that reaches a node only
+//! through a **rule** sizes the shape but generates no chrome. The limit is the
+//! mechanism's, shared by every producer; a filler must therefore never
+//! re-derive a *count* from an attribute the cascade may have moved — it reads
+//! the children it was actually given.
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::bearing_dir;
@@ -19,6 +29,21 @@ use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 /// Whether a node is generated chrome — it carries the `chrome:` marker.
 pub(crate) fn is_chrome(attrs: &AttrMap) -> bool {
     attrs.get("chrome").is_some()
+}
+
+/// The **indexed** marker's `(kind, index)` — the shape `desugar::drawing`
+/// writes for a producer that emits several pieces at once (an opening's
+/// leaves, a window's sills, a flight's risers), each filled from its parent's
+/// own frame. The kind is copied out so the caller can go straight on to fill
+/// the child it read it from.
+pub(in crate::layout) fn indexed(attrs: &AttrMap) -> Option<(String, f64)> {
+    match attrs.get("chrome")? {
+        ResolvedValue::Tuple(items) => match items.as_slice() {
+            [ResolvedValue::Ident(kind), ResolvedValue::Number(i)] => Some((kind.clone(), *i)),
+            _ => None,
+        },
+        _ => None,
+    }
 }
 
 /// A chrome child before its parent is sized: identity and paint, no geometry.

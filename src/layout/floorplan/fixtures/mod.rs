@@ -18,7 +18,6 @@ use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::scale::{UNIT_MM, mm_to_units};
 use crate::error::Error;
 use crate::layout::drawing::geometry::n;
-use crate::ledger::consts::READOUT_GAP;
 use crate::resolve::{NodeKind, ResolvedInst, ResolvedValue};
 use shape::Sym;
 
@@ -75,18 +74,14 @@ pub(in crate::layout) fn plan(inst: &ResolvedInst, own: f64) -> Result<Option<Bo
 
 /// Seat what the body could not decide until it was sized: `|stairs|`' tread
 /// and arrow chrome, and the smart label — beside the body like a discrete's
-/// value [SPEC 16.3], or centred in it for an `|appliance|` [SPEC 15.11].
+/// value [SPEC 16.3] (the shared seat, [`super::label`]), or centred in it for
+/// an `|appliance|` [SPEC 15.11].
 pub(in crate::layout) fn finish(children: &mut [PlacedNode], body: &Body) {
     if let Some(steps) = body.steps {
         flight(children, body, steps);
     }
-    if body.inside {
-        return;
-    }
-    let mut y = body.size.1 / 2.0 + READOUT_GAP;
-    for c in children.iter_mut().filter(|c| c.kind == NodeKind::Text) {
-        c.cy = y + c.bbox.h() / 2.0;
-        y += c.bbox.h();
+    if !body.inside {
+        super::label::seat(children, body.size.1 / 2.0, 1.0);
     }
 }
 
@@ -173,13 +168,9 @@ fn flight(children: &mut [PlacedNode], body: &Body, steps: f64) {
     let pitch = run / steps;
     let (x0, x1) = (-w / 2.0, w / 2.0);
     for c in children.iter_mut() {
-        let Some(ResolvedValue::Tuple(items)) = c.attrs.get("chrome") else {
+        let Some((kind, i)) = crate::layout::drawing::chrome::indexed(&c.attrs) else {
             continue;
         };
-        let [ResolvedValue::Ident(kind), ResolvedValue::Number(i)] = items.as_slice() else {
-            continue;
-        };
-        let i = *i;
         match kind.as_str() {
             // The risers between the treads — the flight's own outline draws
             // the two ends, so only the interior divisions are chrome.
