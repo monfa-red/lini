@@ -9,9 +9,7 @@
 // the island, casework and the balcony deck are plain `|rect|`s and the north
 // arrow is a `|sketch|`: SPEC 15.11's parts-library escape.
 {
-  density: 5; clearance: 14;
-  // the dimension rows' stand-off [SPEC 15.6] — the drawing default of 4 is a
-  // sheet-space gap, and at 100 px to the metre it reads as a row on the wall
+  density: 4; clearance: 16;
   |slab::rect| { fill: --bg; stroke: --stroke-dark; stroke-width: 1; }
   |room::block| {
     layout: flow; align: center; gap: 2; font-size: 11; letter-spacing: 1;
@@ -115,12 +113,12 @@
   // ── Dimensions. Every named wall run answers three ways [SPEC 15.11]: the
   // bare `:segment` is the **centreline**, where a structural drawing measures,
   // and the derived `-in` / `-out` face anchors are its two offset faces — so
-  // the overall reads the **outer** faces and a room reads its **clear** span,
-  // face to face, which is what a listing plan publishes. An edge's extension
-  // line springs from the end nearest the dimension line [SPEC 15.2], so every
-  // witness line here leaves a corner and runs away from the plan.
-  outer:west-out (-) outer:east-out { side: top; }
-  // → 9.8 — the building overall, face to face
+  // every dimension reads an **inside** face — a room its clear span, the
+  // overalls the shell's clear interior: what a listing plan publishes. An
+  // edge's extension line springs from the end nearest the dimension line
+  // [SPEC 15.2], so every witness line here leaves a corner.
+  outer:west-in (-) outer:east-in { side: top; }
+  // → 9.4 — the interior overall, inner face to inner face
   outer:west-in (-) bedwall:side-out { side: bottom; }
   // → 4.45 — the bedroom's clear width ('side' runs south, so its 'out' face
   // is the western one, the bedroom's own)
@@ -130,6 +128,6 @@
   // → 3.85 — kitchen and living, clear to the bathroom wall
   bathwall:head-in (-) outer:south-in { side: right; }
   // → 2.65 — the bathroom's clear depth
-  outer:north-out (-) outer:south-out { side: right; }
-  // → 7.0 — the overall, stacked outside the room clears
+  outer:north-in (-) outer:south-in { side: right; }
+  // → 6.6 — the interior overall, stacked outside the room clears
 ]
