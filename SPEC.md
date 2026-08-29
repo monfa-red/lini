@@ -1583,7 +1583,6 @@ content by the box model. So a participant box in a `sequence` — an ordinary b
 honours `padding`, `align`, `justify`, and `gap-fill` on its **own** content, even
 though the sequence engine placed the participant on the time axis. (A `chart` / `pie`
 consumes its children into marks, so this case does not arise there — [SPEC 14](#14-charts).)
-The full property-by-layout picture is the [support matrix](#17-property-ledger--support).
 
 **`gap-fill`** (default `none`) fills a flow's or grid's interior **gutters** — the gap
 regions between children — with a colour, thickness = the `gap` (`gap: 1; gap-fill: --stroke`
@@ -1675,9 +1674,8 @@ size; the default centres.
 
 A cell that **fills** its track (`stretch`) then honours its **own** `align`/
 `justify` to place its content: an auto cell has no slack and sits centred, but a
-filled one slides its text to the aligned edge. This is what lets a `|table|` align a
-whole column — every table cell fills, and the column's `align` is carried onto the
-cells to place their text ([SPEC 8](#8-templates)); the core needs no notion of "table".
+filled one slides its text to the aligned edge — what lets a `|table|` align a
+whole column ([SPEC 8](#8-templates)) with no notion of "table" in the core.
 The same knob aligns a multi-line text's *lines* ([SPEC 6](#6-paint-stroke--text)).
 
 ### Tree — rooted structure
@@ -1686,8 +1684,8 @@ The same knob aligns a multi-line text's *lines* ([SPEC 6](#6-paint-stroke--text
 ([SPEC 8](#8-templates)): a direct `|topic|`-derived child is a **branch**,
 every other child the topic's own content; custom structural types derive from
 it (`|person::topic|`). The scope holds **exactly one root topic** (none or two
-errors; a forest may relax later), and `|topic|` outside a tree scope errors
-([SPEC 21](#21-errors)).
+errors; a forest is beyond 1.0 — [SPEC 24](#24-deferred)), and `|topic|` outside
+a tree scope errors ([SPEC 21](#21-errors)).
 
 | `direction:` | Growth | The look |
 |---|---|---|
@@ -2294,7 +2292,7 @@ overlaps, punched holes, and cutaways compose with no boolean operations. The
 **ground** is the first-declared geometry child: mates resolve by walking outward from
 it ([15.5](#155-mates--seating)); to reground, reorder the declarations.
 
-**Scale — three quantities, two authored.** Numbers in a drawing are **drawing
+**Scale — three settings, one derived number.** Numbers in a drawing are **drawing
 units**; three settings turn them into pixels and paper:
 
 - **`scale:`** — the drafting **ratio**, per view. Default **1**; `scale: 2` reads
@@ -2414,7 +2412,7 @@ call's own parens (`right(w / 2)`, `up(5 * r)`, [SPEC 10.7](#107-expressions--fu
 | `angle(deg, n)` | a run of length `n` at a bearing — **0 = up, clockwise** (90 right, 180 down, 270 left) |
 | `arc(dx, dy, r)` | the **minor** arc to a relative point; `r > 0` sweeps clockwise, `r < 0` counter-clockwise; `\|r\|` ≥ half the chord or it errors |
 | `arc(r, deg)` | a **tangent** arc: continue the current heading, sweeping `deg` on radius `r > 0` — `deg > 0` turns clockwise; the heading updates by `deg` |
-| `curve(dx1, dy1, dx2, dy2, dx, dy)` | a relative cubic bézier (the advanced 10 %) |
+| `curve(dx1, dy1, dx2, dy2, dx, dy)` | a relative cubic bézier |
 | `fillet(r)` / `chamfer(c)` | **corner modifiers** between two segments — a line or an **arc** on either side — trim both legs (`chamfer` cuts `c` back along each, **by arclength** on a curved leg; on a square corner, the 45° bevel) and join with a tangent arc / a straight bevel. They draw nothing alone and error anywhere but at a corner. |
 | `circle(r)` | a circle subpath centred on the current point; the point and heading are unchanged |
 | `point()` | record the pen's **current point** under its attached `:segment` — a station; draws nothing, changes nothing |
@@ -2970,7 +2968,7 @@ dimension, or a mate across views errors ([SPEC 21](#21-errors)) — a construct
 line relates views; it never measures or seats. View-letter arrows (`of:` an arrow
 marker) are beyond 1.0 ([SPEC 24](#24-deferred)).
 
-**Sections & details.** lini is 2D: a **section's cut face is authored** — drawn with
+**Sections & details.** Lini is 2D: a **section's cut face is authored** — drawn with
 the pen and filled with `hatch()`, as the bushing is ([15.4](#154-features-holes--patterns))
 — but a **detail** needs no concession, being a 2D re-render, and the engine is
 re-entrant. Either way the view is a plain **`|drawing| { of: <marker> }`** — one
