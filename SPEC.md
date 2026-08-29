@@ -3290,7 +3290,7 @@ the sketch's centred read.) `width` / `height` are floors as everywhere
 | Type | `symbol:` | Body (mm) |
 |---|---|---|
 | `\|bed\|` | `queen` *(default)* · `king` · `double` · `single` | 1500 × 2000 · 1800 × 2000 · 1350 × 1900 · 900 × 2000 |
-| `\|sofa\|` | `three` *(default)* · `two` · `one` (the armchair) · `corner` · `stool` (the bar stool — a plain round seat) | 2200 × 900 · 1600 × 900 · 900 × 900 · 2400 × 2400 L · ⌀400 |
+| `\|sofa\|` | `three` *(default)* · `two` · `one` (the armchair) · `corner` · `stool` (the bar stool — a plain round seat) | 2200 × 900 · 1600 × 900 · 900 × 900 · 2400 × 2400 L · ⌀350 |
 | `\|dining\|` | `six` *(default)* · `four` · `round` | the **tabletop** — 1800 × 900 · 1200 × 800 · ⌀1200 — its chairs (450 × 450, `six` 3 + 3 on the long sides, `four` 2 + 2, `round` 4 at the quadrants) extending the bbox |
 | `\|bath\|` | `tub` *(default)* · `shower` · `toilet` · `sink` · `double-sink` (one unit, two square basins — the kitchen run's) | 1700 × 750 · 900 × 900 · 700 × 400 · 500 × 400 · 800 × 450 |
 | `\|appliance\|` | `stove` *(default)* · `fridge` · `washer` · `dishwasher` | 600 × 600 each |
