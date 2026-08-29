@@ -2449,3 +2449,202 @@ unchanged, and the W/D from flush to alcoved.
   the chrome-count boundary (D), `radius:` being sheet-space pixels and
   `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
   6–11 left them.
+
+---
+
+## Phase 13 — Face anchors & the clear-span convention (user, 2026-08-29)
+
+**Goal**: every named wall segment derives its two **face anchors**
+(`name-in` / `name-out`, SPEC 15.11/15.2/21 already amended), the showpiece
+adopts the real dimensioning convention (overall on the outer faces, rooms on
+their clear spans), plus two part tweaks. Face anchors are **additive** — no
+existing anchor's meaning moves.
+
+- [x] **Derived face anchors**: for every named centreline segment of a wall,
+      `name-in` / `name-out` are addressable segments — the offset edges the
+      wall walk already computes (surface, never recompute). Enclosed side on a
+      closed run from the run's own winding; left of the pen's travel on an
+      open one. Full edge anchors: dimensions (axis inference, extension lines
+      from the dimension-side end), leaders, mates.
+- [x] The §21 collision error for an authored `*-in` / `*-out` name on a wall,
+      through the catalog; unknown-segment did-you-mean suggests face names.
+- [x] **Tests**: clear spans measure exactly (3.85 against a 100 mm partition
+      face inside a 200 mm shell at `unit: m`); closed vs open `-in`
+      orientation; the collision error; a face-anchored dim's witness line
+      springs from the corner; the suggestion includes face names; a face
+      spans its whole segment through the window in it.
+- [x] **The showpiece adopts the convention**: overall chains → outer faces
+      (top 9.8, right 7.0), the east and bottom chains → clear spans.
+- [x] **Two part tweaks**: `|dining| { symbol: round }` tabletop ⌀1200 → ⌀1000
+      (SPEC already says so; variants + catalog re-blessed); the showpiece's
+      dining set `six` → `four`.
+- [x] Both samples re-blessed **after** reading renders (full + 0.3 thumb,
+      light **and** dark); `final-renders/fp-*`, `parts-*`,
+      `blueprint-floorplan*` refreshed; §25's SVG verified **byte-identical**.
+- [x] Regen artifacts (no diff), `cargo xtask wasm`, `fmt` / `test` / `clippy`
+      clean.
+
+### Execution log
+
+2026-08-29, one session. Baseline **1469 passed / 0 failed** → after **1475 /
+0** (six new tests, `src/layout/floorplan/tests/face.rs`). `cargo fmt --all
+--check`, `cargo clippy --all-targets`, `lini fmt --check` and `--strict` over
+both samples: clean. `gen-schema` / `gen-grammars` produce **no diff** (a
+variant row is layout data and an error code is not schema data); `cargo xtask
+wasm` rebuilt. **No SPEC edit made or owed.**
+
+#### 1 · A face is the wall's own offset, on the named edge
+
+`layout/floorplan/face.rs` (113 LOC) is the whole mechanism and it computes no
+new geometry: a face is **`wall::raw_offset`** — the very function each run's
+side chains are built with — applied to the named `Segment::Edge`, pushed onto
+`Folded.segments` as two more named segments. Because
+`Folded.segments` flows straight into `SketchGeo.segments`, *every* consumer
+follows for free and none of them changed: `anchors::spot` resolves the name,
+`Anchor::edge_ends` gives `dims::foot` its corner (Phase 9's law), `outward()`
+sets the axis and seats a mate, `direction()` answers `(<)`, and
+`suggest::nearest` reads the face names into the did-you-mean. **Not one line
+of the drawing engine moved.**
+
+Three decisions worth the ink:
+
+1. **Where it runs.** Inside `wall::offset`, after `opening::plan` and before
+   the outline replaces the centreline. After the openings, because `on:` names
+   a *structural* run and must not accept a face (a face has no carrier, so a
+   station on one would silently vanish); before the outline, because the faces
+   are derived off the centreline subpaths.
+2. **Which run carries a named edge** is `opening::locate` — promoted
+   `pub(super)`, not copied. It is already "the one place the pen's names and
+   the folded runs meet", and the enclosed-side question needs exactly that
+   answer (`subs[sub].closed` plus the run's winding).
+3. **The enclosed side is the run's signed area** (screen frame, y down:
+   positive = clockwise = interior on the right of travel). Each segment
+   contributes its chord's shoelace term and an arc adds the circular segment
+   it bulges past that chord, signed by its sweep — so an all-arc ring answers
+   too. Both windings are pinned by test.
+
+**Direction: the material is on a face's right.** The left offset keeps the
+pen's travel and the right offset is **reversed** — which is exactly how the
+outline's own two side chains assemble (Phase 2: "the right side reversed").
+Without it a mate on `outer:north-in` would seat *into* the wall, because a
+named edge's `outward()` is the left of its travel [SPEC 15.5]. Verified: a
+rect mated to the north inner face lands in the room, flush.
+
+**The whole-face-vs-cut-face call: the whole segment's face.** An opening cuts
+the drawn outline; it does not cut the anchor. `outer:north-in` is one edge
+from the segment's first corner to its last, its representative point the full
+face's midpoint, whatever windows sit in it — so a room reads *one* clear span
+and a wall does not start answering as three anchors when someone adds a
+window. Pinned by `a_face_spans_its_whole_segment_through_the_openings_in_it`.
+The face is also taken at the segment's **theoretical** corners, exactly where
+the pen records the centreline segment a `fillet()` trims — so a face and its
+centreline always agree about where the run starts.
+
+**The reserved-name law is unconditional.** Any authored segment on a wall
+whose name ends `-in` / `-out` errors (`Y019 face-anchor`), whether or not a
+twin would collide — the same shape as SPEC 15.2's built-in point names, which
+"win" without asking what else is drawn. A conditional check would make adding
+`:north` later break a file that compiled.
+
+#### 2 · The showpiece's new dimension rows — measured, never typed
+
+Every number below is what the engine printed; the sample states none of them.
+
+| Row | Statement | Reads |
+|---|---|---|
+| top | `outer:west-out (-) outer:east-out` | **9.8** — the building overall, face to face |
+| bottom | `outer:west-in (-) bedwall:side-out` | **4.45** — the bedroom's clear width |
+| bottom | `bedwall:side-in (-) outer:east-in` | **4.85** — hall + bath, clear |
+| right | `outer:north-in (-) bathwall:head-out` | **3.85** — kitchen / living, clear |
+| right | `bathwall:head-in (-) outer:south-in` | **2.65** — the bathroom, clear |
+| right | `outer:north-out (-) outer:south-out` | **7.0** — the overall, stacked outside |
+
+**Composition.** `-out` faces beat bbox sides for the overalls: a bbox side
+still springs from its *midpoint* (Phase 9's carry-over), while a face is an
+edge and leaves the corner — so the two overalls' witness lines run off the
+building's own corners, which is what `20sw-b1.webp` draws. The room clears
+are **two statements per side, not a chain**: consecutive clear spans do not
+share an anchor (they are a wall thickness apart), and the packer seats them on
+one row anyway because their spans do not overlap — so the bottom and right
+each read as one line of dimensions broken at the wall, exactly the reference
+plans' look. Source order puts the clears innermost and the overall outside,
+the drafting order.
+
+**No `format:` needed**: 9.8 · 7 · 4.45 · 4.85 · 3.85 · 2.65 all fit at the
+`auto` 2-decimal default and read cleanly at 1×; forcing 1 dp would have lost
+the 50 mm the partition faces are worth.
+
+**What the centreline reads cost.** The four rows that read 9.6 · 4.6 · 5.0 ·
+4.0 · 2.8 · 6.8 are gone — the plan now publishes what a listing plan
+publishes. The centreline reading is untouched and still tested
+(`dimensions_station_on_the_centreline_and_bbox_anchors_on_the_outline`, the
+new clear-span test's middle row, SPEC §25 and both doc snippets).
+
+#### 3 · The two part tweaks
+
+- **`round` ⌀1200 → ⌀1000** (`fixtures::variants`): the extent falls 2210 →
+  2010 square, so the catalog's `round` cell reseats 15.295 → **15.395** to
+  keep the DINING row's one bottom baseline (Phase 7's mechanism). At 1:50 the
+  chairs now relate to the top instead of being dwarfed by it.
+- **The showpiece's set `six` → `four`**, staying at `4.3 2.2`. Three
+  positions were rendered (4.0 · 4.3 · 4.6): at 4.0 the set crowds the coffee
+  table and its label, at 4.6 it drifts into the hall walkway and leaves a hole
+  in the room's middle; **4.3 keeps the air on both sides** and keeps Phase
+  12's island band (the set's centre still on y 2.2). No respacing needed.
+
+#### 4 · Verification
+
+- **§25's SVG is byte-identical** — proved, not asserted: HEAD built in a
+  throwaway worktree, both binaries rendered the extracted block `--static`,
+  `cmp` clean. Face anchors add segment-table rows and nothing renders a
+  segment.
+- **Only the two floorplan samples moved.** The conformance glob re-blessed
+  exactly `floorplan.lini` and `floorplan_parts.lini`; every other sample —
+  the whole drawing family included — is byte-identical.
+- **Visual pass** (`--static` → `resvg`, read by eye): both samples full size
+  and at `--zoom 0.3`, **light and dark** (eight PNGs); `--theme blueprint`
+  full + thumb; 2.5× crops of the east dimension rows, the south rows and the
+  living zone; a three-up of the dining set's candidate positions; a 1× crop of
+  the catalog's DINING row. Finals overwritten in
+  `plans/refs-floorplan/final-renders/` — `fp-*`, `parts-*`,
+  `blueprint-floorplan{,-thumb}.png`. `spec25-*` deliberately **not**
+  re-rendered (byte-identical output).
+- What the looking confirmed: the clear-span witness lines leave the inner-face
+  corners and cross their wall once, which is what the references draw; the two
+  0.1 m breaks (bottom at the partition, right at the bathroom wall) read as
+  the wall they measure round.
+
+#### 5 · Docs
+
+SKILL.md's dimension bullet now teaches the three readings a named run answers
+(centreline · `-in` · `-out`) with the collision rule, and its floorplan
+snippet gains a clear-span line; README's Floor plans section gains the same
+sentence and line. Both snippets were compiled `--strict` and their measured
+values checked (SKILL 4.8 / 2.05, README 7.2 / 7.0).
+
+### Carry-over notes
+
+- **A bbox side anchor still springs from its midpoint** (Phase 9's open
+  carry-over) — now less pressing on a plan, since the face anchors give the
+  overall an edge to spring from, but unchanged and still the user's call.
+- **`on:` deliberately does not see the faces.** An opening stations on a
+  structural run; a face has no carrier to cut. If a face name is ever wanted
+  there the `on:` did-you-mean should learn them too — today it suggests
+  centreline names only, which is the right advice.
+- **A face is derived for a named `Segment::Edge` only.** A named `arc()` runs
+  and `point()` stations derive none: `Segment::Arc` carries a mid point and a
+  radius but neither centre nor ends, so offsetting one would mean
+  re-deriving geometry the pen threw away. If curved-wall faces are ever
+  wanted, the fix is to have the pen record an arc segment's centre — not a
+  second offsetter here.
+- **`mirror:` on a wall** would mirror the derived faces along with everything
+  else; it is still degenerate for other reasons (Phase 6 finding A, open).
+- Nothing user-reserved was touched: `mirror:` on a wall (A), a negative
+  `width:` (B), `scale:` inheritance into a nested drawing scope (C), the
+  chrome-count boundary (D), `radius:` being sheet-space pixels and
+  `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
+  6–12 left them.
+- `layout/floorplan/` file sizes after this phase: `opening.rs` 380 ·
+  `fixtures/draw.rs` 299 · `wall/mod.rs` 299 · `wall/join.rs` 283 ·
+  `fixtures/mod.rs` 229 · `mod.rs` 167 · `face.rs` 113 · `label.rs` 54 — all
+  comfortably inside the ~500 LOC line.
