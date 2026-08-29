@@ -216,7 +216,7 @@ fillet(2)`, and `mirror:`, whose items each reflect the union so far.
 `(-)`, `(o)`, or `(<)` a measuring op ([SPEC 15.6](#156-dimensions)) — which is how
 `move(-2, 5)`, `(8 * 2)`, and `pin (o)` never meet.
 
-**Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
+**Colours** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
 `rgba(…)`, `hsl(…)`, `hsla(…)` (percentages allowed — `hsl(200, 50%, 50%)`),
 `oklch(L, C, H[, A])` (the palette's own space — L/A in 0–1, C the chroma, H in
@@ -303,8 +303,7 @@ A node has **no label unless you give it one** — a bare `|box#cat|` is an empt
 | `""` | an empty string — nothing in flow, an empty cell in a grid ([SPEC 12](#12-flow-grid--tree)) |
 
 A link to an *undeclared* name still draws a labelled box ([Implicit nodes](#implicit-nodes)).
-A multi-word label needs no `[ ]` (`|box#lb| "Load balancer"`); an *anonymous*
-labelled box needs no id (`|box| "Load balancer"`).
+A multi-word label needs no `[ ]` (`|box#lb| "Load balancer"`).
 
 **The label is smart — each type places it**, and every layout extends the same
 rule (a chart's label is its title, a series' its legend entry — [SPEC 14](#14-charts)),
@@ -430,9 +429,9 @@ A type's class never glues into its bars (`|box.hot|` is rejected): a class is
 **worn**, not part of identity. To match boxes-with-a-class, style the class
 (`.hot { … }`); to match within one, use a descendant (`.hot |box|`).
 
-A **define** introduces a new type from a base: `|treat::box| { … }`. Its
-declarations are the type's defaults (tier 1 below); an optional `[ ]` gives it
-intrinsic children (materialized per instance — see [SPEC 9](#9-links)).
+A **define**'s declarations ([SPEC 3](#3-statements--the-label)) are the new
+type's defaults — tier 1 below; its optional `[ ]` children materialize per
+instance ([SPEC 9](#9-links)).
 
 **Selecting vs. drawing is decided by the section, not the syntax.** `|box| .hot`
 in the stylesheet is a descendant *rule* (.hot inside a box); on the canvas it is
@@ -483,7 +482,7 @@ above ([SPEC 6](#6-paint-stroke--text)).
 A node's **bounding box** is the smallest axis-aligned rectangle containing it,
 stroke included.
 
-1. **Center origin.** Every bbox is centered at the parent's origin by default.
+1. **Centre origin.** Every bbox is centred at the parent's origin by default.
 2. **Source order = render order;** later draws on top, with pinned children above
    the in-flow ones. `layer: N` overrides; ties break by source order.
 3. **Strokes count** toward the bbox — `width: 100 height: 50 stroke-width: 4` →
@@ -527,10 +526,10 @@ CSS's standalone `translate`, baked into the node's origin (so a standalone SVG 
 no transform variable); the canvas still includes the shifted node.
 
 There is **no numeric coordinate property**. Because the parent's origin is its
-center, `pin: center` + `translate: x y` lands a child's center at parent-local
+centre, `pin: center` + `translate: x y` lands a child's centre at parent-local
 (x, y) — explicit coordinates with no node-size arithmetic.
 
-**`rotate: N`** turns a node N degrees about its bbox center, applied last as an SVG
+**`rotate: N`** turns a node N degrees about its bbox centre, applied last as an SVG
 transform. Like `translate`, it works on **any** node, text included. `pin` (which
 needs a parent anchor and takes a child out of the flow) is a **box** job; to pin
 text, wrap it in a `|block|`.
@@ -581,8 +580,8 @@ the name**: a mono `font-family` — a known-mono name, or any name containing
 "mono" — measures on the mono table (exactly **0.6 em per glyph**, at every
 weight), every other family, the bundled default included, on the proportional
 table. An unknown glyph
-falls back to a fixed advance (wide for the CJK ranges). Vertical centering is
-**cap-height optical centering**, from the same tables.
+falls back to a fixed advance (wide for the CJK ranges). Vertical centring is
+**cap-height optical centring**, from the same tables.
 
 ---
 
@@ -684,7 +683,7 @@ empty `|oval|`) make a circle.
 | `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89), default 15. |
 | `\|cyl\|` | size (auto) | Cylinder; end ellipses ≈ h/10. |
 | `\|diamond\|` | size (auto) | Rhombus inscribed in the bbox. |
-| `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
+| `\|poly\|` | `points` | ≥3 points, local (centre-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
 | `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` (or the label) names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its `[ ]` text (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
@@ -701,7 +700,7 @@ on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 24]
 |---|---|---|
 | `stroke-style` | `solid` / `dashed` / `dotted` / `center` / `phantom` | Stroke pattern. Default `solid`. `center` (dash-dot) and `phantom` (dash-dot-dot) are the drafting line conventions — axes and alternate positions — valid on shapes and `\|line\|`s everywhere ([SPEC 15.7](#157-leaders-notes--line-conventions)); a link's set stays `solid` / `dashed` / `dotted` / `wavy` ([SPEC 9](#9-links)). `wavy` is **link-only by design** — a wire waves, an outline never does. |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the node. Scalar `N` = `N -N`. |
-| `rotate` | `N` degrees | Rotate around the bbox center ([SPEC 5](#5-the-box-model)). |
+| `rotate` | `N` degrees | Rotate around the bbox centre ([SPEC 5](#5-the-box-model)). |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
 
 ### Markers (on `|line|` and links)
@@ -773,7 +772,7 @@ resolved against the source `.lini` file's directory. A local file's bytes are r
 once, at resolve — a missing or unreadable path errors at the `src:` span — and
 **embedded** in the output ([SPEC 18](#18-svg-output)): SVG as a nested, id-isolated
 `<svg>`; raster (PNG / JPEG / GIF / WebP) as a base64 data URI. Embedding is the one
-behavior for a path (there is no opt-out — a self-contained SVG is the output
+behaviour for a path (there is no opt-out — a self-contained SVG is the output
 contract) and is **deterministic from the bytes**: the same file and assets give
 byte-identical output on every run. The compiler never touches the network — URLs and
 authored data URIs pass through untouched, so a URL is the authored non-embedded
@@ -980,7 +979,7 @@ end).
 | `-->` `--->` `~>` | dashed / dotted / wavy |
 | `-` `--` `---` `~` | no markers (each line style) |
 
-If the operator carries no markers, there are none on both ends. Explicit `marker:` /
+An operator with no marker glyphs leaves both ends bare. Explicit `marker:` /
 `marker-start:` / `marker-end:` override the operator (source order wins). The
 operator's line part sets the link's `stroke-style` (`--` ⇒ `dashed`, `---` ⇒ `dotted`,
 `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
@@ -1042,14 +1041,10 @@ circuit rather than two statements ([SPEC 16.5](#165-wires)).
 
 ### Styling
 
-The wire and label vocabulary ([SPEC 6](#6-paint-stroke--text)):
-
-| Property | Type | Default | Role |
-|---|---|---|---|
-| `stroke` | colour | `--stroke` | The wire's colour. |
-| `stroke-width` | number | 2 | Wire thickness; markers scale with it. |
-| `stroke-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
-| `color` · every `font-*` · `letter-spacing` · … | — | inherits / baked | The labels ([Labels](#labels)). |
+The vocabulary is [SPEC 6](#6-paint-stroke--text)'s, at the ordinary defaults
+([SPEC 17](#17-property-ledger--support)): `stroke` / `stroke-width` /
+`stroke-style` dress the wire (the style usually set by the operator, above),
+`color` and the `font-*` family its labels ([Labels](#labels)).
 
 `|-| { … }` styles every link; a descendant (`#g |-|`, `|table| |-|`) or a worn class
 scopes it, exactly as `|box|` / `#g |box|` / `.hot` scope a node; a link's own `{ }`
