@@ -962,36 +962,217 @@ thin-outline furniture masking the floor, doors with their swing arcs.
 **Goal**: the feature is a shipped family — sample, SPEC example compiling,
 deferred slots pinned, everything green.
 
-- [ ] Read `PLAN-GALLERY.md`'s "pretty bar" first — samples are showroom
+- [x] Read `PLAN-GALLERY.md`'s "pretty bar" first — samples are showroom
       pieces (user rule: pretty, feature-dense, never crowded; showcase more,
       like the schematic samples do).
-- [ ] `samples/floorplan.lini`: the studio flat (walls + partition + openings
+- [x] `samples/floorplan.lini`: the studio flat (walls + partition + openings
       + fixtures + room text + dimension chains), §25's example grown into a
       real showpiece — a full one-bedroom condo reading like
       `plans/refs-floorplan/20sw-b1.webp`; render, **look at it** (light +
       dark), iterate until it reads like a real-estate plan.
-- [ ] `samples/floorplan_parts.lini`: the catalog sheet — **every fixture ×
+- [x] `samples/floorplan_parts.lini`: the catalog sheet — **every fixture ×
       every variant**, every door symbol × poses, a window, a stairs run,
       labelled, on a tidy grid (the `schematic_parts.lini` precedent); this
       is also what lets the hooks `UNSAMPLED` rows drop.
 - [x] Remove the `tests/spec_blocks.rs` #57 ledger row — the §25 block must
       compile as written. (Done early, after Phase 1's path-fix ruling.)
-- [ ] `tests/deferred.rs`: one pinned test per reachable SPEC 24 Floorplans
+- [x] `tests/deferred.rs`: one pinned test per reachable SPEC 24 Floorplans
       slot (computed areas — n/a if no syntax is reachable; curved-segment
       opening → the error; others n/a — mirror the file's conventions).
-- [ ] Conformance snapshot for the sample; `lini fmt` canon over it
+- [x] Conformance snapshot for the sample; `lini fmt` canon over it
       (`fmt --check` clean); desugar fixed point over it.
-- [ ] Docs sweep: README.md and SKILL.md layout enumerations gain
+- [x] Docs sweep: README.md and SKILL.md layout enumerations gain
       `floorplan`; SKILL.md gains a short floorplan authoring section beside
       its schematic one (walls → openings → fixtures → dims, one example).
-- [ ] `cargo fmt` / `cargo test` / `cargo clippy` clean; sweep this plan's
+- [x] `cargo fmt` / `cargo test` / `cargo clippy` clean; sweep this plan's
       checkboxes; write the final execution log.
-- [ ] Re-read SPEC 15.11 top to bottom against the built behaviour — fix
+- [x] Re-read SPEC 15.11 top to bottom against the built behaviour — fix
       either (SPEC wins on intent; if the implementation taught us better,
       propose the SPEC edit to the user in the log).
 
 ### Execution log
+
+2026-08-29, one session. Baseline 1451 passed / 0 failed → after **1452 / 0**
+(the one new test is `tests/deferred.rs::openings_on_a_curved_segment`);
+`cargo fmt --all --check`, `cargo clippy --all-targets` clean. **No engine code
+changed** — nothing in the two samples exposed a bug.
+
+**`samples/floorplan.lini` — the showpiece.** A 9.6 × 6.8 m one-bedroom condo at
+`unit: m; scale: 0.02` (1 : 50) with `density: 5`, so a metre is 100 px and the
+200 mm poché reads 20 px — the `20sw-b1.webp` weight. The whole plan rides one
+`|floorplan#unit|` node, so its label lowers to the drawing title → footnote.
+What it wears: the outer `|wall|` loop (`close():west`), two `|partition|`s
+(bedroom L, bathroom L), an entry door + a `symbol: sliding` balcony door +
+three windows on the shell, an interior door per partition (one `swing: right`,
+one `hinge: end` on the defaults), seven `|slab::rect|` casework pieces
+(counters, island, coffee table, nightstand, wardrobe, vanity, balcony deck),
+four `|appliance|`s (the F / DW / W/D labels centring **in** the box), sink /
+toilet / tub, sofa / dining / bed, six `|room::block|` sheet texts with authored
+areas, a `|sketch|` north arrow (SPEC 24's "a `|sketch|` define covers it
+today", built), and four dimension rows.
+
+**Three sample-level findings worth remembering.**
+
+1. **A `|block|` in a drawing scope does not stack its children** — every child
+   datum-places, so a two-line room label overprinted itself. `|room::block| {
+   layout: flow }` restores the column. That is the idiom for any multi-line
+   sheet text in a drawing or floorplan scope.
+2. **Dimension extension lines start at the anchor's *midpoint*, so a
+   `:segment` anchor draws a line straight down the wall — and it shows through
+   every opening it crosses** (a window read as *three* lines: two sills plus
+   the extension line). §25's `outer:west (-) outer:east` form hits this on any
+   plan with openings. The fix used here is architectural anyway: name the
+   corners with `point():nw` … `point():sw` and dimension **corner to corner**,
+   so every extension line runs *away* from the plan. See the carry-over — this
+   may deserve an engine answer.
+3. **Dimensions stack outside the geometry on their side**, so a `side: left`
+   row landed ~2 px off the balcony deck's edge. Moving both vertical rows to
+   `side: right` (the location chain inside, the overall outside — the drafting
+   order) and the north arrow to the empty left column fixed the composition.
+
+**`samples/floorplan_parts.lini` — the catalog.** Seven columns on a 2.7 m
+pitch, six labelled rows, `density: 4`, root `font-size: 10` so the fixtures'
+own smart labels and the `|cap|` captions share one size. Rows: **walls**
+(solid 200 · `|partition|` 100 · `thickness: 0.4` · `fill: --bg` hollow ·
+`hatch(45)` section · mitred corner · `arc()` concentric), **doors** (all four
+`hinge` × `swing` poses · `double` · `sliding` · one in a `|partition|`),
+**windows · stairs** (the 1200 mm default · `width: 2` · in a `|partition|` · a
+door **and** a window sharing one run · `steps: 4` · `steps: 8`), **beds ·
+sofas**, **dining · bath**, **appliances**. A fixture's variant name is its own
+smart label (which is also the demo of the beside-the-body seat); the four
+appliances carry their letter **inside** and a `|cap|` below, which is the
+two-seats contrast in one row. `tests/hooks.rs`'s five floorplan `UNSAMPLED`
+rows and their two scene constants are **gone** — the sample wears every hook by
+construction, and `every_documented_class_is_worn` passes from `samples/` alone.
+
+**`tests/deferred.rs`.** SPEC 24's Floorplans block has four items and exactly
+**one** is reachable: `openings_on_a_curved_segment` pins `Y016`
+(`an opening sits on a straight run — ':bay' is an arc`) and asserts both
+built forms beside it — the arced wall itself compiles, and a straight run of
+the same wall takes an opening. The other three (computed room areas, a north
+arrow / scale-bar type, more built-in fixtures) reserve **no spelling** — SPEC
+names no type or property for any of them — so they went into the module
+header's "Unreachable — no test" list in SPEC 24's order, the file's own
+convention for exactly this.
+
+**Canon.** `lini fmt` needed no fix: its only changes over both samples were
+ordinary canon (trailing `.0` trimmed, over-long declaration blocks wrapped,
+double spaces closed) — nothing floorplan-shaped is mangled. Both files are
+`fmt --check` clean as committed. `tests/conformance.rs`'s glob picked both up
+(two new `.snap` files), and the `tests/fmt.rs` / `tests/desugar.rs` /
+`tests/oracle.rs` sample sweeps cover them for free — desugar's byte fixed point
+and the lowered-render oracle both hold.
+
+**`crates/lini-wasm/pkg` was stale** (built 2026-08-28 11:15, before Phase 1)
+and `tests/wasm.rs` failed with `unknown type 'floorplan'` on both new samples.
+`cargo xtask wasm` rebuilt it; parity is green. The pkg is gitignored build
+output, so nothing is committed — but **any session adding a sample must rebuild
+it** or the parity test fails misleadingly.
+
+**Docs.** README gained `floor plans` in the two family enumerations plus a full
+**Floor plans** section between Engineering drawings and Schematics (compiled
+snippet, `--strict` clean). SKILL.md gained `floorplan` in the `layout:` list
+and the preset table, and a **Floorplan (architectural)** section beside the
+schematic one: the walls → openings → fixtures → dimensions order, a compiled
+example, and five bullets covering the poché, the station model, the fixture
+table, the plain-`|rect|` escape, and the corner-station dimension idiom. Both
+doc snippets were compiled `--strict` before landing.
+
+**Visual verification** (`--static` → `resvg`, read by eye): both samples at
+full size and at `--zoom 0.3` thumbnail, light **and** dark (eight PNGs), plus
+2× / 2.5× crops of the entry door, the kitchen, the bedroom, the bathroom, a
+north-wall window and the wall row. What the looking changed: the room labels
+(the `layout: flow` fix), the dimension anchors and sides (findings 2 and 3),
+the north arrow's size and its move to the left column, dropping a trial `"D1"`
+schedule tag off the entry door (it seats *in* the gap — see the SPEC verdict),
+adding `stroke: --stroke-dark` to the catalog's `hatch(45)` wall so the section
+reads with edges, tightening the catalog's row pitch, and sliding the toilet
+south to group with the tub. Dark mode inverts to white poché on ink and reads
+like a negative blueprint; both thumbnails stay legible.
+
+**SPEC 15.11 re-read — verdict.** Clause by clause against the built behaviour,
+the section is **implemented as written** with two exceptions, neither fixed
+here (SPEC is not edited by this phase):
+
+1. **An opening's smart label seats *in* the gap, not beside it.** 15.11 says
+   "An opening's is its schedule tag **beside** the gap"; the implementation
+   gives an opening no label seat of its own, so `|door#d1| "D1"` falls through
+   to `|block|`'s centred text and lands in the middle of the jamb-to-jamb box
+   — on the wall line, and turned with the door's frame. Verified on a
+   horizontal wall: `<text x="0" y="0">D1</text>` inside the door's own group.
+   **Recommendation (Phase 6):** implement the beside-seat in
+   `layout/floorplan/opening.rs` by reusing `fixtures::finish`'s mechanism —
+   push the text child clear of the wall by `thickness/2 + consts::READOUT_GAP`
+   on the swing side, one shared constant, no second mechanism. That is a code
+   fix to match SPEC, not a SPEC change.
+2. **"converted to drawing units at desugar" is inexact for fixture bodies.**
+   `thickness:` and an opening's `width:` really do resolve at desugar (the
+   `wall-thickness:` / `opening-width:` stamps), but a fixture body *cannot* —
+   its `symbol:` is cascade-borne, so desugar stamps `unit-mm:` and
+   `scale::mm_to_units` converts at layout (Phase 4's decision 3). The
+   observable law is untouched and holds: a `|bed|` renders 1500 × 2000 px at
+   `scale: 1; density: 1` under **both** `unit: m` and `unit: mm`, verified.
+   **Recommendation:** if the user wants the sentence exact, drop the phase
+   name — "converted to drawing units through the scope's `unit:`". Purely
+   editorial; no behaviour is at stake.
+
+Everything else checked out, including the clauses no earlier phase had to
+exercise: `|page|` + `|title-block|` + `|note|` + `|hole|` all compile inside a
+floorplan scope (the "every drawing-global mechanism stays welcome" law); a
+`|wall|`'s smart label keeps the sketch's centred read; `:segment` dimensions
+read the **centreline** (the showpiece's 9.6, not the outline's 9.8); the door
+leaf is a line of length `width` from the hinge jamb and the arc has radius
+`width`, sweeping leaf to closed; `swing: left` opens north on an east-running
+wall (left of the pen's travel).
+
 ### Carry-over notes
+
+**For Phase 6 (code audit):**
+- **The opening label seat is a real SPEC-vs-code gap** (verdict 1 above) —
+  the smallest confirmed defect on the branch. Fix it by *sharing* the fixture
+  label seat, not by writing a second one; `fixtures::finish` and the opening's
+  seat want one helper between them (AGENTS' no-parallel-implementations rule
+  applies directly).
+- `desugar/scale.rs` now carries **three** internal stamps —
+  `wall-thickness:`, `opening-width:`, `unit-mm:` — pushed by the same walk and
+  whitelisted in `validate::INTERNAL`. Two carry a resolved fallback, one
+  carries an input. Worth a look as one mechanism with one naming scheme; the
+  asymmetry is deliberate (Phase 4's decision 3) but undocumented at the
+  stamps themselves.
+- Phase 4's known limitation is still open and still logged: `door_symbol` /
+  `stairs_chrome` count chrome from the **authored** `symbol:` / `steps:`, so a
+  rule-borne value sizes the body right and generates nothing. Neither sample
+  writes that form. If it is ever fixed, fix **both** producers together.
+- Nothing in `src/` changed this phase, so the branch diff for the audit is
+  exactly Phases 1–4 plus this phase's samples, tests and docs.
+
+**For Phase 7 (visual polish):**
+- **The extension-line question is the one systemic cosmetic issue.** An
+  extension line starts at its anchor's midpoint, so a `:segment`-anchored
+  dimension draws a line through the whole part; the halo breaks it wherever it
+  crosses geometry, but a wall **opening is a hole**, so it shows through the
+  gap and reads as a spurious sill or mullion. Both samples dodge it with
+  `point()` corner stations, and SKILL.md now teaches that idiom — but SPEC
+  §25's own `outer:west (-) outer:east` still hits it. The principled fix is to
+  start an *edge/segment* anchor's extension line at the segment **end nearest
+  the dimension's side** rather than its midpoint, which is also the drafting
+  convention. That would move every drawing snapshot, so it needs the user's
+  call — do not slip it in.
+- Cosmetic itches deliberately left in the samples: the bathroom's toilet reads
+  a little thin at 1 : 50 (tank 180 mm against a bowl that laps into it); the
+  vanity slab under a `symbol: sink` shows three nested outlines; the catalog's
+  right column is empty on three of six rows (the `schematic_parts.lini`
+  precedent does the same, so it was left); the parts sheet's per-item smart
+  labels sit at each body's own bottom, so a row's captions are not on one
+  baseline.
+- The `|floorplan|` title lowers to a `|footnote|` — small and muted at the
+  sheet's bottom centre. On a plan sheet a title usually wants more presence;
+  if that is worth changing it is a `|drawing|`-wide question, not a floorplan
+  one.
+- Render recipe used here, for repeatability:
+  `lini --static samples/floorplan.lini -o x.svg && resvg x.svg x.png`
+  (add `--theme dark`; `resvg --zoom 0.3` for the thumbnail,
+  `--zoom 2.5` + a PIL crop for detail).
 
 ---
 
