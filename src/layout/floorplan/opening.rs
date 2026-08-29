@@ -21,7 +21,7 @@
 //!    `−y` at every bearing with no second walker.
 
 use super::super::drawing::Segment;
-use super::super::drawing::geometry::{P, dist, n};
+use super::super::drawing::geometry::{P, PathSeg, dist, n};
 use super::super::drawing::pen::Folded;
 use super::super::ir::{Bbox, PlacedNode};
 use super::{FpKind, fp_kind};
@@ -42,7 +42,9 @@ pub(super) struct Station {
     /// Which folded centreline subpath and which of its segments the gap cuts.
     sub: usize,
     seg: usize,
-    /// The jamb distances along that segment, px from its draw start.
+    /// The jamb distances along **that drawn segment**, px from its start —
+    /// `at:` measures from the named run's theoretical start, which a
+    /// `fillet()` may have trimmed off ([`locate`] takes the difference out).
     near: f64,
     far: f64,
     /// The gap centre in the wall's frame, and the segment's bearing — the
@@ -74,10 +76,12 @@ pub(super) fn plan(inst: &ResolvedInst, folded: &Folded, own: f64) -> Result<Vec
             continue;
         };
         let (p0, p1) = straight_run(folded, name, node.span)?;
-        let Some((sub, seg)) = locate(folded, p0, p1) else {
+        symbol_law(node)?;
+        let len = dist(p0, p1);
+        let d = unit((p1.0 - p0.0, p1.1 - p0.1)).expect("a named run has length");
+        let Some((sub, seg, trimmed)) = locate(folded, p0, d, len) else {
             continue;
         };
-        let len = dist(p0, p1);
         let near = node.attrs.number("at").unwrap_or(0.0) * own;
         let far = near + width_of(node) * own;
         if near < -EPS || far > len + EPS {
@@ -93,10 +97,11 @@ pub(super) fn plan(inst: &ResolvedInst, folded: &Folded, own: f64) -> Result<Vec
             )
             .code(Code::OPENING_OVERRUN));
         }
-        if let Some(prev) = out
-            .iter()
-            .find(|s| s.sub == sub && s.seg == seg && s.near < far - EPS && near < s.far - EPS)
-        {
+        // The stations of one drawn run share its trim, so they compare in it.
+        let (cut_near, cut_far) = (near - trimmed, far - trimmed);
+        if let Some(prev) = out.iter().find(|s| {
+            s.sub == sub && s.seg == seg && s.near < cut_far - EPS && cut_near < s.far - EPS
+        }) {
             return Err(Error::at(
                 node.span,
                 format!(
@@ -107,14 +112,13 @@ pub(super) fn plan(inst: &ResolvedInst, folded: &Folded, own: f64) -> Result<Vec
             )
             .code(Code::OPENING_OVERLAP));
         }
-        let d = unit((p1.0 - p0.0, p1.1 - p0.1)).expect("a named edge has length");
         let mid = (near + far) / 2.0;
         out.push(Station {
             child,
             sub,
             seg,
-            near,
-            far,
+            near: cut_near,
+            far: cut_far,
             origin: (p0.0 + d.0 * mid, p0.1 + d.1 * mid),
             bearing: math::atan2(d.1, d.0).to_degrees(),
             width: far - near,
@@ -167,10 +171,35 @@ fn straight_run(folded: &Folded, name: &str, span: crate::span::Span) -> Result<
         .code(Code::OPENING_SEGMENT));
     };
     match *seg {
+        // A run of no length is a point wearing an edge's name — `right(0)`.
+        Segment::Edge(a, b) if dist(a, b) <= EPS => Err(curved(name, "a point", span)),
         Segment::Edge(a, b) => Ok((a, b)),
         Segment::Point(_) => Err(curved(name, "a point", span)),
         _ => Err(curved(name, "an arc", span)),
     }
+}
+
+/// A door's variant [SPEC 15.11], checked where the cascade is known — the one
+/// unknown-`symbol:` message every variant-bearing type says
+/// ([`suggest::unknown_symbol`], the fixtures' and the discretes' too).
+fn symbol_law(node: &ResolvedInst) -> Result<(), Error> {
+    const DOOR_SYMBOLS: &[&str] = &["single", "double", "sliding"];
+    let Some(ResolvedValue::Ident(want)) = node.attrs.get("symbol") else {
+        return Ok(());
+    };
+    // `symbol:` reads on a `|door|` alone [SPEC 17]; on a `|window|` it is a
+    // misuse validation already reports, and none of these names is its.
+    if !node.type_chain.iter().any(|t| t == "door") || DOOR_SYMBOLS.contains(&want.as_str()) {
+        return Ok(());
+    }
+    Err(Error::at(
+        node.span,
+        suggest::unknown_symbol(
+            want,
+            crate::desugar::classes::written_type(&node.type_chain).unwrap_or("door"),
+            DOOR_SYMBOLS.iter().copied(),
+        ),
+    ))
 }
 
 fn curved(name: &str, what: &str, span: crate::span::Span) -> Error {
@@ -181,18 +210,29 @@ fn curved(name: &str, what: &str, span: crate::span::Span) -> Error {
     .code(Code::OPENING_SEGMENT)
 }
 
-/// Which folded segment carries a named edge — the pen names the centreline,
-/// the offset cuts the folded run, and this is the one place they meet.
-fn locate(folded: &Folded, p0: P, p1: P) -> Option<(usize, usize)> {
+/// Which folded segment carries a named run, and **how much of the run its
+/// start is missing** — the pen names the centreline, the offset cuts the
+/// folded run, and this is the one place they meet.
+///
+/// The two need not share endpoints: the pen records a named edge at its
+/// *theoretical* corner (so dimensions measure there, [SPEC 15.3]) while a
+/// `fillet()` / `chamfer()` trims the drawn run back from it. So the match is
+/// "the same straight carrier, travelled the same way, starting inside the
+/// named span", and the returned distance shifts a station out of the run's
+/// frame into the drawn segment's own.
+fn locate(folded: &Folded, p0: P, d: P, len: f64) -> Option<(usize, usize, f64)> {
     folded.subs.iter().enumerate().find_map(|(i, sub)| {
-        sub.segs
-            .iter()
-            .position(|s| {
-                matches!(s, crate::layout::drawing::geometry::PathSeg::Line { .. })
-                    && dist(s.from(), p0) < EPS
-                    && dist(s.to(), p1) < EPS
-            })
-            .map(|j| (i, j))
+        sub.segs.iter().enumerate().find_map(|(j, s)| {
+            let PathSeg::Line { from, .. } = *s else {
+                return None;
+            };
+            let dir = unit((s.to().0 - from.0, s.to().1 - from.1))?;
+            let w = (from.0 - p0.0, from.1 - p0.1);
+            let along = w.0 * d.0 + w.1 * d.1;
+            let off = w.0 * d.1 - w.1 * d.0;
+            (dist(dir, d) < EPS && off.abs() < EPS && along > -EPS && along < len + EPS)
+                .then_some((i, j, along))
+        })
     })
 }
 

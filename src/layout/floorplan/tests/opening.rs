@@ -176,6 +176,53 @@ fn the_station_laws_reject_bad_segments_overruns_and_overlaps() {
     );
 }
 
+/// A `fillet()` trims the **drawn** run back from the corner while the pen
+/// keeps naming the segment at its theoretical one [SPEC 15.3] — so `at:` still
+/// measures from that corner, and the gap still clips the run it names.
+#[test]
+fn a_filleted_run_still_takes_its_gap() {
+    let l = laid(
+        "{ layout: floorplan; density: 1; thickness: 2 }\n\
+         |wall#w| { draw: move(0, 0) down(6) fillet(2) right(10):run; } [\n\
+           |door#d| { on: run; at: 4; width: 3 }\n\
+         ]\n",
+    );
+    // The run's own start is (0, 6); the fillet draws from x = 2, and `at: 4`
+    // seats the near jamb at x = 4 all the same.
+    let d = wall_path(&l, "w");
+    assert!(d.contains("L 4 5 L 4 7") && d.contains("M 7 5"), "{d}");
+    assert_eq!(
+        (by_id(&l.nodes, "d").cx, by_id(&l.nodes, "d").cy),
+        (5.5, 6.0)
+    );
+}
+
+/// A named run with no length is a point wearing an edge's name — the same
+/// law, the same message [SPEC 21], never a panic in the station arithmetic.
+#[test]
+fn a_zero_length_named_run_stations_nothing() {
+    assert_eq!(
+        layout_err(
+            "{ layout: floorplan; density: 1; thickness: 2 }\n\
+             |wall#w| { draw: move(0, 0) right(4) right(0):zero right(4); } [\n\
+               |door#d| { on: zero; at: 0; width: 0 }\n\
+             ]\n"
+        ),
+        "an opening sits on a straight run — ':zero' is a point"
+    );
+}
+
+/// A door's `symbol:` is a closed variant set like every other, so an unknown
+/// one says so in the **one** unknown-symbol wording the fixtures and the
+/// schematic discretes share.
+#[test]
+fn an_unknown_door_symbol_names_the_variants() {
+    assert_eq!(
+        layout_err(&one("|door#d| { on: run; at: 3; symbol: barn }")),
+        "unknown symbol 'barn' on '|door|' — its variants are single, double, sliding"
+    );
+}
+
 /// **All four poses** [SPEC 15.11/15.5]: `hinge:` picks the jamb by the
 /// segment's draw direction, `swing: left` is the left of the pen's travel —
 /// which in the opening's own frame is `−y`, at every bearing. The leaf stands

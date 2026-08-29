@@ -52,6 +52,32 @@ fn two_solid_walls_tee_seamlessly_by_paint_order() {
     assert_eq!(wall_path(&l, "b"), "M 11 0 L 11 12 L 9 12 L 9 0 Z");
 }
 
+/// A centreline jog **shorter than thickness ∕ 2** eats its own offset: the
+/// inner face's middle element cannot reach either crossing. It is dropped and
+/// its neighbours step, so the loop stays simple — a straight connector there
+/// would double the face back over itself and even-odd would punch a white
+/// notch out of the middle of a solid wall [SPEC 15.11].
+#[test]
+fn a_jog_under_half_the_thickness_steps_rather_than_doubling_back() {
+    let jog = |d: f64| {
+        let l = laid(&format!(
+            "{{ layout: floorplan; density: 1; thickness: 4 }}\n\
+             |wall#w| {{ draw: move(0, 0) right(10) down({d}) right(10); }}\n"
+        ));
+        wall_path(&l, "w")
+    };
+    // Under the offset (h = 2) the inner face steps at the jog's own station…
+    assert_eq!(
+        jog(1.0),
+        "M 0 -2 L 12 -2 L 12 -1 L 20 -1 L 20 3 L 10 3 L 10 2 L 0 2 Z"
+    );
+    // …and over it the corners trim to their true crossings, as any L does.
+    assert_eq!(
+        jog(6.0),
+        "M 0 -2 L 12 -2 L 12 4 L 20 4 L 20 8 L 8 8 L 8 2 L 0 2 Z"
+    );
+}
+
 /// An acute corner's miter would spike past limit 4 — it bevels [SPEC 15.11].
 #[test]
 fn an_acute_spike_bevels_at_the_miter_limit() {

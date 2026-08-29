@@ -132,6 +132,13 @@ fn cut(sub: &Subpath, stations: &[opening::Station], index: usize) -> Vec<(Vec<P
         let at = |t: f64| (from.0 + d.0 * t, from.1 + d.1 * t);
         let mut cursor = 0.0;
         for (a, b) in here {
+            // A `fillet()` can leave the drawn run shorter than the named one
+            // the station measured in, so only the part of the gap that lands
+            // on this piece cuts it.
+            let (a, b) = (a.max(0.0), b.min(len));
+            if b <= cursor + SEAM_EPS {
+                continue;
+            }
             if a > cursor + SEAM_EPS {
                 cur.push(PathSeg::Line {
                     from: at(cursor),
@@ -212,9 +219,14 @@ fn side(segs: &[PathSeg], closed: bool, h: f64, left: bool) -> Vec<PathSeg> {
         // seat its (possibly trimmed) copy back at the head — cyclically the
         // inserted connectors belong at the tail.
         let first = out[0];
-        join(&mut out, first);
-        let seamed = out.pop().expect("join pushed the wrapped element");
-        out[0] = seamed;
+        if join(&mut out, first) {
+            let seamed = out.pop().expect("join pushed the wrapped element");
+            out[0] = seamed;
+        } else if out.len() > 1 {
+            // The seam corner ate the head element whole, as an interior one
+            // would; drop it there too.
+            out.remove(0);
+        }
     }
     out
 }

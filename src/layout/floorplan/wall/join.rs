@@ -23,14 +23,17 @@ const MITER_COS: f64 = 1.0 - 2.0 / (4.0 * 4.0);
 /// point, the SVG join — or bevels past the limit; an **inside** corner
 /// trims both elements to their carriers' true intersection, so the inner
 /// face stays crisp [SPEC 15.11].
-pub(super) fn join(out: &mut Vec<PathSeg>, mut next: PathSeg) {
+///
+/// Answers whether `next` ended up in the chain: an inside corner can eat a
+/// short element whole ([`consumed`]), and the seam join needs to know.
+pub(super) fn join(out: &mut Vec<PathSeg>, mut next: PathSeg) -> bool {
     let prev = *out.last().expect("join needs a chained element");
     let a = prev.to();
     let b = next.from();
     if dist(a, b) <= SEAM_EPS {
         set_from(&mut next, a);
         out.push(next);
-        return;
+        return true;
     }
     let t1 = end_tangent(&prev);
     let t2 = start_tangent(&next);
@@ -41,7 +44,7 @@ pub(super) fn join(out: &mut Vec<PathSeg>, mut next: PathSeg) {
         // whole join.
         push_line(out, b);
         out.push(next);
-        return;
+        return true;
     }
     let s = (w.0 * t2.1 - w.1 * t2.0) / cross;
     let u = (t1.0 * w.1 - t1.1 * w.0) / cross;
@@ -61,20 +64,50 @@ pub(super) fn join(out: &mut Vec<PathSeg>, mut next: PathSeg) {
             }
         }
         out.push(next);
+        true
     } else {
         // Inside: the offsets overlap; trim both back to the crossing.
         match trim_pair(&prev, &next) {
             Some((e1, e2)) => {
                 *out.last_mut().expect("chained") = e1;
                 out.push(e2);
+                true
             }
-            // Elements too short to reach their crossing — connect straight.
-            None => {
-                push_line(out, b);
-                out.push(next);
-            }
+            None => consumed(out, &prev, next),
         }
     }
+}
+
+/// Neither element reaches the pair's crossing — the offset has eaten one of
+/// them **whole**, which is what a centreline jog shorter than thickness ∕ 2
+/// does (the straight-run twin of an arc tighter than thickness ∕ 2, which
+/// [SPEC 21] rejects outright). The eaten element is dropped and its
+/// neighbours meet instead, so the face steps once; connecting the two ends
+/// straight, as a corner would, doubles the loop back over itself and the
+/// even-odd fill then punches a hole in the poché.
+///
+/// With no carrier crossing at all there is nothing to judge — the pair still
+/// connects straight.
+fn consumed(out: &mut Vec<PathSeg>, prev: &PathSeg, next: PathSeg) -> bool {
+    let ps = crossings(prev, &next);
+    if ps.is_empty() {
+        push_line(out, next.from());
+        out.push(next);
+        return true;
+    }
+    if ps.iter().any(|p| trim_start(&next, *p).is_some()) {
+        // `next` reaches the crossing, so `prev` is the eaten one: drop it and
+        // join against whatever it was chained to.
+        out.pop();
+        if out.is_empty() {
+            out.push(next);
+            return true;
+        }
+        return join(out, next);
+    }
+    // …otherwise `next` is the eaten one — dropped, and whatever follows joins
+    // the element still at the chain's end.
+    false
 }
 
 /// Trim two offset elements to their carriers' intersection — the inside
