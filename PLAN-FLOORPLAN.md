@@ -1445,3 +1445,46 @@ few parts / too little", and hard corners everywhere).
 
 ### Execution log
 ### Carry-over notes
+
+---
+
+## Phase 9 — Two conventions & four parts (user rulings, 2026-08-29)
+
+**Goal**: the user ruled on both open engine calls (fix both, SPEC updated)
+and asked for four more part refinements. SPEC edits are already in.
+
+- [ ] **Extension-line origin** (SPEC 15.2/15.6 updated): an **edge**
+      anchor's extension line springs from the edge's end nearest the
+      dimension line, never the midpoint; point anchors and every measured
+      value unchanged. One mechanism in the dims lowering. Re-bless every
+      affected drawing snapshot AFTER rendering + looking (this touches
+      pre-floorplan drawing samples too — eyeball each diff). Then remove
+      the `point()` corner-workarounds where they became redundant in both
+      floorplan samples and simplify SKILL.md's note; SPEC §25 benefits
+      as-is.
+- [ ] **Upright labels** (SPEC 15.11 updated): floorplan fixture + opening
+      labels share dimension text's ISO-aligned rule (readable from the
+      bottom or right, never upside-down) — find where dim text implements
+      it and REUSE it, no second walker. Re-bless the catalog's `D1`.
+- [ ] **Schedule tags return to the showpiece** — Phase 7 built and
+      reverted them because of the upside-down defect; with it fixed, add
+      the door/window tags (and the small corner schedule `|table|` if it
+      composes without crowding — MINIMAL wins if they fight).
+- [ ] **`sofa: stool`** — the bar stool, ⌀400: a plain round seat (circle;
+      try a squircle side-by-side and keep what reads better — user is happy
+      with either). Two or three at the showpiece island.
+- [ ] **`bath: double-sink`** — 800 × 450, ONE unit with two small
+      square(ish) basins (not two sink symbols); it replaces the island's
+      single `sink` in the showpiece.
+- [ ] **Toilet silhouette merge** — the pan and cistern outlines currently
+      cross; merge into one continuous silhouette (tank shoulders flowing
+      into the pan) that still reads as a toilet — the user likes the
+      rounded pan, dislikes the crossing lines.
+- [ ] Catalog rows gain `stool` + `double-sink`; captions on the shared
+      baseline; re-bless after LOOKING (full + thumb, light + dark);
+      finals refreshed in `plans/refs-floorplan/final-renders/`.
+- [ ] Regen artifacts if variant data changed; wasm pkg rebuild if needed;
+      `fmt`/`test`/`clippy` clean.
+
+### Execution log
+### Carry-over notes

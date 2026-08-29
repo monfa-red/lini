@@ -2392,7 +2392,12 @@ point  = center                                            (the default)
 - **The anchor aims; the outline lands.** A leader's tip is a ray from its text toward
   the anchor's representative point, stopped at the ray's *first crossing of the drawn
   path* — aiming at the bbox corner of a filleted plate touches the fillet arc itself.
-  Dimension extension lines, by contrast, spring exactly from the anchor points.
+  Dimension extension lines, by contrast, spring exactly from the anchor
+  points — except an **edge** anchor's, which springs from the edge's **end
+  nearest the dimension line** (the drafting convention: the witness line
+  leaves the corner, never travels the face — so it also never crosses a
+  wall opening, [15.11](#1511-floorplan--the-architectural-dialect)).
+  Measurement is untouched — the representative point stands.
 
 ### 15.3 The sketch pen
 
@@ -2803,7 +2808,8 @@ instead of seating on a side — a leader's text, a spilled diametral value — 
 same way along its exit. `translate` stays the exact nudge; a dimension takes no `gap:`
 ([SPEC 21](#21-errors)).
 The anatomy is baked sheet constants ([SPEC 10.5](#105-layout-constants-baked)):
-extension lines spring from the anchors with a small gap and overshoot past the dim
+extension lines spring from the anchors (an edge anchor's from its
+dimension-side end — [15.2](#152-anchors)) with a small gap and overshoot past the dim
 line — painted the light support tone (`--stroke-light`,
 [SPEC 10.1](#101-visual-variables-live-themeable)) unless the statement recolours, so
 the geometry reads first; arrows are **drafting-slender** (≈ 3 : 1, filled), sized by
@@ -3271,7 +3277,10 @@ errors ([SPEC 21](#21-errors)).
 **Fixtures.** Six symbol-bodied types — the discretes' pattern
 ([SPEC 16.3](#163-discretes)), their **smart label beside the body like a
 discrete's value** — except an `|appliance|`'s, which centres **in** its
-body: the labelled-box convention (`"F"`, `"DW"`, `"W/D"`). (An opening's is
+body: the labelled-box convention (`"F"`, `"DW"`, `"W/D"`). Fixture and
+opening labels stay **readable like dimension text** — ISO-aligned, from
+the bottom or the right, never upside-down ([15.6](#156-dimensions)'s rule,
+shared). (An opening's is
 its schedule tag beside the gap; a `|floorplan|`'s is the drawing title it
 inherits, [15.8](#158-assemblies-views-sheets--titles); a `|wall|`'s keeps
 the sketch's centred read.) `width` / `height` are floors as everywhere
@@ -3281,9 +3290,9 @@ the sketch's centred read.) `width` / `height` are floors as everywhere
 | Type | `symbol:` | Body (mm) |
 |---|---|---|
 | `\|bed\|` | `queen` *(default)* · `king` · `double` · `single` | 1500 × 2000 · 1800 × 2000 · 1350 × 1900 · 900 × 2000 |
-| `\|sofa\|` | `three` *(default)* · `two` · `one` (the armchair) · `corner` | 2200 × 900 · 1600 × 900 · 900 × 900 · 2400 × 2400 L |
+| `\|sofa\|` | `three` *(default)* · `two` · `one` (the armchair) · `corner` · `stool` (the bar stool — a plain round seat) | 2200 × 900 · 1600 × 900 · 900 × 900 · 2400 × 2400 L · ⌀400 |
 | `\|dining\|` | `six` *(default)* · `four` · `round` | the **tabletop** — 1800 × 900 · 1200 × 800 · ⌀1200 — its chairs (450 × 450, `six` 3 + 3 on the long sides, `four` 2 + 2, `round` 4 at the quadrants) extending the bbox |
-| `\|bath\|` | `tub` *(default)* · `shower` · `toilet` · `sink` | 1700 × 750 · 900 × 900 · 700 × 400 · 500 × 400 |
+| `\|bath\|` | `tub` *(default)* · `shower` · `toilet` · `sink` · `double-sink` (one unit, two square basins — the kitchen run's) | 1700 × 750 · 900 × 900 · 700 × 400 · 500 × 400 · 800 × 450 |
 | `\|appliance\|` | `stove` *(default)* · `fridge` · `washer` · `dishwasher` | 600 × 600 each |
 | `\|stairs\|` | — (`steps: N` **required**, ≥ 2) | 900 wide × N × 250 run; treads across the flight, the **up arrow** from the first tread past the last |
 
