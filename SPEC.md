@@ -3244,9 +3244,16 @@ paint order) — and it is the geometry bbox
 [15.10](#1510-lowering) step 1 the offset runs **after the `draw:` fold and
 before the bboxes**, and an opening clips it there — resolving against its
 already-folded parent, the one place a child reads down from its part.
-Anchors: `:segment`s read the **centreline** (dimensions station where
-architects measure), bbox points the **outline**; `|partition|` is the
-built-in 100 mm interior define ([SPEC 8](#8-templates)).
+Anchors: `:segment`s read the **centreline**, bbox points the **outline** —
+and every named segment **derives its two face anchors**, `name-in` /
+`name-out`: the segment's own offset edges. On a **closed** run `-in` is the
+enclosed side; on an **open** one it is the left of the pen's travel (the
+named-edge convention, [15.5](#155-mates--seating)). So a **clear room span**
+— what a listing plan dimensions — is face to face,
+`outer:north-in (-) bedwall:top`, measured like everything else; an authored
+segment name ending `-in` / `-out` errors as colliding with its derived twin
+([SPEC 21](#21-errors)). `|partition|` is the built-in 100 mm interior define
+([SPEC 8](#8-templates)).
 
 **Openings.** A `|door|` / `|window|` rides in its wall's `[ ]`, stationed
 **on a straight named segment**: `on:` the segment, bare (the `thread:` shape,
@@ -3291,7 +3298,7 @@ the sketch's centred read.) `width` / `height` are floors as everywhere
 |---|---|---|
 | `\|bed\|` | `queen` *(default)* · `king` · `double` · `single` | 1500 × 2000 · 1800 × 2000 · 1350 × 1900 · 900 × 2000 |
 | `\|sofa\|` | `three` *(default)* · `two` · `one` (the armchair) · `corner` · `stool` (the bar stool — a plain round seat) | 2200 × 900 · 1600 × 900 · 900 × 900 · 2400 × 2400 L · ⌀350 |
-| `\|dining\|` | `six` *(default)* · `four` · `round` | the **tabletop** — 1800 × 900 · 1200 × 800 · ⌀1200 — its chairs (450 × 450, drawn a small pull-back off the edge; `six` 3 + 3 on the long sides, `four` 2 + 2, `round` 4 at the quadrants) extending the bbox |
+| `\|dining\|` | `six` *(default)* · `four` · `round` | the **tabletop** — 1800 × 900 · 1200 × 800 · ⌀1000 — its chairs (450 × 450, drawn a small pull-back off the edge; `six` 3 + 3 on the long sides, `four` 2 + 2, `round` 4 at the quadrants) extending the bbox |
 | `\|bath\|` | `tub` *(default)* · `shower` · `toilet` · `sink` · `double-sink` (one unit, two square basins — the kitchen run's) | 1700 × 750 · 900 × 900 · 700 × 400 · 500 × 400 · 800 × 450 |
 | `\|appliance\|` | `stove` *(default)* · `fridge` · `washer` · `dishwasher` | 600 × 600 each |
 | `\|stairs\|` | — (`steps: N` **required**, ≥ 2) | 900 wide × N × 250 run; treads across the flight, the **up arrow** from the first tread past the last |
@@ -4392,6 +4399,7 @@ error.
 | `translate:` on an opening | `an opening sits at 'on:' / 'at:' — move the station, or nudge the wall` |
 | `curve()` in a wall's `draw:` | `a wall bends with 'arc()' — 'curve()' has no offset` |
 | `hinge:` / `swing:` on a sliding door | `a sliding door has no leaf to hang — remove 'hinge:' / 'swing:'` |
+| A wall segment authored `*-in` / `*-out` | `':north-in' collides with the derived face anchor — rename the segment` |
 | An arc wall tighter than its thickness | `arc radius 40 is under thickness/2 — the inner face vanishes` |
 | Missing `on:` / `steps:` | required-property errors, as `points` on a `\|line\|` |
 
