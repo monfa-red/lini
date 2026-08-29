@@ -1410,3 +1410,38 @@ cropped at 4–5× for the side-by-side). Final set:
 reads, the vanity nests two outlines not three, the catalog's captions are on
 one baseline per row. The catalog's empty right column on the BEDS and
 APPLIANCES rows stands deliberately (the `schematic_parts.lini` precedent).
+
+---
+
+## Phase 8 — Parts completeness & softness (user feedback, 2026-08-29)
+
+**Goal**: the catalog feels complete and the symbols feel finished — the
+user's first-impression feedback after Phase 7 ("looks great" but "missing a
+few parts / too little", and hard corners everywhere).
+
+- [ ] `|sofa| { symbol: one }` — the **armchair**, 900 × 900, same anatomy
+      language as `two`/`three` (seat + back + arms, MINIMAL). SPEC 15.11's
+      table already lists it.
+- [ ] `|bed|` grows the real size family (SPEC table updated): **`queen`
+      1500 × 2000 is the new default** — same geometry today's bare `|bed|`
+      draws, so the showpiece must not move — plus `king` 1800 × 2000,
+      `double` 1350 × 1900, `single` 900 × 2000 unchanged. Sweep every place
+      the old default *name* appears (variant tables, tests, catalog labels,
+      SKILL.md if it names it); a bare `|bed|`'s rendered output must be
+      byte-identical.
+- [ ] **The softness pass** on the symbol paths (authoring, no new
+      properties): tabletops (`six`/`four`) take a modest corner radius
+      (~60 mm); chair backs round; sofa/armchair arms + backs soften; check
+      each against the reference charts — MINIMAL still rules, rounding is
+      finish, not detail. The `round` table, tub, toilet already curve.
+- [ ] Counters/islands: `|rect|` already honours `radius:` (core) — give the
+      showpiece island a small radius (~40 mm) so the sample teaches it;
+      note in SKILL.md's floorplan section if it has a casework line.
+- [ ] Catalog sample gains the new variants (`one` in the sofa row, the bed
+      row grows to four), captions on the shared baseline mechanism; re-bless
+      snapshots after LOOKING (resvg, light + dark, full + thumb).
+- [ ] SPEC-vs-built re-check of the two edited table rows; regen artifacts
+      if any ledger/variant data changed; `fmt`/`test`/`clippy` clean.
+
+### Execution log
+### Carry-over notes
