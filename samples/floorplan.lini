@@ -9,7 +9,9 @@
 // the island, casework and the balcony deck are plain `|rect|`s and the north
 // arrow is a `|sketch|`: SPEC 15.11's parts-library escape.
 {
-  density: 5;
+  density: 5; clearance: 14;
+  // the dimension rows' stand-off [SPEC 15.6] — the drawing default of 4 is a
+  // sheet-space gap, and at 100 px to the metre it reads as a row on the wall
   |slab::rect| { fill: --bg; stroke: --stroke-dark; stroke-width: 1; }
   |room::block| {
     layout: flow; align: center; gap: 2; font-size: 11; letter-spacing: 1;
@@ -56,7 +58,7 @@
   // the island
   |slab| { width: 1.1; height: 0.55; translate: 2 1.75; }
   // the coffee table
-  |slab| { width: 0.45; height: 0.45; translate: 0.6 4.15; }
+  |slab| { width: 0.45; height: 0.45; translate: 0.6 4.075; }
   // a nightstand
   |slab| { width: 0.6; height: 1.4; translate: 4.25 6; }
   // the wardrobe
@@ -68,12 +70,12 @@
   // box (the F / DW / W/D convention), every other fixture's reads beside it.
   |appliance| { symbol: stove; translate: 6.4 0.4; }
   |appliance| "F" { symbol: fridge; translate: 8.1 0.4; }
-  |appliance| "DW" { symbol: dishwasher; translate: 7.8 2; }
+  |appliance| "DW" { symbol: dishwasher; translate: 7.55 2; }
   |appliance| "W/D" { symbol: washer; translate: 5.2 6.4; }
   |bath| { symbol: sink; translate: 6.8 2; }
-  |sofa| { translate: 2 0.65; }
+  |sofa| { translate: 2 0.55; }
   |dining| { translate: 4.3 2.6; }
-  |bed| { translate: 1.8 4.95; }
+  |bed| { translate: 1.8 4.85; }
   |bath| { symbol: sink; translate: 7.35 4.325; }
   |bath| { symbol: toilet; rotate: 180; translate: 9.15 5.4; }
   |bath| { symbol: tub; translate: 7.6 6.325; }

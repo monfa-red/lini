@@ -30,7 +30,7 @@
     draw: move(9.6, 0) right(2.4);
     fill: hatch(45); stroke: --stroke-dark; stroke-width: 1;
   }
-  |wall| { draw: move(12.7, -0.5) right(1.6) down(1.4); }
+  |wall| { draw: move(12.9, -0.5) right(1.2) down(1); }
   |wall| { draw: move(15.1, 0.25) arc(2.2, 0, 1.8); }
   |cap| { translate: 0 1.3; } [ "solid · 200" ]
   |cap| { translate: 2.7 1.3; } [ "|partition| · 100" ]
@@ -94,32 +94,37 @@
     |door| { on: run; at: 0.2; width: 0.7; }
     |window| { on: run; at: 1.2; width: 1; }
   ]
-  |stairs| "steps: 4" { steps: 4; translate: 10.8 6; }
-  |stairs| "steps: 8" { steps: 8; translate: 13.5 6; }
+  // the two flights stand on the row's baseline, so every caption in the row
+  // sits on one line however tall the piece above it is
+  |stairs| { steps: 4; translate: 10.8 6.6; }
+  |stairs| { steps: 8; translate: 13.5 6.1; }
   |cap| { translate: 0 7.35; } [ "1200 default" ]
   |cap| { translate: 2.7 7.35; } [ "width: 2" ]
   |cap| { translate: 5.4 7.35; } [ "in a |partition|" ]
   |cap| { translate: 8.1 7.35; } [ "two on one run" ]
+  |cap| { translate: 10.8 7.35; } [ "steps: 4" ]
+  |cap| { translate: 13.5 7.35; } [ "steps: 8" ]
 
   // ── The furniture. Every body is one path on the fixture's own node, filled
   // `--bg` so it masks the floor under it; the smart label reads **beside** the
-  // body, like a discrete's value.
+  // body, like a discrete's value — so a row seats its pieces on one baseline
+  // and their labels line up without a caption being written at all.
   |head| { translate: -3.7 9.3; } [ "BEDS · SOFAS" ]
-  |bed| "double" { translate: 0 9.3; }
-  |bed| "single" { symbol: single; translate: 2.7 9.3; }
-  |sofa| "three" { translate: 5.4 9.3; }
-  |sofa| "two" { symbol: two; translate: 8.1 9.3; }
-  |sofa| "corner" { symbol: corner; translate: 10.8 9.3; }
+  |bed| "double" { translate: 0 9.4; }
+  |bed| "single" { symbol: single; translate: 2.7 9.4; }
+  |sofa| "three" { translate: 5.4 9.95; }
+  |sofa| "two" { symbol: two; translate: 8.1 9.95; }
+  |sofa| "corner" { symbol: corner; translate: 10.8 9.2; }
 
   // A `|dining|` is sized by its **tabletop**; the chairs extend the bbox.
   |head| { translate: -3.7 12.7; } [ "DINING · BATH" ]
-  |dining| "six" { translate: 0 12.7; }
-  |dining| "four" { symbol: four; translate: 2.7 12.7; }
-  |dining| "round" { symbol: round; translate: 5.4 12.7; }
-  |bath| "tub" { translate: 8.1 12.7; }
-  |bath| "shower" { symbol: shower; translate: 10.8 12.7; }
-  |bath| "toilet" { symbol: toilet; translate: 13.5 12.7; }
-  |bath| "sink" { symbol: sink; translate: 16.2 12.7; }
+  |dining| "six" { translate: 0 12.8; }
+  |dining| "four" { symbol: four; translate: 2.7 12.85; }
+  |dining| "round" { symbol: round; translate: 5.4 12.65; }
+  |bath| "tub" { translate: 8.1 13.325; }
+  |bath| "shower" { symbol: shower; translate: 10.8 13.25; }
+  |bath| "toilet" { symbol: toilet; translate: 13.5 13.5; }
+  |bath| "sink" { symbol: sink; translate: 16.2 13.5; }
 
   // ── …and the kitchen boxes, whose label is the one that centres **in** the
   // body — the F / W / DW convention every real plan writes.

@@ -1308,17 +1308,105 @@ count may be read.
 samples (and any render the earlier phases flagged) by looking, not by
 guessing. Cosmetics last, per AGENTS.md.
 
-- [ ] Render every floorplan sample + the §25 SPEC block via the CLI
+- [x] Render every floorplan sample + the §25 SPEC block via the CLI
       (`--static` for resvg), PNG at 2× and at thumbnail size, light AND
       dark; **read every PNG**. (`lini serve` is the user-facing playground;
       the render-and-look loop is the agent equivalent.)
-- [ ] Judge against `plans/refs-floorplan/20sw-b1.webp` and the pretty bar:
+- [x] Judge against `plans/refs-floorplan/20sw-b1.webp` and the pretty bar:
       line-weight contrast (poché vs thin chrome), swing arcs, fixture
       proportions at 1:50, dimension row spacing, label collisions, dark-mode
       legibility. Fix in the sample source first; fix engine constants only
       where the flaw is systemic (log it; SPEC constants need the user).
-- [ ] Iterate render → look → adjust until nothing jars; final side-by-side
+- [x] Iterate render → look → adjust until nothing jars; final side-by-side
       screenshot set in the execution log (paths), tests green.
 
 ### Execution log
+
+2026-08-29, one session. Baseline **1458 passed / 0 failed** → after **1458 /
+0** (no test added or removed; two conformance snapshots re-blessed after
+looking). `cargo fmt --all`, `cargo clippy --all-targets`, `lini fmt --check`
+over both samples, `--strict` over both: clean. Two files of `src/` prose and
+two samples changed; **no engine constant moved.**
+
+**The loop.** Twelve full-size + thumbnail PNGs (`samples/floorplan.lini`,
+`samples/floorplan_parts.lini`, and SPEC §25's block extracted to a temp file),
+light and dark, plus ~a dozen 3–8× crops, all read by eye against
+`plans/refs-floorplan/20sw-b1.webp` (its toilet / vanity / kitchen-sink details
+cropped at 4–5× for the side-by-side). Final set:
+`plans/refs-floorplan/final-renders/` (gitignored) —
+`fp-{light,dark}{,-thumb}.png`, `parts-{light,dark}{,-thumb}.png`,
+`spec25-{light,dark}{,-thumb}.png`, plus the four decisive crops
+(`crop-bath`, `crop-island`, `crop-toilet2`, `crop-topstrip`).
+
+#### The jar list — what was seen, and what it became
+
+| # | Jar (before) | Fix | Where | After |
+|---|---|---|---|---|
+| 1 | **Dimension rows sat on the poché** — the top row stood **6 px** off the wall face and the two right rows all but touched it. Not a floorplan bug: `DIM_CLEARANCE` is 4 px of *sheet* space [SPEC 15.6] while `density: 5` makes a metre 100 px, so the stand-off shrinks against the drawing as the drawing gets denser. | `clearance: 14` in the scene config — SPEC's own per-scope minimum, one line, no constant moved | `samples/floorplan.lini` | a proper drafting stand-off; the two right rows now pack with air between them |
+| 2 | **`symbol: sink` on a vanity/counter showed three nested outlines** (slab + sink rim + basin oval) — every real plan draws two. | the **basin is the sink**: `Round` at the body extent + a drain dot, no rim of its own; the counter under it is the author's `\|rect\|`, which is what SPEC 15.11's parts-library escape already says | `fixtures/draw.rs` | kitchen island and bathroom vanity now read exactly like `20sw-b1.webp`'s |
+| 3 | **The toilet read thin at 1:50** — a 180 mm tank hidden behind an oval bowl 350 of the 400 mm pan width, so only 25 mm of tank showed either side. | tank 220 mm, bowl a `Round` pan 290 mm wide (a 55 mm **shoulder** each side) lapping 80 mm into the tank | `fixtures/draw.rs` | a block-and-pan read that is unmistakable at thumbnail size |
+| 4 | **The catalog's per-item captions were not on one baseline** — bodies were centred on the row line, so a 2.4 m corner sofa's smart label hung 0.75 m below a 0.9 m sofa's. | seat each row's bodies on **one bottom line** and let the smart labels follow (`BEDS · SOFAS` at 10.4, `DINING · BATH` at 13.7); in `WINDOWS · STAIRS` the flights join the row's `\|cap\|` line instead (one caption mechanism per row) | `samples/floorplan_parts.lini` | six rows, six caption lines, dead straight |
+| 5 | The catalog's **mitred-corner cell floated above the wall row** (`move(12.7,-0.5) … down(1.4)` hung its long leg past the row). | re-cut to a 1.2 × 1.0 L centred on both the row line and the 13.5 column | `samples/floorplan_parts.lini` | the WALLS row reads as one row |
+| 6 | The showpiece's **sofa, bed and nightstand floated 75–100 mm off their walls** while every other piece was flush. | seated flush on the wall faces (`sofa` 0.55, `bed` 4.85, nightstand 4.075) | `samples/floorplan.lini` | furniture touches wall, as the reference draws it |
+| 7 | The island's **dishwasher left a 0.1 m sliver** at the counter's east end against the sink's 0.35 m at the west. | `DW` to 7.55 — equal margins | `samples/floorplan.lini` | the island run reads deliberate |
+
+#### Tried and rejected
+
+- **Door / window schedule tags on the showpiece** (Phase 6's carry-over: the
+  label-seat fix makes them available). Built all seven — `D1`–`D4`, `W1`–`W3`
+  — rendered, looked: **reverted**. Three independent problems, all visible in
+  the render: (a) a tag turns with its wall, so `W3` on the south run — drawn
+  east→west — renders **upside-down**, and `D2`/`D3`/`D4` read bottom-to-top;
+  (b) `W1` and `W2` were **invisible**, masked by the sofa and the kitchen
+  counter that seat against the same wall face (the tag lands ~80 mm inside the
+  room, under the furniture's `--bg` fill); (c) `D1`, on the east wall's outer
+  face, landed **in the dimension zone** between the wall and the location
+  chain. MINIMAL wins over showcase when they fight [Phase 4's taste rule], and
+  the catalog's DOORS row already wears a rendered `"D1"`, so the hook keeps its
+  sample coverage. (a) is a real defect — see the carry-over.
+- **Anything at the extension-line convention** — untouched, per instruction.
+- **The `\|floorplan\|` title's footnote seat**, the catalog's empty right
+  columns, and the `\|dining\| { symbol: round }` stretch: all re-looked at,
+  all left as earlier phases ruled.
+
+#### Notes
+
+- The **only** `src/` change is two symbol bodies. No new shape kind, no new
+  constant, no engine behaviour: `Round` and `Oval` were already in the
+  alphabet, and the sink's drain reuses the tub's 45 mm dot.
+- `crates/lini-wasm/pkg` was rebuilt (`cargo xtask wasm`) — `tests/wasm.rs`
+  fails misleadingly otherwise whenever a sample or `src/` moves.
+- Both conformance snapshots were re-blessed **after** looking at the renders
+  they encode, not before.
+
 ### Carry-over notes
+
+**For the user — three visual calls this pass could not make:**
+
+1. **An opening's schedule tag turns with its wall, so it can render
+   upside-down.** Repro: `samples/floorplan.lini` with `\|window#w3\| "W3"` —
+   the south wall is drawn east→west, and the tag comes out mirrored (crop
+   kept at `plans/refs-floorplan/final-renders/`, reproducible in one edit).
+   The drawing engine already has the convention this wants: a dimension's
+   value text reads along its span but **never upside-down**. The principled
+   fix is to give `floorplan::label::seat` that same uprighting rather than a
+   second rule — but it changes rendered output for any tagged opening, so it
+   is the user's call, not a cosmetic one. Until then the showpiece carries no
+   tags and SKILL.md's guidance is unaffected (the catalog tags an
+   east-running wall, which reads correctly).
+2. **`DIM_CLEARANCE = 4` is a sheet-space default that does not scale with
+   `density:`.** Every dense drawing crowds its dimension rows the way the
+   showpiece did; the sample-level `clearance:` is the documented escape and is
+   what was used here. If dimension stand-off should instead derive from the
+   scope's own px-per-unit, that is a SPEC 15.6 question and moves every
+   drawing snapshot.
+3. **SPEC §25's floorplan example has two overlaps of its own** (rendered at
+   `final-renders/spec25-light.png`): `"STUDIO 27 m²"` overprints the corner
+   sofa's back run, and the `symbol: fridge` at `0.5 4.3` sits on the sofa's
+   arm. Both are one-number moves in the SPEC block (e.g. text to `4.4 2.4`,
+   fridge to `0.5 4.5`), but this phase edits no SPEC — flagged for the user.
+
+**Everything else in Phase 5/6's cosmetic-itch list is now closed**: the toilet
+reads, the vanity nests two outlines not three, the catalog's captions are on
+one baseline per row. The catalog's empty right column on the BEDS and
+APPLIANCES rows stands deliberately (the `schematic_parts.lini` precedent).

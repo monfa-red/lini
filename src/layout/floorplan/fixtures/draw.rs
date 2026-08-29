@@ -131,19 +131,27 @@ fn bath(variant: &str, (w, h): (f64, f64)) -> Sym {
             Shape::Line(vec![(x1, y0), (x0, y1)]),
             Shape::Oval(0.0, 0.0, 70.0, 70.0),
         ],
-        // The tank across the back and the bowl filling the rest of the
-        // footprint, running **into** the tank — tangent, the pair reads as
-        // two pieces that happen to touch.
+        // The cistern across the back and the bowl filling the rest of the
+        // footprint, running **into** it. The bowl is narrower than the pan is
+        // wide, so the tank keeps a shoulder either side — what makes the pair
+        // read as a toilet at 1:50 rather than an oval on a sliver.
         "toilet" => {
-            const TANK: f64 = 180.0;
-            const LAP: f64 = 120.0;
-            let rx = (w - TANK + LAP) / 2.0;
+            const TANK: f64 = 220.0;
+            const LAP: f64 = 80.0;
+            const SHOULDER: f64 = 55.0;
+            let (back, wide) = (x0 + TANK - LAP, h / 2.0 - SHOULDER);
             vec![
                 Shape::Rect(x0, y0, x0 + TANK, y1),
-                Shape::Oval(x1 - rx, 0.0, rx, h / 2.0 - 25.0),
+                Shape::Round(back, -wide, x1, wide, wide * 0.8),
             ]
         }
-        "sink" => vec![body, Shape::Oval(0.0, 0.0, w / 2.0 - 80.0, h / 2.0 - 70.0)],
+        // The basin **is** the sink: the counter or vanity it drops into is the
+        // author's own `|rect|` [SPEC 15.11], so drawing a second rim here
+        // would nest three outlines where every real plan draws two.
+        "sink" => vec![
+            Shape::Round(x0, y0, x1, y1, 60.0),
+            Shape::Oval(0.0, 0.0, 45.0, 45.0),
+        ],
         // The tub: the rim, the rounded basin inside it, and the drain at the
         // tap end — the one detail that says which way it lies.
         _ => {
