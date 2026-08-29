@@ -797,10 +797,18 @@ variants; `|stairs|` generates.
 **Goal**: the feature is a shipped family — sample, SPEC example compiling,
 deferred slots pinned, everything green.
 
+- [ ] Read `PLAN-GALLERY.md`'s "pretty bar" first — samples are showroom
+      pieces (user rule: pretty, feature-dense, never crowded; showcase more,
+      like the schematic samples do).
 - [ ] `samples/floorplan.lini`: the studio flat (walls + partition + openings
-      + fixtures + room text + dimension chains), matching §25's example in
-      spirit; render, **look at it** (light + dark), iterate until it reads
-      like a real-estate plan.
+      + fixtures + room text + dimension chains), §25's example grown into a
+      real showpiece — a full one-bedroom condo reading like
+      `plans/refs-floorplan/20sw-b1.webp`; render, **look at it** (light +
+      dark), iterate until it reads like a real-estate plan.
+- [ ] `samples/floorplan_parts.lini`: the catalog sheet — **every fixture ×
+      every variant**, every door symbol × poses, a window, a stairs run,
+      labelled, on a tidy grid (the `schematic_parts.lini` precedent); this
+      is also what lets the hooks `UNSAMPLED` rows drop.
 - [x] Remove the `tests/spec_blocks.rs` #57 ledger row — the §25 block must
       compile as written. (Done early, after Phase 1's path-fix ruling.)
 - [ ] `tests/deferred.rs`: one pinned test per reachable SPEC 24 Floorplans
@@ -816,6 +824,59 @@ deferred slots pinned, everything green.
 - [ ] Re-read SPEC 15.11 top to bottom against the built behaviour — fix
       either (SPEC wins on intent; if the implementation taught us better,
       propose the SPEC edit to the user in the log).
+
+### Execution log
+### Carry-over notes
+
+---
+
+## Phase 6 — Branch code audit & quality pass
+
+**Goal**: the whole `blueprint` branch diff — and any pre-existing code it
+leans on — reads clean, professional, and organized: no parallel
+implementations, no dead scaffolding, easy to find things, human-readable
+(the user's explicit bar). Two stages, review then fix.
+
+- [ ] **Review stage** (adversarial, whole branch): `git diff main...HEAD`
+      end to end, plus the blast radius (every pre-existing module the
+      phases touched: `desugar/scale.rs`, `resolve/ir.rs`, `validate.rs`,
+      `layout/mod.rs`, `ledger/*`). Hunt: correctness bugs (geometry edge
+      cases, station arithmetic, inheritance precedence), duplicated logic
+      that should share one mechanism (the house rule — including drift
+      between floorplan and drawing/schematic twins), naming and module
+      organization, over-long files, dead code, missed `AttrMap` /
+      shared-helper reuse, snapshot gaps. Verify each finding before
+      reporting it (read the code paths, run the case).
+- [ ] **Fix stage**: apply confirmed findings; improvements to pre-existing
+      code are in scope where they serve one-mechanism/organization (no
+      drive-by rewrites of unrelated subsystems). One commit per coherent
+      cleanup theme, or one purposeful commit overall.
+- [ ] Full gate after: `cargo fmt` / `cargo test` / `cargo clippy` clean;
+      every sample still byte-identical unless a fix intentionally changed
+      output (then re-snapshot + re-look).
+
+### Execution log
+### Carry-over notes
+
+---
+
+## Phase 7 — Visual polish loop (the last pass)
+
+**Goal**: the rendered results are *pretty* — iterate on the two floorplan
+samples (and any render the earlier phases flagged) by looking, not by
+guessing. Cosmetics last, per AGENTS.md.
+
+- [ ] Render every floorplan sample + the §25 SPEC block via the CLI
+      (`--static` for resvg), PNG at 2× and at thumbnail size, light AND
+      dark; **read every PNG**. (`lini serve` is the user-facing playground;
+      the render-and-look loop is the agent equivalent.)
+- [ ] Judge against `plans/refs-floorplan/20sw-b1.webp` and the pretty bar:
+      line-weight contrast (poché vs thin chrome), swing arcs, fixture
+      proportions at 1:50, dimension row spacing, label collisions, dark-mode
+      legibility. Fix in the sample source first; fix engine constants only
+      where the flaw is systemic (log it; SPEC constants need the user).
+- [ ] Iterate render → look → adjust until nothing jars; final side-by-side
+      screenshot set in the execution log (paths), tests green.
 
 ### Execution log
 ### Carry-over notes
