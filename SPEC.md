@@ -3276,7 +3276,7 @@ read. An opening past its segment, on a curved one, or overlapping another
 errors ([SPEC 21](#21-errors)).
 
 **Fixtures.** Six symbol-bodied types — the discretes' pattern
-([SPEC 16.3](#163-discretes)), their **smart label beside the body like a
+([SPEC 16.3](#163-discretes)), their **smart label below the body like a
 discrete's value** — except an `|appliance|`'s, which centres **in** its
 body: the labelled-box convention (`"F"`, `"DW"`, `"W/D"`). Fixture and
 opening labels stay **readable like dimension text** — ISO-aligned, from

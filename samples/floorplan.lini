@@ -56,7 +56,7 @@
   |slab| { width: 3.9; height: 0.6; translate: 7.55 0.4; }
   // the kitchen run, against the north wall and into the north-east corner
   |slab| { width: 2; height: 0.9; translate: 7.2 2.05; radius: 4; }
-  // the island — `radius:` is core, and sheet-space px: 4 is 40 mm at 1:50
+  // the island — `radius:` is core, and sheet-space px: 4 is 50 mm at 1:50
   |slab| { width: 1.1; height: 0.55; translate: 2 1.75; }
   // the coffee table
   |slab| { width: 0.45; height: 0.45; translate: 0.6 4.075; }
