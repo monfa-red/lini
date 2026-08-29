@@ -10,7 +10,9 @@ Phase 0 below, audited; where this plan and SPEC disagree, SPEC wins. The
 design conversation is not preserved anywhere else: settled decisions live in
 this file, in "Settled design decisions" below.
 
-Branch: `blueprint`. Do not push; the user merges.
+Branch: `blueprint` — pushed to `origin/blueprint` by the **session lead
+after each phase** (user-approved); phase agents never push. Merging to
+`main` (and pushing main) is the user's, kept for last.
 
 ---
 
