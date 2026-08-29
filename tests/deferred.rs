@@ -30,6 +30,11 @@
 //! - *Drawings*: repeated-segment counting (`4× R3` auto-prefixing); the ASME
 //!   text-in-a-broken-line diametral form and its horizontal-text knob; balloon
 //!   auto-numbering and auto-BOM; angled break lines.
+//! - *Floorplans*: computed room areas (a room is authored sheet text — the
+//!   deferred half is the computation, which reserves no spelling); a north
+//!   arrow / scale-bar type and more built-in fixtures (wardrobes, counter runs,
+//!   door casings) — SPEC 24 names no type for any of them, so there is no
+//!   reserved word to refuse, and a `|sketch|` define draws them today.
 //! - *Schematics*: wire-seating; crossing hop-over arcs; pin electrical marks;
 //!   hierarchical sheets; netlist semantics; a mid-wire tag at an `along:`
 //!   fraction (a link label at `along:` is built — the deferred part is the tag
@@ -367,6 +372,31 @@ fn an_ambient_w_h_bound_to_a_nodes_own_size() {
         refusal("|drawing#d| [\n|rect#p| { width: 40; height: 20 }\n|rect#q| { width: (w / 2); height: 10 }\n]\n"),
         @"test.lini:3:12: error: unknown name 'w' in an expression"
     );
+}
+
+// ─────────────────────────────── Floorplans ───────────────────────────────
+
+#[test]
+fn openings_on_a_curved_segment() {
+    // An opening stations on a **straight** named segment [SPEC 15.11]; naming
+    // an arc is refused rather than silently seated on its chord.
+    let wall = "|wall#w| { draw: move(0, 0) right(2) arc(2, 0, 1.6):bay right(2):run; }";
+    insta::assert_snapshot!(
+        refusal(&format!(
+            "{{ layout: floorplan; unit: m; scale: 0.02 }}\n{wall} [\n\
+             |door| {{ on: bay; at: 0.4 }}\n]\n"
+        )),
+        @"test.lini:3:1: error: an opening sits on a straight run — ':bay' is an arc"
+    );
+    // The arced wall itself is built — only the opening on it is deferred…
+    compiles(&format!(
+        "{{ layout: floorplan; unit: m; scale: 0.02 }}\n{wall}\n"
+    ));
+    // …and a straight run of the same wall takes one.
+    compiles(&format!(
+        "{{ layout: floorplan; unit: m; scale: 0.02 }}\n{wall} [\n\
+         |door| {{ on: run; at: 0.4 }}\n]\n"
+    ));
 }
 
 // ─────────────────────────────── Schematics ───────────────────────────────
