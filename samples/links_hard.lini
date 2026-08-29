@@ -2,7 +2,7 @@
 // detours, forced sides, a parent→child link, and a forced outer pair.
 
 {
-  layout: grid; columns: repeat(3); gap: 38; clearance: 12;
+  layout: grid; columns: repeat(3); gap: 40; clearance: 10;
   .hot { stroke: --red; stroke-width: 3; }
   .cool { stroke: --blue; }
   .attention { stroke: --orange; }
