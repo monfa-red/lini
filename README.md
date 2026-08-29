@@ -218,6 +218,8 @@ Each marker composes `[min][max]` — the ring `o` (zero) or bar `+` (one) hugs 
 
 ## Engineering drawings
 
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/drawing_turned.svg" alt="A Lini engineering drawing: a turned shaft on an ISO sheet with a thread callout, diameter and length dimensions, and a title block" width="760"></p>
+
 `layout: drawing` turns a profile drawn with a pen into a **dimensioned technical sheet** — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes.
 
 Parts *mate* against each other, holes and patterns punch through, a half-profile *revolves* into a turned part (every shoulder drawing its edge line), `thread:` dresses a surface with ISO minor lines and composes its own `M20×1.5` callout, and a long bar *breaks* to fit. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums (`>-`), and hatched sections for the rest. **GD&T** is first-class: `|control|` rows carry `tol:` / `zone:` / `datums:` with the ISO modifier glyphs, plus `|feature-control|`, `|surface-finish|`, and datum triangles that plant against the geometry. Views project from one another, and an ISO 5457 `|page|` (frame, zone references, seated ISO 7200 `|title-block|`) hosts them at true millimetre scale. [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)
@@ -225,6 +227,8 @@ Parts *mate* against each other, holes and patterns punch through, a half-profil
 ---
 
 ## Floor plans
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/floorplan.svg" alt="A Lini floor plan: a one-bedroom condo with poché walls, doors with swing arcs, windows, true-size furniture, room labels, and clear-span dimensions" width="760"></p>
 
 `layout: floorplan` is the same drawing engine under an architect's vocabulary — the datum, `scale:` / `unit:`, anchors, dimensions and leaders all work unchanged, and the dialect adds the words a plan needs.
 
