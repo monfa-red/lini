@@ -108,33 +108,41 @@
   // ── The furniture. Every body is one path on the fixture's own node, filled
   // `--bg` so it masks the floor under it; the smart label reads **beside** the
   // body, like a discrete's value — so a row seats its pieces on one baseline
-  // and their labels line up without a caption being written at all.
-  |head| { translate: -3.7 9.3; } [ "BEDS · SOFAS" ]
-  |bed| "double" { translate: 0 9.4; }
-  |bed| "single" { symbol: single; translate: 2.7 9.4; }
-  |sofa| "three" { translate: 5.4 9.95; }
-  |sofa| "two" { symbol: two; translate: 8.1 9.95; }
-  |sofa| "corner" { symbol: corner; translate: 10.8 9.2; }
+  // and their labels line up without a caption being written at all. A bed is
+  // named for its mattress: `queen` is what a bare `|bed|` draws.
+  |head| { translate: -3.7 9.4; } [ "BEDS" ]
+  |bed| "queen" { translate: 0 9.4; }
+  |bed| "king" { symbol: king; translate: 2.7 9.4; }
+  |bed| "double" { symbol: double; translate: 5.4 9.45; }
+  |bed| "single" { symbol: single; translate: 8.1 9.4; }
+
+  // One anatomy at four widths — outline, then the run tracing arm → back →
+  // arm; `one` is the armchair, `corner` folds the same two strokes round an L.
+  |head| { translate: -3.7 12.2; } [ "SOFAS" ]
+  |sofa| "three" { translate: 0 12.95; }
+  |sofa| "two" { symbol: two; translate: 2.7 12.95; }
+  |sofa| "one" { symbol: one; translate: 5.4 12.95; }
+  |sofa| "corner" { symbol: corner; translate: 8.1 12.2; }
 
   // A `|dining|` is sized by its **tabletop**; the chairs extend the bbox.
-  |head| { translate: -3.7 12.7; } [ "DINING · BATH" ]
-  |dining| "six" { translate: 0 12.8; }
-  |dining| "four" { symbol: four; translate: 2.7 12.85; }
-  |dining| "round" { symbol: round; translate: 5.4 12.65; }
-  |bath| "tub" { translate: 8.1 13.325; }
-  |bath| "shower" { symbol: shower; translate: 10.8 13.25; }
-  |bath| "toilet" { symbol: toilet; translate: 13.5 13.5; }
-  |bath| "sink" { symbol: sink; translate: 16.2 13.5; }
+  |head| { translate: -3.7 15.4; } [ "DINING · BATH" ]
+  |dining| "six" { translate: 0 15.5; }
+  |dining| "four" { symbol: four; translate: 2.7 15.55; }
+  |dining| "round" { symbol: round; translate: 5.4 15.35; }
+  |bath| "tub" { translate: 8.1 16.025; }
+  |bath| "shower" { symbol: shower; translate: 10.8 15.95; }
+  |bath| "toilet" { symbol: toilet; translate: 13.5 16.2; }
+  |bath| "sink" { symbol: sink; translate: 16.2 16.2; }
 
   // ── …and the kitchen boxes, whose label is the one that centres **in** the
   // body — the F / W / DW convention every real plan writes.
-  |head| { translate: -3.7 15.2; } [ "APPLIANCES" ]
-  |appliance| { symbol: stove; translate: 0 15.2; }
-  |appliance| "F" { symbol: fridge; translate: 2.7 15.2; }
-  |appliance| "W" { symbol: washer; translate: 5.4 15.2; }
-  |appliance| "DW" { symbol: dishwasher; translate: 8.1 15.2; }
-  |cap| { translate: 0 15.85; } [ "stove" ]
-  |cap| { translate: 2.7 15.85; } [ "fridge" ]
-  |cap| { translate: 5.4 15.85; } [ "washer" ]
-  |cap| { translate: 8.1 15.85; } [ "dishwasher" ]
+  |head| { translate: -3.7 17.9; } [ "APPLIANCES" ]
+  |appliance| { symbol: stove; translate: 0 17.9; }
+  |appliance| "F" { symbol: fridge; translate: 2.7 17.9; }
+  |appliance| "W" { symbol: washer; translate: 5.4 17.9; }
+  |appliance| "DW" { symbol: dishwasher; translate: 8.1 17.9; }
+  |cap| { translate: 0 18.55; } [ "stove" ]
+  |cap| { translate: 2.7 18.55; } [ "fridge" ]
+  |cap| { translate: 5.4 18.55; } [ "washer" ]
+  |cap| { translate: 8.1 18.55; } [ "dishwasher" ]
 ]

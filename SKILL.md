@@ -432,8 +432,9 @@ outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centre
   east end). They clip the wall and generate their chrome: `hinge: start|end` ×
   `swing: left|right` (left of the pen's travel), `symbol: single | double |
   sliding` (a slider takes no `hinge:`/`swing:`). `translate:` on one is an error.
-- **Fixtures.** `|bed|` (double·single) · `|sofa|` (three·two·corner) ·
-  `|dining|` (six·four·round — table *with* chairs) · `|bath|`
+- **Fixtures.** `|bed|` (queen·king·double·single) · `|sofa|`
+  (three·two·one·corner — `one` is the armchair) · `|dining|`
+  (six·four·round — table *with* chairs) · `|bath|`
   (tub·shower·toilet·sink) · `|appliance|` (stove·fridge·washer·dishwasher) ·
   `|stairs|` (`steps: N` required). `width`/`height` are floors that **stretch**
   the body. Each fills `--bg`, so furniture masks the floor under it. Two label
@@ -442,6 +443,9 @@ outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centre
 - **Everything else** is plain geometry: counters, islands, desks and coffee
   tables are `|rect|`s; a balcony deck, a north arrow or a scale bar is a
   `|sketch|`; room names and areas are sheet text placed with `translate:`.
+  A casework `|rect|` takes the core `radius:` for a softened counter — mind
+  that it is **sheet-space pixels**, not drawing units, so it does not scale
+  with the plan (at 1:50 and `density: 5`, `radius: 4` is 40 mm).
 - **Dimensions** read the centreline, where architects measure. Anchor them on
   `point():name` corner stations — an extension line off a corner runs away from
   the plan instead of down a wall and through an opening.

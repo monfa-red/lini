@@ -54,8 +54,8 @@
   |slab#deck| { width: 1.7; height: 2.4; translate: -0.95 2.2; }
   |slab| { width: 2.8; height: 0.6; translate: 7 0.4; }
   // the kitchen run, against the north wall
-  |slab| { width: 2; height: 0.8; translate: 7.2 2; }
-  // the island
+  |slab| { width: 2; height: 0.8; translate: 7.2 2; radius: 4; }
+  // the island — `radius:` is core, and sheet-space px: 4 is 40 mm at 1:50
   |slab| { width: 1.1; height: 0.55; translate: 2 1.75; }
   // the coffee table
   |slab| { width: 0.45; height: 0.45; translate: 0.6 4.075; }

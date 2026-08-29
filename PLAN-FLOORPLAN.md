@@ -1419,32 +1419,168 @@ APPLIANCES rows stands deliberately (the `schematic_parts.lini` precedent).
 user's first-impression feedback after Phase 7 ("looks great" but "missing a
 few parts / too little", and hard corners everywhere).
 
-- [ ] `|sofa| { symbol: one }` — the **armchair**, 900 × 900, same anatomy
+- [x] `|sofa| { symbol: one }` — the **armchair**, 900 × 900, same anatomy
       language as `two`/`three` (seat + back + arms, MINIMAL). SPEC 15.11's
       table already lists it.
-- [ ] `|bed|` grows the real size family (SPEC table updated): **`queen`
+- [x] `|bed|` grows the real size family (SPEC table updated): **`queen`
       1500 × 2000 is the new default** — same geometry today's bare `|bed|`
       draws, so the showpiece must not move — plus `king` 1800 × 2000,
       `double` 1350 × 1900, `single` 900 × 2000 unchanged. Sweep every place
       the old default *name* appears (variant tables, tests, catalog labels,
       SKILL.md if it names it); a bare `|bed|`'s rendered output must be
       byte-identical.
-- [ ] **The softness pass** on the symbol paths (authoring, no new
+- [x] **The softness pass** on the symbol paths (authoring, no new
       properties): tabletops (`six`/`four`) take a modest corner radius
       (~60 mm); chair backs round; sofa/armchair arms + backs soften; check
       each against the reference charts — MINIMAL still rules, rounding is
       finish, not detail. The `round` table, tub, toilet already curve.
-- [ ] Counters/islands: `|rect|` already honours `radius:` (core) — give the
+- [x] Counters/islands: `|rect|` already honours `radius:` (core) — give the
       showpiece island a small radius (~40 mm) so the sample teaches it;
       note in SKILL.md's floorplan section if it has a casework line.
-- [ ] Catalog sample gains the new variants (`one` in the sofa row, the bed
+- [x] Catalog sample gains the new variants (`one` in the sofa row, the bed
       row grows to four), captions on the shared baseline mechanism; re-bless
       snapshots after LOOKING (resvg, light + dark, full + thumb).
-- [ ] SPEC-vs-built re-check of the two edited table rows; regen artifacts
+- [x] SPEC-vs-built re-check of the two edited table rows; regen artifacts
       if any ledger/variant data changed; `fmt`/`test`/`clippy` clean.
 
 ### Execution log
+
+2026-08-29, one session. Baseline **1458 passed / 0 failed** → after **1461 /
+0** (three new fixture tests); `cargo fmt --all`, `cargo clippy --all-targets`,
+`lini fmt --check` and `--strict` over both samples: clean. `cargo xtask
+gen-schema` / `gen-grammars` produce **no diff** — a variant table is layout
+data, not ledger data, so nothing regenerated; `cargo xtask wasm` was rerun (the
+parity test fails misleadingly on any sample change).
+
+**The two table rows, and why neither needed new code.** `|bed|`'s four sizes
+and `|sofa|`'s four widths are **rows in `fixtures::variants`, nothing more**:
+`draw::symbol` already branched on `variant == "single"` (one pillow) and
+`variant == "corner"` (the L), so `queen` / `king` / `double` fall into the
+two-pillow bed and `one` into the straight-sofa anatomy with no dispatch change
+at all. The armchair is literally `sofa(900, 900)` — 200 mm arms round a 500 mm
+seat, which is the chart's ARMCHAIR
+(`plans/refs-floorplan/furniture-symbols-for-floor-plans.jpg`) stroke for
+stroke.
+
+**The byte-identical verdict: proven, and tighter than asked.** Rendering
+`samples/floorplan.lini` before (the committed conformance snapshot at HEAD)
+and after, and diffing element by element, **exactly three elements moved** —
+the island (its new `radius:`), the sofa and the dining set. The bed's path is
+character-identical:
+
+```
+<path d="M -75 -100 L 75 -100 L 75 100 L -75 100 Z M -67 -92 L -4 -92 L -4 -57
+         L -67 -57 Z M 4 -92 L 67 -92 L 67 -57 L 4 -57 Z M -75 -17 L 75 -17"/>
+```
+
+and so are the tub, sink, toilet, appliances, walls, openings and every
+dimension — which also proves the shape-alphabet rewrite below is a pure
+refactor everywhere it was not asked to change the drawing.
+
+**One fillet emitter, not per-symbol arc stitching.** `shape.rs` had a
+rounded **rectangle** (`Round`) but no rounded anything-else, and the corner
+sofa is an L. Rather than add a second rounding path, the alphabet collapsed
+from five variants to three: `Poly(points, r)` (closed) · `Line(points, r)`
+(open, interior corners only) · `Oval`, with `rect()` / `box_at()` as the
+constructors every family actually writes. `run()` is the one emitter and
+`fillet()` the one corner: the trim is `r / tan(θ∕2)` written from the two unit
+edge vectors' **dot and cross**, so it needs no trigonometry (the libm
+determinism test forbids `f64::sin/cos` anyway), it is exact at any angle, and
+at a right angle it trims exactly `r` — which is why the old `Round` output
+reproduces character for character. The sweep flag comes from the cross
+product's sign, so an **inside** corner (the corner sofa's) fillets inward
+instead of bulging; pinned by `a_fillet_turns_with_the_corner_it_rounds`.
+
+**The rounding chosen** (millimetres, named at the top of `draw.rs`):
+
+| Constant | mm | Wears it |
+|---|---|---|
+| `SEAT_R` | 80 | a sofa's / armchair's outline **and** its arm → back → arm run; the corner sofa's L and seat |
+| `TOP_R` | 60 | the `six` / `four` tabletop |
+| `CHAIR_R` | 50 | every dining chair, straight and round table alike |
+| `SHARP` | 0 | everything else, stated rather than implied |
+
+At 1 : 50 those land at 4–7 px: the furniture reads soft against the square
+casework and the poché without a single corner reading as *detail*. The
+sanitaryware, the appliances and the flight keep their hard edges — that is
+what the two condo plans draw, and the tub / sink / toilet already carry their
+own curves.
+
+**Tried and rejected: rounding the bed.** A 60 mm mattress with 40 mm pillows
+was built and rendered (it reads well — soft goods drawn as soft goods), then
+**reverted**: this phase's stated contract is that a bare `|bed|` renders
+byte-identical, and the softness checklist names tabletops, chairs and sofas
+only. It is a one-line change in `bed()` if the user wants it — see carry-over.
+
+**The island's `radius:`, and what it taught.** `radius:` is a **core,
+sheet-space pixel** property: it lands on the `<rect>` as `rx`/`ry` in the
+node's own frame and is **not** multiplied by the drawing's px-per-unit
+(verified directly — `radius: 0.04` at `unit: m` renders `rx="0.04"`, i.e.
+invisible). The showpiece draws at 100 px to the metre (`scale: 0.02`,
+`density: 5`), so **`radius: 4` is the 40 mm the plan asked for**, and that is
+what landed, with the reasoning on the line itself and in SKILL.md's casework
+bullet. Cropped at 3× it reads exactly like a rolled-edge counter.
+
+**The catalog re-tile.** `BEDS · SOFAS` would have been **eight** cells in a
+seven-column sheet. Both fixes were built and looked at side by side: a single
+row on an eighth column leaves the corner sofa alone past every other row's
+right edge and widens the sheet for one piece; **splitting into `BEDS` (queen ·
+king · double · single) and `SOFAS` (three · two · one · corner)** keeps the
+seven-column edge, makes each row one family, and matches the `APPLIANCES`
+row's own four-of-seven fill (the `schematic_parts.lini` precedent). The split
+won. Both rows keep Phase 7's shared-baseline mechanism — bodies seated on one
+bottom line (10.4 and 13.4), their smart labels following — and the two rows
+below shifted down by 2.5 m, re-tightened after looking so the vertical rhythm
+holds.
+
+**Visual pass** (`--static` → `resvg`, read by eye): both samples full size and
+at `--zoom 0.3` thumbnail, **light and dark** (eight PNGs), plus 2.5× crops of
+the beds, sofas and dining rows, a 3× crop of the showpiece island, and SPEC
+§25's block re-rendered (its corner sofa moved). Finals overwritten in
+`plans/refs-floorplan/final-renders/` — `fp-*`, `parts-*`, `spec25-*`, plus
+`crop-island.png` and `crop-sofas.png`. What the looking changed: the catalog's
+row pitch (twice), the choice of split-over-eighth-column, and the bed
+rounding's reversal.
+
+**SPEC 15.11 vs built, the two edited rows.** Implemented as written: `|bed|`
+`queen` *(default)* 1500 × 2000 · `king` 1800 × 2000 · `double` 1350 × 1900 ·
+`single` 900 × 2000; `|sofa|` `three` *(default)* 2200 × 900 · `two`
+1600 × 900 · `one` 900 × 900 · `corner` 2400 × 2400 L. Each pinned by
+`the_bed_family_is_four_sizes_defaulting_to_queen` and
+`the_armchair_is_the_sofa_anatomy_at_one_seat`. **No SPEC edit made or owed.**
+
 ### Carry-over notes
+
+- **The bed is the one hard-cornered soft furnishing left.** The user's
+  feedback was "hard corners everywhere"; beds were held back only because
+  byte-identity was this phase's stated contract. If the user wants them soft,
+  it is `rect(…, 60.0)` for the mattress and `box_at(…, 40.0)` for the pillows
+  in `draw::bed` — rendered and looked at during this phase, it reads well —
+  plus a re-bless of both sample snapshots.
+- **`radius:` does not scale with the drawing**, the same shape of quirk as
+  Phase 7's `DIM_CLEARANCE`: a casework rounding authored for `density: 5` is
+  wrong at `density: 2`. Whether a drawing-scope `radius:` should be drawing
+  units is a SPEC 7 / 15.1 question and would move every drawing snapshot —
+  the user's call, not a cosmetic one.
+- The fillet emitter is exact at any angle but **trims along both edges**, so a
+  radius larger than half the shorter edge self-crosses. Every polygon the
+  alphabet draws today is rectilinear and well inside that; no guard was added
+  (`|box| { width: -50 }` is equally unvalidated language-wide — Phase 6's
+  finding B).
+- **For Phase 9's catalog re-tile**: the sheet is seven columns at a 2.7 m
+  pitch, six rows, each row seated on one bottom baseline (`WALLS` 0 · `DOORS`
+  2.9 · `WINDOWS · STAIRS` 6 · `BEDS` 10.4 · `SOFAS` 13.4 · `DINING · BATH`
+  16.4 · `APPLIANCES` 17.9). `stool` makes `SOFAS` five of seven — free.
+  `double-sink` makes `DINING · BATH` **eight**, so that row splits the way
+  this one did (`DINING` 3 + `BATH` 5, both under seven) rather than widening
+  the sheet for one cell — the eighth-column variant was built and looked at
+  here and reads worse.
+- The `BEDS` and `SOFAS` rows fill four of seven columns each: deliberate, and
+  the same fill the `APPLIANCES` row has carried since Phase 5.
+- **Nothing user-reserved was touched.** The two the user has since ruled on
+  are Phase 9's (extension-line origin, upright labels); `mirror:` on a wall,
+  a negative `width:`, and `scale:` inheritance into a nested drawing scope
+  are still open exactly as Phase 6 left them.
 
 ---
 

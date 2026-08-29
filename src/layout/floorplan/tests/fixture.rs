@@ -66,13 +66,69 @@ fn a_symbol_picks_the_variant_inline_or_from_a_rule() {
     assert_eq!(body(by_id(&l.nodes, "f")), (2100.0, 2100.0));
 }
 
+/// The mattress sizes [SPEC 15.11]. `queen` is the default a bare `|bed|`
+/// draws — the same body, stroke for stroke — and only `single` sleeps alone,
+/// so only `single` takes one pillow.
+#[test]
+fn the_bed_family_is_four_sizes_defaulting_to_queen() {
+    for (sym, w, h) in [
+        ("queen", 1500.0, 2000.0),
+        ("king", 1800.0, 2000.0),
+        ("double", 1350.0, 1900.0),
+        ("single", 900.0, 2000.0),
+    ] {
+        let l = laid(&plan(&format!("|bed#f| {{ symbol: {sym} }}\n")));
+        assert_eq!(body(by_id(&l.nodes, "f")), (w, h), "{sym}");
+    }
+    let drawn = |src: &str| path(by_id(&laid(&plan(src)).nodes, "f"));
+    assert_eq!(drawn("|bed#f|\n"), drawn("|bed#f| { symbol: queen }\n"));
+    assert_eq!(
+        drawn("|bed#f|\n").matches('M').count(),
+        4,
+        "mattress, two pillows, turndown"
+    );
+    assert_eq!(
+        drawn("|bed#f| { symbol: single }\n").matches('M').count(),
+        3,
+        "one pillow"
+    );
+}
+
+/// The armchair is the sofa family's one-seater [SPEC 15.11] — the same two
+/// strokes at a 900 mm square, never a symbol of its own.
+#[test]
+fn the_armchair_is_the_sofa_anatomy_at_one_seat() {
+    let l = laid(&plan("|sofa#f| { symbol: one }\n"));
+    assert_eq!(body(by_id(&l.nodes, "f")), (900.0, 900.0));
+    let d = path(by_id(&l.nodes, "f"));
+    assert_eq!(d.matches('M').count(), 2, "outline + seat run: {d}");
+}
+
+/// One fillet mechanism rounds every corner an upholstered body turns, and it
+/// reads the corner it is rounding: the corner sofa's **inside** vertex sweeps
+/// the other way, so the L stays soft on both faces instead of bulging.
+#[test]
+fn a_fillet_turns_with_the_corner_it_rounds() {
+    let d = path(by_id(
+        &laid(&plan("|sofa#f| { symbol: corner }\n")).nodes,
+        "f",
+    ));
+    let outline = d.split(" M ").next().expect("the outline run");
+    let sweeps: Vec<&str> = outline
+        .split('A')
+        .skip(1)
+        .map(|a| a.split_whitespace().nth(4).expect("the sweep flag"))
+        .collect();
+    assert_eq!(sweeps, ["1", "1", "0", "1", "1", "1"], "{outline}");
+}
+
 /// An unknown variant names its family's whole set — the discretes' wording,
 /// through the one shared builder.
 #[test]
 fn an_unknown_symbol_names_the_variants() {
     assert_eq!(
         layout_err(&plan("|sofa#f| { symbol: sectional }\n")),
-        "unknown symbol 'sectional' on '|sofa|' — its variants are three, two, corner"
+        "unknown symbol 'sectional' on '|sofa|' — its variants are three, two, one, corner"
     );
     assert_eq!(
         layout_err(&plan("|appliance#f| { symbol: oven }\n")),

@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/floorplan_parts.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-894.84 -680.5 1789.68 1380" width="1789.68" height="1380" class="lini lini-scope-e671c23f">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-894.84 -788.5 1789.68 1596" width="1789.68" height="1596" class="lini lini-scope-e671c23f">
   <style>
     .lini-scope-e671c23f { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 10px; font-weight: 500; color: black; }
     .lini-scope-e671c23f .lini-canvas { fill: white; }
@@ -81,6 +81,7 @@ input_file: samples/floorplan_parts.lini
     <path id="lini-g1500-265" d="…"/>
     <path id="lini-g1500-271" d="…"/>
     <path id="lini-g1500-296" d="…"/>
+    <path id="lini-g1500-298" d="…"/>
     <path id="lini-g1500-299" d="…"/>
     <path id="lini-g1500-303" d="…"/>
     <path id="lini-g1500-310" d="…"/>
@@ -103,11 +104,11 @@ input_file: samples/floorplan_parts.lini
     <path id="lini-g1500-1828" d="…"/>
     <path id="lini-g1500-1994" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-894.84" y="-680.5" width="1789.68" height="1380"/>
+  <rect class="lini-canvas" x="-894.84" y="-788.5" width="1789.68" height="1596"/>
   <g class="lini-scene">
     <g class="lini-node lini-floorplan lini-drawing lini-block" data-id="parts" transform="translate(0,0)">
-      <rect x="-874.84" y="-660.5" width="1749.68" height="1321" rx="0" ry="0"/>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-612.5)">
+      <rect x="-874.84" y="-768.5" width="1749.68" height="1537" rx="0" ry="0"/>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-720.5)">
         <rect x="-21.668" y="-6" width="43.336" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-157" transform="translate(-21.668 4.296) scale(0.012 -0.012)"/>
@@ -117,28 +118,28 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-126" transform="translate(14.852 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M -96 -8 L 96 -8 L 96 8 L -96 8 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 120 -4 L 312 -4 L 312 4 L 120 4 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 336 -16 L 528 -16 L 528 16 L 336 16 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-wall lini-sketch" style="fill: white; stroke: black; stroke-width: 1" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" style="fill: white; stroke: black; stroke-width: 1" transform="translate(-517.16,-720.5)">
         <path d="M 552 -8 L 744 -8 L 744 8 L 552 8 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-wall lini-sketch" style="fill: url(#lini-hatch-fecd99e1); stroke: black; stroke-width: 1" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" style="fill: url(#lini-hatch-fecd99e1); stroke: black; stroke-width: 1" transform="translate(-517.16,-720.5)">
         <path d="M 768 -8 L 960 -8 L 960 8 L 768 8 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 1032 -48 L 1136 -48 L 1136 40 L 1120 40 L 1120 -32 L 1032 -32 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 1203.111 13.668 A 152 152 0 0 1 1388.889 13.668 L 1379.111 26.332 A 136 136 0 0 0 1212.889 26.332 Z" fill-rule="evenodd"/>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-616.5)">
         <rect x="-23.745" y="-5" width="47.49" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-23.745 3.58) scale(0.01 -0.01)"/>
@@ -152,7 +153,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1652" transform="translate(17.175 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-616.5)">
         <rect x="-34.9" y="-5" width="69.8" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-1994" transform="translate(-34.9 3.58) scale(0.01 -0.01)"/>
@@ -172,7 +173,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1652" transform="translate(28.33 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-616.5)">
         <rect x="-32.135" y="-5" width="64.27" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-32.135 3.58) scale(0.01 -0.01)"/>
@@ -190,7 +191,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1656" transform="translate(26.065 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-616.5)">
         <rect x="-18.465" y="-5" width="36.93" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-232" transform="translate(-18.465 3.58) scale(0.01 -0.01)"/>
@@ -204,7 +205,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-233" transform="translate(12.385 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-616.5)">
         <rect x="-40.745" y="-5" width="81.49" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-238" transform="translate(-40.745 3.58) scale(0.01 -0.01)"/>
@@ -225,7 +226,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-265" transform="translate(34.965 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-616.5)">
         <rect x="-32.11" y="-5" width="64.22" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-264" transform="translate(-32.11 3.58) scale(0.01 -0.01)"/>
@@ -242,7 +243,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(28.16 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-508.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-616.5)">
         <rect x="-36.13" y="-5" width="72.26" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-177" transform="translate(-36.13 3.58) scale(0.01 -0.01)"/>
@@ -261,7 +262,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-203" transform="translate(30.6 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-380.5)">
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-488.5)">
         <rect x="-23.366" y="-6" width="46.732" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-34" transform="translate(-23.366 4.296) scale(0.012 -0.012)"/>
@@ -271,7 +272,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-126" transform="translate(16.55 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M -96 224 L -36 224 L -36 240 L -96 240 Z M 36 224 L 96 224 L 96 240 L 36 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(0,232)">
           <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
@@ -283,7 +284,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 120 224 L 180 224 L 180 240 L 120 240 Z M 252 224 L 312 224 L 312 240 L 252 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(216,232)">
           <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
@@ -295,7 +296,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 336 224 L 396 224 L 396 240 L 336 240 Z M 468 224 L 528 224 L 528 240 L 468 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(432,232)">
           <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
@@ -307,7 +308,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 552 224 L 612 224 L 612 240 L 552 240 Z M 684 224 L 744 224 L 744 240 L 684 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(648,232)">
           <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
@@ -319,7 +320,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 768 224 L 804 224 L 804 240 L 768 240 Z M 924 224 L 960 224 L 960 240 L 924 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(864,232)">
           <rect x="-60" y="-8" width="120" height="16" rx="0" ry="0"/>
@@ -337,7 +338,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 984 224 L 1008 224 L 1008 240 L 984 240 Z M 1152 224 L 1176 224 L 1176 240 L 1152 240 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(1080,232)">
           <rect x="-72" y="-8" width="144" height="16" rx="0" ry="0"/>
@@ -349,7 +350,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 1200 228 L 1260 228 L 1260 236 L 1200 236 Z M 1332 228 L 1392 228 L 1392 236 L 1332 236 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(1296,232)">
           <rect x="-36" y="-4" width="72" height="8" rx="0" ry="0"/>
@@ -365,7 +366,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-380.5)">
         <rect x="-22.51" y="-5" width="45.02" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-22.51 3.58) scale(0.01 -0.01)"/>
@@ -380,7 +381,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(18.62 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-380.5)">
         <rect x="-25.685" y="-5" width="51.37" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-25.685 3.58) scale(0.01 -0.01)"/>
@@ -396,7 +397,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(21.795 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-380.5)">
         <rect x="-20.305" y="-5" width="40.61" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-213" transform="translate(-20.305 3.58) scale(0.01 -0.01)"/>
@@ -409,7 +410,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(16.415 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-380.5)">
         <rect x="-23.48" y="-5" width="46.96" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-213" transform="translate(-23.48 3.58) scale(0.01 -0.01)"/>
@@ -423,7 +424,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(19.59 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-380.5)">
         <rect x="-35.365" y="-5" width="70.73" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-35.365 3.58) scale(0.01 -0.01)"/>
@@ -441,7 +442,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-213" transform="translate(29.645 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-380.5)">
         <rect x="-34.225" y="-5" width="68.45" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-34.225 3.58) scale(0.01 -0.01)"/>
@@ -460,7 +461,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-233" transform="translate(28.145 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-272.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-380.5)">
         <rect x="-55.93" y="-5" width="111.86" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-1994" transform="translate(-55.93 3.58) scale(0.01 -0.01)"/>
@@ -488,7 +489,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-233" transform="translate(49.85 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-132.5)">
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-240.5)">
         <rect x="-61.68" y="-6" width="123.36" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-157" transform="translate(-61.68 4.296) scale(0.012 -0.012)"/>
@@ -507,7 +508,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-126" transform="translate(54.864 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M -96 472 L -48 472 L -48 488 L -96 488 Z M 48 472 L 96 472 L 96 488 L 48 488 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-window lini-block" transform="translate(0,480)">
           <rect x="-48" y="-8" width="96" height="16" rx="0" ry="0"/>
@@ -519,7 +520,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 120 472 L 136 472 L 136 488 L 120 488 Z M 296 472 L 312 472 L 312 488 L 296 488 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-window lini-block" transform="translate(216,480)">
           <rect x="-80" y="-8" width="160" height="16" rx="0" ry="0"/>
@@ -531,7 +532,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 336 476 L 384 476 L 384 484 L 336 484 Z M 480 476 L 528 476 L 528 484 L 480 484 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-window lini-block" transform="translate(432,480)">
           <rect x="-48" y="-4" width="96" height="8" rx="0" ry="0"/>
@@ -543,7 +544,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-720.5)">
         <path d="M 552 472 L 568 472 L 568 488 L 552 488 Z M 624 472 L 648 472 L 648 488 L 624 488 Z M 728 472 L 744 472 L 744 488 L 728 488 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-door lini-block" transform="translate(596,480)">
           <rect x="-28" y="-8" width="56" height="16" rx="0" ry="0"/>
@@ -564,7 +565,7 @@ input_file: samples/floorplan_parts.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-stairs lini-path" transform="translate(346.84,-84.5)">
+      <g class="lini-node lini-stairs lini-path" transform="translate(346.84,-192.5)">
         <path d="M -36 -40 L 36 -40 L 36 40 L -36 40 Z"/>
         <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
           <line x1="-36" y1="20" x2="36" y2="20"/>
@@ -579,7 +580,7 @@ input_file: samples/floorplan_parts.lini
           <path d="M 0 30 L 0 -40 M -8.8 -31.2 L 0 -40 L 8.8 -31.2"/>
         </g>
       </g>
-      <g class="lini-node lini-stairs lini-path" transform="translate(562.84,-124.5)">
+      <g class="lini-node lini-stairs lini-path" transform="translate(562.84,-232.5)">
         <path d="M -36 -80 L 36 -80 L 36 80 L -36 80 Z"/>
         <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
           <line x1="-36" y1="60" x2="36" y2="60"/>
@@ -606,7 +607,7 @@ input_file: samples/floorplan_parts.lini
           <path d="M 0 70 L 0 -80 M -8.8 -71.2 L 0 -80 L 8.8 -71.2"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-132.5)">
         <rect x="-29.195" y="-5" width="58.39" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-1653" transform="translate(-29.195 3.58) scale(0.01 -0.01)"/>
@@ -622,7 +623,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(25.305 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-132.5)">
         <rect x="-18.26" y="-5" width="36.52" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-335" transform="translate(-18.26 3.58) scale(0.01 -0.01)"/>
@@ -634,7 +635,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1654" transform="translate(12.87 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-132.5)">
         <rect x="-31.585" y="-5" width="63.17" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-241" transform="translate(-31.585 3.58) scale(0.01 -0.01)"/>
@@ -653,7 +654,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1994" transform="translate(29.005 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-132.5)">
         <rect x="-34.895" y="-5" width="69.79" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-34.895 3.58) scale(0.01 -0.01)"/>
@@ -669,7 +670,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-265" transform="translate(29.115 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-132.5)">
         <rect x="-18.245" y="-5" width="36.49" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-18.245 3.58) scale(0.01 -0.01)"/>
@@ -681,7 +682,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1656" transform="translate(12.175 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-24.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-132.5)">
         <rect x="-18.095" y="-5" width="36.19" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-18.095 3.58) scale(0.01 -0.01)"/>
@@ -693,33 +694,46 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-1660" transform="translate(12.325 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,131.5)">
-        <rect x="-43.954" y="-6" width="87.908" height="12" rx="0" ry="0"/>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,31.5)">
+        <rect x="-16.326" y="-6" width="32.652" height="12" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lini-g1500-27" transform="translate(-43.954 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-38" transform="translate(-35.514 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-34" transform="translate(-27.734 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-126" transform="translate(-18.118 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-1788" transform="translate(-6.506 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-126" transform="translate(1.41 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-94" transform="translate(9.226 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-56" transform="translate(20.186 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-1" transform="translate(27.786 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-126" transform="translate(37.138 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-27" transform="translate(-16.326 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-38" transform="translate(-7.886 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-34" transform="translate(-0.106 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(9.51 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-bed lini-path" transform="translate(-517.16,139.5)">
+      <g class="lini-node lini-bed lini-path" transform="translate(-517.16,31.5)">
         <path d="M -60 -80 L 60 -80 L 60 80 L -60 80 Z M -53.6 -73.6 L -3.2 -73.6 L -3.2 -45.6 L -53.6 -45.6 Z M 3.2 -73.6 L 53.6 -73.6 L 53.6 -45.6 L 3.2 -45.6 Z M -60 -13.6 L 60 -13.6"/>
         <g class="lini-text">
-          <use href="#lini-g1500-209" transform="translate(-16.07 96.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(-9.93 96.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-315" transform="translate(-3.9 96.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-202" transform="translate(1.88 96.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-259" transform="translate(8.02 96.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-213" transform="translate(10.35 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-298" transform="translate(-14.57 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-8.43 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(-2.65 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(3.07 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(8.79 96.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-bed lini-path" transform="translate(-301.16,139.5)">
+      <g class="lini-node lini-bed lini-path" transform="translate(-301.16,31.5)">
+        <path d="M -72 -80 L 72 -80 L 72 80 L -72 80 Z M -65.6 -73.6 L -3.2 -73.6 L -3.2 -45.6 L -65.6 -45.6 Z M 3.2 -73.6 L 65.6 -73.6 L 65.6 -45.6 L 3.2 -45.6 Z M -72 -13.6 L 72 -13.6"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-256" transform="translate(-9.745 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-4.445 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-2.115 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(3.665 96.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bed lini-path" transform="translate(-85.16,35.5)">
+        <path d="M -54 -76 L 54 -76 L 54 76 L -54 76 Z M -47.6 -69.6 L -3.2 -69.6 L -3.2 -41.6 L -47.6 -41.6 Z M 3.2 -69.6 L 47.6 -69.6 L 47.6 -41.6 L 3.2 -41.6 Z M -54 -9.6 L 54 -9.6"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-209" transform="translate(-16.07 92.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.93 92.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-3.9 92.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(1.88 92.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(8.02 92.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(10.35 92.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bed lini-path" transform="translate(130.84,31.5)">
         <path d="M -36 -80 L 36 -80 L 36 80 L -36 80 Z M -29.6 -73.6 L 29.6 -73.6 L 29.6 -45.6 L -29.6 -45.6 Z M -36 -13.6 L 36 -13.6"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-13.555 96.58) scale(0.01 -0.01)"/>
@@ -730,8 +744,18 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-213" transform="translate(7.835 96.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-sofa lini-path" transform="translate(-85.16,183.5)">
-        <path d="M -88 -36 L 88 -36 L 88 36 L -88 36 Z M -72 36 L -72 -20 L 72 -20 L 72 36"/>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,255.5)">
+        <rect x="-21.272" y="-6" width="42.544" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-126" transform="translate(-21.272 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-94" transform="translate(-13.456 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-56" transform="translate(-2.496 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(5.104 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(14.456 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-sofa lini-path" transform="translate(-517.16,315.5)">
+        <path d="M -81.6 -36 L 81.6 -36 A 6.4 6.4 0 0 1 88 -29.6 L 88 29.6 A 6.4 6.4 0 0 1 81.6 36 L -81.6 36 A 6.4 6.4 0 0 1 -88 29.6 L -88 -29.6 A 6.4 6.4 0 0 1 -81.6 -36 Z M -72 36 L -72 -13.6 A 6.4 6.4 0 0 1 -65.6 -20 L 65.6 -20 A 6.4 6.4 0 0 1 72 -13.6 L 72 36"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-12.545 52.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-238" transform="translate(-8.655 52.58) scale(0.01 -0.01)"/>
@@ -740,16 +764,24 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-213" transform="translate(6.825 52.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-sofa lini-path" transform="translate(130.84,183.5)">
-        <path d="M -64 -36 L 64 -36 L 64 36 L -64 36 Z M -48 36 L -48 -20 L 48 -20 L 48 36"/>
+      <g class="lini-node lini-sofa lini-path" transform="translate(-301.16,315.5)">
+        <path d="M -57.6 -36 L 57.6 -36 A 6.4 6.4 0 0 1 64 -29.6 L 64 29.6 A 6.4 6.4 0 0 1 57.6 36 L -57.6 36 A 6.4 6.4 0 0 1 -64 29.6 L -64 -29.6 A 6.4 6.4 0 0 1 -57.6 -36 Z M -48 36 L -48 -13.6 A 6.4 6.4 0 0 1 -41.6 -20 L 41.6 -20 A 6.4 6.4 0 0 1 48 -13.6 L 48 36"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-8.975 52.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-335" transform="translate(-5.085 52.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-271" transform="translate(2.945 52.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-sofa lini-path" transform="translate(346.84,123.5)">
-        <path d="M -96 -96 L 96 -96 L 96 -24 L -24 -24 L -24 96 L -96 96 Z M -24 80 L -80 80 L -80 -80 L 80 -80 L 80 -24"/>
+      <g class="lini-node lini-sofa lini-path" transform="translate(-85.16,315.5)">
+        <path d="M -29.6 -36 L 29.6 -36 A 6.4 6.4 0 0 1 36 -29.6 L 36 29.6 A 6.4 6.4 0 0 1 29.6 36 L -29.6 36 A 6.4 6.4 0 0 1 -36 29.6 L -36 -29.6 A 6.4 6.4 0 0 1 -29.6 -36 Z M -20 36 L -20 -13.6 A 6.4 6.4 0 0 1 -13.6 -20 L 13.6 -20 A 6.4 6.4 0 0 1 20 -13.6 L 20 36"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-271" transform="translate(-8.765 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-2.735 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(3.045 52.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-sofa lini-path" transform="translate(130.84,255.5)">
+        <path d="M -89.6 -96 L 89.6 -96 A 6.4 6.4 0 0 1 96 -89.6 L 96 -30.4 A 6.4 6.4 0 0 1 89.6 -24 L -17.6 -24 A 6.4 6.4 0 0 0 -24 -17.6 L -24 89.6 A 6.4 6.4 0 0 1 -30.4 96 L -89.6 96 A 6.4 6.4 0 0 1 -96 89.6 L -96 -89.6 A 6.4 6.4 0 0 1 -89.6 -96 Z M -24 80 L -73.6 80 A 6.4 6.4 0 0 1 -80 73.6 L -80 -73.6 A 6.4 6.4 0 0 1 -73.6 -80 L 73.6 -80 A 6.4 6.4 0 0 1 80 -73.6 L 80 -24"/>
         <g class="lini-text">
           <use href="#lini-g1500-203" transform="translate(-15.48 112.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-271" transform="translate(-9.95 112.58) scale(0.01 -0.01)"/>
@@ -759,7 +791,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(11.53 112.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,403.5)">
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,511.5)">
         <rect x="-46.956" y="-6" width="93.912" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-34" transform="translate(-46.956 4.296) scale(0.012 -0.012)"/>
@@ -775,16 +807,16 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-62" transform="translate(38.388 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-517.16,411.5)">
-        <path d="M -72 -36 L 72 -36 L 72 36 L -72 36 Z M -66 -72 L -30 -72 L -30 -36 L -66 -36 Z M -66 36 L -30 36 L -30 72 L -66 72 Z M -18 -72 L 18 -72 L 18 -36 L -18 -36 Z M -18 36 L 18 36 L 18 72 L -18 72 Z M 30 -72 L 66 -72 L 66 -36 L 30 -36 Z M 30 36 L 66 36 L 66 72 L 30 72 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-517.16,519.5)">
+        <path d="M -67.2 -36 L 67.2 -36 A 4.8 4.8 0 0 1 72 -31.2 L 72 31.2 A 4.8 4.8 0 0 1 67.2 36 L -67.2 36 A 4.8 4.8 0 0 1 -72 31.2 L -72 -31.2 A 4.8 4.8 0 0 1 -67.2 -36 Z M -62 -72 L -34 -72 A 4 4 0 0 1 -30 -68 L -30 -40 A 4 4 0 0 1 -34 -36 L -62 -36 A 4 4 0 0 1 -66 -40 L -66 -68 A 4 4 0 0 1 -62 -72 Z M -62 36 L -34 36 A 4 4 0 0 1 -30 40 L -30 68 A 4 4 0 0 1 -34 72 L -62 72 A 4 4 0 0 1 -66 68 L -66 40 A 4 4 0 0 1 -62 36 Z M -14 -72 L 14 -72 A 4 4 0 0 1 18 -68 L 18 -40 A 4 4 0 0 1 14 -36 L -14 -36 A 4 4 0 0 1 -18 -40 L -18 -68 A 4 4 0 0 1 -14 -72 Z M -14 36 L 14 36 A 4 4 0 0 1 18 40 L 18 68 A 4 4 0 0 1 14 72 L -14 72 A 4 4 0 0 1 -18 68 L -18 40 A 4 4 0 0 1 -14 36 Z M 34 -72 L 62 -72 A 4 4 0 0 1 66 -68 L 66 -40 A 4 4 0 0 1 62 -36 L 34 -36 A 4 4 0 0 1 30 -40 L 30 -68 A 4 4 0 0 1 34 -72 Z M 34 36 L 62 36 A 4 4 0 0 1 66 40 L 66 68 A 4 4 0 0 1 62 72 L 34 72 A 4 4 0 0 1 30 68 L 30 40 A 4 4 0 0 1 34 36 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-6.085 88.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-241" transform="translate(-1.215 88.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-340" transform="translate(1.115 88.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-301.16,415.5)">
-        <path d="M -48 -32 L 48 -32 L 48 32 L -48 32 Z M -42 -68 L -6 -68 L -6 -32 L -42 -32 Z M -42 32 L -6 32 L -6 68 L -42 68 Z M 6 -68 L 42 -68 L 42 -32 L 6 -32 Z M 6 32 L 42 32 L 42 68 L 6 68 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-301.16,523.5)">
+        <path d="M -43.2 -32 L 43.2 -32 A 4.8 4.8 0 0 1 48 -27.2 L 48 27.2 A 4.8 4.8 0 0 1 43.2 32 L -43.2 32 A 4.8 4.8 0 0 1 -48 27.2 L -48 -27.2 A 4.8 4.8 0 0 1 -43.2 -32 Z M -38 -68 L -10 -68 A 4 4 0 0 1 -6 -64 L -6 -36 A 4 4 0 0 1 -10 -32 L -38 -32 A 4 4 0 0 1 -42 -36 L -42 -64 A 4 4 0 0 1 -38 -68 Z M -38 32 L -10 32 A 4 4 0 0 1 -6 36 L -6 64 A 4 4 0 0 1 -10 68 L -38 68 A 4 4 0 0 1 -42 64 L -42 36 A 4 4 0 0 1 -38 32 Z M 10 -68 L 38 -68 A 4 4 0 0 1 42 -64 L 42 -36 A 4 4 0 0 1 38 -32 L 10 -32 A 4 4 0 0 1 6 -36 L 6 -64 A 4 4 0 0 1 10 -68 Z M 10 32 L 38 32 A 4 4 0 0 1 42 36 L 42 64 A 4 4 0 0 1 38 68 L 10 68 A 4 4 0 0 1 6 64 L 6 36 A 4 4 0 0 1 10 32 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-232" transform="translate(-9.765 84.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-271" transform="translate(-5.995 84.58) scale(0.01 -0.01)"/>
@@ -792,8 +824,8 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(5.815 84.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,399.5)">
-        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -18 -84 L 18 -84 L 18 -48 L -18 -48 Z M -84 -18 L -48 -18 L -48 18 L -84 18 Z M -18 48 L 18 48 L 18 84 L -18 84 Z M 48 -18 L 84 -18 L 84 18 L 48 18 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,507.5)">
+        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -14 -84 L 14 -84 A 4 4 0 0 1 18 -80 L 18 -52 A 4 4 0 0 1 14 -48 L -14 -48 A 4 4 0 0 1 -18 -52 L -18 -80 A 4 4 0 0 1 -14 -84 Z M -80 -18 L -52 -18 A 4 4 0 0 1 -48 -14 L -48 14 A 4 4 0 0 1 -52 18 L -80 18 A 4 4 0 0 1 -84 14 L -84 -14 A 4 4 0 0 1 -80 -18 Z M -14 48 L 14 48 A 4 4 0 0 1 18 52 L 18 80 A 4 4 0 0 1 14 84 L -14 84 A 4 4 0 0 1 -18 80 L -18 52 A 4 4 0 0 1 -14 48 Z M 52 -18 L 80 -18 A 4 4 0 0 1 84 -14 L 84 14 A 4 4 0 0 1 80 18 L 52 18 A 4 4 0 0 1 48 14 L 48 -14 A 4 4 0 0 1 52 -18 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-299" transform="translate(-13.84 100.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-271" transform="translate(-9.89 100.58) scale(0.01 -0.01)"/>
@@ -802,7 +834,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-209" transform="translate(7.7 100.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-bath lini-path" transform="translate(130.84,453.5)">
+      <g class="lini-node lini-bath lini-path" transform="translate(130.84,561.5)">
         <path d="M -68 -30 L 68 -30 L 68 30 L -68 30 Z M -48.8 -22.8 L 48.8 -22.8 A 12 12 0 0 1 60.8 -10.8 L 60.8 10.8 A 12 12 0 0 1 48.8 22.8 L -48.8 22.8 A 12 12 0 0 1 -60.8 10.8 L -60.8 -10.8 A 12 12 0 0 1 -48.8 -22.8 Z M 42 0 A 3.6 3.6 0 1 1 49.2 0 A 3.6 3.6 0 1 1 42 0 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-7.905 46.58) scale(0.01 -0.01)"/>
@@ -810,7 +842,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-202" transform="translate(1.765 46.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-bath lini-path" transform="translate(346.84,447.5)">
+      <g class="lini-node lini-bath lini-path" transform="translate(346.84,555.5)">
         <path d="M -36 -36 L 36 -36 L 36 36 L -36 36 Z M -36 -36 L 36 36 M 36 -36 L -36 36 M -5.6 0 A 5.6 5.6 0 1 1 5.6 0 A 5.6 5.6 0 1 1 -5.6 0 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-17.205 52.58) scale(0.01 -0.01)"/>
@@ -821,7 +853,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(13.255 52.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-bath lini-path" transform="translate(562.84,467.5)">
+      <g class="lini-node lini-bath lini-path" transform="translate(562.84,575.5)">
         <path d="M -28 -16 L -10.4 -16 L -10.4 16 L -28 16 Z M -7.52 -11.6 L 18.72 -11.6 A 9.28 9.28 0 0 1 28 -2.32 L 28 2.32 A 9.28 9.28 0 0 1 18.72 11.6 L -7.52 11.6 A 9.28 9.28 0 0 1 -16.8 2.32 L -16.8 -2.32 A 9.28 9.28 0 0 1 -7.52 -11.6 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-310" transform="translate(-12.095 32.58) scale(0.01 -0.01)"/>
@@ -832,7 +864,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-310" transform="translate(8.205 32.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-bath lini-path" transform="translate(778.84,467.5)">
+      <g class="lini-node lini-bath lini-path" transform="translate(778.84,575.5)">
         <path d="M -15.2 -16 L 15.2 -16 A 4.8 4.8 0 0 1 20 -11.2 L 20 11.2 A 4.8 4.8 0 0 1 15.2 16 L -15.2 16 A 4.8 4.8 0 0 1 -20 11.2 L -20 -11.2 A 4.8 4.8 0 0 1 -15.2 -16 Z M -3.6 0 A 3.6 3.6 0 1 1 3.6 0 A 3.6 3.6 0 1 1 -3.6 0 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-9.14 32.58) scale(0.01 -0.01)"/>
@@ -841,7 +873,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-256" transform="translate(3.84 32.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-head lini-block" transform="translate(-813.16,603.5)">
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,711.5)">
         <rect x="-40.296" y="-6" width="80.592" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-1" transform="translate(-40.296 4.296) scale(0.012 -0.012)"/>
@@ -856,29 +888,29 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-126" transform="translate(33.48 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-appliance lini-path" transform="translate(-517.16,603.5)">
+      <g class="lini-node lini-appliance lini-path" transform="translate(-517.16,711.5)">
         <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -20.64 -12 A 8.64 8.64 0 1 1 -3.36 -12 A 8.64 8.64 0 1 1 -20.64 -12 Z M 3.36 -12 A 8.64 8.64 0 1 1 20.64 -12 A 8.64 8.64 0 1 1 3.36 -12 Z M -20.64 12 A 8.64 8.64 0 1 1 -3.36 12 A 8.64 8.64 0 1 1 -20.64 12 Z M 3.36 12 A 8.64 8.64 0 1 1 20.64 12 A 8.64 8.64 0 1 1 3.36 12 Z"/>
       </g>
-      <g class="lini-node lini-appliance lini-path" transform="translate(-301.16,603.5)">
+      <g class="lini-node lini-appliance lini-path" transform="translate(-301.16,711.5)">
         <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -24 14.4 L 24 14.4"/>
         <g class="lini-text">
           <use href="#lini-g1500-56" transform="translate(-2.75 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-appliance lini-path" transform="translate(-85.16,603.5)">
+      <g class="lini-node lini-appliance lini-path" transform="translate(-85.16,711.5)">
         <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -18.4 -18.4 L 18.4 -18.4 L 18.4 18.4 L -18.4 18.4 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-157" transform="translate(-4.81 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-appliance lini-path" transform="translate(130.84,603.5)">
+      <g class="lini-node lini-appliance lini-path" transform="translate(130.84,711.5)">
         <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-34" transform="translate(-8.4 3.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-157" transform="translate(-1.22 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,655.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,763.5)">
         <rect x="-12.955" y="-5" width="25.91" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-303" transform="translate(-12.955 3.58) scale(0.01 -0.01)"/>
@@ -888,7 +920,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-213" transform="translate(7.235 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,655.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,763.5)">
         <rect x="-13.995" y="-5" width="27.99" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-232" transform="translate(-13.995 3.58) scale(0.01 -0.01)"/>
@@ -899,7 +931,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-213" transform="translate(8.275 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,655.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,763.5)">
         <rect x="-16.915" y="-5" width="33.83" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-335" transform="translate(-16.915 3.58) scale(0.01 -0.01)"/>
@@ -910,7 +942,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(12.965 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(130.84,655.5)">
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,763.5)">
         <rect x="-26.49" y="-5" width="52.98" height="10" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1500-209" transform="translate(-26.49 3.58) scale(0.01 -0.01)"/>
@@ -925,7 +957,7 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(22.54 3.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,675.5)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,783.5)">
         <rect x="-67.872" y="-4" width="135.744" height="8" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1400-132" transform="translate(-67.872 2.864) scale(0.008 -0.008)"/>
