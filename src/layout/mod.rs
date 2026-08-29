@@ -530,7 +530,15 @@ fn layout_inst(
     let mut gutters: Vec<Gutter> = Vec::new();
     let mut sketch_d: Option<String> = None;
     let mut sketch_geo = None;
-    let bbox = if inst.kind == NodeKind::Sketch {
+    // A fixture's body is authored geometry on the true-size mm grid
+    // [SPEC 15.11] — it sizes the node, so it is drawn before the bbox picks.
+    let fixture = match part {
+        true => floorplan::fixtures::plan(inst, own)?,
+        false => None,
+    };
+    let bbox = if let Some(f) = &fixture {
+        f.bbox
+    } else if inst.kind == NodeKind::Sketch {
         // The pen folds here [SPEC 15.3]: geometry decides the bbox — never
         // content + padding. Outside a drawing any children still arrange
         // normally over it; in one they are features, datum-placed below.
@@ -622,6 +630,11 @@ fn layout_inst(
         drawing::place_features(&mut children, own, sketch_geo.as_ref().map(|g| &g.view))?;
         drawing::chrome::fill(&mut children, bbox.inflate(-half), own);
     }
+    // …and a fixture's own chrome and smart label seat off the sized body
+    // [SPEC 15.11], the same fill-once-sized step.
+    if let Some(f) = &fixture {
+        floorplan::fixtures::finish(&mut children, f);
+    }
     // A page's furniture takes its geometry from the sized sheet, and any
     // title block seats flush inside the frame corner [SPEC 15.8].
     if page::is_page(&inst.type_chain) {
@@ -659,6 +672,9 @@ fn layout_inst(
     };
     if let Some(d) = sketch_d {
         placed.attrs.insert("path", ResolvedValue::String(d));
+    }
+    if let Some(f) = fixture {
+        floorplan::fixtures::paint(&mut placed, f);
     }
     // The drawn `points:` scale with the shape [SPEC 15.1] — the render reads
     // them off the placed node, so they carry the same factor `leaf_bbox`

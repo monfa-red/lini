@@ -767,30 +767,193 @@ variants stacked for the taste call.
 **Goal**: the six fixture types render true-size with their `symbol:`
 variants; `|stairs|` generates.
 
-- [ ] **Read the reference sheet first** (`plans/refs-floorplan/`, all five
+- [x] **Read the reference sheet first** (`plans/refs-floorplan/`, all five
       images — the Read tool renders them); author every symbol against it.
-- [ ] Symbol path library on the mm grid (SPEC 15.11's table is the size
+- [x] Symbol path library on the mm grid (SPEC 15.11's table is the size
       law): bed double/single (mattress + pillow read), sofa three/two/corner
       (seat + back + arms), dining six/four/round (table **with chairs**),
       bath tub/shower/toilet/sink, appliance stove (4 burners) / fridge
       (double-door tick) / washer / dishwasher (door line + circle reads).
       Author for the modern-condo read; keep line work `stroke-width: 1`.
-- [ ] Sizing: intrinsic mm through the conversion function; `width` /
+- [x] Sizing: intrinsic mm through the conversion function; `width` /
       `height` floors stretch the symbol (like `|image| fit: stretch` — pick
       and log the exact scaling rule per family; a toilet should not distort
       absurdly — if a family must keep aspect, log it and error or letterbox
       consistently).
-- [ ] `|stairs|`: `steps: N` (required, ≥ 2) generates treads at 250 mm pitch
+- [x] `|stairs|`: `steps: N` (required, ≥ 2) generates treads at 250 mm pitch
       × 900 mm width + the direction arrow; `width`/`height` override.
-- [ ] Unknown `symbol:` errors with a suggestion (shared machinery).
-- [ ] Extend SPEC 18's floorplan hook-family row with `lini-stair-tread` ·
+- [x] Unknown `symbol:` errors with a suggestion (shared machinery).
+- [x] Extend SPEC 18's floorplan hook-family row with `lini-stair-tread` ·
       `lini-stair-arrow`, worn in a rendered snapshot (`tests/hooks.rs`
       green — Phase 1 ruling).
-- [ ] Snapshot + **visual PNG check**: one sheet laying out every fixture ×
+- [x] Snapshot + **visual PNG check**: one sheet laying out every fixture ×
       every variant at `unit: m`, verified by eye at 1:50.
 
 ### Execution log
+
+2026-08-29, one session. Baseline 1442 passed / 0 failed → after **1451 / 0**;
+`cargo fmt --check`, `cargo clippy --all-targets` clean. The only SPEC edit is
+the §18 hook-family row this phase owed (two classes added). No SPEC
+contradiction found — 15.11's table is implementable as written.
+
+**A fixture is one path on its own node.** The body — outline *and* detail —
+is a single `d` on the fixture node, whose kind flips to `|path|`; the type's
+own class rule (`stroke: --stroke-dark; stroke-width: 1; fill: --bg`) paints
+it. So a symbol needs **no generated children and no class of its own**, SPEC
+18 gains only the two `|stairs|` hooks it was promised, and the masking read
+is the node's own `fill: --bg` under the nonzero rule. `|stairs|` is the one
+exception the SPEC states: its risers and up arrow are real chrome children.
+
+| Concern | Home |
+|---|---|
+| sizing, stretch, variant table, label seat, flight chrome | `layout/floorplan/fixtures/mod.rs` (229) |
+| every family's strokes on the mm grid | `layout/floorplan/fixtures/draw.rs` (198) |
+| the shape alphabet + the one path emitter | `layout/floorplan/fixtures/shape.rs` (132) |
+| the flight's chrome **count** | `desugar/drawing.rs::stairs_chrome`, beside `opening_chrome` |
+| the scope's `unit:`, for the reader | `desugar/scale.rs::stamp_unit_mm` → internal `unit-mm:` |
+| the unknown-`symbol:` wording | `suggest::unknown_symbol` — the discretes now call it too |
+
+**The stamp is the *unit*, not a size — and why that is not a second
+mechanism.** `wall-thickness:` and `opening-width:` carry a **resolved
+fallback**: the walk can compute them because nothing downstream changes the
+answer. A fixture's body cannot be resolved that way — the `symbol:` that
+picks its millimetres is the cascade's (a rule-borne `|bath| { symbol: toilet
+}` must work), and `width:` / `height:` then stretch it. So the same walk —
+still the only place `unit:` is known — stamps `unit-mm:` (millimetres per
+drawing unit) on every fixture, and the read site calls the **one**
+conversion function, `scale::mm_to_units`. Whitelisted in `validate::INTERNAL`
+beside the other two.
+
+**Where it hooks.** `layout_inst` gained three lines, no new pass:
+`fixtures::plan` runs where `part` is known and its box **is** the bbox
+(ahead of the `Sketch` / `part_bbox` arms); `fixtures::finish` runs beside
+`page::finish` / `schematic::fill_tag` — the existing fill-once-sized step —
+and `fixtures::paint` sets the kind and `path` beside the sketch's `d`. So
+`rotate:`, `translate:` (datum placement, no exemption), `mirror:` and
+`pattern:` all still fold around it exactly as they do for any part.
+
+**The stretch rule, one for every family.** Intrinsic extent in millimetres →
+pixels through `mm_to_units(1, unit_mm) × own`; the resolved box is
+`max(intrinsic, width × own) × max(intrinsic, height × own)` (`width:` /
+`height:` are floors, [SPEC 5]); the body draws at one factor **per axis**,
+`px = per_mm × resolved ∕ intrinsic`. **Nothing keeps aspect** — a stretched
+circle is an ellipse, a stretched rounded corner an elliptical one. That is
+what "the body stretches to the resolved box" means, and a per-family
+exception would be exactly the special-casing AGENTS.md forbids. Unstretched
+is the overwhelming case: only an authored `width:`/`height:` above the true
+size moves either factor.
+
+**Winding is the emitter's, never the author's.** One path + nonzero fill
+means two subpaths winding against each other *cancel* — a hole exactly where
+the furniture is supposed to mask. Rather than trust each family to author its
+detail runs in the right direction, `shape::wound` normalises every
+polyline/polygon to the alphabet's one sense (rects, rounds and ovals are
+authored in it). The corner sofa's seat line is the case that found this: read
+naturally it winds against the L and punched the seat out. Pinned by
+`a_bodys_detail_lines_wind_with_its_outline` and proved visually over a solid
+poché wall.
+
+**Per-family authoring decisions** (taste rule: MINIMAL, real condo plans over
+the charts wherever they differ):
+
+- **bed** — mattress + pillow(s) at the head + one turned-down sheet line
+  400 mm below them. `double` splits two pillows about an 80 mm gap, `single`
+  takes one. Three strokes; the pillows are what make it read.
+- **sofa** — outline + **one** inner run tracing arm → back → arm (200 mm
+  arms). The charts' cushion divisions are clutter at 1:50 and were dropped.
+  `corner` folds the same two strokes round a 900 mm-deep L in the 2400 square,
+  seat facing the open quadrant.
+- **dining** — tabletop + chairs as plain 450 squares seated **flush** against
+  the long edges, which is what makes the bbox exactly SPEC's (1800 × 1800 for
+  `six`, 1200 × 1700 for `four`, 2100 square for `round`). A gap would have
+  contradicted the stated extent; flush is also how the chart draws it.
+- **bath** — `tub` rim + rounded basin + drain at the tap end (the drain is
+  the one stroke that says which way it lies); `shower` square + X + drain;
+  `toilet` tank + bowl **lapping 120 mm into it** (drawn tangent first, and
+  the pair read as two detached pieces — fixed after looking); `sink` rect +
+  oval basin, no tap.
+- **appliance** — `stove` is the square + four circles the real plans draw and
+  nothing else. `fridge` / `washer` / `dishwasher` are near-plain boxes whose
+  **letter is the smart label**, never baked into the path (SPEC's
+  labelled-box convention, and `20sw-b1.webp`'s own F / DW / W/D): a door line
+  across the front, a drum panel, and the plain box respectively — one stroke
+  apiece, enough to tell them apart unlabelled without competing with the text
+  that centres in them. **No pictorial variant needed flagging** — the
+  label-in-box read is strong at 1:50.
+- **stairs** — 900 wide × `steps` × 250 run; the outline is the body, the
+  `steps − 1` interior risers and the up arrow are chrome. The arrow climbs
+  from the **first tread's centre** to the far edge, head 110 mm.
+
+**Decisions / findings:**
+
+1. **The label's two seats.** Five families read their smart label beside the
+   body — centred under it, clear by `consts::READOUT_GAP`, the discrete
+   value-readout's own constant (reused, not re-invented). An `|appliance|`'s
+   stays where a `|block|`'s text already lands: the centre. Text children
+   stack if there is more than one.
+2. **No new error code.** SPEC 21's floorplan block states no unknown-variant
+   row, and the discretes' equivalent has always been codeless (phase-generic).
+   Rather than pin a number SPEC does not know about, the message was
+   **shared**: `suggest::unknown_symbol` now words both, so a fixture reads
+   `unknown symbol 'sectional' on '|sofa|' — its variants are three, two,
+   corner`. The variant list beats a fuzzy guess for a set this small.
+3. **The variant is read at layout, not desugar** — the whole reason the stamp
+   carries the unit. That is what makes a rule-borne `symbol:` work, and it is
+   tested both ways.
+4. **Known limitation, inherited from the door**: `stairs_chrome` counts from
+   the **authored** `steps:`, exactly as `door_symbol` reads the authored
+   `symbol:`. A `steps:` reaching a flight only through a class rule sizes the
+   body correctly (layout reads the cascade) but generates no risers and no
+   arrow. Closing it means either matching the count at layout (a second
+   mechanism for the same job) or teaching desugar the cascade; neither is
+   worth it for the form nobody writes. If it ever bites, fix **both**
+   producers in `desugar/drawing.rs` at once.
+5. `ledger/defaults.rs`'s chrome row now covers five types in one arm
+   (`door-leaf` · `door-swing` · `window-sill` · `stair-tread` ·
+   `stair-arrow`) — one rule each, a class on every wearer, no inline style
+   (pinned in `tests/desugar.rs`).
+
+**Visual pass** (`resvg --static` → PNG, read by eye, light **and** dark):
+the full variant sheet — every fixture × every variant at `unit: m`, 1:50 —
+looked at and iterated three times (the toilet's detached bowl, the fridge's
+door line sitting on the edge, the bed's turndown crowding its pillows); a
+labelled sheet proving the beside/inside seats; furniture crossing a solid
+poché wall, proving the mask and catching the corner sofa's winding; and the
+**§25 studio flat, rendering complete for the first time** — walls, openings,
+both dimension rows (7.2 / 3.75 / 3.45), a rotated bed, the corner sofa, the
+toilet and shower in the bathroom corner, the fridge. Side by side with
+`plans/refs-floorplan/20sw-b1.webp` it is the same drawing: solid poché,
+thin-outline furniture masking the floor, doors with their swing arcs.
+
 ### Carry-over notes
+
+**For Phase 5 (showroom):**
+- `tests/hooks.rs::UNSAMPLED` now carries five floorplan rows —
+  `lini-door-leaf` / `-swing` / `lini-window-sill` against `FLOORPLAN_OPENINGS`
+  and `lini-stair-tread` / `-arrow` against `FLOORPLAN_STAIRS`.
+  `samples/floorplan_parts.lini` wears all five by construction (a door, a
+  window, a flight), so the whole block of rows drops with that sample.
+- **Every hook is emitted now**, so `every_documented_class_is_worn` is green
+  on its own terms — Phase 1's red is fully closed.
+- The catalog sheet is already drafted, in effect: this phase's variant sheet
+  (every fixture × every variant, labelled, on a `translate:` grid at
+  `unit: m; scale: 0.02`) is what was looked at, and it is the shape
+  `floorplan_parts.lini` wants — add the door symbols × poses and a window
+  beside it. Author sizes in **drawing units** (`width: 2` is 2 m at
+  `unit: m`); the true-size defaults need nothing stated.
+- Two seats worth remembering when composing: a fixture's label hangs
+  **below** its body (it is real ink and collides), and an `|appliance|`'s
+  sits inside — so a catalog row wants vertical air, and the kitchen boxes
+  want their `F` / `DW` / `W/D`.
+- `tests/deferred.rs` still wants the curved-segment-opening slot (Phase 3's
+  note) — nothing new is owed by this phase; the Floorplans deferred block
+  names no fixture syntax that is reachable.
+- The desugar fixed-point corpus in `tests/desugar.rs` already carries a
+  `|stairs| { steps: 12 }` and a `|bed|`, so the chrome and the `unit-mm:`
+  stamp are both pinned idempotent.
+- SKILL.md's floorplan section should state the two label seats explicitly
+  (beside for furniture, inside for an appliance) — it is the one rule an
+  author is surprised by.
 
 ---
 

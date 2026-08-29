@@ -1,8 +1,10 @@
-//! The dialect's three halves [SPEC 15.11]: the **vocabulary gate** (a
+//! The dialect's four quarters [SPEC 15.11]: the **vocabulary gate** (a
 //! floorplan scope is a drawing scope, and its own types are legal only here),
-//! the **wall** (a centreline grown into its mitred poché outline), and the
-//! **openings** stationed on it. One helper set, one law per module.
+//! the **wall** (a centreline grown into its mitred poché outline), the
+//! **openings** stationed on it, and the **fixtures** that furnish it. One
+//! helper set, one law per module.
 
+mod fixture;
 mod gate;
 mod opening;
 mod wall;

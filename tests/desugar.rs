@@ -934,6 +934,34 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
         2,
         "{openings}"
     );
+    // A fixture's body is not one fallback the fold could resolve — the
+    // `symbol:` that picks its size is the cascade's, and `width:` / `height:`
+    // then stretch it — so what the fold stamps is the scope's own `unit:`,
+    // for the reader to convert with [SPEC 15.11]. A flight's chrome counts
+    // here all the same: `steps: 4` divides into three risers and one arrow.
+    let fixtures = desugar_source(
+        "{ layout: floorplan; unit: m; scale: 0.02 }\n\
+         |wall#w| { draw: move(0, 0) right(7.2):north; }\n\
+         |bed#b| { symbol: single }\n\
+         |stairs#s| { steps: 4 }\n",
+    )
+    .unwrap();
+    assert_eq!(fixtures.matches("unit-mm: 1000;").count(), 2, "{fixtures}");
+    assert_eq!(
+        fixtures.matches(".lini-stair-tread.lini-line").count(),
+        3,
+        "{fixtures}"
+    );
+    assert_eq!(
+        fixtures.matches(".lini-stair-arrow.lini-line").count(),
+        1,
+        "{fixtures}"
+    );
+    assert!(
+        fixtures
+            .contains(".lini-stair-tread { stroke: --stroke-light; stroke-width: 1; fill: none; }"),
+        "one rule, worn — never an inline style [SPEC 18]: {fixtures}"
+    );
 }
 
 #[test]

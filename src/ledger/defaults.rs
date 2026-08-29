@@ -435,10 +435,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // physical millimetres, converted through the scope's `unit:` where it
         // is read, never a drawing-unit literal in a class rule [SPEC 15.11].
         "wall" => vec![var("fill", "stroke-dark"), id("stroke", "none")],
-        // An opening's generated chrome [SPEC 15.7/15.11]: the leaf and its
-        // swing arc, a window's sill pair — annotation-thin, the support tone,
-        // one rule each and a class on every wearer.
-        "door-leaf" | "door-swing" | "window-sill" => vec![
+        // The dialect's generated chrome [SPEC 15.7/15.11]: an opening's leaf
+        // and swing arc, a window's sill pair, a flight's treads and up arrow
+        // — annotation-thin, the support tone, one rule each and a class on
+        // every wearer.
+        "door-leaf" | "door-swing" | "window-sill" | "stair-tread" | "stair-arrow" => vec![
             var("stroke", "stroke-light"),
             n("stroke-width", 1.0),
             id("fill", "none"),

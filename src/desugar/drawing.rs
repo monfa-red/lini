@@ -13,6 +13,8 @@
 //! | a `\|hole\|` | its centre-mark crosshair — two axis `\|centerline\|`s |
 //! | `pattern: radial(…)` | the `\|pitch-circle\|` ring through the copies |
 //! | a `break:` | the `\|breakline\|` pair per group — zigzag / round-stock S |
+//! | a `\|door\|` / `\|window\|` | the leaf + quarter swing arc / the sill pair |
+//! | a `\|stairs\|` | the risers across the flight + the up arrow |
 //!
 //! Openness is judged **syntactically** (no `close()` before the next `move()`
 //! or the end) — the same rule the pen's `mirror` fuses by; the tests assert
@@ -82,6 +84,7 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         ));
     }
     out.extend(opening_chrome(node, chain));
+    out.extend(stairs_chrome(node, chain));
     if has_radial_pattern(&node.style) {
         out.push(chrome_node(
             "pitch-circle",
@@ -137,6 +140,31 @@ fn opening_chrome(node: &Node, chain: &[String]) -> Vec<Node> {
             indexed(node, "door-swing", "swing", 0),
         ],
     }
+}
+
+/// A flight's chrome [SPEC 15.11]: the risers between its treads — the
+/// outline draws the two ends, so a `steps: N` flight divides `N − 1` times —
+/// and the one up arrow. Only the **count** is decided here; the flight's own
+/// size fills the geometry, at layout
+/// ([`crate::layout::floorplan::fixtures`]).
+fn stairs_chrome(node: &Node, chain: &[String]) -> Vec<Node> {
+    if !chain.iter().any(|c| c == "stairs") {
+        return Vec::new();
+    }
+    let steps = match node
+        .style
+        .iter()
+        .rev()
+        .find(|d| d.name == "steps")
+        .map(single)
+    {
+        Some(Some(Value::Number(n))) if *n >= 2.0 => *n as usize,
+        _ => return Vec::new(),
+    };
+    (0..steps - 1)
+        .map(|i| indexed(node, "stair-tread", "tread", i))
+        .chain([indexed(node, "stair-arrow", "arrow", 0)])
+        .collect()
 }
 
 /// A door's `symbol:` as written — `single` unless a bare ident says otherwise;

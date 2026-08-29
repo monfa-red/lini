@@ -15,6 +15,7 @@ use crate::desugar::types::{FIXTURES, OPENINGS};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedInst};
 
+pub(in crate::layout) mod fixtures;
 mod opening;
 #[cfg(test)]
 mod tests;

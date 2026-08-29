@@ -44,6 +44,7 @@ const INTERNAL: &[&str] = &[
     "px-per-unit",
     "wall-thickness",
     "opening-width",
+    "unit-mm",
     "field",
     "font-scale",
 ];

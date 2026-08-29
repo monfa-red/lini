@@ -313,6 +313,10 @@ const FLOORPLAN_OPENINGS: &str = "{ layout: floorplan; unit: m; scale: 0.05 }\n\
        |window| { on: run; at: 3.5 }\n\
      ]\n";
 
+/// A flight of stairs — the tread chrome and the up arrow in one scene.
+const FLOORPLAN_STAIRS: &str = "{ layout: floorplan; unit: m; scale: 0.05 }\n\
+     |stairs| { steps: 10 }\n";
+
 const UNSAMPLED: &[(&str, &str)] = &[
     (
         "lini-stray",
@@ -340,6 +344,13 @@ const UNSAMPLED: &[(&str, &str)] = &[
     ),
     ("lini-door-swing", FLOORPLAN_OPENINGS),
     ("lini-window-sill", FLOORPLAN_OPENINGS),
+    (
+        // A flight's generated chrome [SPEC 15.11] — the risers across it and
+        // the one up arrow, both filled from `steps:`.
+        "lini-stair-tread",
+        FLOORPLAN_STAIRS,
+    ),
+    ("lini-stair-arrow", FLOORPLAN_STAIRS),
     (
         "lini-net-run-turned",
         // A net run stood on end [SPEC 16.4] — the label's own pose turns it.

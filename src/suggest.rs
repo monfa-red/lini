@@ -50,6 +50,16 @@ pub fn did_you_mean<S: AsRef<str>>(candidates: &[S]) -> String {
     format!("; did you mean {}?", quoted.join(", "))
 }
 
+/// The **one** unknown-`symbol:` message [SPEC 16.3/15.11]: a variant set is
+/// small and closed, so the whole set beats a fuzzy guess — a schematic
+/// discrete and a floorplan fixture say it the same way.
+pub fn unknown_symbol<'a>(want: &str, ty: &str, variants: impl Iterator<Item = &'a str>) -> String {
+    format!(
+        "unknown symbol '{want}' on '|{ty}|' — its variants are {}",
+        variants.collect::<Vec<_>>().join(", ")
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -32,6 +32,15 @@ pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
 /// wall's thickness, and for the same reason: only this walk knows `unit:`.
 pub(crate) const OPENING_WIDTH: &str = "opening-width";
 
+/// The generated internal attr carrying the scope's **millimetres per drawing
+/// unit** [SPEC 15.11] — stamped on a fixture, whose body size is not a single
+/// fallback the walk could resolve: it depends on the `symbol:` variant, which
+/// only the cascade knows, and then stretches to the resolved box. So the two
+/// stamps above carry a *resolved value*, and this one carries the *scope's
+/// `unit:`* for the reader to convert with — the same reason, since this walk
+/// is still the one place `unit:` is known.
+pub(crate) const UNIT_MM: &str = "unit-mm";
+
 /// The true-size wall defaults [SPEC 15.11] — physical millimetres, the
 /// reader's (never a class-rule literal; see `ledger::defaults`).
 pub(crate) const WALL_MM: f64 = 200.0;
@@ -116,6 +125,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     }
     if ctx.in_drawing {
         stamp_opening_width(&mut n.style, &ctx, &chain, n.span);
+        stamp_unit_mm(&mut n.style, &ctx, &chain, n.span);
     }
     ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &chain, &n.style);
     for c in &mut n.children {
@@ -210,6 +220,26 @@ fn stamp_opening_width(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], 
     style.push(Decl {
         name: OPENING_WIDTH.into(),
         groups: vec![vec![Value::Number(mm_to_units(mm, ctx.unit_mm))]],
+        span,
+    });
+}
+
+/// Stamp a fixture's scope `unit:` [SPEC 15.11] — the millimetres per drawing
+/// unit its true-size body converts through. Every fixture takes it, since a
+/// family's mm sizes are picked by the cascaded `symbol:` and the body then
+/// stretches to a cascaded `width:` / `height:` — all resolved past this walk,
+/// so what travels is the unit, not a size.
+fn stamp_unit_mm(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
+    style.retain(|d| d.name != UNIT_MM);
+    if !crate::desugar::types::FIXTURES
+        .iter()
+        .any(|f| chain.iter().any(|t| t == f))
+    {
+        return;
+    }
+    style.push(Decl {
+        name: UNIT_MM.into(),
+        groups: vec![vec![Value::Number(ctx.unit_mm)]],
         span,
     });
 }

@@ -74,6 +74,8 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `door-leaf` | `line` | `door-leaf` |
 | `door-swing` | `line` | `door-swing` |
 | `window-sill` | `line` | `window-sill` |
+| `stair-tread` | `line` | `stair-tread` |
+| `stair-arrow` | `line` | `stair-arrow` |
 | `bed` | `block` | `bed` |
 | `sofa` | `block` | `sofa` |
 | `dining` | `block` | `dining` |

@@ -120,6 +120,10 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("door-leaf", "line"),
     ("door-swing", "line"),
     ("window-sill", "line"),
+    // …and the chrome a `|stairs|` generates from its `steps:` — the risers
+    // across the flight and the up arrow (a `|path|` where it turns a head).
+    ("stair-tread", "line"),
+    ("stair-arrow", "line"),
     ("bed", "block"),
     ("sofa", "block"),
     ("dining", "block"),

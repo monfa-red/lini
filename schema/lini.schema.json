@@ -1016,6 +1016,32 @@
       }
     },
     {
+      "name": "stair-tread",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "stair-tread"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "stair-arrow",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "stair-arrow"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
       "name": "bed",
       "primitive": "block",
       "base": "block",

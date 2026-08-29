@@ -267,10 +267,10 @@ pub(super) fn symbol_body(
         };
         Error::at(
             span,
-            format!(
-                "unknown symbol '{}' on '|{ty}|' — its variants are {}",
+            crate::suggest::unknown_symbol(
                 want.as_deref().unwrap_or_default(),
-                variant_names(ty).join(", ")
+                ty,
+                variant_names(ty).into_iter(),
             ),
         )
     })?;
