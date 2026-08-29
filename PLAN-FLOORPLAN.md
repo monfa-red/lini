@@ -1183,7 +1183,7 @@ leans on — reads clean, professional, and organized: no parallel
 implementations, no dead scaffolding, easy to find things, human-readable
 (the user's explicit bar). Two stages, review then fix.
 
-- [ ] **Review stage** (adversarial, whole branch): `git diff main...HEAD`
+- [x] **Review stage** (adversarial, whole branch): `git diff main...HEAD`
       end to end, plus the blast radius (every pre-existing module the
       phases touched: `desugar/scale.rs`, `resolve/ir.rs`, `validate.rs`,
       `layout/mod.rs`, `ledger/*`). Hunt: correctness bugs (geometry edge
@@ -1193,16 +1193,112 @@ implementations, no dead scaffolding, easy to find things, human-readable
       organization, over-long files, dead code, missed `AttrMap` /
       shared-helper reuse, snapshot gaps. Verify each finding before
       reporting it (read the code paths, run the case).
-- [ ] **Fix stage**: apply confirmed findings; improvements to pre-existing
+- [x] **Fix stage**: apply confirmed findings; improvements to pre-existing
       code are in scope where they serve one-mechanism/organization (no
       drive-by rewrites of unrelated subsystems). One commit per coherent
       cleanup theme, or one purposeful commit overall.
-- [ ] Full gate after: `cargo fmt` / `cargo test` / `cargo clippy` clean;
+- [x] Full gate after: `cargo fmt` / `cargo test` / `cargo clippy` clean;
       every sample still byte-identical unless a fix intentionally changed
       output (then re-snapshot + re-look).
 
 ### Execution log
+
+2026-08-29, one session. Baseline **1452 passed / 0 failed** → after **1458 /
+0**; `cargo fmt --all`, `cargo clippy --all-targets` clean at every commit.
+Review ran as a whole-branch read plus two adversarial sweeps (a geometry
+edge-case hunt that actually ran ~120 cases, and a parallel-implementation
+hunt); every finding below was re-verified against the real code path here
+before it was acted on. Six commits, one per theme.
+
+**Only one sample moved**: `floorplan_parts.lini`'s last DOORS cell wears a
+`"D1"` schedule tag (the rendered proof of the label-seat fix). Every other
+snapshot is byte-identical — the geometry fixes touch only cases neither
+sample exercises. Both samples re-rendered and looked at (catalog at 2×, the
+condo dark at thumbnail).
+
+#### Findings ledger — fixed
+
+| # | Sev | Finding | Verdict / where |
+|---|---|---|---|
+| 1 | **high** | **Panic.** `right(0):zero` names a run of no length; an opening on it hit `unit(…).expect("a named edge has length")` and aborted the compiler. | Confirmed. Fixed in `opening::straight_run`: a zero-length `Segment::Edge` **is** a point, so it takes the law and the message that already exist (`':zero' is a point`, `Y016`) — no new code, no new wording. |
+| 2 | **high** | **`fillet()` / `chamfer()` silently voided every opening on the adjacent named run** — no gap, no chrome, no box, no diagnostic, `--strict` clean. The pen records `Segment::Edge` at the *theoretical* corner (so dimensions measure there) while the fold trims the drawn run back; `opening::locate` demanded matching endpoints and skipped the station. | Confirmed. Fixed: `locate` matches the **carrier** (same straight line, same travel, starting inside the named span) and returns how much the fillet trimmed; the station shifts into the drawn segment's own frame so `at:` still measures from the corner [SPEC 15.11], and `wall::cut` clamps a gap to the piece it lands on. |
+| 3 | **high** | **A centreline jog ≤ thickness ∕ 2 punched a white notch out of the poché** (a stray diagonal inside a hollow wall, a white wedge in a hatched one). Threshold swept exactly: at h = 100 mm, jog 99 broken / 101 clean. `join`'s inside corner could trim neither element, and the straight-connector fallback doubles the face back over itself — even-odd then cancels the overlap. | Confirmed. Fixed in `wall/join.rs::consumed`: the offset has eaten the short element **whole** (the straight-run twin of SPEC 21's arc-under-thickness), so it is dropped and its neighbours step. `join` now reports whether `next` landed in the chain, and the seam join drops a consumed head the same way; a pair with no carrier crossing still connects straight. |
+| 4 | med | **The assigned fix**: an opening's smart label seated *in* the gap, on the wall line, turned with the door — SPEC 15.11 says "its schedule tag **beside** the gap". | Confirmed. Fixed by **sharing** `fixtures::finish`'s seat, never copying it: `layout/floorplan/label.rs` is the one seat, with the fixture and the opening as its two callers. An opening clears the wall face by `thickness/2 + READOUT_GAP` on the face the leaf never sweeps. |
+| 5 | med | **A rule-borne door `symbol: double` drew *half* a double door**, and a rule-borne `sliding` drew a hinged leaf **plus an arc** (SPEC: a slider has no arc). The count came from desugar's authored read, the shape from layout's cascade read — two readings of one decision. | Confirmed. Fixed at the mechanism: `opening::chrome` derives `double` from the **leaves it was given**, so the count has one source. A rule-borne symbol now draws the door desugar generated, consistently. |
+| 6 | med | **An unknown door `symbol:` compiled and drew `single`.** Every other variant-bearing type — the fixtures, the schematic discretes — refuses one through `suggest::unknown_symbol`; `\|door\|` was the only consumer not calling it. | Confirmed. Fixed in `opening::symbol_law`, through that same shared message. |
+| 7 | med | **`fn single(&Decl)` in three copies** — the branch turned one into three (`scale.rs`, `drawing.rs`, beside `validate.rs`'s) — plus `scale::find` re-implementing `ast::ident_of`'s last-wins lookup and `door_symbol` re-implementing `Decl::ident`. | Confirmed. Fixed: `Decl::single()` beside `Decl::ident()`, and `ident_of` splits into `decl_of` + `.ident()`. Every copy in `src/` is gone (`grep 'groups.as_slice()'` finds only the definition), including two pre-existing narrowed ones. |
+| 8 | med | **The `chrome:` `(kind, index)` marker destructured verbatim in both floorplan fillers**, and the `break:` producer built the same marker inline beside desugar's own `indexed()`. | Confirmed. Fixed: `drawing::chrome::indexed` is the one reader (documented in the marker table beside `is_chrome`), `desugar::drawing::indexed` the one writer, used by the break producer too. |
+| 9 | med | **Three internal stamps, two doing one job** (the plan's own audit target). `wall-thickness:` and `opening-width:` carried resolved sizes, `unit-mm:` an input — but an opening's 900/1200 mm depends on nothing but its type, exactly the case `unit-mm:` exists for. Both stamps' raw-mm last rungs also dropped millimetres into a drawing-unit slot, defended as unreachable (it is reachable — through a nested layout-owning container that seals the drawing scope). | Confirmed. Fixed: `opening-width:` folded into `unit-mm:`, leaving **two** stamps with the split written at the stamps ("can the walk resolve this?"). `floorplan::true_size(attrs, mm)` is the one reader for all three consumers, so the last rung converts instead of being accidentally right. |
+| 10 | med | **Three walkers over `TEMPLATES`** — the branch added `derives_from` and `root_facts`' class walk beside `schema::template_chain`. | Confirmed. Fixed: `types::template_chain(name)` is the one walk; all three read it. |
+| 11 | low | **A latent silent miss in the validation matrix**: the root-block check compared `Owner::Layout` by name while `Owner::Type` went through `layout_reads`. Safe only because no ledger row carries `Layout("drawing")` — the day one does, a `layout: floorplan` root would silently reject what a drawing root accepts, with nothing failing. | Confirmed. Both arms now ask the one predicate. |
+| 12 | low | Stacked label lines had **no gap**, while the schematic readout stacks by `READOUT_STACK` and calls itself the one seat table. | Confirmed. `label::seat` stacks by the same constant. |
+| 13 | low | Dead / over-wide surface: `is_floorplan_layout` `pub` with no caller outside its file; `layout_reads` and `is_floorplan` `pub` with one each; `validate::INTERNAL` re-spelling the stamp consts as literals; `floorplan::is_floorplan` a wrapper where its schematic sibling re-exports. | Confirmed. All narrowed / re-exported / pointed at the consts. |
+| 14 | low | Readability: `match part { true =>, false => }`; the openings' "carries no bundle" comment reading as the fixtures' own (nothing separated them); the synthetic `layout: drawing` link-dress probe unexplained for a dialect. | Confirmed. All three reworded / re-idiomed. |
+
+#### Findings ledger — confirmed, deliberately not fixed
+
+| # | Sev | Finding | Why not, and what it needs |
+|---|---|---|---|
+| A | med | **`mirror:` on a `\|wall\|` renders a degenerate band.** The fuse leaves a doubled-back centreline, so the offset traces its band twice in one subpath and even-odd cancels it (`M 7 -1 … L 10 1 L 7 1 Z`, self-overlapping). | Needs a design call: what does mirroring a *centreline* mean for a wall — a symmetric wall, or the fused sketch it is today? Not a code bug to patch blind. **User ruling.** |
+| B | med | **A negative or zero opening `width:`** makes degenerate geometry — overlapping jamb pieces and an SVG arc with negative radii. | `width:` / `height:` are unvalidated **language-wide** (`\|box\| { width: -50 }` is equally accepted, no error, `--strict` clean). A floorplan-only positivity rule would be the special case, not the fix. **SPEC 17 question for the user.** |
+| C | med | **`scale:` does not inherit into a nested drawing scope.** `\|floorplan\| { scale: 0.02 } [ \|floorplan\| [ … ] ]` folds the inner scope at ratio 1 (`px-per-unit: 4`, not `0.2`), so the inner wall renders 20× oversize. SPEC 15.1: "nearest ancestor wins". Reproduces in a plain `\|drawing\|` inside a `\|drawing\|`. | **Pre-existing drawing-engine behaviour**, not the dialect's — `ScaleCtx` carries `unit_mm` and `thickness` down but not the ratio. Flagged because `scale.rs` was in the blast radius; fixing it moves drawing snapshots and wants its own pass. |
+| D | med | **The chrome mechanism's boundary**, the plan's other audit target: chrome is counted at desugar from **authored** decls while its geometry reads the cascade at layout. A rule-borne `steps:` sizes a flight correctly and generates **no treads and no arrow** — a silent blank rectangle. | **Not a floorplan flaw**: verified pre-existing and systemic — a rule-borne `pattern: radial()` places its copies and loses its `\|pitch-circle\|` in exactly the same way. So the limit belongs to the mechanism, and it is now **documented once** in `drawing/chrome.rs` (with the rule a filler must follow — never re-derive a count from an attribute, which is what closed finding 5), not at each of the twelve producers. Closing it means teaching desugar the cascade or letting layout mint nodes; both are design calls beyond an audit. |
+| E | low | An exact hairpin (`right(10) left(10)`) traces the band twice in one subpath — even-odd renders nothing at all. | The degenerate root of A. Same ruling. |
+| F | low | A `\|wall\|` inside a nested layout-owning container inside a floorplan scope passes the vocabulary gate but the scale fold does not reach it, so it draws in raw units. | Consistent with the sealed-scope law (a nested `\|row\|` in a plain drawing arranges the same way), and finding 9's shared reader now converts correctly there (`unit:` defaults to mm). Worth a gate one day; not a regression. |
+
+#### Rejected (checked, not defects)
+
+- *"The stairs arrow lands **on** the far edge, not past the last tread."* The
+  `steps − 1` risers stop one pitch short of the edge, so the arrow **does**
+  run past the last tread. SPEC satisfied.
+- *"A slider's panels abut rather than overlap."* They sit on **opposite
+  faces** and read as one set passing the other — Phase 3's ruling against
+  both reference plans stands.
+- *"`FIXTURES` is restated in the ledger tables."* Declarative `match` / `&[…]`
+  data that cannot take a runtime slice, and `DISCRETES` has the identical
+  shape pre-existing. House precedent, not an oversight.
+- *"`\|dining\| { symbol: round; width: 3 }` stretches ⌀1200 into an ellipse."*
+  That is Phase 4's stated stretch law for every family; a per-family
+  exception would be the special-casing AGENTS.md forbids.
+
+#### Housekeeping verified
+
+`crates/lini-wasm/pkg` was rebuilt (`cargo xtask wasm`) after the sample
+change — the parity test fails misleadingly otherwise. `cargo xtask gen-schema`
+/ `gen-grammars` produce **no diff** (no `PROPERTIES` or template row moved).
+No file the branch touches is near the ~500 LOC line: `opening.rs` 380,
+`scale.rs` 353, `wall/mod.rs` 294, `wall/join.rs` 283, `fixtures/mod.rs` 218,
+`label.rs` 30. `desugar/scale.rs` doubled over the branch but stays one
+concept — *what the walk that knows `unit:` stamps* — and splitting the
+stamps away from that walk would read worse, so it was left whole and
+documented instead.
+
 ### Carry-over notes
+
+**For Phase 7 (visual polish):**
+- **Nothing the fixes changed needs re-judging** — every sample snapshot is
+  byte-identical except `floorplan_parts.lini`'s new `"D1"` tag in the last
+  DOORS cell (looked at, light; the sheet's composition is unmoved).
+- **The showpiece can now carry a door schedule.** Phase 5 dropped a trial
+  `"D1"` off the entry door because it seated in the gap; that is fixed, so
+  `D1` / `W1` tags are available if the plan wants them. They seat on the face
+  away from the swing and rotate with the wall — worth a look before adopting
+  on a north/south wall.
+- The Phase-5 cosmetic itches all stand, unchanged: the toilet reads thin at
+  1 : 50; the vanity slab under a `symbol: sink` shows three nested outlines;
+  the parts sheet's per-item smart labels sit at each body's own bottom, so a
+  row's captions are not on one baseline; the catalog's right column is empty
+  on two of six rows (the DOORS row is now full).
+- The **extension-line-origin** convention was left alone as instructed — the
+  samples keep the `point()` corner idiom.
+- `|dining| { symbol: round }` under a `width:` override draws an ellipse
+  (finding "rejected", above): if that ever reads badly it is a SPEC question
+  about the stretch law, not a family patch.
+
+**For whoever rules on the deferred findings (A–D above):** each is written up
+with its exact repro in the ledger; A/B/E want the user, C wants its own pass
+over the drawing engine's `ScaleCtx`, D wants a decision about where a chrome
+count may be read.
 
 ---
 
