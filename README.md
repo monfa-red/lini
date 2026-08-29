@@ -292,7 +292,8 @@ OKLCH under the hood, so the ramp is perceptually even; pick any colour the same
 .lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */
 ```
 
-Geometry is always baked, so a theme only ever changes colour. `--theme light|dark|high-contrast` pins one palette at export; `lini theme NAME` prints it as an editable `--lini-*` file; `--static` flattens to literals and outlines text to paths for non-browser renderers and email.
+Geometry is always baked, so a theme only ever changes colour. `--theme light|dark|high-contrast|blueprint` pins one palette at export
+(`blueprint` is the white-on-Prussian-blue print, for any diagram); `lini theme NAME` prints it as an editable `--lini-*` file; `--static` flattens to literals and outlines text to paths for non-browser renderers and email.
 
 **Backgrounds are opt-in.** An SVG drops straight into a page: it paints no backdrop unless the scene asks for one, so the page shows through. Give the root a `fill:` when you want a plate — `fill: --bg` for the themed one, any colour or `gradient(…)` for your own. `--static` is the exception: that output is a standalone file, so it bakes `--lini-bg` in.
 

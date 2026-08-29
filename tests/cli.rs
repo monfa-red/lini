@@ -107,6 +107,45 @@ fn a_theme_never_changes_layout() {
 }
 
 #[test]
+fn a_builtin_theme_round_trips_through_its_own_printed_css() {
+    // `lini theme blueprint > t.css` then `--theme t.css` must land the same
+    // palette: the printed file is the carrier the web path uses (a host page
+    // links exactly this CSS), so it has to be a faithful copy of the built-in.
+    let css = lini::builtin_css("blueprint").expect("built-in");
+    let src = "{ fill: --bg; }\n|box| \"x\"\n";
+    let direct = lini::compile_str_with(
+        src,
+        &Options {
+            theme_css: Some(css.clone()),
+            static_mode: true,
+            ..Default::default()
+        },
+    )
+    .expect("compile");
+    assert!(direct.contains("#002e5b"), "the paper bakes in: {direct}");
+    assert!(!direct.contains("var("), "{direct}");
+}
+
+#[test]
+fn a_themed_live_compile_stays_overridable_by_host_css() {
+    // The web/WASM path [SPEC 10.6/18]: without `--static` the theme lands as
+    // live `--lini-*` declarations inside `@layer lini.defaults`, and the rules
+    // keep their `var()`s — so unlayered host CSS (`:root, .lini { … }`, what
+    // `lini theme NAME` prints) re-themes the same SVG in the browser.
+    let svg = lini::compile_str_with(
+        "|box| \"x\"\n",
+        &Options {
+            theme_css: Some(lini::builtin_css("blueprint").expect("built-in")),
+            ..Default::default()
+        },
+    )
+    .expect("compile");
+    assert!(svg.contains("@layer lini.defaults"), "{svg}");
+    assert!(svg.contains("--lini-fill: #0f3d69;"), "{svg}");
+    assert!(svg.contains("fill: var(--lini-fill)"), "{svg}");
+}
+
+#[test]
 fn check_with_succeeds_on_valid_input() {
     let opts = Options::default();
     assert!(lini::check_with("|box| \"x\"\n", &opts).is_ok());

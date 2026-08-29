@@ -1840,3 +1840,208 @@ label sentence and its two new table rows — `stool` ⌀400 and `double-sink`
 - `draw.rs` is 262 LOC and `dims.rs` 480 — both still inside the ~500 LOC line,
   though `dims.rs` is now close enough that the next feature there should plan
   the split.
+
+---
+
+## Phase 10 — The blueprint theme (2026-08-29)
+
+**Goal**: one built-in theme that turns *any* diagram into the classic
+blueprint — white linework on Prussian blue — through the existing
+`--theme` mechanism, with the floorplan's black-on-white default (SPEC
+15.11) untouched. Plus a concrete answer to "does theming reach the
+web/WASM live render?".
+
+- [x] **`blueprint` built-in palette** in `src/theme.rs`: one more typed
+      palette behind `palette(name)`, no new machinery — collapse to a
+      single arm, then apply the role overrides, exactly as `light` /
+      `dark` / `high-contrast` do. `list_themes()` row added.
+- [x] **Every SPEC 10.1 role covered or deliberately passed through** —
+      audited by a test that compares the theme's var-name set against the
+      defaults', so a dropped role cannot silently fall back to black.
+- [x] **The hue-palette call** (SPEC 10.2): pass through as the **dark
+      arm**; rendered both arms side by side before deciding.
+- [x] **Rendered and looked at**: `floorplan`, `hero`, `charts`,
+      `schematic` at `--theme blueprint --static` → resvg → PNG, full size
+      and thumbnail; plus `text_tables`, `mindmap`, `sequence`, `icons`,
+      `drawing_sheet` as a coverage sweep, and a whole-`samples/` compile
+      sweep for errors. Finals in
+      `plans/refs-floorplan/final-renders/blueprint-*.png`.
+- [x] **The web/WASM answer**: proven in a real browser against the shipped
+      `crates/lini-wasm/pkg` artifact — recipe below.
+- [x] **`lini serve --theme NAME|FILE|A/B`** — the playground and the
+      file-mode preview compile through the same `Options.theme_css` the
+      CLI fills, via the same `theme_css_for` resolver.
+- [x] Tests (+5); `cargo fmt --all --check`, `cargo clippy --all-targets`,
+      `cargo test` clean.
+
+### Execution log
+
+2026-08-29, one session. Baseline **1464 passed / 0 failed** → after **1469
+/ 0** (+3 in `src/theme.rs`, +2 in `tests/cli.rs`). `cargo fmt --all
+--check` and `cargo clippy --all-targets`: clean. The wasm parity test
+**ran** (not skipped) and passes on the existing `pkg` — a new built-in
+palette moves no default-compile bytes, so no rebuild was owed.
+
+#### 1 · The palette
+
+Single-look (no `light-dark()`, so `to_css` emits no `color-scheme`): a
+blueprint is a blueprint in either mode. Chosen in OKLCH and judged by eye.
+
+| Role | Value | Why |
+|---|---|---|
+| `bg` / `sheet` | `#002e5b` | the paper — OKLCH (0.30, 0.093, 253), a true Prussian blue (the reference `#003153` is (0.30, 0.078, 246)) |
+| `fill` / `component-fill` | `#0f3d69` | L 0.355 — one clear step up from the paper, **opaque** so a body still masks what it overlaps and never reads as a white plate |
+| `fg` | `#edf5fb` | near-white, slightly cool |
+| `stroke-dark` | `white` | the primary drafting tone; a floorplan's poché fills with it (`ledger/defaults.rs`: `wall → fill: --stroke-dark`), so walls read solid white on blue |
+| `stroke` | `rgba(255,255,255,.78)` | the general outline |
+| `stroke-light` | `rgba(255,255,255,.45)` | support lines (centrelines, extensions, a door's swing arc) |
+| `accent` / `accent-text` | `#7adff7` / `#0a2c4e` | light cyan, with dark text on it (white on cyan would not read) |
+| `muted`, `caption-color`, `footer-color` | `rgba(255,255,255,.62)` | |
+| `group-stroke` / `group-fill` / `header-fill` / `icon-fill` / `grid` | white at .40 / .05 / .10 / .18 / .16 | washes, so a group or a table band tints the paper instead of covering it |
+| `danger` / `stray` / `warn` | `#f97770` / `#f3bd5c` | lifted into the light tones that read on blue |
+| `tip-bg` / `tip-fg` | `#edf5fb` / `#002e5b` | the tooltip inverts the paper, as in every theme |
+| `shadow-color` | `rgba(0,0,0,.18)` | a print is flat — a whisper, not a lift |
+| `wire` / `label-ink` / `pin-number` | `#a8d8f0` / `#7bd9de` / white .55 | schematic: wires and net tags as lighter tints of the pen, part outlines full white |
+
+**Passed through untouched** (deliberate, and asserted by the roster test):
+`text-color` (it is `var(--lini-fg)` and follows), `font-family`,
+`font-weight`, `caption-font-weight`, `link-font-weight` — not colours of
+the paper — and the whole named-hue palette.
+
+#### 2 · The hue call: the dark arm, decided by looking
+
+SPEC 10.2's hues are two internally-consistent designs (light: pale
+surface + dark ink; dark: deep surface + bright ink), so the theme has to
+pick an arm rather than mix tiers — mixing gives near-white ink on a
+near-white card. Both arms were rendered:
+
+- **Light arm** — charts were gorgeous (pastel chalk on blue), but a hue's
+  `-ink`, whose documented job is *text and emphasis*, sits at L 0.40 on a
+  paper at L 0.30: `text_tables`' coloured strings and `styled by |-|` were
+  barely legible, and hero's `-wash` cards read as bright plates pasted on
+  the blueprint rather than drawing on it.
+- **Dark arm** (chosen) — every hue takes its dark-mode job against a paper
+  one notch lighter than the dark default's (`#1b1b1f`, L 0.23): `-ink`
+  text reads straight on the paper, `-wash`/`-soft` still read as surfaces,
+  and hero's cards became part of the sheet. Charts get moodier jewel tones
+  but stay legible — every `-soft` fill carries its `-deep` edge (SPEC
+  14.6), which is what saves a blue-hue series on blue paper.
+
+The paper's lightness was pulled from a first pass at `#0d3a66` (L 0.345)
+down to L 0.30 for exactly this reason: at 0.345 a chart's `-soft` fill
+(dark arm, L 0.37) had nowhere to sit.
+
+#### 3 · The renders
+
+All four read as intended, full size and at thumbnail:
+
+- **floorplan** — the deliverable: white poché, white fixture linework over
+  `--bg`-filled bodies, translucent extension lines, dimension text white.
+  Unmistakably a blueprint at 0.3× too.
+- **hero** — hue cards recede into the sheet with bright ink text and
+  outlines; the `--gray-deep` link (the sample's own choice) reads as a
+  light grey line.
+- **charts** — titles, gridlines and axis labels are the pen; series keep
+  their hue separation; the one soft spot is a `|band|`'s low-opacity wash
+  (`fill: --amber` at the band opacity), which over dark paper reads as a
+  dark plate. That is translucency over a dark ground, identical under
+  `--theme dark`, not a blueprint defect.
+- **schematic** — pale-blue wires, white part outlines over the faint card,
+  cyan net tags; the sheet wash is the paper.
+
+#### 4 · The web / WASM answer (the deliverable recipe)
+
+**It works, live, with no compiler change.** A default (non-`--static`)
+compile keeps every `var(--lini-*)` in its rules and declares the palette
+inside `@layer lini.defaults` on `:root, .lini-scope-HHHHHHHH` (SPEC 18),
+so *unlayered* host CSS beats it with no `!important`. `lini theme
+blueprint` prints exactly that host CSS.
+
+```html
+<link rel="stylesheet" href="blueprint.css">   <!-- lini theme blueprint > blueprint.css -->
+<style>.paper { background: var(--lini-bg); }</style>
+<div class="paper" id="out"></div>
+<script type="module">
+  import init, { compile } from "./lini_wasm.js";
+  await init();
+  document.getElementById("out").innerHTML = compile(source);   // live var()s
+</script>
+```
+
+Two things this session verified in Chrome against the **shipped**
+`crates/lini-wasm/pkg` (lini 1.0.0-beta.5), three panels of the same wasm
+SVG on one page:
+
+1. The theme applies live — the figure came up full blueprint.
+2. **Per-figure theming works**, e.g. `#one .lini { --lini-bg: white; … }` —
+   that figure reverted to light while its neighbour stayed blue.
+3. **The trap**: the same declarations on a *wrapper element* do nothing.
+   The figure carries its own `--lini-*` declarations on the SVG element
+   (its `.lini-scope-…` rule), and a declaration on the element always beats
+   a value inherited from an ancestor — layer or no layer. So a host theme
+   must land on the SVG itself (`.lini`, which every figure keeps as the
+   host hook) or on `:root`. Both halves of the `:root, .lini` selector
+   `lini theme` prints are load-bearing: `.lini` re-themes the figure,
+   `:root` is what lets the surrounding page read `var(--lini-bg)` to paint
+   the paper.
+
+**The page must paint the paper.** SPEC 18's law — a figure paints no
+background it was not given — means white linework on an unpainted page is
+invisible. `--static` carries its own `--lini-bg` plate; a live figure needs
+one CSS line on its container (above), or a scene that says `fill: --bg`.
+
+**`--static` is the one path host CSS cannot reach** (values are baked, and
+`compile_static()` in wasm has no theme parameter). Server-side theming is
+the answer there, which is what the new flag gives the playground:
+
+```
+lini serve --theme blueprint samples/     # every served compile is themed
+```
+
+It resolves through the same `theme_css_for` the CLI uses into
+`Options.theme_css`, so `serve`'s dir mode (playground) and file mode both
+inherit it from `state.opts` with no new code in either.
+
+#### 5 · Tests
+
+- `src/theme.rs`: `blueprint_is_one_look_on_prussian_paper` (no
+  `light-dark()`, no `color-scheme`, the paper and the pen are right);
+  `blueprint_covers_the_whole_role_roster` (var-name set equals the
+  default palette's — the SPEC 10.1 audit, mechanized);
+  `blueprint_hues_are_the_dark_arm` (three tiers must match `dark`'s lines
+  verbatim — pins the pass-through call against a silent re-tune).
+- `tests/cli.rs`: `a_builtin_theme_round_trips_through_its_own_printed_css`
+  (what `lini theme blueprint` prints, fed back as `--theme FILE`, bakes
+  the same paper — the web recipe's carrier is faithful);
+  `a_themed_live_compile_stays_overridable_by_host_css` (the themed live
+  SVG keeps its `@layer` block *and* its `var()`s — the property the
+  browser recipe depends on).
+
+**SPEC vs built.** No SPEC edit made. Built-in theme names are code-level
+(SPEC 20 names them as examples), so `blueprint` owes none. **One line is
+owed** and left for the session lead alongside the SPEC 24 amendment: SPEC
+20's synopsis line `lini serve [--port N] [--static] [PATH]` should gain
+`[--theme NAME|FILE|A/B]` (the flag table's `--theme` row already covers
+the meaning).
+
+### Carry-over notes
+
+- **No blueprint hue variants.** The named hues pass through as the dark
+  arm; if a future theme wants its own hue ramp, that is a palette-level
+  feature (a seed table per theme), not a per-theme override list — do not
+  grow `blueprint()` into one.
+- **A `|band|`'s wash over dark paper** reads as a dark plate (charts,
+  above). Shared with every dark theme; if it is ever worth fixing, the fix
+  belongs in the band's opacity model, not in a theme.
+- **`compile_static()` in wasm has no theme parameter.** A browser that
+  wants a *themed baked* SVG (a download, a canvas rasterise) has no path
+  today except recompiling server-side. If that becomes real, the natural
+  shape is one optional theme-CSS argument on the wasm binding forwarding
+  into `Options.theme_css` — still the same one apply path, no new
+  mechanism.
+- **The playground has no theme picker**, deliberately: `--theme` on the
+  command line covers "show me this file in blueprint", and the host-CSS
+  recipe covers an embedder. A picker would be a second mechanism deciding
+  the same thing.
+- **`src/theme.rs` is now 394 LOC** — still inside the ~500 line, but the
+  next built-in should probably move the palettes into their own module.

@@ -46,6 +46,10 @@ enum Command {
         /// Bake CSS variables and outline text (for non-browser renderers).
         #[arg(long = "static")]
         static_mode: bool,
+        /// A theme for every served compile: a built-in name, a CSS file of
+        /// `--lini-*` overrides, or a light/dark pair. See `lini theme`.
+        #[arg(long = "theme", value_name = "NAME|FILE|A/B")]
+        theme: Option<String>,
     },
     /// Print a file lowered to primitives + .lini-* classes
     Desugar {
@@ -132,7 +136,8 @@ fn main() -> ExitCode {
             path,
             port,
             static_mode,
-        }) => return run_serve(path, port, static_mode),
+            theme,
+        }) => return run_serve(path, port, static_mode, theme.as_deref()),
         Some(Command::Desugar { input }) => return run_desugar(&input),
         Some(Command::Theme { name }) => return run_theme(name.as_deref()),
         None => match parsed.compile {
@@ -309,7 +314,7 @@ fn watch_loop(input: &Path, output: &Path, opts: &lini::Options, check_only: boo
     }
 }
 
-fn run_serve(input: Option<String>, port: u16, static_mode: bool) -> ExitCode {
+fn run_serve(input: Option<String>, port: u16, static_mode: bool, theme: Option<&str>) -> ExitCode {
     let target = match input {
         Some(p) => {
             let path = PathBuf::from(&p);
@@ -327,8 +332,18 @@ fn run_serve(input: Option<String>, port: u16, static_mode: bool) -> ExitCode {
             lini::ServeTarget::Dir(std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
         }
     };
+    // The served compiles carry the theme exactly as a `lini --theme` compile
+    // does — one apply path, so the preview shows what the file will ship as.
+    let theme_css = match theme {
+        Some(arg) => match theme_css_for(arg) {
+            Ok(css) => Some(css),
+            Err(code) => return code,
+        },
+        None => None,
+    };
     let opts = lini::Options {
         static_mode,
+        theme_css,
         ..Default::default()
     };
     match lini::serve(target, port, opts) {

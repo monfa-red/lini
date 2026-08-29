@@ -73,6 +73,10 @@ pub fn list_themes() -> &'static [(&'static str, &'static str)] {
         ("light", "the light palette alone"),
         ("dark", "the dark palette alone"),
         ("high-contrast", "maximal contrast, light + dark (a11y)"),
+        (
+            "blueprint",
+            "white linework on Prussian blue — the diazo print, one look",
+        ),
     ]
 }
 
@@ -120,6 +124,12 @@ fn palette(name: &str) -> Option<VarTable> {
         "light" => collapse(&mut v, 0),
         "dark" => collapse(&mut v, 1),
         "high-contrast" => apply(&mut v, &high_contrast()),
+        // One look in every mode: collapse to the dark arm — the paper is dark,
+        // so every hue takes its dark-mode job — then paint the paper over it.
+        "blueprint" => {
+            collapse(&mut v, 1);
+            apply(&mut v, &blueprint());
+        }
         _ => return None,
     }
     Some(v)
@@ -188,6 +198,60 @@ fn high_contrast() -> Vec<(&'static str, ResolvedValue)> {
         ),
         ("caption-color", ld(idn("black"), idn("white"))),
         ("footer-color", ld(idn("black"), idn("white"))),
+    ]
+}
+
+/// The blueprint — white linework on Prussian-blue paper, the diazo print look,
+/// one look in every mode. Only the black-and-white roles are repainted; the
+/// named-hue palette [SPEC 10.2] passes through as the **dark arm** it was
+/// collapsed to, since the paper sits at that arm's own lightness (OKLCH L 0.30
+/// against the dark default's 0.23): a hue's `-ink` still reads as text straight
+/// on the paper, and its `-wash` / `-soft` still read as surfaces over it — which
+/// the light arm's pale tiers, pasted on as bright plates, do not. `text-color`,
+/// the fonts and the weights are not colours of the paper: they pass through.
+fn blueprint() -> Vec<(&'static str, ResolvedValue)> {
+    // Linework is the paper's own white at strength — one pen, many pressures,
+    // so a line crossing a filled shape blends toward it instead of greying it
+    // (the reasoning behind `--lini-stroke-light` [SPEC 10.1]).
+    let pen = |a: f64| rgba(255.0, 255.0, 255.0, a);
+    vec![
+        // The paper: OKLCH (0.30, 0.093, 253) — Prussian blue, the diazo ground.
+        ("bg", hx("002e5b")),
+        ("sheet", hx("002e5b")),
+        ("fg", hx("edf5fb")),
+        // A body sits one step up from the paper (L 0.355) — opaque, so it still
+        // masks what it overlaps, and blue, so nothing reads as a white plate.
+        ("fill", hx("0f3d69")),
+        ("stroke", pen(0.78)),
+        // The primary drafting tone: full white. A floorplan's poché fills with
+        // it [SPEC 15.11], so walls read solid white on blue.
+        ("stroke-dark", idn("white")),
+        ("stroke-light", pen(0.45)),
+        ("accent", hx("7adff7")),
+        ("accent-text", hx("0a2c4e")),
+        ("muted", pen(0.62)),
+        ("danger", hx("f97770")),
+        ("warn", hx("f3bd5c")),
+        ("stray", hx("f97770")),
+        ("group-stroke", pen(0.4)),
+        ("group-fill", pen(0.05)),
+        ("header-fill", pen(0.1)),
+        ("icon-fill", pen(0.18)),
+        ("caption-color", pen(0.62)),
+        ("footer-color", pen(0.62)),
+        ("grid", pen(0.16)),
+        // The tooltip card inverts the paper, as it does in every theme.
+        ("tip-bg", hx("edf5fb")),
+        ("tip-fg", hx("002e5b")),
+        // A print is flat: the shadow is a whisper, not a lift.
+        ("shadow-color", rgba(0.0, 0.0, 0.0, 0.18)),
+        // The schematic roles [SPEC 16.6]: wires and net tags as lighter tints
+        // of the pen, part bodies the same faint card as any other fill.
+        ("wire", hx("a8d8f0")),
+        ("component-fill", hx("0f3d69")),
+        ("component-stroke", idn("white")),
+        ("label-ink", hx("7bd9de")),
+        ("pin-number", pen(0.55)),
     ]
 }
 
@@ -276,6 +340,49 @@ mod tests {
     #[test]
     fn unknown_theme_is_none() {
         assert!(builtin_css("nope").is_none());
+    }
+
+    #[test]
+    fn blueprint_is_one_look_on_prussian_paper() {
+        let css = builtin_css("blueprint").unwrap();
+        // A blueprint is a blueprint in either mode: no arms, no color-scheme.
+        assert!(!css.contains("light-dark("), "{css}");
+        assert!(!css.contains("color-scheme"), "{css}");
+        // The paper, and the pen a floorplan's poché fills with [SPEC 15.11].
+        assert!(css.contains("--lini-bg: #002e5b;"), "{css}");
+        assert!(css.contains("--lini-sheet: #002e5b;"), "{css}");
+        assert!(css.contains("--lini-stroke-dark: white;"), "{css}");
+    }
+
+    #[test]
+    fn blueprint_covers_the_whole_role_roster() {
+        // Every `--lini-*` the defaults carry [SPEC 10.1/10.2] survives the
+        // theme — a role dropped here would fall back to a light-mode default
+        // and paint black on the blue.
+        let names = |css: &str| -> BTreeSet<String> {
+            extract_lini_vars(css).into_iter().map(|(n, _)| n).collect()
+        };
+        let default = names(&builtin_css("default").unwrap());
+        let blueprint = names(&builtin_css("blueprint").unwrap());
+        // `font-family` is emitted commented out, so it is in neither set.
+        assert_eq!(default, blueprint);
+    }
+
+    #[test]
+    fn blueprint_hues_are_the_dark_arm() {
+        // The named-hue palette [SPEC 10.2] passes through: the paper is dark,
+        // so every hue takes its dark-mode job rather than a repainted one.
+        let bp = builtin_css("blueprint").unwrap();
+        let dark = builtin_css("dark").unwrap();
+        for line in ["--lini-teal-ink: ", "--lini-rose-soft: ", "--lini-amber: "] {
+            let of = |css: &str| {
+                css.lines()
+                    .find(|l| l.trim_start().starts_with(line))
+                    .unwrap()
+                    .to_string()
+            };
+            assert_eq!(of(&bp), of(&dark), "{line} must pass through");
+        }
     }
 
     #[test]
