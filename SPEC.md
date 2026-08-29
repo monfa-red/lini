@@ -2,8 +2,8 @@
 
 Pretty diagrams, charts, and technical drawings from plain text, with fine-grained
 control. One core — composable nodes, a CSS-driven cascade, compile-time layout —
-drives a family of layouts (flow, grid, tree, sequence, charts, and engineering
-drawings), and compiles to clean, themeable SVG.
+drives a family of layouts (flow, grid, tree, sequence, charts, engineering
+drawings, and floor plans), and compiles to clean, themeable SVG.
 
 This document is complete: an implementer can build a conforming engine from it
 alone. **Everything is defined once and reused** — a property, the cascade, colour,
@@ -841,6 +841,12 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|opamp\|` | `\|component\|` | `prefix: "U"` — pins `out` `inp` `inn`; power pins hidden | The amplifier triangle ([SPEC 16.2](#162-components--pins)). |
 | the **discretes** — `\|R\|` `\|C\|` `\|L\|` `\|D\|` `\|LED\|` `\|Q\|` `\|Y\|` `\|F\|` `\|FB\|` `\|SW\|` `\|BT\|` `\|V\|` `\|I\|` | `\|block\|` | symbol-bodied, generated pins, `symbol:` variants | The two/three-terminal parts; the type is the ref family ([SPEC 16.3](#163-discretes)). |
 | `\|gnd\|` / `\|nc\|` | `\|label\|` | `symbol: gnd` / `symbol: nc` | Built-in ground / no-connect defines ([SPEC 16.4](#164-labels)). |
+| `\|floorplan\|` | `\|drawing\|` | `layout: floorplan` | An architectural **floor plan** — the drawing engine in a dialect, so `\|drawing\|`-scoped rules dress it too ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
+| `\|wall\|` | `\|sketch\|` | `fill: --stroke-dark; stroke: none` — `draw:` traces the **centreline**; `thickness:` inherited (200 mm) | A **wall run** — offset to a solid (poché) outline at lowering; openings ride its `[ ]` ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
+| `\|partition\|` | `\|wall\|` | `thickness: 100` (mm — the true-size law, [SPEC 15.11](#1511-floorplan--the-architectural-dialect)) | The thinner interior wall — a define, nothing more. |
+| `\|door\|` | `\|block\|` | `on:` **required**; `width: 900` (mm); `hinge: start`; `swing: left` | A wall **opening** — gap + leaf + swing arc; `symbol: single / double / sliding` ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
+| `\|window\|` | `\|block\|` | `on:` **required**; `width: 1200` (mm) | A glazed wall opening — gap + sill lines ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
+| the **fixtures** — `\|bed\|` `\|sofa\|` `\|dining\|` `\|bath\|` `\|appliance\|` `\|stairs\|` | `\|block\|` | `stroke: --stroke-dark; stroke-width: 1; fill: --bg` — symbol-bodied, true-size mm defaults; `symbol:` variants (`\|stairs\|` takes none — `steps: N` **required**) | The furniture set — thin outline, masking what it overlaps ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -1515,6 +1521,7 @@ properties. This part is the family; each section states just its delta.
 | `chart` | data plane | series + axes + bands + marks ([SPEC 14](#14-charts)) | layout-time data→pixels | yes |
 | `pie` | part-to-whole | slices ([SPEC 14](#14-charts)) | layout-time value→angle | yes |
 | `drawing` | datum / geometry | geometry + annotations + mates ([SPEC 15](#15-drawing)) | layout-time dims / leaders | yes |
+| `floorplan` | the drawing engine, architectural dialect | walls + openings + fixtures + annotations ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) | layout-time dims / leaders | yes |
 | `schematic` | circuit sheet | anchors on tracks + satellites at pins ([SPEC 16](#16-schematic)) | orthogonal router, fixed ports | no — arranges in place |
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
@@ -1535,7 +1542,8 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
 2. **The wiring strategy realises a scope's links.** `flow` / `grid` / `tree` — and
    `schematic`, whose wires land on fixed ports ([SPEC 16.5](#165-wires)) — hand their
    links to the router ([SPEC 9](#9-links), [ROUTING.md](ROUTING.md)); `sequence` fixes each message's
-   geometry (column x, row y) and hands it to the `straight` strategy; a `drawing` lowers each link to a dimension, leader, or mate
+   geometry (column x, row y) and hands it to the `straight` strategy; a `drawing` — and its
+   `floorplan` dialect ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) — lowers each link to a dimension, leader, or mate
    ([SPEC 15](#15-drawing)); `chart` / `pie` have no links. One scope, one strategy — set by the
    scope's `layout` (with `routing:` selecting `orthogonal`, `natural`, or `straight` for the routed
    ones), and it governs that scope's **own** links only — an ordinary `|row|` / `|grid|`
@@ -1546,7 +1554,8 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    routing problem.
 
 3. **A layout-owning engine lowers to primitives in the layout phase.** `flow` / `grid`
-   arrange their children where they sit. `sequence` / `chart` / `pie` / `drawing` instead **read their
+   arrange their children where they sit. `sequence` / `chart` / `pie` / `drawing`
+   (`floorplan` included) instead **read their
    whole subtree** and emit an ordinary primitive tree — `|block|`s, `|line|`s, `|path|`s,
    text — at baked coordinates ([SPEC 19](#19-compile-pipeline)). So the cascade, palette, theming,
    gradients, `--static`, `fmt`, and determinism all apply to a chart, a sequence, or a drawing with
@@ -2269,6 +2278,9 @@ semantics need a drawing scope:
 
 Outside a drawing a `\|sketch\|` is just a shape; its authored `:segment`s are declared
 but dormant (a routed link landing on one is deferred — [SPEC 24](#24-deferred)).
+A **floorplan** is this same engine under an architectural vocabulary —
+[15.11](#1511-floorplan--the-architectural-dialect), the one subsection that is a
+dialect rather than a mechanism.
 
 ### 15.1 The container, the datum & the scale
 
@@ -2897,7 +2909,7 @@ over hatching and in every theme. Never over arrowheads, text, frames, or the
 contact region (a tip, a landing) — the crossing alone. The generated `|halo|`
 chrome rule restyles or removes them scope-wide (`|halo| { … }`), like all chrome.
 
-**Auto chrome — one mechanism, ten producers.** The lines drafting always draws are
+**Auto chrome — one mechanism, twelve producers.** The lines drafting always draws are
 **generated children**, so the cascade styles or removes them with no dedicated knobs
 (`|sketch| |centerline| { stroke: none }`):
 
@@ -2913,6 +2925,8 @@ chrome rule restyles or removes them scope-wide (`|halo| { … }`), like all chr
 | a `\|page\|` ([15.8](#158-assemblies-views-sheets--titles)) | the sheet chrome — the `\|frame\|`, the `\|zone\|` references, the `\|tick\|` dividers and centring marks |
 | annotation linework crossing geometry | its `\|halo\|` knockouts — the understroke break, above |
 | a sheet's **projection link** ([15.8](#158-assemblies-views-sheets--titles)) | its straight `\|projection\|` construction line |
+| a `\|door\|` / `\|window\|` ([15.11](#1511-floorplan--the-architectural-dialect)) | the leaf + quarter swing arc / the sill lines |
+| a `\|stairs\|` ([15.11](#1511-floorplan--the-architectural-dialect)) | its tread lines + the up arrow |
 
 ### 15.8 Assemblies, views, sheets & titles
 
@@ -3184,6 +3198,98 @@ seam 3). The **parser is scope-blind**: the ops and forms parse everywhere and
 The drawing property index — owners, value shapes, defaults — is the
 [Property Ledger](#17-property-ledger--support); each property's law lives in its
 subsection above.
+
+### 15.11 Floorplan — the architectural dialect
+
+`layout: floorplan` — and the `|floorplan|` template (`|drawing|`-based, so
+`|drawing|`-scoped rules dress a floorplan too) — **is the drawing engine**
+under another vocabulary: everything in this section applies unchanged (the
+datum, `scale:` / `unit:`, anchors, the pen, `pattern:`, dimensions, leaders,
+mates, sheets, hatch), and **every "drawing-scope only" rule reads a floorplan
+scope as a drawing scope** — the ops, `tol:`, the drafting symbols, and the
+[SPEC 21](#21-errors) gates hold unchanged. What the dialect adds is a
+**vocabulary with its own gate**: the floorplan types are legal only in a
+floorplan scope — a `|wall|` in a plain drawing errors like any scope type
+([SPEC 21](#21-errors)) — so each drafting language keeps its own completion
+surface, while every drawing-global mechanism (`|sketch|`, `|hole|`, `|note|`,
+`|page|`, …) stays welcome here. No new role variables.
+
+**True-size defaults.** A floorplan type's intrinsic sizes — a wall's
+`thickness:`, an opening's `width:`, every fixture body — are **physical
+millimetres**, converted to drawing units at desugar through the scope's
+`unit:` ([15.1](#151-the-container-the-datum--the-scale)): a bed is
+1500 × 2000 mm whether the file drafts in `m` or `mm`. An **authored** value is
+drawing units like everything else — at `unit: m`, a 100 mm partition reads
+`thickness: 0.1`.
+
+**Walls.** A `|wall|` is a `|sketch|` whose `draw:` traces the wall's
+**centreline** — named `:segment`s and all — and **`thickness:`** (inherits
+nearest-wins, like `unit:`; default 200 mm) grows it into the wall outline:
+each run offset **± thickness ∕ 2**, corners **mitred** (an acute spike bevels
+at miter limit 4), an arc offset to its concentric pair (an arc radius under
+thickness ∕ 2 errors), an **open** end butt-capped at its endpoint, a `close()`
+seam mitred like any corner; `curve()` in a wall's `draw:` errors
+([SPEC 21](#21-errors)). The outline **is** the wall's shape: it takes the
+paint — solid `--stroke-dark`, the poché read (`{ fill: --bg; stroke:
+--stroke-dark }` is the hollow double-line look, `fill: hatch(45)` a section
+convention — both show their junctions, where the solid default merges by
+paint order) — and it is the geometry bbox
+([15.1](#151-the-container-the-datum--the-scale)). In
+[15.10](#1510-lowering) step 1 the offset runs **after the `draw:` fold and
+before the bboxes**, and an opening clips it there — resolving against its
+already-folded parent, the one place a child reads down from its part.
+Anchors: `:segment`s read the **centreline** (dimensions station where
+architects measure), bbox points the **outline**; `|partition|` is the
+built-in 100 mm interior define ([SPEC 8](#8-templates)).
+
+**Openings.** A `|door|` / `|window|` rides in its wall's `[ ]`, stationed
+**on a straight named segment**: `on:` the segment, bare (the `thread:` shape,
+[15.3](#153-the-sketch-pen)); `at:` the near jamb's distance from the
+segment's start; `width:` the clear opening. The gap **clips the wall
+outline** at the two jambs — a profile clip, not `break:`
+([15.3](#153-the-sketch-pen)): the wall keeps its length, nothing compresses,
+no `|breakline|` draws, and each jamb closes flat across the thickness. An
+opening's own geometry is that jamb-to-jamb box — `width` × `thickness`,
+seated on the segment — so an id'd opening anchors a dimension at its centre
+(`outer:west (-) entry (-) outer:east`, the location chain along a wall); it
+is placed by `on:` / `at:` alone, so `translate:` on an opening errors.
+`hinge: start | end` picks the jamb by the segment's draw direction;
+`swing: left | right` the side the leaf opens toward — `left` is the left of
+the pen's travel, the named-edge convention ([15.5](#155-mates--seating)).
+The chrome is generated children in the thin tone
+([15.7](#157-leaders-notes--line-conventions)): a door's **leaf** — a line of
+length `width` from the hinge jamb, drawn at 90° open — and its quarter
+**swing arc**, radius `width`, sweeping leaf to closed; `symbol: double`
+splits two half-width leaves + arcs mirrored about the gap's centre;
+`symbol: sliding` draws two overlapping half-length panel lines offset to
+either face, no arc (`hinge:` / `swing:` on it error). A window draws two
+**sill lines** across the gap at the thickness's thirds — the double-glazing
+read. An opening past its segment, on a curved one, or overlapping another
+errors ([SPEC 21](#21-errors)).
+
+**Fixtures.** Six symbol-bodied types — the discretes' pattern
+([SPEC 16.3](#163-discretes)), their **smart label beside the body like a
+discrete's value** (an opening's is its schedule tag beside the gap; a
+`|floorplan|`'s is the drawing title it inherits,
+[15.8](#158-assemblies-views-sheets--titles); a `|wall|`'s keeps the sketch's
+centred read). `width` / `height` are floors as everywhere
+([SPEC 5](#5-the-box-model)) and the body **stretches** to the resolved box;
+`symbol:` picks the variant:
+
+| Type | `symbol:` | Body (mm) |
+|---|---|---|
+| `\|bed\|` | `double` *(default)* · `single` | 1500 × 2000 · 900 × 2000 |
+| `\|sofa\|` | `three` *(default)* · `two` · `corner` | 2200 × 900 · 1600 × 900 · 2400 × 2400 L |
+| `\|dining\|` | `six` *(default)* · `four` · `round` | the **tabletop** — 1800 × 900 · 1200 × 800 · ⌀1200 — its chairs (450 × 450, `six` 3 + 3 on the long sides, `four` 2 + 2, `round` 4 at the quadrants) extending the bbox |
+| `\|bath\|` | `tub` *(default)* · `shower` · `toilet` · `sink` | 1700 × 750 · 900 × 900 · 700 × 400 · 500 × 400 |
+| `\|appliance\|` | `stove` *(default)* · `fridge` · `washer` · `dishwasher` | 600 × 600 each |
+| `\|stairs\|` | — (`steps: N` **required**, ≥ 2) | 900 wide × N × 250 run; treads across the flight, the **up arrow** from the first tread past the last |
+
+A counter, island, desk, or coffee table is a plain `|rect|`; anything else is
+a `|sketch|` define — the parts-library escape
+([15.4](#154-features-holes--patterns)). A room name is plain sheet text
+(`"KITCHEN"`, an authored area beside it); computed room areas, curved-segment
+openings, and a north arrow are deferred ([SPEC 24](#24-deferred)).
 
 ---
 
@@ -3553,6 +3659,9 @@ boxes), but *not* by the sequence engine's placement of them on the time axis
 ([SPEC 11](#11-the-layout-model)). A `chart` / `pie` consumes its children into marks, so that
 case does not arise — hence `—`.
 
+A **`floorplan`** reads the `drawing` column — the same engine
+([SPEC 15.11](#1511-floorplan--the-architectural-dialect)).
+
 ### Universal properties
 
 Honoured on every drawn node, in every layout (a box; text takes the marked subset).
@@ -3617,7 +3726,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry default 2 — a straight segment; chart default 24). |
 | `path` | `\|path\|` | quoted SVG path | **required**; native top-left coords. |
 | `src` | `\|image\|` | quoted URL / data URI / local path | **required**; a local file embeds ([SPEC 7](#7-nodes)). |
-| `symbol` | `\|icon\|` · `\|surface-finish\|` · `\|label\|` · the discretes | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)) · a schematic symbol / variant ([SPEC 16.3](#163-discretes), [SPEC 16.4](#164-labels)). |
+| `symbol` | `\|icon\|` · `\|surface-finish\|` · `\|label\|` · the discretes · `\|door\|` and the floorplan fixtures (not `\|stairs\|`) | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)) · a schematic symbol / variant ([SPEC 16.3](#163-discretes), [SPEC 16.4](#164-labels)) · a floorplan variant ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
 | `fit` | `\|icon\|` `\|image\|` | `auto` · `contain` · `cover` · `stretch` | maps content into the box (size unchanged); `auto` default, `\|sign\|` `contain`. |
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
@@ -3628,14 +3737,14 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
-### Grid, tree, chart, pie, sequence, drawing & schematic properties
+### Grid, tree, chart, pie, sequence, drawing, floorplan & schematic properties
 
 Layout-owned — an error only where a hard gate exists ([SPEC 21](#21-errors)); otherwise inert
 out of scope.
 
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
-| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
+| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `column` | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid--tree) |
@@ -3649,7 +3758,7 @@ out of scope.
 | `hole` | `\|pie\|` | `0` ≤ n < `1` | 0 | [SPEC 14.7](#147-direction-radial--pie) |
 | `legend` · `tooltip` | `\|chart\|` `\|pie\|`, series (`tooltip`) | see [SPEC 14](#14-charts) | auto · auto | [SPEC 14](#14-charts) |
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
-| `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` · an opening (`\|door\|` / `\|window\|` — its station on `on:`'s segment) | `V` / `X Y` · `N [x-axis \| y-axis]` · `N` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles), [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` (`range` also a `\|band\|`'s extent — [SPEC 14.5](#145-bands--annotations)) | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
 | `format` | chart / drawing scope · `\|axis\|` · series · a dimension — **inherits** | `auto` (a chart tick to 4 decimals, a dimension to 2, zeros trimmed) · `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` · `fraction D` · date preset (`year`·`month`·`day`·`hour`·`minute`) | `auto` | presentation only, never measurement; composes before `unit:`, `tol:`, the `⌀`/`R`/`°` glyphs, and `N×` counts ([SPEC 14.4](#144-axes-scales--domain), [SPEC 15.6](#156-dimensions)) |
 | `side` (homonym: also an `\|axis\|`'s, above, and a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
@@ -3670,6 +3779,11 @@ out of scope.
 | `facing` | `\|plane\|` | `left`·`right`·`up`·`down` | by plane | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `of` | `\|drawing\|` | a `\|plane\|` / `\|magnifier\|` id | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `thickness` | a floorplan scope · `\|wall\|` — **inherits**, nearest wins | number > 0 | 200 mm | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
+| `on` | `\|door\|` `\|window\|` | a straight wall `:segment`, bare | — **required** | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
+| `hinge` | `\|door\|` | `start` · `end` | `start` | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
+| `swing` | `\|door\|` | `left` · `right` | `left` | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
+| `steps` | `\|stairs\|` | integer ≥ 2 | — **required** | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
 | `number` | `\|pin\|` | integer | — | [SPEC 16.2](#162-components--pins) |
 | `prefix` | `\|component\|` lineage, the discretes | quoted string | the type name (`\|component\|`: `"U"`) | [SPEC 16.2](#162-components--pins) |
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
@@ -3822,6 +3936,7 @@ families:
 | sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
+| floorplan | `lini-door-leaf` · `lini-door-swing` · `lini-window-sill` · `lini-stair-tread` · `lini-stair-arrow` ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)'s generated chrome) |
 | schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 | marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--anchors--satellites)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
@@ -3856,9 +3971,10 @@ defaults and any `|type| { }` element rule fold into a generated `.lini-<type> {
 class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`, and
 `|-|` (the link type) to `.lini-link` — the class every link wears; define bodies inline
 per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clearance`,
-`routing`, `density`) settle on the root; a drawing scope's `scale:` (the ratio) ×
-`unit:` × the root `density:` fold into its one internal px-per-unit
-([SPEC 15.1](#151-the-container-the-datum--the-scale)); the per-type smart label (text / caption / symbol / link
+`routing`, `density`) settle on the root; a drawing (or floorplan) scope's `scale:` (the ratio) ×
+`unit:` × the root `density:` fold into its one internal px-per-unit, and a
+floorplan type's mm defaults convert through the same `unit:`
+([SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 15.11](#1511-floorplan--the-architectural-dialect)); the per-type smart label (text / caption / symbol / link
 label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
 `a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
 concept; a schematic chain is the carve-out, cut only where its pass-through
@@ -3895,7 +4011,8 @@ box → content + `padding`; + half-`stroke-width` per side); arrange flow child
 out-of-flow children to their parent anchor (the parent never grows for them); compute
 gutters; apply `padding`; apply each node's `translate`; `rotate` last. A **layout-owning**
 container — `sequence` ([SPEC 13](#13-sequence)), `chart` / `pie`
-([SPEC 14.9](#149-lowering)), and `drawing` ([SPEC 15.10](#1510-lowering)) — instead
+([SPEC 14.9](#149-lowering)), and `drawing` / `floorplan` ([SPEC 15.10](#1510-lowering),
+[SPEC 15.11](#1511-floorplan--the-architectural-dialect)) — instead
 reads its whole subtree here and lowers it to primitives, **consuming its own links**,
 so the router never sees them.
 
@@ -4176,7 +4293,7 @@ error.
 | `break:` station off the profile | `'break' at N misses the profile` |
 | Overlapping `break:` groups | `'break' spans overlap — merge them` |
 | `break:` through a cubic | `a 'break' can't cut a 'curve()' — move the stations` ([SPEC 24](#24-deferred)) |
-| Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing'` (same for `(o)`, `(<)`, `\|\|`, corner anchors, `tol:`, …) |
+| Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)` (same for `(o)`, `(<)`, `\|\|`, corner anchors, `tol:`, …) |
 | Unknown endpoint | `dimension endpoint 'X' not found at <scope>` + suggestions — **never auto-created** |
 | Corner order | `':right-top' is not an anchor — did you mean ':top-right'?` |
 | `(>)` | `'(>)' is reserved — the angle op is '(<)'` |
@@ -4218,7 +4335,7 @@ error.
 | `project:` vs a directed anchor | `'project: vertical' conflicts with 'a:left' — the directed anchor reads horizontal` |
 | Unknown copy index | `no copy 'bolt.5' — the replication places 4` |
 | Duplicate datum letter | `datum 'A' is already placed (previously at L:C)` |
-| Drafting type outside a drawing | `'\|feature-control\|' annotates a drawing — it belongs in a 'layout: drawing'` (same for `\|surface-finish\|`, `\|control\|`, `\|datum\|`) |
+| Drafting type outside a drawing | `'\|feature-control\|' annotates a drawing — it belongs in a 'layout: drawing' (or its 'floorplan' dialect)` (same for `\|surface-finish\|`, `\|control\|`, `\|datum\|`) |
 | Unknown characteristic | `unknown characteristic 'flatnes'; did you mean 'flatness'?` |
 | Characteristic set twice | `a control's characteristic is its label or 'characteristic:', not both` |
 | Unknown finish variant | `'symbol' picks the vee — basic, machined, or prohibited` |
@@ -4250,6 +4367,21 @@ error.
 | Chain past a label | `a text callout ends its statement — chain before it` |
 | Mate in a flow scope | `a '\|row\|' places its own children — mates seat a drawing's` |
 | Empty drawing | `a drawing needs at least one geometry child` |
+
+**Layout — floorplan** ([SPEC 15.11](#1511-floorplan--the-architectural-dialect))
+
+| Condition | Message |
+|---|---|
+| Floorplan type outside the scope | `'\|wall\|' belongs in a 'layout: floorplan'` (every floorplan type) |
+| `on:` an unknown / curved segment | `'sout' is not a segment of this wall; did you mean 'south'?` · `an opening sits on a straight run — ':bay' is an arc` |
+| An opening off its segment | `'d2' at 1.8 + width 0.9 overruns 'side' (length 2.3)` |
+| Overlapping openings | `'entry' and 'w1' overlap on 'south'` |
+| An opening outside a wall's `[ ]` | `a '\|door\|' rides in its wall's '[ ]'` |
+| `translate:` on an opening | `an opening sits at 'on:' / 'at:' — move the station, or nudge the wall` |
+| `curve()` in a wall's `draw:` | `a wall bends with 'arc()' — 'curve()' has no offset` |
+| `hinge:` / `swing:` on a sliding door | `a sliding door has no leaf to hang — remove 'hinge:' / 'swing:'` |
+| An arc wall tighter than its thickness | `arc radius 40 is under thickness/2 — the inner face vanishes` |
+| Missing `on:` / `steps:` | required-property errors, as `points` on a `\|line\|` |
 
 **Layout — schematic** ([SPEC 16](#16-schematic))
 
@@ -4558,6 +4690,16 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 - **balloon auto-numbering and auto-BOM** from the scene's parts.
 - **`\|mark\|` / `\|note\|` in charts** — data-coordinate placement (`at:`).
 
+**Floorplans** ([SPEC 15.11](#1511-floorplan--the-architectural-dialect))
+
+- **computed room areas** — a room polygon read off the wall topology, its area the
+  smart label; today a room name and area are authored sheet text.
+- **openings on curved segments** — straight runs only today (an arced wall itself
+  is fine).
+- a **north arrow / scale bar** type (a `\|sketch\|` define covers it today).
+- more built-in fixtures (wardrobes, counter runs with an inset sink, door
+  casings / thresholds) — the `\|sketch\|`-define parts library is the escape.
+
 **Schematics** ([SPEC 16](#16-schematic))
 
 - **wire-seating** — placing a series chain's parts along the routed wire;
@@ -4577,7 +4719,10 @@ cycles); a true ring-radial tree and forest (multi-root) trees
 marker composing "VIEW A (2:1)" — an arrow defines no capture, so it is title sugar
 over a view's smart label; construction links are built,
 [SPEC 15.8](#158-assemblies-views-sheets--titles)); imports / modules / namespaces
-for shared themes and part libraries; animation; native PNG / WebP export.
+for shared themes and part libraries; a built-in **`blueprint` theme** — white
+linework on Prussian blue for `--theme blueprint` ([SPEC 20](#20-cli)) and the web
+runtime, applicable to any diagram (a floorplan's default stays black-on-white);
+animation; native PNG / WebP export.
 
 ---
 
@@ -4585,8 +4730,9 @@ for shared themes and part libraries; animation; native PNG / WebP export.
 
 One worked example per family; the full per-feature gallery is the repo's
 `samples/` directory (one tested `.lini` file per feature — tables and entities,
-gradients, icons, every chart kind, and the drawing set: tie bar with `break:`,
-bushing section, mated pump assembly, patterns, details, sheets).
+gradients, icons, every chart kind, the drawing set — tie bar with `break:`,
+bushing section, mated pump assembly, patterns, details, sheets — and a floorplan
+studio).
 
 **A scene — grid, defines, groups, nested links:**
 
@@ -4744,4 +4890,33 @@ db      --> api     "record"
     revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
   }
 ]
+```
+
+**A floorplan — a studio flat** ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)):
+
+```
+{ layout: floorplan; unit: m; scale: 0.02 }        // 1 : 50 — thickness defaults 200 mm
+
+|wall#outer| {
+  draw: move(0, 0) right(7.2):north down(4.8):east left(7.2):south close():west;
+} [
+  |door#entry| { on: south; at: 3.0; swing: right }      // width: the 900 mm default
+  |window#w1|  { on: north; at: 0.9; width: 1.8 }
+  |window#w2|  { on: north; at: 4.5; width: 1.8 }
+]
+|partition#bathwall| {
+  draw: move(4.9, 0) down(2.2) right(2.3):side;          // the bathroom corner
+} [
+  |door| { on: side; at: 0.6; hinge: end }
+]
+
+|bed|  { translate: 1.2 1.2; rotate: 90 }
+|sofa| { symbol: corner; translate: 2.0 3.3 }
+|bath| { symbol: toilet; translate: 5.5 0.5 }
+|bath| { symbol: shower; translate: 6.6 1.6 }
+|appliance| { symbol: fridge; translate: 0.5 4.3 }
+"STUDIO 27 m²" { translate: 2.6 2.4 }
+
+outer:west (-) outer:east { side: top }                  // → 7.2 — centreline to centreline
+outer:west (-) entry (-) outer:east { side: bottom }     // the door's location chain
 ```
