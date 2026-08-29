@@ -2258,3 +2258,194 @@ was tried first and read as a chair that had left the table).
   `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
   6–10 left them.
 
+
+## Phase 12 — Small art-direction round (user, 2026-08-29)
+
+**Goal**: six more adjustments the user asked for on `samples/floorplan.lini`.
+**Pure sample source** — no SPEC edit, no engine change, no symbol edit. If an
+item needs one, stop and report.
+
+- [x] **The balcony's ends pull back off the shell's outer faces** (7.0 m
+      "looks like going to neighbours' area"). The ask is the outer walls'
+      **centrelines** (6.8); Phase 11 logged a 100 mm corner notch there, so
+      render it and judge — the walls' **inner** faces (6.6) are in the same
+      spirit ("center of the outer walls, not the end"). Pick what reads
+      best, log the call.
+- [x] **The north arrow moves into the balcony** — sheet chrome, placed at a
+      low/empty end of the deck where it reads as no fixture, sized sensibly.
+- [x] **The balcony gets narrower** — 1.7 m is deep for a condo; try
+      ~1.3–1.4 m clear, keeping what reads right with `BALCONY` still fitting.
+- [x] **The dining set nudges north** so it centres better in the living zone
+      and clears the bedroom wall below, keeping clearance from the sofa and
+      the coffee table.
+- [x] **The W/D gets a home.** It floats alone in the hall corner — "a bit
+      unrealistic". Real units tuck a stacked W/D into a shallow closet:
+      (a) a `|partition|` stub + an existing wall making an alcove beside the
+      bathroom block, or (b) flush on the bathroom's west wall so it reads
+      built-in. Render both, pick by realism against the references, keep the
+      hall walkable.
+- [x] **D1 moves south along the east wall** so the kitchen run can extend
+      east to the east wall. The fridge does not move; only the counter grows,
+      filling from the fridge to the north-east corner. Mind D1's new swing
+      clearance, the east dimension chain, the `D1` tag riding along, and that
+      the run stays `|slab|` casework.
+- [x] Consequentials: dimension rows still honest; labels don't collide after
+      the moves; `--strict` clean; the floorplan conformance snapshot
+      re-blessed **only after looking** (full + 0.3 thumb, light **and** dark);
+      `final-renders/fp-*` and `blueprint-floorplan*` refreshed. Catalog
+      untouched.
+- [x] `cargo fmt` / `cargo test` / `cargo clippy --all-targets` clean; one
+      purposeful commit; never push.
+
+### Execution log
+
+2026-08-29, one session. **1469 passed / 0 failed** before and after — no test
+added or removed; the one snapshot that moved is
+`conformance__…@floorplan.lini.snap`, re-blessed after the visual pass below.
+`cargo fmt --all --check`, `cargo clippy --all-targets`, `lini fmt --check` and
+`lini --strict --check` on the sample: clean. **No SPEC edit made or owed, no
+`src/` line touched** — every change is nine lines of sample source.
+
+#### 1 · The balcony's ends: **6.6 m**, on the inner faces — the notch does jar
+
+Three lengths rendered at 1× and again as a 3× crop of *both* corners:
+
+| Height | Where the deck's end line lands | Read at 1× |
+|---|---|---|
+| 7.0 (as-was) | the shell's **outer** faces | flush — but the deck runs to the party wall's far side, which is the complaint |
+| 6.8 (asked) | the wall **centrelines** | the line dies into the **middle** of the wall's end face; a 100 mm sliver of poché stands past it and reads as an unfinished join |
+| **6.6** | the wall **inner** faces | the deck's end line is **collinear with the room's own inner face** — an alignment the eye can actually find, because that line is drawn |
+
+6.6 won. The deciding argument is that a centreline is not a line on this
+sheet: aligning to it buys an alignment nobody can see and costs a visible
+step, while the inner face is already inked the length of the plan. It also
+answers the complaint harder — at 6.8 two neighbouring decks still meet on the
+shared centreline; at 6.6 each stops inside its own party wall, so the party
+walls bracket the deck and 400 mm of daylight separates one unit's balcony
+from the next. `height: 6.6`, centre still `3.4` (the pull-back is symmetric).
+
+#### 2 · The north arrow, into the deck's south end
+
+`move(-0.8, 5.73)`, `"N"` at `-0.8 5.46` — the same arrow, unchanged in shape
+and size, translated 1.7 m east and 0.32 m north onto the balcony's empty
+southern third. **Size was tested, not assumed**: a 0.75-scale arrow (0.54 ×
+0.33) was rendered beside it at 1× and reads timid — the full 0.72 × 0.44 is
+about a third of the 1.4 m deck's width, which is chrome-sized, and it is the
+size that already worked in the margin, so moving it changes exactly one thing.
+The south end is right for two reasons: it is the sheet's own bottom-left,
+where a north point belongs, and it is the end no label competes for
+(`BALCONY` sits at mid-height). **The sheet got narrower**: the arrow at
+`x = -2.5` was what set the left edge, so the plan now starts at the deck.
+
+#### 3 · The balcony: **1.4 m** clear
+
+1.7 / 1.5 / 1.4 / 1.3 rendered side by side at 1×. 1.7 reads as another room;
+1.3 and 1.4 both read as a deck. 1.4 landed — at 1.3 the `BALCONY` label
+(≈ 0.7 m set) leaves only 0.3 m of air either side, and 1.4 m is a real
+Ontario condo balcony depth rather than a number chosen to fit a word. The
+label stayed **horizontal and full**: it needs half the deck's width, so
+neither the vertical set nor a short form was necessary. Deck and label both
+recentred to `x = -0.8`.
+
+#### 4 · The dining set, 2.6 → **2.2**
+
+2.6 (as-was) / 2.4 / 2.2 / 2.0 rendered as a four-up of the living zone. At
+2.6 the chairs sat 195 mm off the bedroom wall — a set backed against a wall;
+at 2.0 the top row draws level with the sofa's back and the pair reads
+crowded on the diagonal. **2.2** gives 595 mm below (a walkway from the slider
+to the hall) and 1.145 m above, and — the reason it beat 2.4 — it puts the
+set's centre on 2.2 against the island-plus-stools group's 2.26, so table and
+island sit on one band across the plan. Clearances: 850 mm to the coffee table,
+no overlap with the sofa in either axis, and the `LIVING / DINING` label stays
+put at `2.2 2.75` in clear floor.
+
+#### 5 · The W/D: option **(a)**, a stub making a 600 mm alcove
+
+`|partition#laundry| { draw: move(6, 6.8) up(0.8); }` and the W/D to
+`6.35 6.4`. The stub drops off the south wall's centreline and runs 0.8 m
+north; with the bathroom's own west wall it makes a recess **exactly 600 mm
+clear** — the appliance's width — 0.7 m deep, open to the hall, with the stub's
+tip standing 100 mm proud of the W/D's front as a reveal.
+
+Both options were rendered as a 3× crop of the hall's south-east corner. (b),
+flush on the bathroom wall with no stub, is better than the float but still
+reads as *a box pushed into a corner*: nothing encloses it. (a) reads as
+casework — three sides of wall and an open front — which is what both
+references draw (`158Front` puts the W/D in a stub-formed corner closet off the
+entry hall; `20sw-b1` gives it a closet sharing the bathroom's wall). The
+bathroom wall is also the wet wall, which is why real plans stack laundry
+against it. **No door**: the alcove's mouth is a gap between the stub's free
+end and the bathroom wall, not a run an opening could ride, and an open-front
+laundry closet is common enough that MINIMAL wins. **The hall stays walkable** —
+the alcove fills a dead-end pocket south of both D3 and D4; the 2.0 m hall
+width and every route through it are untouched.
+
+#### 6 · D1 south to 1.2, and the counter into the north-east corner
+
+`|slab| { width: 3.9; … translate: 7.55 0.4 }` — the run now goes from
+x 5.6 to **9.5, the east wall's inner face**, a straight extension, no L. The
+fridge did not move (`8.1 0.4`); it now has counter on both sides and reads as
+an appliance set into the run instead of the run's end, which is exactly
+`20sw-b1`'s kitchen. `|door#entry|` goes `at: 0.6` → **`at: 1.2`**, leaving a
+500 mm nib of wall between the counter's south-east corner and the near jamb.
+Checked in a 3× crop: the leaf hinges on the north jamb as before and its
+quarter arc sweeps a band at y 1.2–2.15 that clears the counter above (0.5 m)
+and the island to the west (0.35 m). The `D1` tag rode south with its opening
+and sits clear of both east dimension lines and of the `4` text.
+
+#### Consequentials swept
+
+- **Every dimension row is unchanged and re-verified in the render.** Nothing
+  this phase moved is an anchor: the rows read `outer:*`, `bedwall:side` and
+  `bathwall:head`, and no wall run moved. The east chain still reads 4.0 · 2.8
+  off `bathwall:head` at y = 4 — D1 was never one of its anchors, it only rides
+  beside them, so moving it costs the chain nothing. 9.6 (top), 4.6 · 5.0
+  (bottom) and the stacked 6.8 (right) are all as Phase 11 left them.
+- **The new stub carries no dimension and needs none** — it is 0.8 m of
+  casework framing, not a room boundary an architect would locate.
+- **No authored area changed.** The balcony has no `m²` label; the hall has
+  none; the three that do (23.9 / 12.8 / 7.3) bound rooms this phase did not
+  resize, and the 65 m² in the title is the interior.
+- **Label collisions checked after every move**: `BALCONY` and `N` recentred
+  with the deck, `LIVING / DINING` left where it was (still clear floor once
+  the set moved north), `HALL` clear of the alcove, `D1` clear of the dim rows.
+- The sample's own comments were updated where they now state something false —
+  the balcony no longer "runs the whole west face, corner to corner", the north
+  arrow no longer lives in the sheet's margin, the kitchen run turns the corner,
+  and D1's comment says why it is stationed where it is.
+
+#### Visual pass
+
+`--static` → `resvg`, read by eye. Comparisons: three balcony lengths at 1×
+plus a 3× crop of both corners; four balcony widths at 1×; four dining
+positions at 1×; two north-arrow sizes at 1×; the two W/D options as a 3× crop
+of the hall corner; a 3× crop of the kitchen through D1 and the dim rows.
+Finals: the sample at full size and `--zoom 0.3`, **light and dark** (four
+PNGs), and `--theme blueprint` at both sizes. `final-renders/` overwritten —
+`fp-{light,dark}{,-thumb}.png` and `blueprint-floorplan{,-thumb}.png`.
+`parts-*` and `spec25-*` were **not** re-rendered: the catalog and SPEC §25
+have no sample geometry in them, and this phase touched nothing else.
+
+What the looking changed: the balcony's end from the asked 6.8 to 6.6 (the
+notch is real), the deck's width from 1.3 to 1.4 (the label's air), the dining
+set from 2.0 to 2.2 (the island band), the north arrow's size back to
+unchanged, and the W/D from flush to alcoved.
+
+### Carry-over notes
+
+- **Phase 11's deck-edge note is now smaller but still open.** The deck's east
+  edge still sits on the west wall's outer face, so its line still shows
+  through `D2` and `W1`. Unchanged by this phase; the fix, if ever wanted, is
+  still a 50 mm inset in the sample.
+- **The laundry alcove has no door.** If the user wants one, it needs the
+  opening to ride a wall run — which would mean closing the mouth with a second
+  stub and hanging a 0.6 m door on it, or a SPEC ask for an opening that spans
+  between two free wall ends. Neither is worth it at 1:50 today.
+- **`crop-*.png` in `final-renders/` are Phase 7–9 evidence crops** and were
+  deliberately left as they were; they document findings, not the current
+  sheet.
+- Nothing user-reserved was touched: `mirror:` on a wall (Phase 6 finding A), a
+  negative `width:` (B), `scale:` inheritance into a nested drawing scope (C),
+  the chrome-count boundary (D), `radius:` being sheet-space pixels and
+  `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
+  6–11 left them.
