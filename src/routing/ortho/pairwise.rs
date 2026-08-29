@@ -22,12 +22,13 @@ pub(super) fn pairwise(
     prefs: &[f64],
     bounds: &[(f64, f64)],
     clearance: f64,
+    flat: bool,
 ) -> Vec<f64> {
     let n = cluster.len();
     let mut gaps: Vec<(usize, usize, f64)> = Vec::new();
     for i in 0..n {
         for j in i + 1..n {
-            let owes = owed(&cluster[i].0, &cluster[j].0, clearance, clearance);
+            let owes = owed(&cluster[i].0, &cluster[j].0, clearance, clearance, flat);
             if owes > 0.0 {
                 gaps.push((i, j, owes));
             }

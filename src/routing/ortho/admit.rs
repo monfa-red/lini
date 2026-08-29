@@ -58,9 +58,27 @@ pub(crate) fn admits(
                     let (a, b) = (&cluster[i].0, &cluster[j].0);
                     // The floor of the distance model: what the pair's
                     // diagonal needs at half-clearance separation.
-                    let floor = cluster::owed(a, b, clearance, min_pitch(clearance));
+                    // Judged on the drawn spans, so the diagonal is exact
+                    // here — never `flat`.
+                    let floor = cluster::owed(a, b, clearance, min_pitch(clearance), false);
                     let short = (ord(a.members[0]) - ord(b.members[0])).abs() + 1e-6 < floor;
                     short.then_some((i, j))
+                })
+            });
+            // A run's ordinate must also hold its own law bounds judged on
+            // the **drawn** spans: placement prices each run against the
+            // corridor of the span it currently believes, and a settle that
+            // then moves the far corner can leave the drawn span reaching
+            // past the void the ordinate was lawful in (links_medium at
+            // clearance 16 parked a jog over a keep-out that way — 5.5
+            // from a body, a Law-1 breach no pitch floor sees). The same
+            // `bound` placement clamps into, judged once more on the final
+            // geometry.
+            let broken = broken.or_else(|| {
+                (0..cluster.len()).find_map(|i| {
+                    let b = place::bound(&cluster[i]);
+                    let o = ord(cluster[i].0.members[0]);
+                    (o < b.0 - 1e-6 || o > b.1 + 1e-6).then_some((i, i))
                 })
             });
             let Some((i, j)) = broken else { continue };

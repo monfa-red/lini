@@ -36,16 +36,36 @@ use super::{Chain, Run, World};
 /// A run's ordinate preference and its hard port window, if any.
 type Pref = (f64, Option<(f64, f64)>);
 
-/// Assign every `Run::ord` in every chain — two rounds of the one pass,
-/// the second's answer standing. Geometry's provisional spans reach
-/// *estimates* of unplaced neighbours (a corridor anchor a jog may ladder
-/// well away from), so first-round contention is partly phantom: spans that
-/// touch only at a shared estimate charge pitch two wires never owe, and
-/// the relief valve can then compress a window with room to spare. The
-/// second round re-derives every span from the placed ordinates — the
-/// corners the polyline will actually take — and settles the real
-/// contention, the same probe-refine shape the search uses for learned
-/// closures. Deciding on refreshed truth, once.
+/// Assign every `Run::ord` in every chain — the one pass, probed and
+/// refined **to a fixed point**. A run's span tips are its corners — the
+/// *perpendicular* runs' ordinates — so every price placement quotes
+/// (the diagonal discount, a corridor's reassembled walls, the nesting
+/// walk's estimates) is a claim about the other axis's answer. The search
+/// hands over provisional spans, so first-round contention is partly
+/// phantom: spans that touch only at a shared estimate charge pitch two
+/// wires never owe, and the relief valve can then compress a window with
+/// room to spare. Each axis therefore settles against spans refreshed
+/// from the freshest placed ordinates ([`refresh_axis`] right before it —
+/// alternation, never a shared stale snapshot, which oscillates), and the
+/// loop stops the moment a full round reproduces its own premises,
+/// because only then is the refreshed truth *true*: a round that still
+/// moves ordinates has priced separations on corners the drawing won't
+/// have. Two rounds were once taken as enough; links_hard at gap 40 drew
+/// two runs `√(c²−g²)` apart on a gap `g` the second round's own later
+/// settle inverted into an overlap — sub-clearance with room to spare. At
+/// the fixed point every span equals its drawn extent and every owed
+/// pitch was judged on the final geometry.
+///
+/// A fixed point need not exist: the discount's gain is unbounded near
+/// tangency (`d√(p²−g²)/dg → ∞` as the gap nears the pitch), so two
+/// states can each price the other — links_hard at swept clearance 6
+/// two-cycles between the flat-charged and the discounted state forever.
+/// When the cap falls without convergence, the scene has *proved* the
+/// discount's premise unreachable, and placement reprices with the flat
+/// charge ([`cluster::owed`]'s `flat`) — full pitch for every contender,
+/// no tip read, so the tame map settles — trading a possibly-wider
+/// ladder for premises that cannot be inverted. Both legs are pure
+/// functions of the input, so Law 4 holds throughout.
 ///
 /// Corners, by contrast, never ride an estimate: a run's drawn extent
 /// follows wherever its neighbours finally land, so every ordinate is
@@ -55,9 +75,48 @@ type Pref = (f64, Option<(f64, f64)>);
 /// the free space it was priced in, no matter where a later round moves
 /// the far corner.
 pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
-    settle_axes(worlds, chains, clearance);
-    refresh_spans(chains);
-    settle_axes(worlds, chains, clearance);
+    if !settle_rounds(worlds, chains, clearance, false) {
+        settle_rounds(worlds, chains, clearance, true);
+    }
+}
+
+/// The refine loop at one pricing (`flat` as [`cluster::owed`]): rounds of
+/// per-axis refresh-and-settle until a full round reproduces its own
+/// premises. True on convergence; false when the cap fell — the last
+/// round standing either way.
+fn settle_rounds(
+    worlds: &[World],
+    chains: &mut [Option<Chain>],
+    clearance: f64,
+    flat: bool,
+) -> bool {
+    let mut prev: Option<Vec<f64>> = None;
+    for _ in 0..PLACE_ROUNDS {
+        for axis in [Axis::H, Axis::V] {
+            refresh_axis(chains, axis);
+            settle_axis(worlds, chains, clearance, axis, flat);
+        }
+        let now = ords_of(chains);
+        if prev.as_ref() == Some(&now) {
+            return true;
+        }
+        prev = Some(now);
+    }
+    false
+}
+
+/// Refine-round cap: every sample across the clearance sweep settles in two
+/// or three rounds; the cap only fences hypothetical cycling.
+const PLACE_ROUNDS: usize = 8;
+
+/// Every placed ordinate, flattened — the fixed-point test reads exact bit
+/// equality, so the loop stops on truth, never on a tolerance.
+fn ords_of(chains: &[Option<Chain>]) -> Vec<f64> {
+    chains
+        .iter()
+        .flatten()
+        .flat_map(|c| c.runs.iter().map(|r| r.ord.expect("settled run")))
+        .collect()
 }
 
 /// A run's lawful ordinate range: its port window intersected with the
@@ -104,43 +163,59 @@ fn corner_clamp(worlds: &[World], chain: &Chain, ri: usize) -> (f64, f64) {
 /// runs from their side line to the first corner, interior runs corner to
 /// corner (the segment extents [`super::geometry::polyline`] will draw).
 pub(super) fn refresh_spans(chains: &mut [Option<Chain>]) {
+    refresh_axis(chains, Axis::H);
+    refresh_axis(chains, Axis::V);
+}
+
+/// [`refresh_spans`] for one axis's runs alone — their tips are the
+/// *perpendicular* runs' ordinates, so refreshing `axis` right before it
+/// settles hands it the other axis's freshest answer. A tip whose
+/// neighbour is still unplaced (the first round's bootstrap) keeps the
+/// search's provisional span.
+fn refresh_axis(chains: &mut [Option<Chain>], axis: Axis) {
     for chain in chains.iter_mut().flatten() {
         let n = chain.runs.len();
         if n < 2 {
             continue;
         }
-        let ords: Vec<f64> = chain
-            .runs
-            .iter()
-            .map(|r| r.ord.expect("first round placed every run"))
-            .collect();
+        let ords: Vec<Option<f64>> = chain.runs.iter().map(|r| r.ord).collect();
         for (i, run) in chain.runs.iter_mut().enumerate() {
+            if run.axis != axis {
+                continue;
+            }
             let lo = if i == 0 {
-                chain.ends[0].side_coord()
+                Some(chain.ends[0].side_coord())
             } else {
                 ords[i - 1]
             };
             let hi = if i == n - 1 {
-                chain.ends[1].side_coord()
+                Some(chain.ends[1].side_coord())
             } else {
                 ords[i + 1]
             };
-            run.span = (lo.min(hi), lo.max(hi));
+            if let (Some(lo), Some(hi)) = (lo, hi) {
+                run.span = (lo.min(hi), lo.max(hi));
+            }
         }
     }
 }
 
-/// One placement pass: cluster, order, ladder, per (world, axis) in fixed
-/// order — preferences and the nesting walk read only static estimates, so
-/// the outcome is independent of that order, and deterministic.
-fn settle_axes(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
-    let (ests, by_axis) = collect(worlds, chains);
-    for (axis, mut items) in by_axis {
-        let axis = [Axis::H, Axis::V][axis as usize];
-        merge_fans(&mut items, chains);
-        for cluster in clusters_of(axis, items, worlds, clearance) {
-            settle(cluster, clearance, chains, &ests);
-        }
+/// One axis's settle: cluster, order, ladder over that axis's items alone,
+/// against the freshest spans ([`refresh_axis`]).
+fn settle_axis(
+    worlds: &[World],
+    chains: &mut [Option<Chain>],
+    clearance: f64,
+    axis: Axis,
+    flat: bool,
+) {
+    let (ests, mut by_axis) = collect(worlds, chains);
+    let Some(mut items) = by_axis.remove(&axis.index()) else {
+        return;
+    };
+    merge_fans(&mut items, chains);
+    for cluster in clusters_of(axis, items, worlds, clearance) {
+        settle(cluster, clearance, chains, &ests, flat);
     }
 }
 
@@ -305,6 +380,7 @@ fn settle(
     clearance: f64,
     chains: &mut [Option<Chain>],
     ests: &[Vec<f64>],
+    flat: bool,
 ) {
     let (prefs, cluster) = arrange(cluster, &*chains, ests);
 
@@ -317,7 +393,7 @@ fn settle(
     // the ordinate space.
     let mut seps: Vec<f64> = cluster
         .windows(2)
-        .map(|w| owed(&w[0].0, &w[1].0, clearance, clearance))
+        .map(|w| owed(&w[0].0, &w[1].0, clearance, clearance, flat))
         .collect();
     // The chain expresses this cluster only when it is chained whole:
     // every adjacent pair owes a real gap, and every farther pair's debt
@@ -333,7 +409,7 @@ fn settle(
     let chain_ok = seps.iter().all(|s| *s > 0.0)
         && (0..n).all(|i| {
             (i + 2..n).all(|j| {
-                owed(&cluster[i].0, &cluster[j].0, clearance, clearance)
+                owed(&cluster[i].0, &cluster[j].0, clearance, clearance, flat)
                     <= seps[i..j].iter().sum::<f64>() + 1e-9
             })
         });
@@ -375,7 +451,7 @@ fn settle(
     let ords = feasible
         .then(|| ladder(&prefs, &bounds, &seps))
         .flatten()
-        .unwrap_or_else(|| super::pairwise::pairwise(&cluster, &prefs, &bounds, clearance));
+        .unwrap_or_else(|| super::pairwise::pairwise(&cluster, &prefs, &bounds, clearance, flat));
     for ((item, _), ord) in cluster.iter().zip(&ords) {
         for &(ci, ri) in &item.members {
             chains[ci].as_mut().expect("placed chain").runs[ri].ord = Some(*ord);

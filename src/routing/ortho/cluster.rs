@@ -228,11 +228,23 @@ pub(super) fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
 /// pitch may share an ordinate (two collinear segments a clearance
 /// apart), and the flat charge that laddered such pairs apart — stage 6's
 /// recorded conservatism — is spent. The pair still couples ([`contend`]
-/// stays inclusive at exactly a clearance), so round two never forgets
+/// stays inclusive at exactly a clearance), so a refresh never forgets
 /// the contention; it just owes the truth.
-pub(super) fn owed(a: &Item, b: &Item, clearance: f64, pitch: f64) -> f64 {
+///
+/// `flat` revives the flat charge: full pitch for every contending pair,
+/// gap ignored. The discount's premise is the perpendicular axis's
+/// answer, so it is honest only at a placement fixed point; a scene the
+/// rounds prove has none ([`super::place`] — the discount's gain is
+/// unbounded near tangency, so two states can each price the other)
+/// reprices flat, whose charges don't read the tips at all. The
+/// admission probe never passes `flat`: it judges *drawn* spans, where
+/// the gap is the final geometry's own.
+pub(super) fn owed(a: &Item, b: &Item, clearance: f64, pitch: f64, flat: bool) -> f64 {
     if !contend(a, b, clearance) {
         return 0.0;
+    }
+    if flat {
+        return pitch;
     }
     let gap = (b.span.0 - a.span.1).max(a.span.0 - b.span.1).max(0.0);
     (pitch * pitch - gap * gap).max(0.0).sqrt()

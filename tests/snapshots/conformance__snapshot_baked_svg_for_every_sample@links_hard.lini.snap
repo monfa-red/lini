@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 60
 expression: svg
 input_file: samples/links_hard.lini
 ---
@@ -230,30 +231,30 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="113.6475,-24.5 104.6475,-20 104.6475,-29"/>
     </g>
     <g class="lini-link" data-from="hub" data-to="south.s1">
-      <mask id="lini-label-cut-1674ab92" maskUnits="userSpaceOnUse" x="-52.9875" y="2.7165" width="61.4165" height="143.2835"><rect class="lini-cut-bg" x="-52.9875" y="2.7165" width="61.4165" height="143.2835"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
-      <path d="M -28.3175 4.7165 L -38.9875 4.7165 A 12 12 0 0 0 -50.9875 16.7165 L -50.9875 60.25 A 12 12 0 0 0 -38.9875 72.25 L -5.571 72.25 A 12 12 0 0 1 6.429 84.25 L 6.429 140.5" mask="url(#lini-label-cut-1674ab92)"/>
+      <mask id="lini-label-cut-895fe350" maskUnits="userSpaceOnUse" x="-52.9875" y="3.9065" width="61.4165" height="142.0935"><rect class="lini-cut-bg" x="-52.9875" y="3.9065" width="61.4165" height="142.0935"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
+      <path d="M -28.3175 5.9065 L -38.9875 5.9065 A 12 12 0 0 0 -50.9875 17.9065 L -50.9875 60.25 A 12 12 0 0 0 -38.9875 72.25 L -5.571 72.25 A 12 12 0 0 1 6.429 84.25 L 6.429 140.5" mask="url(#lini-label-cut-895fe350)"/>
       <polygon class="lini-marker lini-marker-arrow" points="6.429,144.5 1.929,135.5 10.929,135.5"/>
     </g>
     <g class="lini-link" data-from="hub" data-to="west.w1">
-      <path d="M -28.3175 4.7165 L -31.2075 4.7165 A 12 12 0 0 1 -43.2075 -7.2835 L -43.2075 -26.61 A 9.89 9.89 0 0 0 -53.0975 -36.5 L -99.6925 -36.5"/>
+      <path d="M -28.3175 5.9065 L -31.2075 5.9065 A 12 12 0 0 1 -43.2075 -6.0935 L -43.2075 -26.61 A 9.89 9.89 0 0 0 -53.0975 -36.5 L -99.6925 -36.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="-103.6925,-36.5 -94.6925,-41 -94.6925,-32"/>
     </g>
     <g class="lini-link lini-style-cool" data-from="north.n2" data-to="east.e1">
-      <path d="M 12.9775 -144 L 12.9775 -94 A 12 12 0 0 0 24.9775 -82 L 44.4789 -82 A 27.8956 27.8956 0 0 1 72.3745 -54.1044 L 72.3745 -54.1044 A 5.6044 5.6044 0 0 0 77.9789 -48.5 L 109.6475 -48.5"/>
+      <path d="M 12.9775 -144 L 12.9775 -100 A 12 12 0 0 0 24.9775 -88 L 42.3405 -88 A 30.034 30.034 0 0 1 72.3745 -57.966 L 72.3745 -54.534 A 6.034 6.034 0 0 0 78.4085 -48.5 L 109.6475 -48.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="113.6475,-48.5 104.6475,-44 104.6475,-53"/>
     </g>
     <g class="lini-link lini-style-cool" data-from="north.n2" data-to="east.e1">
-      <path d="M 0.9775 -144 L 0.9775 -94 A 24 24 0 0 0 24.9775 -70 L 45.3235 -70 A 21.017 21.017 0 0 1 66.3405 -48.983 L 66.3405 -48.568 A 12.068 12.068 0 0 0 78.4085 -36.5 L 109.6475 -36.5"/>
+      <path d="M 0.9775 -144 L 0.9775 -100 A 24 24 0 0 0 24.9775 -76 L 45.3235 -76 A 21.017 21.017 0 0 1 66.3405 -54.983 L 66.3405 -48.568 A 12.068 12.068 0 0 0 78.4085 -36.5 L 109.6475 -36.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="113.6475,-36.5 104.6475,-32 104.6475,-41"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-9dfccfd3" maskUnits="userSpaceOnUse" x="-130.745" y="63" width="111.125" height="99.5"><rect class="lini-cut-bg" x="-130.745" y="63" width="111.125" height="99.5"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
-      <path d="M -128.745 65 L -128.745 115 A 12 12 0 0 0 -116.745 127 L -80.8108 127 A 22.3333 22.3333 0 0 1 -58.4775 149.3333 L -58.4775 149.3333 A 11.1667 11.1667 0 0 0 -47.3108 160.5 L -25.12 160.5" mask="url(#lini-label-cut-9dfccfd3)"/>
+      <mask id="lini-label-cut-e80a802d" maskUnits="userSpaceOnUse" x="-130.745" y="63" width="111.125" height="99.5"><rect class="lini-cut-bg" x="-130.745" y="63" width="111.125" height="99.5"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
+      <path d="M -128.745 65 L -128.745 115 A 12 12 0 0 0 -116.745 127 L -80.8108 127 A 22.3333 22.3333 0 0 1 -58.4775 149.3333 L -58.4775 149.3333 A 11.1667 11.1667 0 0 0 -47.3108 160.5 L -25.12 160.5" mask="url(#lini-label-cut-e80a802d)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,160.5 -30.12,165 -30.12,156"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-992f5589" maskUnits="userSpaceOnUse" x="-142.745" y="63" width="123.125" height="111.5"><rect class="lini-cut-bg" x="-142.745" y="63" width="123.125" height="111.5"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
-      <path d="M -140.745 65 L -140.745 115 A 24 24 0 0 0 -116.745 139 L -81.6442 139 A 11.1667 11.1667 0 0 1 -70.4775 150.1667 L -70.4775 150.1667 A 22.3333 22.3333 0 0 0 -48.1442 172.5 L -25.12 172.5" mask="url(#lini-label-cut-992f5589)"/>
+      <mask id="lini-label-cut-e4c8ab54" maskUnits="userSpaceOnUse" x="-142.745" y="63" width="123.125" height="111.5"><rect class="lini-cut-bg" x="-142.745" y="63" width="123.125" height="111.5"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/></mask>
+      <path d="M -140.745 65 L -140.745 115 A 24 24 0 0 0 -116.745 139 L -81.6442 139 A 11.1667 11.1667 0 0 1 -70.4775 150.1667 L -70.4775 150.1667 A 22.3333 22.3333 0 0 0 -48.1442 172.5 L -25.12 172.5" mask="url(#lini-label-cut-e4c8ab54)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,172.5 -30.12,177 -30.12,168"/>
     </g>
     <g class="lini-link" data-from="alpha" data-to="delta">
@@ -280,7 +281,7 @@ input_file: samples/links_hard.lini
     </g>
     <g class="lini-link" data-from="beta" data-to="gamma">
       <mask id="lini-label-cut-b2397a65" maskUnits="userSpaceOnUse" x="-213.5025" y="-211" width="320.28" height="428"><rect class="lini-cut-bg" x="-213.5025" y="-211" width="320.28" height="428"/><rect class="lini-cut" x="-76.9685" y="-97.8844" width="27.962" height="14.3"/><rect class="lini-cut" x="-72.7108" y="53.1" width="27.489" height="14.3"/><rect class="lini-cut" x="58.8493" y="72.7781" width="35.024" height="14.3"/></mask>
-      <path d="M 104.7775 -209 L 96.4425 -209 A 12 12 0 0 0 84.4425 -197 L 84.4425 -100.034 A 6.034 6.034 0 0 1 78.4085 -94 L -43.9875 -94 A 12 12 0 0 1 -55.9875 -106 L -55.9875 -135.75 A 7 7 0 0 0 -62.9875 -142.75 L -199.5025 -142.75 A 12 12 0 0 0 -211.5025 -130.75 L -211.5025 191 A 24 24 0 0 0 -187.5025 215 L -186.86 215" mask="url(#lini-label-cut-b2397a65)"/>
+      <path d="M 104.7775 -209 L 96.4425 -209 A 12 12 0 0 0 84.4425 -197 L 84.4425 -108.534 A 6.034 6.034 0 0 1 78.4085 -102.5 L -43.9875 -102.5 A 12 12 0 0 1 -55.9875 -114.5 L -55.9875 -135.75 A 7 7 0 0 0 -62.9875 -142.75 L -199.5025 -142.75 A 12 12 0 0 0 -211.5025 -130.75 L -211.5025 191 A 24 24 0 0 0 -187.5025 215 L -186.86 215" mask="url(#lini-label-cut-b2397a65)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-182.86,215 -191.86,219.5 -191.86,210.5"/>
     </g>
     <g class="lini-link" data-from="gamma" data-to="south.s1">
@@ -309,8 +310,8 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="180.65,209 189.65,204.5 189.65,213.5"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="west">
-      <path d="M 95.9425 0 L 72.3065 0 A 12 12 0 0 1 60.3065 -12 L 60.3065 -46 A 12 12 0 0 0 48.3065 -58 L -41.0975 -58 A 12 12 0 0 0 -53.0975 -46 L -53.0975 -14.6065 A 9.89 9.89 0 0 1 -62.9875 -4.7165 L -78.4875 -4.7165"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-82.4875,-4.7165 -73.4875,-9.2165 -73.4875,-0.2165"/>
+      <path d="M 95.9425 -0 L 72.3065 -0 A 12 12 0 0 1 60.3065 -12 L 60.3065 -52 A 12 12 0 0 0 48.3065 -64 L -41.0975 -64 A 12 12 0 0 0 -53.0975 -52 L -53.0975 -15.7965 A 9.89 9.89 0 0 1 -62.9875 -5.9065 L -78.4875 -5.9065"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-82.4875,-5.9065 -73.4875,-10.4065 -73.4875,-1.4065"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="hub">
       <path d="M 95.9425 12 L 45.7725 12"/>
