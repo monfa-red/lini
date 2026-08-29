@@ -187,19 +187,31 @@ pub fn template_base(name: &str) -> Option<&'static str> {
     TEMPLATES.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
 }
 
-/// Whether a written type name **is, or builds on,** `base` through the table
-/// above — the type-chain reading available before [`Types`] exists (the raw
-/// AST) and wherever only a name is in hand. A user define over one is caught
-/// downstream, where the resolved chain is known.
-pub fn derives_from(name: &str, base: &str) -> bool {
-    let mut walk = Some(name);
-    while let Some(n) = walk {
-        if n == base {
-            return true;
+/// The built-in **type chain** a template name wears — the name itself and each
+/// base above it, **derived → base**, stopping before the primitive (that is
+/// the node's `kind`, never a type; [`template_base`] of the last entry names
+/// it). Empty for a primitive or a name the table does not know.
+///
+/// The one walk of [`TEMPLATES`]: the type-chain reading available before
+/// [`Types`] exists (the raw AST, a root engine's worn classes) and wherever
+/// only a name is in hand. A user define over a template is caught downstream,
+/// where the resolved chain is known.
+pub fn template_chain(name: &str) -> Vec<&'static str> {
+    let mut out = Vec::new();
+    let mut cur = name;
+    while let Some((ty, base)) = TEMPLATES.iter().find(|(n, _)| *n == cur) {
+        out.push(*ty);
+        if crate::resolve::NodeKind::parse(base).is_some() {
+            break;
         }
-        walk = template_base(n);
+        cur = base;
     }
-    false
+    out
+}
+
+/// Whether a written type name **is, or builds on,** the template `base`.
+pub fn derives_from(name: &str, base: &str) -> bool {
+    name == base || template_chain(name).contains(&base)
 }
 
 /// A define may not take the name of a primitive, a template, the `link` rule

@@ -131,19 +131,14 @@ fn leak(s: &str) -> &'static str {
 }
 
 /// The built-in template's primitive kind and its base→derived chain (the
-/// primitive excluded — it is the kind), walked off the [`TEMPLATES`] table.
+/// primitive excluded — it is the kind), off the one [`TEMPLATES`] walk.
 fn template_chain(name: &str) -> (NodeKind, Vec<String>) {
-    let mut chain = vec![name.to_string()];
-    let mut cur = name;
-    loop {
-        let base = template_base(cur).expect("a built-in template has a base");
-        if let Some(kind) = NodeKind::parse(base) {
-            chain.reverse();
-            return (kind, chain);
-        }
-        chain.push(base.to_string());
-        cur = base;
-    }
+    let chain = crate::desugar::types::template_chain(name);
+    let last = chain.last().expect("a built-in template");
+    let kind = template_base(last)
+        .and_then(NodeKind::parse)
+        .expect("a template chain bottoms out at a primitive");
+    (kind, chain.iter().rev().map(|t| (*t).to_string()).collect())
 }
 
 fn example_for(name: &str) -> Option<&'static str> {

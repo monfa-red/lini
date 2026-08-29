@@ -455,8 +455,10 @@ impl<'a> Ctx<'a> {
             Owner::Universal | Owner::Root => true,
             // A layout-owned property reads on the root only when the root
             // *runs* that layout — `{ layout: flow; activation: none }` is the
-            // same misuse as `activation:` on a flow node [SPEC 21].
-            Owner::Layout(l) => *l == self.root_layout,
+            // same misuse as `activation:` on a flow node [SPEC 21]. A dialect
+            // runs its parent engine, so it reads through the same predicate
+            // the `Owner::Type` arm below does.
+            Owner::Layout(l) => crate::resolve::layout_reads(&self.root_layout, l),
             Owner::Link => false,
             Owner::Type(t) => scope_reads_type(&self.root_layout, t),
             Owner::Role(_) => false,

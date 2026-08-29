@@ -100,16 +100,10 @@ pub(super) fn root_facts(root_attrs: &AttrMap) -> Option<NodeFacts> {
             if l == "sequence" || crate::resolve::is_drawing_layout(l) || l == "schematic" =>
         {
             // Most-derived first, exactly as a node wears its chain [SPEC 18].
-            let mut classes: Vec<String> = Vec::new();
-            let mut ty = Some(l.as_str());
-            while let Some(name) = ty {
-                classes.push(format!("lini-{name}"));
-                ty = crate::desugar::types::template_base(name);
-                // The primitive base is the node's `kind`, never a type class.
-                if ty.is_some_and(|b| crate::resolve::NodeKind::parse(b).is_some()) {
-                    break;
-                }
-            }
+            let classes = crate::desugar::types::template_chain(l)
+                .into_iter()
+                .map(crate::desugar::classes::lini_class)
+                .collect();
             Some(NodeFacts { classes, id: None })
         }
         _ => None,

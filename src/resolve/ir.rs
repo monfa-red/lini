@@ -260,10 +260,10 @@ pub fn is_drawing_layout(name: &str) -> bool {
     matches!(name, "drawing" | "floorplan")
 }
 
-/// Whether a `layout:` name is the **floorplan dialect** [SPEC 15.11] — for the
-/// vocabulary gate and the dialect's own chrome alone. Everything mechanical
+/// Whether a `layout:` name is the **floorplan dialect** [SPEC 15.11] — the
+/// vocabulary gate's own question and nothing else's. Everything mechanical
 /// asks [`is_drawing_layout`]: a floorplan *is* a drawing.
-pub fn is_floorplan_layout(name: &str) -> bool {
+fn is_floorplan_layout(name: &str) -> bool {
     name == "floorplan"
 }
 
@@ -272,7 +272,7 @@ pub fn is_floorplan_layout(name: &str) -> bool {
 /// surface: a floorplan is a drawing, so `unit:` and the rest of the drawing's
 /// scoped property surface land there too. Directional — a plain drawing does
 /// not gain the dialect's vocabulary.
-pub fn layout_reads(scope: &str, owner: &str) -> bool {
+pub(crate) fn layout_reads(scope: &str, owner: &str) -> bool {
     scope == owner || (is_floorplan_layout(scope) && is_drawing_layout(owner))
 }
 
@@ -285,7 +285,7 @@ pub fn is_drawing(attrs: &AttrMap) -> bool {
 
 /// Whether resolved `attrs` open a **floorplan** scope [SPEC 15.11] — the
 /// vocabulary gate's container test, beside its drawing and schematic twins.
-pub fn is_floorplan(attrs: &AttrMap) -> bool {
+pub(crate) fn is_floorplan(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if is_floorplan_layout(l))
 }
 
