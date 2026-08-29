@@ -23,30 +23,24 @@
   // ── The shell. One centreline loop; `close():west` mitres the seam like any
   // other corner, and every opening below cuts its own gap out of the poché.
   |wall#outer| {
-    draw: move(0, 0) point():nw right(9.6):north point():ne down(6.8):east
-          point():se left(9.6):south point():sw close():west;
-    // the corner `point()`s are the dimension strings' feet — an extension
-    // line off a corner runs away from the plan, never through an opening
+    draw: move(0, 0) right(9.6):north down(6.8):east left(9.6):south
+          close():west;
   } [
-    |door#entry| { on: east; at: 0.6; width: 0.95; swing: right; }
+    |door#entry| "D1" { on: east; at: 0.6; width: 0.95; swing: right; }
     // hinged at the north jamb, opening into the flat
-    |door#slider| { on: west; at: 3.4; width: 2.4; symbol: sliding; }
+    |door#slider| "D2" { on: west; at: 3.4; width: 2.4; symbol: sliding; }
     // the balcony slider — two panels, no arc
     |window#w1| { on: north; at: 1; width: 2; }
     |window#w2| { on: north; at: 6.2; width: 1.6; }
-    |window#w3| { on: south; at: 6.6; width: 1.8; }
+    |window#w3| "W1" { on: south; at: 6.6; width: 1.8; }
   ]
 
-  |partition#bedwall| {
-    draw: move(0, 3.8) right(4.6):head down(3):side point():foot;
-  } [
-    |door#bed-door| { on: side; at: 0.4; width: 0.9; swing: right; }
+  |partition#bedwall| { draw: move(0, 3.8) right(4.6):head down(3):side; } [
+    |door#bed-door| "D3" { on: side; at: 0.4; width: 0.9; swing: right; }
     // 'right' of the pen's travel — the leaf opens into the bedroom
   ]
-  |partition#bathwall| {
-    draw: move(9.6, 4) point():tee left(2.9):head down(2.8):side;
-  } [
-    |door#bath-door| { on: side; at: 1; width: 0.8; hinge: end; }
+  |partition#bathwall| { draw: move(9.6, 4) left(2.9):head down(2.8):side; } [
+    |door#bath-door| "D4" { on: side; at: 1; width: 0.8; hinge: end; }
     // hung on the far jamb, and 'swing:' left by default — into the bathroom
   ]
 
@@ -97,13 +91,17 @@
   }
   |room| { translate: -0.95 4.78; } [ "N" ]
 
-  // ── Dimensions read the **centreline**, where architects measure.
-  outer:nw (-) outer:ne { side: top; }
+  // ── Dimensions read the **centreline**, where architects measure. A wall's
+  // named run is the anchor an architect names: an edge's extension line
+  // springs from the end nearest the dimension line [SPEC 15.2], so every
+  // witness line here leaves a corner and runs away from the plan — never
+  // down a wall face and through the openings in it.
+  outer:west (-) outer:east { side: top; }
   // → 9.6
-  outer:sw (-) bedwall:foot (-) outer:se { side: bottom; }
+  outer:west (-) bedwall:side (-) outer:east { side: bottom; }
   // → 4.6 · 5.0 — the bedroom wall, located along the south
-  outer:ne (-) bathwall:tee (-) outer:se { side: right; }
+  outer:north (-) bathwall:head (-) outer:south { side: right; }
   // → 4.0 · 2.8 — the bathroom wall, located along the east
-  outer:ne (-) outer:se { side: right; }
+  outer:north (-) outer:south { side: right; }
   // → 6.8 — the overall, stacked outside its own chain
 ]

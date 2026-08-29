@@ -153,6 +153,7 @@ pub(super) fn linear(
             frame,
             a: pa,
             b: pb,
+            edges: [a.edge_ends(), b.edge_ends()],
             text,
             seat,
             clearance,
@@ -214,6 +215,10 @@ pub(super) struct Stacked<'a> {
     pub frame: Frame,
     pub a: P,
     pub b: P,
+    /// Each anchor's edge ends, when it is a named **edge** [SPEC 15.2] — its
+    /// extension line springs from whichever end the dim line is nearer, not
+    /// from the representative point the arrows and the value read.
+    pub edges: [Option<(P, P)>; 2],
     pub text: DimText,
     pub seat: Seat,
     /// The dim's resolved stand-off minimum [SPEC 15.6] — the cascade's value
@@ -385,9 +390,11 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     let fits = p.fits;
 
     let mut out = Vec::new();
-    // Extension lines spring from the anchor points exactly [SPEC 15.2],
-    // with a small gap, and overshoot past the dim line.
-    for p in [s.a, s.b] {
+    // Extension lines spring from the anchor points exactly [SPEC 15.2] — an
+    // edge anchor's from the end the dim line is nearer — with a small gap,
+    // and overshoot past the dim line.
+    for (p, edge) in [(s.a, s.edges[0]), (s.b, s.edges[1])] {
+        let p = foot(p, edge, line_c, &f);
         let toward = (line_c - f.cross(p)).signum();
         let c0 = f.cross(p) + EXT_GAP * toward;
         let c1 = line_c + EXT_OVERSHOOT * toward;
@@ -413,6 +420,21 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     out.push(arrow(f.pt(u_hi, line_c), scale(along, -flip), paint));
     out.extend(value_texts(&s, p, line_c, paint));
     out
+}
+
+/// Where one extension line springs from [SPEC 15.2]. A named **edge** offers
+/// its two ends and the witness line leaves the one the dim line is nearer —
+/// the drafting convention, and what keeps it off the face it would otherwise
+/// travel (a wall opening shows straight through such a line, [SPEC 15.11]).
+/// Every other anchor springs from its representative point, which is also what
+/// the arrows and the measured value read either way.
+fn foot(point: P, edge: Option<(P, P)>, line_c: f64, f: &Frame) -> P {
+    let Some((a, b)) = edge else { return point };
+    if (f.cross(a) - line_c).abs() <= (f.cross(b) - line_c).abs() {
+        a
+    } else {
+        b
+    }
 }
 
 /// The dim's ISO-aligned value texts above the line [SPEC 15.6]: turned with

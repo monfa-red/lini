@@ -289,6 +289,18 @@ impl Anchor<'_> {
         self.to_world(self.local_point())
     }
 
+    /// An **edge** anchor's two ends in the drawing frame — where a dimension's
+    /// extension line may spring from instead of the midpoint [SPEC 15.2]:
+    /// the witness line leaves the corner nearest the dim line, never travels
+    /// the face. `None` for every anchor that is not a named edge (a point, an
+    /// arc, a bbox name), whose extension line springs from its point.
+    pub fn edge_ends(&self) -> Option<(P, P)> {
+        match &self.spot {
+            Spot::Segment(Segment::Edge(a, b)) => Some((self.to_world(*a), self.to_world(*b))),
+            _ => None,
+        }
+    }
+
     /// The representative point with any `break:` undone — the node's own and
     /// every ancestor's — what measured values read: *dimensions stay true*
     /// [SPEC 15.3/15.6].

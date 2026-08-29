@@ -398,8 +398,8 @@ every *built-in* size is true physical mm converted through `unit:`.
 { layout: floorplan; unit: m; scale: 0.02; density: 5 }   // 1:50, ~100 px per metre
 
 |wall#outer| {                                  // draw: is the CENTRELINE
-  draw: move(0, 0) point():nw right(7.2):north down(4.8):east
-        left(7.2):south point():sw close():west;
+  draw: move(0, 0) right(7.2):north down(4.8):east
+        left(7.2):south close():west;
 } [                                             // openings ride the wall's [ ]
   |door#entry| { on: south; at: 3; swing: right }        // width: 900 mm default
   |window|     { on: north; at: 0.9; width: 1.8 }
@@ -416,7 +416,7 @@ every *built-in* size is true physical mm converted through `unit:`.
 |appliance| "F" { symbol: fridge; translate: 0.5 4.3 }
 "KITCHEN" { translate: 6 1.4 }                  // room names are plain sheet text
 
-outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centreline
+outer:north (-) outer:south { side: left }      // → 4.8, centreline to centreline
 ```
 
 - **Walls.** `|wall|` is a `|sketch|` whose `draw:` traces the centreline;
@@ -439,7 +439,8 @@ outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centre
   `|stairs|` (`steps: N` required). `width`/`height` are floors that **stretch**
   the body. Each fills `--bg`, so furniture masks the floor under it. Two label
   seats: a fixture's smart label hangs **below** the body — leave air there —
-  but an `|appliance|`'s centres **inside** it (write `"F"` / `"DW"` / `"W/D"`).
+  but an `|appliance|`'s centres **inside** it (write `"F"` / `"DW"` / `"W/D"`);
+  either way it turns upright, so a tag on a right-to-left wall still reads.
 - **Everything else** is plain geometry: counters, islands, desks and coffee
   tables are `|rect|`s; a balcony deck, a north arrow or a scale bar is a
   `|sketch|`; room names and areas are sheet text placed with `translate:`.
@@ -447,8 +448,11 @@ outer:nw (-) outer:sw { side: left }            // → 4.8, centreline to centre
   that it is **sheet-space pixels**, not drawing units, so it does not scale
   with the plan (at 1:50 and `density: 5`, `radius: 4` is 40 mm).
 - **Dimensions** read the centreline, where architects measure. Anchor them on
-  `point():name` corner stations — an extension line off a corner runs away from
-  the plan instead of down a wall and through an opening.
+  the wall's own named runs (`outer:west (-) outer:east`): a named **edge**'s
+  extension line springs from the end nearest the dimension line, so it leaves a
+  corner and runs away from the plan, never down a wall face. Mind the axis —
+  an edge dimensions **across** itself, so a horizontal span names the two
+  vertical runs.
 
 ### Schematic
 

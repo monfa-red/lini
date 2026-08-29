@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/drawing_turned.lini
 ---
@@ -383,10 +382,10 @@ input_file: samples/drawing_turned.lini
         <use href="#lini-g1400-1660" transform="translate(-348.102 59.296) scale(0.012 -0.012)"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(99,-9.5)">
-        <line x1="-345" y1="-40.5" x2="-345" y2="75.5"/>
+        <line x1="-345" y1="-39" x2="-345" y2="75.5"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(99,-9.5)">
-        <line x1="-317" y1="-38" x2="-317" y2="75.5"/>
+        <line x1="-317" y1="-34" x2="-317" y2="75.5"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(99,-9.5)">
         <line x1="-359" y1="72.5" x2="-303" y2="72.5"/>
@@ -402,10 +401,10 @@ input_file: samples/drawing_turned.lini
         <use href="#lini-g1400-1656" transform="translate(-232.966 59.296) scale(0.012 -0.012)"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(99,-9.5)">
-        <line x1="-317" y1="-38" x2="-317" y2="75.5"/>
+        <line x1="-317" y1="-34" x2="-317" y2="75.5"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(99,-9.5)">
-        <line x1="-303" y1="-38" x2="-303" y2="75.5"/>
+        <line x1="-303" y1="-34" x2="-303" y2="75.5"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(99,-9.5)">
         <line x1="-331" y1="72.5" x2="-289" y2="72.5"/>

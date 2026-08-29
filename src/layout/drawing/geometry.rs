@@ -214,7 +214,14 @@ pub fn dist(a: P, b: P) -> f64 {
 /// the line's own angle folded into [-90, 90) so the text reads from the
 /// bottom / right — a vertical line's text turns exactly −90.
 pub fn iso_text_angle(dir: P) -> f64 {
-    let mut theta = math::atan2(dir.1, dir.0).to_degrees();
+    iso_upright(math::atan2(dir.1, dir.0).to_degrees())
+}
+
+/// The same rule stated on an angle already in degrees — what a label turned by
+/// its own node's frame folds through to stay readable ([SPEC 15.11]'s fixture
+/// and opening labels, which share 15.6's rule).
+pub fn iso_upright(deg: f64) -> f64 {
+    let mut theta = deg % 180.0;
     if theta < -90.0 {
         theta += 180.0;
     } else if theta >= 90.0 {

@@ -971,6 +971,45 @@ fn a_dim_row_clears_leader_texts() {
     );
 }
 
+#[test]
+fn an_edge_anchors_extension_line_leaves_the_end_nearest_the_dim_line() {
+    // Two 40-long vertical faces, 60 apart. A bottom-seated dim's witness
+    // lines spring from their **bottom** ends, a top-seated one's from
+    // their tops — never the midpoint the value still reads [SPEC 15.2].
+    let springs = |side: &str| {
+        let l = laid(&format!(
+            "{{ layout: drawing; density: 1 }}\n|sketch#a| {{ draw: move(0, -20) down(40):west right(60) up(40):east }}\na:west (-) a:east {{ side: {side} }}\n"
+        ));
+        let ys: Vec<f64> = l
+            .nodes
+            .iter()
+            .filter(|n| n.type_chain.iter().any(|t| t == "ext-line"))
+            .map(|n| {
+                crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
+                    .unwrap()
+                    .unwrap()[0]
+                    .1
+            })
+            .collect();
+        assert_eq!(ys.len(), 2, "two extension springs");
+        assert!(
+            (ys[0] - ys[1]).abs() < 1e-9,
+            "both feet on one line: {ys:?}"
+        );
+        // …and the measured value still reads off the representative
+        // points — the midpoints — untouched [SPEC 15.2].
+        let _ = text_at(&l.nodes, "60");
+        ys[0]
+    };
+    // Foot to foot is the face's whole 40 plus a gap either way — the
+    // midpoint reading would have left only the two gaps between them.
+    let (bottom, top) = (springs("bottom"), springs("top"));
+    assert!(
+        (bottom - top - 46.0).abs() < 1e-6,
+        "each witness line leaves its own end: bottom {bottom}, top {top}"
+    );
+}
+
 // ── The anatomy's class hooks [SPEC 18] ──
 
 #[test]

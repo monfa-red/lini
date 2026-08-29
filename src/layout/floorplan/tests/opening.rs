@@ -381,6 +381,35 @@ fn a_schedule_tag_seats_beside_the_gap() {
     );
 }
 
+/// A schedule tag stays **readable like dimension text** [SPEC 15.11] —
+/// ISO-aligned, from the bottom or the right, never upside-down: on a wall
+/// drawn east → west the opening's frame is turned a half turn, and the tag
+/// takes that half turn back.
+#[test]
+fn a_schedule_tag_on_a_right_to_left_wall_still_reads_upright() {
+    let turn = |draw: &str| {
+        let l = laid(&format!(
+            "{{ layout: floorplan; density: 1; thickness: 2 }}\n\
+             |wall#w| {{ draw: {draw} }} [\n  |door#d| \"D1\" {{ on: run; at: 3; width: 4 }}\n]\n"
+        ));
+        let d = by_id(&l.nodes, "d");
+        let t = d
+            .children
+            .iter()
+            .find(|c| c.kind == crate::resolve::NodeKind::Text)
+            .expect("the schedule tag");
+        (d.rotation, t.attrs.number("rotate").unwrap_or(0.0))
+    };
+    assert_eq!(
+        turn("move(0, 0) right(10):run;"),
+        (0.0, 0.0),
+        "a wall drawn west → east turns nothing"
+    );
+    let (frame, back) = turn("move(10, 0) left(10):run;");
+    assert_eq!(frame, 180.0, "the opening rides the segment's bearing");
+    assert_eq!(back, -180.0, "and the tag reads the other way up");
+}
+
 /// The chrome **count** is the authored decls' [SPEC 15.7], so a filler reads
 /// the children it was given and never re-derives the count from the cascade:
 /// a rule-borne `symbol: double` draws the single door desugar generated, not

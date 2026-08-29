@@ -41,6 +41,8 @@ pub(in crate::layout) struct Body {
     /// `|appliance|` labelled-box convention; every other fixture reads its
     /// label beside the body, like a discrete's value.
     inside: bool,
+    /// The fixture's own turn — what its label takes back to stay readable.
+    rot: f64,
 }
 
 /// Lay out a fixture's body [SPEC 15.11], or `None` for a node that is not
@@ -67,6 +69,7 @@ pub(in crate::layout) fn plan(inst: &ResolvedInst, own: f64) -> Result<Option<Bo
         px,
         steps,
         inside: ty == "appliance",
+        rot: inst.attrs.number("rotate").unwrap_or(0.0),
     }))
 }
 
@@ -78,8 +81,12 @@ pub(in crate::layout) fn finish(children: &mut [PlacedNode], body: &Body) {
     if let Some(steps) = body.steps {
         flight(children, body, steps);
     }
-    if !body.inside {
-        super::label::seat(children, body.size.1 / 2.0, 1.0);
+    // An `|appliance|`'s label keeps the `|block|`'s centred seat and only
+    // turns upright; every other fixture's reads beside the body.
+    if body.inside {
+        super::label::upright(children, body.rot);
+    } else {
+        super::label::seat(children, body.size.1 / 2.0, 1.0, body.rot);
     }
 }
 

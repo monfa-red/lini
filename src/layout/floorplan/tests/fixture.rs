@@ -177,6 +177,16 @@ fn the_smart_label_reads_beside_the_body_and_inside_an_appliance() {
     let (x, y, _) = text_at(&l.nodes, "DW");
     let f = by_id(&l.nodes, "f");
     assert_eq!((x, y), (f.cx, f.cy), "centred in the box it names");
+    // Either seat stays readable however the fixture is turned [SPEC 15.11].
+    let l = laid(&plan(
+        "|appliance#f| \"DW\" { symbol: dishwasher; rotate: 180 }\n",
+    ));
+    let t = by_id(&l.nodes, "f")
+        .children
+        .iter()
+        .find(|c| c.kind == NodeKind::Text)
+        .expect("the label");
+    assert_eq!(t.attrs.number("rotate"), Some(-180.0), "upright in the box");
 }
 
 /// A fixture datum-places and turns like any drawing geometry [SPEC 15.4] —

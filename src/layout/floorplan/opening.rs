@@ -151,7 +151,7 @@ pub(super) fn place(children: &mut [PlacedNode], stations: &[Station], thickness
         // The schedule tag stands **beside** the gap [SPEC 15.11], on the face
         // the leaf never sweeps — the fixture label's own seat, shared.
         let (_, swing) = pose(node);
-        super::label::seat(&mut node.children, thickness / 2.0, -swing);
+        super::label::seat(&mut node.children, thickness / 2.0, -swing, st.bearing);
     }
 }
 

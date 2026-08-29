@@ -265,6 +265,8 @@ fn station(
             frame: Frame::axis(axis),
             a: s.disp.0,
             b: s.disp.1,
+            // A ⌀ span is read across a round feature, never off a named edge.
+            edges: [None, None],
             text,
             seat: Seat::Row(side),
             clearance: dim_clearance(&w.attrs),
