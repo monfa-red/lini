@@ -2106,8 +2106,8 @@ One smart-label rule, placed by where the label sits: on the `|chart|` / `|pie|`
 **title** (a caption above the plot); on a series / `|slice|` → a **legend** entry with a
 swatch **mirroring its paint** (fill and edge); on an `|axis|` → the **axis title**; on a
 `|band|` → a **tick** tinted its `fill`; on a `|mark|` → the annotation's **label**. A
-legend appears automatically at ≥ 2 entries; `legend:` will position or
-suppress it — writing it is an error until then ([SPEC 24](#24-deferred)). **`gap:`**
+legend appears automatically at ≥ 2 entries (`legend:` is deferred —
+[SPEC 24](#24-deferred), [14.1](#141-the-chart-plane)). **`gap:`**
 sets the plot-to-title/legend clearance (default 10; `gap: 0` ≈ touching). The chart sets its
 **chrome** — title and legend — in **semibold**, while its **data text** — axis ticks, per-datum labels,
 annotation labels — stays **normal** weight, so the numbers read quietly beneath the captions.
@@ -2304,8 +2304,7 @@ units**; three settings turn them into pixels and paper:
   `m`, or `in`. Inherits nearest-wins (state it once, on the page); semantic only
   in drawing scopes — a `|sketch|` in a flow diagram stays pixel-space
   (`right(300)` is 300 px). Displaying a unit suffix on measured values is
-  presentation — `format:`'s territory ([SPEC 17](#17-property-ledger--support));
-  drafting states units once, in the title block.
+  presentation — `format:`'s territory ([15.6](#156-dimensions)).
 - **density** — pixels per millimetre: `density: N` on the **root** only, default
   **4**. Non-semantic — it sets screen/raster resolution and nothing else: print
   stays true-scale regardless ([SPEC 18](#18-svg-output)), and no measured value,
@@ -3975,30 +3974,36 @@ A reference pipeline; implementations may differ if the observable output matche
 bracket-and-bars vocabulary (`|…|` identity, `{ }` style, `[ ]` content) resolves every
 statement with one token of lookahead — no type-set prescan ([SPEC 22](#22-grammar)).
 
-**Desugar.** Lower all surface sugar to primitives + classes — the engine's true input.
-Each template/define instance becomes its base primitive wearing a `.lini-*` class
-chain (derived→base→primitive, down to `block` for every rectangular type); a type's
-defaults and any `|type| { }` element rule fold into a generated `.lini-<type> { … }`
-class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`, and
-`|-|` (the link type) to `.lini-link` — the class every link wears; define bodies inline
-per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clearance`,
-`routing`, `density`) settle on the root; a drawing (or floorplan) scope's `scale:` (the ratio) ×
-`unit:` × the root `density:` fold into its one internal px-per-unit, and a
-floorplan scope's `unit:` is stamped for its types' mm defaults to convert
-through where each is read
-([SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 15.11](#1511-floorplan--the-architectural-dialect)); the per-type smart label (text / caption / symbol / link
-label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
-`a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
-concept; a schematic chain is the carve-out, cut only where its pass-through
-resolved, [SPEC 16.5](#165-wires)), a tree's branch links, `.lini-level-N` classes, and a mindmap's
-palette-walk rules ([SPEC 12](#12-flow-grid--tree)), link auto-create (an
-undeclared endpoint `x` → `|box#x| "x"`), **capsule hoisting** (an endpoint
-capsule → a declaration at the statement's position + a reference,
-anonymous ones under minted `lini-cap-N` ids — [SPEC 9](#capsule-endpoints)),
-and the schematic lowerings — pin rails, ref readouts and minted display
-refs, label-wire minting (`U7.DIAG - "NSTDBY"` → a `|label|` + its wire),
-and the scope's look rules ([SPEC 16](#16-schematic)) — become explicit. The pass is idempotent; type-system errors (cycle, depth > 16, a define
-shadowing a built-in) surface here.
+**Desugar.** Lower all surface sugar to primitives + classes — the engine's true
+input. The pass is idempotent; type-system errors (cycle, depth > 16, a define
+shadowing a built-in) surface here. What becomes explicit:
+
+- *Types & rules:* each template / define instance becomes its base primitive
+  wearing a `.lini-*` class chain (derived → base → primitive, down to `block`
+  for every rectangular type); a type's defaults and any `|type| { }` element
+  rule fold into a generated `.lini-<type> { … }` class; a `|table| |box| { }`
+  descendant rule rewrites to `.lini-table .lini-box { }`, and `|-|` (the link
+  type) to `.lini-link` — the class every link wears; define bodies inline per
+  instance.
+- *Scene config:* the scene defaults (`layout`, `padding`, `gap`, `font-size`,
+  `clearance`, `routing`, `density`) settle on the root; a drawing (or
+  floorplan) scope's `scale:` (the ratio) × `unit:` × the root `density:` fold
+  into its one internal px-per-unit, and a floorplan scope's `unit:` is stamped
+  for its types' mm defaults to convert through where each is read
+  ([SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 15.11](#1511-floorplan--the-architectural-dialect)).
+- *Statements:* the per-type smart label (text / caption / symbol / link label /
+  chart title …); auto-`along:`; chain expansion (`a -> b -> c` →
+  `a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve /
+  routing concept; a schematic chain is the carve-out, cut only where its
+  pass-through resolved, [SPEC 16.5](#165-wires)); a tree's branch links,
+  `.lini-level-N` classes, and a mindmap's palette-walk rules
+  ([SPEC 12](#12-flow-grid--tree)); link auto-create (an undeclared endpoint
+  `x` → `|box#x| "x"`); and **capsule hoisting** (an endpoint capsule → a
+  declaration at the statement's position + a reference, anonymous ones under
+  minted `lini-cap-N` ids — [SPEC 9](#capsule-endpoints)).
+- *Schematic lowerings:* pin rails, ref readouts and minted display refs,
+  label-wire minting (`U7.DIAG - "NSTDBY"` → a `|label|` + its wire), and the
+  scope's look rules ([SPEC 16](#16-schematic)).
 
 **Resolve** (top-to-bottom):
 
@@ -4524,29 +4529,35 @@ endpoint forces a side (`a:left`), distinct from the declaration `:` by position
 relaxation.** Charts and sequences add
 **no** lexer or parser grammar — they are nodes, declarations, and children, distinguished
 by type name and by the scope's `layout` ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)).
-The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly: the four `draw_op` tokens —
-glued, like every link op; `||` is resolved in the parser from two **adjacent** pipes at
-**operator position only**, so bars stay paired and selectors are untouched — the
-**one-ended relaxation** (the right-hand endpoints may be omitted for `<-`, `*-`,
-`>-`, `(<)`, and **must** be for the unary-only `(o)` — and, meaning only in a
-schematic scope, the wire ops `-` `->` `-<` `-<>` `-*` may stand one-ended
-before a string or capsule, the label wire of [SPEC 16.5](#165-wires); one
-token of lookahead decides — after the op, an ident or a `|` opens an
-endpoint (bars: a capsule); a string, `.`, `{`, `[`, or
-end-of-statement is the tail; the binary `(-)` and `||`
-require both ends), the widened endpoint `point` set in drawing scope, the numeric
-**copy `index`** in an endpoint path (`plate.bolt.2` — the lexer glues `.` + digits
-in endpoint position only, so `1.5` in value position stays a number), the `(-)`
-dimension-family `sel_unit` at a stylesheet statement head (a leading `(` there is
-unambiguous — calls and groups appear only in value position), the annotation
-**node** among a `label_block`'s labels (parsed everywhere, *meaning* only on a
-drawing's dimensions and leaders — a core routed link's `[ ]` stays text-only and
-a node there errors at resolve, [SPEC 15.9](#159-drafting-symbols--annotation-composition)),
-and the `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
-free-standing `(…)` is a math group and a free-standing `(-)`, `(o)`, or `(<)` an op
-([SPEC 2](#2-lexical-syntax)). The pen calls,
-`grid` / `radial`, and `hatch` are **call names**, contextual before `(` like `rgb` /
-`repeat` ([SPEC 23](#23-reserved-words)).
+The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly seven things:
+
+1. the four **`draw_op`** tokens — glued, like every link op; `||` is resolved in
+   the parser from two **adjacent** pipes at **operator position only**, so bars
+   stay paired and selectors are untouched;
+2. the **one-ended relaxation** — the right-hand endpoints may be omitted for
+   `<-`, `*-`, `>-`, `(<)`, and **must** be for the unary-only `(o)`; the binary
+   `(-)` and `||` require both ends. (Meaning only in a schematic scope, the
+   wire ops `-` `->` `-<` `-<>` `-*` may stand one-ended before a string or
+   capsule — the label wire of [SPEC 16.5](#165-wires).) One token of lookahead
+   decides: after the op, an ident or a `|` opens an endpoint (bars: a capsule);
+   a string, `.`, `{`, `[`, or end-of-statement is the tail;
+3. the widened endpoint **`point`** set in drawing scope;
+4. the numeric **copy `index`** in an endpoint path — `plate.bolt.2`; the lexer
+   glues `.` + digits in endpoint position only, so `1.5` in value position
+   stays a number;
+5. the `(-)` **dimension-family `sel_unit`** at a stylesheet statement head — a
+   leading `(` there is unambiguous, calls and groups appearing only in value
+   position;
+6. the annotation **node** among a `label_block`'s labels — parsed everywhere,
+   *meaning* only on a drawing's dimensions and leaders: a core routed link's
+   `[ ]` stays text-only and a node there errors at resolve,
+   [SPEC 15.9](#159-drafting-symbols--annotation-composition);
+7. the **`pen_item`** form inside a `draw:` value.
+
+A call's `(` **glues to its name**; a free-standing `(…)` is a math group and a
+free-standing `(-)`, `(o)`, or `(<)` an op ([SPEC 2](#2-lexical-syntax)). The pen
+calls, `grid` / `radial`, and `hatch` are **call names**, contextual before `(`
+like `rgb` / `repeat` ([SPEC 23](#23-reserved-words)).
 
 ---
 
