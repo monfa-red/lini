@@ -71,6 +71,9 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `partition` | `sketch` | `wall` → `partition` |
 | `door` | `block` | `door` |
 | `window` | `block` | `window` |
+| `door-leaf` | `line` | `door-leaf` |
+| `door-swing` | `line` | `door-swing` |
+| `window-sill` | `line` | `window-sill` |
 | `bed` | `block` | `bed` |
 | `sofa` | `block` | `sofa` |
 | `dining` | `block` | `dining` |

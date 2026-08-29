@@ -615,6 +615,8 @@ fn every_sugar_lowers_to_a_byte_fixed_point() {
         // and the root, whose `unit:` the scale fold reads.
         "|floorplan#f| [\n  |wall#w| { draw: move(0, 0) right(4000):north; } [\n    |door#d| { on: north; at: 900 }\n  ]\n  |stairs| { steps: 12 }\n]\n",
         "{ layout: floorplan; unit: m; scale: 0.02 }\n|wall#w| { draw: move(0, 0) right(7.2):north down(4.8):east; }\n|bed| { translate: 1.2 1.2 }\nw:north (-) w:east { side: top }\n",
+        // …and every opening symbol, whose chrome count reads its `symbol:`.
+        "{ layout: floorplan; unit: m }\n|wall#w| { draw: move(0, 0) right(9):run; } [\n  |door#a| { on: run; at: 1 }\n  |door#b| { on: run; at: 3; symbol: double }\n  |door#c| { on: run; at: 5; symbol: sliding }\n  |window#v| { on: run; at: 7 }\n]\n",
     ] {
         let once = desugar_source(src).unwrap();
         let twice = desugar_source(&once).unwrap();
@@ -896,6 +898,41 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
     assert!(
         root.contains("wall-thickness: 0.2;"),
         "200 mm reads 0.2 drawing units at unit: m — {root}"
+    );
+    // An opening's clear width is stamped the same way [SPEC 15.11] — 900 mm
+    // for a door, 1200 mm for a window, through the scope's `unit:` — and its
+    // chrome lowers as real children, one leaf + one arc, two sills.
+    let openings = desugar_source(
+        "{ layout: floorplan; unit: m; scale: 0.02 }\n\
+         |wall#w| { draw: move(0, 0) right(7.2):north; } [\n\
+           |door#d| { on: north; at: 1 }\n\
+           |window#v| { on: north; at: 4 }\n\
+           |door#s| { on: north; at: 6; width: 1.4; symbol: sliding }\n\
+         ]\n",
+    )
+    .unwrap();
+    assert!(openings.contains("opening-width: 0.9;"), "{openings}");
+    assert!(openings.contains("opening-width: 1.2;"), "{openings}");
+    assert!(
+        !openings.contains("opening-width: 1.4;"),
+        "an authored width needs no fallback: {openings}"
+    );
+    // (the class-chain form counts wearers only — the rule line above states
+    // the bare class.)
+    assert_eq!(
+        openings.matches(".lini-door-leaf.lini-line").count(),
+        3,
+        "one leaf on the hinged door, two panels on the slider: {openings}"
+    );
+    assert_eq!(
+        openings.matches(".lini-door-swing.lini-line").count(),
+        1,
+        "{openings}"
+    );
+    assert_eq!(
+        openings.matches(".lini-window-sill.lini-line").count(),
+        2,
+        "{openings}"
     );
 }
 

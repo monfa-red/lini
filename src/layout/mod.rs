@@ -542,7 +542,7 @@ fn layout_inst(
         // bbox [SPEC 15.11] — offset after the fold, before the bboxes
         // ([SPEC 15.10] step 1); its `:segment`s stay centreline stations.
         if floorplan::fp_kind(&inst.type_chain) == Some(floorplan::FpKind::Wall) {
-            floorplan::wall::offset(&mut folded, inst, own)?;
+            floorplan::wall::offset(&mut folded, inst, &mut children, own)?;
         }
         let half = inst.attrs.half_stroke();
         sketch_d = Some(folded.d);

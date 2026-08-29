@@ -26,10 +26,20 @@ pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
 /// one place the scope's `unit:` (nearest-wins, pages included) is known.
 pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
 
+/// The generated internal attr carrying an opening's **resolved fallback**
+/// `width:` in drawing units [SPEC 15.11] — the clear opening a `|door|` /
+/// `|window|` reads when no cascaded `width:` reaches it. Stamped beside the
+/// wall's thickness, and for the same reason: only this walk knows `unit:`.
+pub(crate) const OPENING_WIDTH: &str = "opening-width";
+
 /// The true-size wall defaults [SPEC 15.11] — physical millimetres, the
 /// reader's (never a class-rule literal; see `ledger::defaults`).
 pub(crate) const WALL_MM: f64 = 200.0;
 const PARTITION_MM: f64 = 100.0;
+
+/// …and the openings' clear widths [SPEC 15.11], likewise physical.
+pub(crate) const DOOR_MM: f64 = 900.0;
+pub(crate) const WINDOW_MM: f64 = 1200.0;
 
 /// The unit / density context carried down the lowered tree.
 struct ScaleCtx {
@@ -104,6 +114,9 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     if ctx.in_drawing && chain.iter().any(|t| t == "wall") {
         stamp_wall_thickness(&mut n.style, &ctx, &chain, n.span);
     }
+    if ctx.in_drawing {
+        stamp_opening_width(&mut n.style, &ctx, &chain, n.span);
+    }
     ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &chain, &n.style);
     for c in &mut n.children {
         walk(c, &ctx)?;
@@ -172,6 +185,31 @@ fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String],
     style.push(Decl {
         name: WALL_THICKNESS.into(),
         groups: vec![vec![Value::Number(units)]],
+        span,
+    });
+}
+
+/// Stamp an opening's fallback clear `width:` [SPEC 15.11] — 900 mm for a
+/// door, 1200 mm for a window — through the scope's `unit:`, exactly as the
+/// wall's thickness is stamped: an authored `width:` needs no fallback, and a
+/// rule-borne one wins over the stamp at the read site
+/// (`layout::floorplan::opening`).
+fn stamp_opening_width(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
+    style.retain(|d| d.name != OPENING_WIDTH);
+    let has = |t: &str| chain.iter().any(|c| c == t);
+    let mm = if has("door") {
+        DOOR_MM
+    } else if has("window") {
+        WINDOW_MM
+    } else {
+        return;
+    };
+    if find(style, "width").is_some() {
+        return;
+    }
+    style.push(Decl {
+        name: OPENING_WIDTH.into(),
+        groups: vec![vec![Value::Number(mm_to_units(mm, ctx.unit_mm))]],
         span,
     });
 }

@@ -113,6 +113,13 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("partition", "wall"),
     ("door", "block"),
     ("window", "block"),
+    // …and the chrome an opening generates [SPEC 15.7/15.11] — the leaf (a
+    // sliding door's panels too), its quarter swing arc, and a window's sill
+    // pair. `|line|`-based like every other chrome type; the arc flips to a
+    // `|path|` where it fills, the round-thread play.
+    ("door-leaf", "line"),
+    ("door-swing", "line"),
+    ("window-sill", "line"),
     ("bed", "block"),
     ("sofa", "block"),
     ("dining", "block"),

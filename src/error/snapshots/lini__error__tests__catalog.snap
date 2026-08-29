@@ -67,6 +67,9 @@ Y012 opening-placed
 Y013 sliding-door-leaf
 Y014 wall-curve
 Y015 arc-under-thickness
+Y016 opening-segment
+Y017 opening-overrun
+Y018 opening-overlap
 T000 route
 T001 impossible-link
 T002 law-breach

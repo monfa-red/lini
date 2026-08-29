@@ -81,6 +81,7 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
             node,
         ));
     }
+    out.extend(opening_chrome(node, chain));
     if has_radial_pattern(&node.style) {
         out.push(chrome_node(
             "pitch-circle",
@@ -102,6 +103,67 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         }
     }
     out
+}
+
+/// An opening's chrome [SPEC 15.11]: a door's leaf + quarter swing arc (a
+/// `double` splits both about the gap centre, a `sliding` trades the arc for a
+/// second panel), a window's two sill lines. Only the **count** is decided
+/// here — the station on the wall's segment fills the geometry, at layout
+/// ([`crate::layout::floorplan::opening`]).
+fn opening_chrome(node: &Node, chain: &[String]) -> Vec<Node> {
+    let has = |t: &str| chain.iter().any(|c| c == t);
+    if has("window") {
+        return (0..2)
+            .map(|i| indexed(node, "window-sill", "sill", i))
+            .collect();
+    }
+    if !has("door") {
+        return Vec::new();
+    }
+    match door_symbol(&node.style) {
+        "sliding" => (0..2)
+            .map(|i| indexed(node, "door-leaf", "panel", i))
+            .collect(),
+        "double" => (0..2)
+            .flat_map(|i| {
+                [
+                    indexed(node, "door-leaf", "leaf", i),
+                    indexed(node, "door-swing", "swing", i),
+                ]
+            })
+            .collect(),
+        _ => vec![
+            indexed(node, "door-leaf", "leaf", 0),
+            indexed(node, "door-swing", "swing", 0),
+        ],
+    }
+}
+
+/// A door's `symbol:` as written — `single` unless a bare ident says otherwise;
+/// an unknown one is validation's to report, and reads as the default here.
+fn door_symbol(style: &[Decl]) -> &str {
+    match style.iter().rev().find(|d| d.name == "symbol").map(single) {
+        Some(Some(Value::Ident(s))) => s.as_str(),
+        _ => "single",
+    }
+}
+
+fn single(d: &Decl) -> Option<&Value> {
+    match d.groups.as_slice() {
+        [group] => match group.as_slice() {
+            [v] => Some(v),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn indexed(at: &Node, ty: &str, kind: &str, i: usize) -> Node {
+    chrome_group(
+        ty,
+        vec![Value::Ident(kind.into()), Value::Number(i as f64)],
+        at,
+    )
 }
 
 /// The axis a fused `mirror:` draws its centerline on [SPEC 15.7]: the first

@@ -43,6 +43,7 @@ const INTERNAL: &[&str] = &[
     "mount",
     "px-per-unit",
     "wall-thickness",
+    "opening-width",
     "field",
     "font-scale",
 ];

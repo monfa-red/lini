@@ -605,33 +605,158 @@ sizes are read at layout.
 
 **Goal**: SPEC 15.11's openings, fully — gaps, chrome, poses, errors, dims.
 
-- [ ] Station model: `on:` resolves a straight segment of the host wall
+- [x] Station model: `on:` resolves a straight segment of the host wall
       (unknown → suggestion error; arc → error); `at:` + `width:` (mm default
       via conversion; 900 door / 1200 window) validated against segment
       length; overlapping openings on one segment error.
-- [ ] Gap cutting in the outline builder (Phase 2's module): both wall faces
+- [x] Gap cutting in the outline builder (Phase 2's module): both wall faces
       opened, jambs capped flat.
-- [ ] Door chrome (generated children, `--stroke-light` weight 1): leaf line
+- [x] Door chrome (generated children, `--stroke-light` weight 1): leaf line
       from the hinge jamb + quarter swing arc, `hinge: start|end` ×
       `swing: left|right` (walker's rule along the segment's draw direction);
       `symbol: single` (default) / `double` (two leaves, two arcs) /
       `sliding` (offset panel lines, no arc).
-- [ ] Window chrome: two sill lines at the thickness's thirds (SPEC 15.11);
+- [x] Window chrome: two sill lines at the thickness's thirds (SPEC 15.11);
       compare against `plans/refs-floorplan/floor-plan-symbols-1.jpg` (the
       reference draws rect + centre line — if that reads better at 1:50,
       propose the SPEC tweak in the log rather than silently diverging).
-- [ ] Openings as geometry: an id'd opening anchors dimensions at its centre
+- [x] Openings as geometry: an id'd opening anchors dimensions at its centre
       (`outer:west (-) outer.entry (-) outer:east` renders the location
       chain).
-- [ ] Restore the SPEC 18 floorplan hook-family row with `lini-door-leaf` ·
+- [x] Restore the SPEC 18 floorplan hook-family row with `lini-door-leaf` ·
       `lini-door-swing` · `lini-window-sill` — emitted as one rule each and
       worn in a rendered snapshot so `tests/hooks.rs` passes (Phase 1 ruling).
-- [ ] Snapshot + **visual PNG check**: all four hinge/swing poses, each door
+- [x] Snapshot + **visual PNG check**: all four hinge/swing poses, each door
       symbol, a window, a door at a segment end, two openings on one wall —
       light and dark.
 
 ### Execution log
+
+2026-08-28, one session. Baseline 1432 passed / 0 failed → after **1442 / 0**;
+`cargo fmt --check`, `cargo clippy --all-targets` clean. §15.7's producer row
+for `|door|` / `|window|` was already there (Phase 0) — verified, not
+duplicated. No SPEC contradiction found; the only SPEC edit is the §18
+hook-family row this phase owed.
+
+**The central geometry decision: the gap cuts the *run*, not the two side
+chains.** Phase 2's carry-over proposed splitting `left`/`right` at the
+stations and capping each jamb with the butt cap's `push_line`/`normal`
+construction. Cutting the **centreline run** first and offsetting each piece
+as its own *open* run gets the identical outline with **no new geometry code
+at all**: a jamb cap *is* the open-run butt cap, and every interior corner
+keeps its mitre because it stays inside a piece. `wall::cut` is the whole
+mechanism (≈50 lines): walk the subpath, split the gapped `Line`s at their
+station parameters, emit a piece per interval; a **closed** run's tail piece
+then absorbs the head piece — a gapped ring is one band, not two loops (the
+seam stops being a corner). Ungapped runs pass through untouched, so every
+Phase-2 snapshot is byte-identical.
+
+**Where each piece lives.**
+
+| Concern | Home |
+|---|---|
+| stations, laws, opening geometry, chrome fill | `layout/floorplan/opening.rs` (new, 325 LOC) — **one pass** over the wall's `[ ]`, so the station is computed once |
+| the cut + the offset assembly | `layout/floorplan/wall/mod.rs` (282) |
+| corner joins / carriers / trims | `layout/floorplan/wall/join.rs` (250) — `wall.rs` passed 500 LOC, split along "how a side chain runs" vs "how two offset elements meet"; `push_line` stays in `mod.rs` (`pub(super)`) since both the cap and the bevel are the same connector |
+| chrome *count* (never geometry) | `desugar/drawing.rs::opening_chrome` — the existing `chrome:` marker mechanism, one more producer |
+| the 900 / 1200 mm fallbacks | `desugar/scale.rs::stamp_opening_width` → internal `opening-width:`, the `wall-thickness:` pattern verbatim (whitelisted in `validate::INTERNAL`) |
+
+**The opening's frame** (the reason there is no second walker): the placed
+`|door|` / `|window|` carries `rotation = the segment's bearing`, so its
+children draw in a frame where `+x` is the pen's travel and `+y` is the
+**right** of it. `hinge: start` is then always `−x`, `swing: left` always
+`−y`, at every bearing and in both draw directions — §25's right-to-left
+`south` needs no special case, and its `swing: right` opens north, into the
+flat (verified visually). The arc's SVG sweep flag is computed from the turn's
+own cross product, never a 4-row pose table.
+
+**Decisions / findings:**
+
+1. **`place_features` skips openings**, beside its chrome skip: an opening is
+   placed by `on:` / `at:` alone [SPEC 15.11], seated by its wall as it folded,
+   exactly as chrome takes its geometry from the shape that generated it. One
+   clause in the one datum-placement site — no second placement path.
+2. **The leaf pivots on the swing-side *face*, not the centreline.** SPEC
+   states "a line of length `width` from the hinge jamb … its quarter swing
+   arc … sweeping leaf to closed" without naming the face; both reference
+   plans (`20sw-b1.webp`, `158Front-1BD-D-10.pdf`) and the symbol chart draw
+   the leaf rising from the jamb **at the wall face the door opens toward**,
+   with the arc landing flat on that same face. That is what is built.
+3. **Sill lines: SPEC's thirds stand — no divergence.** Both variants were
+   rendered at 1:50 (`sillA` = ±t/6, `sillB` = one centre line, the symbol
+   chart's read). At 1:50 the paired lines read unmistakably as glazing and
+   match the condo plan's window exactly; the single centre line reads thin
+   and is easy to mistake for a break. The "rect" half of the chart's symbol
+   is already supplied by the clip itself — the gap's white against the poché
+   *is* the frame. **No SPEC edit proposed.**
+4. **A slider's panels** are half the clear width each, seated **on** the two
+   faces (`y = ∓t/2`), meeting at the gap centre — SPEC's "two overlapping
+   half-length panel lines offset to either face": at plan scale the pair
+   reads as one set passing the other, which is exactly the reference
+   balcony slider. `hinge:`/`swing:` are gate errors there (Phase 1), so the
+   panels need no pose. `double` ignores `hinge:` (both jambs hang a leaf)
+   and still reads `swing:`.
+5. **Three chrome types, three rules**: `|door-leaf|` (a slider's panels wear
+   it too), `|door-swing|`, `|window-sill|` — `|line|`-based templates in
+   `desugar/types.rs` with **one** shared bundle row in `ledger/defaults.rs`
+   (`stroke: --stroke-light; stroke-width: 1; fill: none`), so each is one CSS
+   rule and a class on every wearer, never an inline style. The swing arc
+   flips its kind to `|path|` where it fills — the round-thread play.
+6. **New codes** (stable): `Y016 opening-segment` (both halves of SPEC 21's
+   `on:` row — unknown, with the suggestion, and not-straight, which also
+   covers a `point():name` station: "… — ':corner' is a point"), `Y017
+   opening-overrun`, `Y018 opening-overlap`. An anonymous opening names its
+   written type in those messages (`'|window|' at 9.5 + width 1200 overruns
+   'run' (length 10)`).
+7. An opening's box paints nothing by default — `|door|`'s chain bottoms out
+   at `.lini-block { fill: none; stroke: none }` — but it *is* a real shape, so
+   `|door| { fill: --bg }` masks, and the box is what dimensions anchor on.
+8. §25's location chain now reads **3.75 then 3.45** (sum 7.2): `south` is
+   drawn east→west, so `at: 3.0` seats the near jamb 3 m from the **east** end
+   and the gap centre 3.45 m from it — 3.75 m from the west. The plan's
+   "3.45 / 3.75-ish" is exactly this, in that order.
+
+**Visual pass** (`resvg` → PNG, read by eye, light **and** dark): the full §25
+studio flat (doors, windows, both dimension rows — reads like a real-estate
+plan, and the entry door swings into the flat); all four hinge × swing poses
+on one east-running wall; `single` / `double` / `sliding` / window side by
+side (the double's two arcs meet at the gap centre exactly as
+`20sw-b1.webp`'s); a vertical wall with a door at `at: 0.2` and one running to
+the segment's very end; solid / hollow / `hatch(45)` walls all clipping with
+flat jambs; a 60°-bearing wall (leaf and sills turn with it); the two sill
+variants stacked for the taste call.
+
 ### Carry-over notes
+
+**For Phase 4 (fixtures):**
+- The `opening-width:` stamp is the pattern for any fixture size read at
+  layout: one internal attr per true-size fallback, pushed in
+  `scale::walk`, whitelisted in `validate::INTERNAL`, read as
+  `attrs.number("width").or_else(stamp)` so a cascaded value always wins.
+- `|stairs|`'s treads + up arrow are generated children like the door chrome:
+  add the count to `desugar::drawing::opening_chrome`'s neighbourhood (a
+  `stairs_chrome`, same `chrome:` tuple shape `[Ident(kind), Number(index)]`),
+  register `stair-tread` / `stair-arrow` in `desugar/types.rs`, give them the
+  **same** one bundle row in `ledger/defaults.rs`, and fill their geometry
+  where the flight is sized. Then extend SPEC 18's floorplan row (already
+  restored, three classes) with the two, and add the ledger entries in
+  `tests/hooks.rs` beside `FLOORPLAN_OPENINGS`.
+- Fixtures **do** datum-place (`translate:`), so they need no `place_features`
+  exemption — that skip is openings-only.
+
+**For Phase 5 (showroom):**
+- `tests/hooks.rs::UNSAMPLED` now carries `lini-door-leaf` /
+  `lini-door-swing` / `lini-window-sill` against a small inline scene
+  (`FLOORPLAN_OPENINGS`). Once `samples/floorplan.lini` wears them, those three
+  rows can go — the sweep will cover them.
+- `tests/deferred.rs` wants the curved-segment-opening slot: the message is
+  `an opening sits on a straight run — ':bay' is an arc` (code `Y016`).
+- The desugar fixed-point corpus in `tests/desugar.rs` already carries a
+  four-symbol opening scene; extend it rather than adding a case if a new
+  generator lands.
+- A wall whose `[ ]` openings consume every segment renders only its chrome
+  (no panic, empty outline) — worth one line in the sample if it ever looks
+  wrong.
 
 ---
 

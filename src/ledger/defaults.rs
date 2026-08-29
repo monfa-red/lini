@@ -435,6 +435,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // physical millimetres, converted through the scope's `unit:` where it
         // is read, never a drawing-unit literal in a class rule [SPEC 15.11].
         "wall" => vec![var("fill", "stroke-dark"), id("stroke", "none")],
+        // An opening's generated chrome [SPEC 15.7/15.11]: the leaf and its
+        // swing arc, a window's sill pair — annotation-thin, the support tone,
+        // one rule each and a class on every wearer.
+        "door-leaf" | "door-swing" | "window-sill" => vec![
+            var("stroke", "stroke-light"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // The openings [SPEC 15.11] carry no bundle at all. Their defaults are
         // either true-size (`width:` 900 mm / 1200 mm) or a pose the reader
         // falls back to (`hinge: start`, `swing: left`) — and a pose stated as

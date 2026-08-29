@@ -257,7 +257,10 @@ pub(super) fn place_features(
     view: Option<&breaks::ViewMap>,
 ) -> Result<(), Error> {
     for c in children.iter_mut() {
-        if chrome::is_chrome(&c.attrs) {
+        // An **opening** is placed by `on:` / `at:` alone [SPEC 15.11] — its
+        // wall seated it on the segment as it folded, exactly as chrome takes
+        // its geometry from the shape that generated it.
+        if chrome::is_chrome(&c.attrs) || super::floorplan::is_opening(&c.type_chain) {
             continue;
         }
         let (dx, dy) = super::anchors::translate(&c.attrs, c.span)?.unwrap_or((0.0, 0.0));

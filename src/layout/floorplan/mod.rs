@@ -15,6 +15,7 @@ use crate::desugar::types::{FIXTURES, OPENINGS};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedInst};
 
+mod opening;
 #[cfg(test)]
 mod tests;
 pub(in crate::layout) mod wall;
@@ -49,6 +50,13 @@ pub(crate) fn fp_kind<S: AsRef<str>>(chain: &[S]) -> Option<FpKind> {
         return Some(FpKind::Opening);
     }
     FIXTURES.iter().any(|t| has(t)).then_some(FpKind::Fixture)
+}
+
+/// Whether a type chain is a `|door|` / `|window|` [SPEC 15.11] — the one
+/// question the drawing engine asks the dialect: an opening is placed by its
+/// station on the wall's segment, so it never datum-places.
+pub(in crate::layout) fn is_opening(chain: &[String]) -> bool {
+    fp_kind(chain) == Some(FpKind::Opening)
 }
 
 /// The floorplan type a chain wears, as the **author** spelled it — the

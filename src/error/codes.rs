@@ -204,6 +204,9 @@ catalog! {
     Layout 13 SLIDING_LEAF "sliding-door-leaf";
     Layout 14 WALL_CURVE "wall-curve";
     Layout 15 WALL_ARC "arc-under-thickness";
+    Layout 16 OPENING_SEGMENT "opening-segment";
+    Layout 17 OPENING_OVERRUN "opening-overrun";
+    Layout 18 OPENING_OVERLAP "opening-overlap";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

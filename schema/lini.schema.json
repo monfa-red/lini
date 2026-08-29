@@ -977,6 +977,45 @@
       "defaults": {}
     },
     {
+      "name": "door-leaf",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "door-leaf"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "door-swing",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "door-swing"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "window-sill",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "window-sill"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
       "name": "bed",
       "primitive": "block",
       "base": "block",
