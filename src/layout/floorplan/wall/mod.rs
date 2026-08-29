@@ -50,6 +50,10 @@ pub(in crate::layout) fn offset(
     // that reads down from its part [SPEC 15.11] — and their stations are what
     // the offset cuts around.
     let stations = opening::plan(inst, folded, own)?;
+    // The face anchors read the centreline too [SPEC 15.11], so they derive
+    // while it is still there — and after `on:` resolved, which names a
+    // structural run and never a face.
+    super::face::derive(folded, h, inst.span)?;
     let mut outline = Vec::new();
     for (i, sub) in folded.subs.iter().enumerate() {
         outline.extend(offset_run(sub, &stations, i, h, own, inst.span)?);
@@ -234,8 +238,9 @@ fn side(segs: &[PathSeg], closed: bool, h: f64, left: bool) -> Vec<PathSeg> {
 /// A segment's parallel at distance `h` on one side of travel. An arc's left
 /// side is outside its circle exactly when it sweeps clockwise, so the
 /// concentric radius is `r + h` when `sweep == left`, `r − h` otherwise
-/// [SPEC 15.11].
-fn raw_offset(seg: &PathSeg, h: f64, left: bool) -> PathSeg {
+/// [SPEC 15.11]. The face anchors ([`super::face`]) are this same offset on a
+/// named edge — one construction for the drawn face and the named one.
+pub(in crate::layout::floorplan) fn raw_offset(seg: &PathSeg, h: f64, left: bool) -> PathSeg {
     match *seg {
         PathSeg::Line { from, to } => {
             let d = unit((to.0 - from.0, to.1 - from.1)).expect("zero-length filtered");

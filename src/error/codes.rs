@@ -207,6 +207,7 @@ catalog! {
     Layout 16 OPENING_SEGMENT "opening-segment";
     Layout 17 OPENING_OVERRUN "opening-overrun";
     Layout 18 OPENING_OVERLAP "opening-overlap";
+    Layout 19 FACE_ANCHOR "face-anchor";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

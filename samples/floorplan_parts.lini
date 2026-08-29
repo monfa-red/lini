@@ -131,7 +131,7 @@
   |head| { translate: -3.7 15.4; } [ "DINING" ]
   |dining| "six" { translate: 0 15.445; }
   |dining| "four" { symbol: four; translate: 2.7 15.495; }
-  |dining| "round" { symbol: round; translate: 5.4 15.295; }
+  |dining| "round" { symbol: round; translate: 5.4 15.395; }
 
   // The sanitaryware. A toilet is **one** silhouette — the cistern's shoulders
   // flowing into the rounded pan — and `double-sink` is one unit with two

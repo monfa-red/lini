@@ -417,6 +417,7 @@ every *built-in* size is true physical mm converted through `unit:`.
 "KITCHEN" { translate: 6 1.4 }                  // room names are plain sheet text
 
 outer:north (-) outer:south { side: left }      // → 4.8, centreline to centreline
+outer:north-in (-) bathwall:side-in { side: right }    // → 2.05, the clear span
 ```
 
 - **Walls.** `|wall|` is a `|sketch|` whose `draw:` traces the centreline;
@@ -448,12 +449,18 @@ outer:north (-) outer:south { side: left }      // → 4.8, centreline to centre
   A casework `|rect|` takes the core `radius:` for a softened counter — mind
   that it is **sheet-space pixels**, not drawing units, so it does not scale
   with the plan (at 1:50 and `density: 5`, `radius: 4` is 40 mm).
-- **Dimensions** read the centreline, where architects measure. Anchor them on
-  the wall's own named runs (`outer:west (-) outer:east`): a named **edge**'s
-  extension line springs from the end nearest the dimension line, so it leaves a
-  corner and runs away from the plan, never down a wall face. Mind the axis —
-  an edge dimensions **across** itself, so a horizontal span names the two
-  vertical runs.
+- **Dimensions** anchor on the wall's own named runs, which answer three ways:
+  the bare `:segment` is the **centreline**, where a structural drawing
+  measures, and every named run also derives its two **face anchors** — `-in`
+  (the enclosed side on a closed run, the left of the pen's travel on an open
+  one) and `-out`. So the overall reads face to face
+  (`outer:west-out (-) outer:east-out`) and a room reads its **clear** span
+  (`outer:north-in (-) bathwall:head-out`), which is what a listing plan
+  publishes. A name of your own ending `-in`/`-out` on a wall errors. A named
+  **edge**'s extension line springs from the end nearest the dimension line, so
+  it leaves a corner and runs away from the plan, never down a wall face. Mind
+  the axis — an edge dimensions **across** itself, so a horizontal span names
+  the two vertical runs.
 
 ### Schematic
 

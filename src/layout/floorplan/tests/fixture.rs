@@ -61,9 +61,9 @@ fn a_symbol_picks_the_variant_inline_or_from_a_rule() {
          |bath#f|\n",
     );
     assert_eq!(body(by_id(&l.nodes, "f")), (700.0, 400.0));
-    // The round table's four quadrant chairs push ⌀1200 out to 2210 square.
+    // The round table's four quadrant chairs push ⌀1000 out to 2010 square.
     let l = laid(&plan("|dining#f| { symbol: round }\n"));
-    assert_eq!(body(by_id(&l.nodes, "f")), (2210.0, 2210.0));
+    assert_eq!(body(by_id(&l.nodes, "f")), (2010.0, 2010.0));
 }
 
 /// The mattress sizes [SPEC 15.11]. `queen` is the default a bare `|bed|`

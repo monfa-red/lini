@@ -4,6 +4,7 @@
 //! **openings** stationed on it, and the **fixtures** that furnish it. One
 //! helper set, one law per module.
 
+mod face;
 mod fixture;
 mod gate;
 mod opening;

@@ -220,7 +220,7 @@ fn curved(name: &str, what: &str, span: crate::span::Span) -> Error {
 /// "the same straight carrier, travelled the same way, starting inside the
 /// named span", and the returned distance shifts a station out of the run's
 /// frame into the drawn segment's own.
-fn locate(folded: &Folded, p0: P, d: P, len: f64) -> Option<(usize, usize, f64)> {
+pub(super) fn locate(folded: &Folded, p0: P, d: P, len: f64) -> Option<(usize, usize, f64)> {
     folded.subs.iter().enumerate().find_map(|(i, sub)| {
         sub.segs.iter().enumerate().find_map(|(j, s)| {
             let PathSeg::Line { from, .. } = *s else {

@@ -829,14 +829,14 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(5.815 88.98) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,463.1)">
-        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -14 -88.4 L 14 -88.4 A 4 4 0 0 1 18 -84.4 L 18 -56.4 A 4 4 0 0 1 14 -52.4 L -14 -52.4 A 4 4 0 0 1 -18 -56.4 L -18 -84.4 A 4 4 0 0 1 -14 -88.4 Z M -84.4 -18 L -56.4 -18 A 4 4 0 0 1 -52.4 -14 L -52.4 14 A 4 4 0 0 1 -56.4 18 L -84.4 18 A 4 4 0 0 1 -88.4 14 L -88.4 -14 A 4 4 0 0 1 -84.4 -18 Z M -14 52.4 L 14 52.4 A 4 4 0 0 1 18 56.4 L 18 84.4 A 4 4 0 0 1 14 88.4 L -14 88.4 A 4 4 0 0 1 -18 84.4 L -18 56.4 A 4 4 0 0 1 -14 52.4 Z M 56.4 -18 L 84.4 -18 A 4 4 0 0 1 88.4 -14 L 88.4 14 A 4 4 0 0 1 84.4 18 L 56.4 18 A 4 4 0 0 1 52.4 14 L 52.4 -14 A 4 4 0 0 1 56.4 -18 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,471.1)">
+        <path d="M -40 0 A 40 40 0 1 1 40 0 A 40 40 0 1 1 -40 0 Z M -14 -80.4 L 14 -80.4 A 4 4 0 0 1 18 -76.4 L 18 -48.4 A 4 4 0 0 1 14 -44.4 L -14 -44.4 A 4 4 0 0 1 -18 -48.4 L -18 -76.4 A 4 4 0 0 1 -14 -80.4 Z M -76.4 -18 L -48.4 -18 A 4 4 0 0 1 -44.4 -14 L -44.4 14 A 4 4 0 0 1 -48.4 18 L -76.4 18 A 4 4 0 0 1 -80.4 14 L -80.4 -14 A 4 4 0 0 1 -76.4 -18 Z M -14 44.4 L 14 44.4 A 4 4 0 0 1 18 48.4 L 18 76.4 A 4 4 0 0 1 14 80.4 L -14 80.4 A 4 4 0 0 1 -18 76.4 L -18 48.4 A 4 4 0 0 1 -14 44.4 Z M 48.4 -18 L 76.4 -18 A 4 4 0 0 1 80.4 -14 L 80.4 14 A 4 4 0 0 1 76.4 18 L 48.4 18 A 4 4 0 0 1 44.4 14 L 44.4 -14 A 4 4 0 0 1 48.4 -18 Z"/>
         <g class="lini-text">
-          <use href="#lini-g1500-299" transform="translate(-13.84 104.98) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(-9.89 104.98) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-315" transform="translate(-3.86 104.98) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-265" transform="translate(1.92 104.98) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-209" transform="translate(7.7 104.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-13.84 96.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.89 96.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-3.86 96.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(1.92 96.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(7.7 96.98) scale(0.01 -0.01)"/>
         </g>
       </g>
       <g class="lini-node lini-head lini-block" transform="translate(-813.16,635.5)">

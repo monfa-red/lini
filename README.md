@@ -239,9 +239,10 @@ Parts *mate* against each other, holes and patterns punch through, a half-profil
 ]
 |bed| { translate: 1.2 1.2; rotate: 90 }
 outer:west (-) outer:east { side: top }             // → 7.2, centreline to centreline
+outer:west-in (-) outer:east-in { side: bottom }    // → 7.0, the clear span
 ```
 
-A `|wall|` traces its **centreline** and `thickness:` (200 mm; a `|partition|` is the 100 mm interior define) grows it into the mitred poché outline that takes the paint. `|door|` / `|window|` ride the wall's `[ ]`, stationed `on:` a named segment `at:` a distance — they clip the outline at the jambs and draw their own leaf, quarter swing arc (`hinge:` × `swing:`, `symbol: single | double | sliding`) and sill pair. Six symbol-bodied fixtures — `|bed| |sofa| |dining| |bath| |appliance| |stairs|` — draw at **true size in physical millimetres**, converted through the scope's `unit:`, so a tub is 1700 × 750 mm whether the file drafts in `m` or `mm`. Counters and islands are plain `|rect|`s; anything else is a `|sketch|` define. [`SPEC.md` §15.11](https://github.com/monfa-red/lini/blob/main/SPEC.md#1511-floorplan--the-architectural-dialect)
+A `|wall|` traces its **centreline** and `thickness:` (200 mm; a `|partition|` is the 100 mm interior define) grows it into the mitred poché outline that takes the paint. `|door|` / `|window|` ride the wall's `[ ]`, stationed `on:` a named segment `at:` a distance — they clip the outline at the jambs and draw their own leaf, quarter swing arc (`hinge:` × `swing:`, `symbol: single | double | sliding`) and sill pair. Six symbol-bodied fixtures — `|bed| |sofa| |dining| |bath| |appliance| |stairs|` — draw at **true size in physical millimetres**, converted through the scope's `unit:`, so a tub is 1700 × 750 mm whether the file drafts in `m` or `mm`. Counters and islands are plain `|rect|`s; anything else is a `|sketch|` define. Every named wall run also derives its two **face anchors**, `name-in` / `name-out`, so a dimension reads the structural centreline or the **clear** span an architect publishes, face to face. [`SPEC.md` §15.11](https://github.com/monfa-red/lini/blob/main/SPEC.md#1511-floorplan--the-architectural-dialect)
 
 ---
 
