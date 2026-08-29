@@ -1,6 +1,6 @@
 ---
 name: lini
-description: Use when asked to create, edit, review, or debug a Lini diagram (a .lini file or its SVG) — architecture/box-and-arrow diagrams, flowcharts, mindmaps, org charts, ER schemas, tables, sequence diagrams, bar/line/area/pie/radar/scatter charts, engineering drawings, or circuit schematics written in the Lini language.
+description: Use when asked to create, edit, review, or debug a Lini diagram (a .lini file or its SVG) — architecture/box-and-arrow diagrams, flowcharts, mindmaps, org charts, ER schemas, tables, sequence diagrams, bar/line/area/pie/radar/scatter charts, engineering drawings, floor plans, or circuit schematics written in the Lini language.
 ---
 
 # Lini — writing beautiful diagrams
@@ -51,13 +51,8 @@ users -> api                               // undeclared id → auto-creates |bo
 
 Every drawn statement is a node (`|…|`), a text leaf (`"…"`), or a link (bare
 name + operator). The full node anatomy — **only the bars are required, order
-fixed**:
-
-```
-|type#id| "label" .class1.class2 { key: value; } [ children ]
-```
-
-A link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
+fixed** — is `|type#id| "label" .class1.class2 { key: value; } [ children ]`;
+a link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
 
 ## Syntax laws that bite
 
@@ -169,8 +164,9 @@ a -> b                          // 1 link (labels boxes into existence)
 a -> b -> c                     // chain: 2 links, every hop marked
 a -> b & c                      // fan-out — shares one trunk at a's side
 a & b -> c                      // fan-in
-a:right -> b.child:left "label" // forced sides, path endpoint, label
-cat -> |cyl#db|                 // capsule endpoint: declare + link in one statement
+|group#g| [ |box#child| "C" ]
+a:right -> g.child:left "label" // forced sides, path endpoint, label
+client -> |cyl#db|              // capsule endpoint: declare + link in one statement
 ```
 
 Operators are `[marker][line][marker]`, glued. Lines: `-` solid, `--` dashed,
@@ -233,6 +229,12 @@ Fonts: bundled **Google Sans** (default) and **Google Sans Code** (mono, via
 `font-family: "Google Sans Code"`). `font-weight: normal | medium | semibold |
 bold` (or 400–700). Body default 15/medium; captions and link labels derive
 from the inherited size, so one root `font-size:` scales everything.
+
+Themes re-skin at render time — no file edits: `--theme` takes a builtin
+(`light` · `dark` · `high-contrast` · `blueprint`, white linework on cyanotype
+blue — the diazo print, for any diagram), a CSS file of `--lini-*` overrides,
+or a `light/dark` pair. `lini serve --theme` paints every served compile;
+`lini theme NAME` prints a builtin as CSS to start your own.
 
 ## Layout engines
 
@@ -386,6 +388,16 @@ plate.pin.2 <- "THRU"                          // leader to the 2nd pattern copy
   (two-ended) the value. `scale: 2` on a drawing = 2:1 view that still
   measures true. Sheets: `|page| { sheet: a4 }` + `|title-block| { title: "…";
   drawing-number: "…"; }`; multi-view rows share axes with `align: origin`.
+- Deep machinery, a line each: `thread: neck 1.25` dresses an ISO thread on a
+  revolved profile — a bare leader on that segment composes `M8×1.25`;
+  `break: -40 40` cuts a long part's boring middle (the view compresses, dims
+  still read the unbroken model). A section / detail is a marker plus a view:
+  `|plane#a| "A" { at: 40 }` or `|magnifier#c| "C" { width: 12 }` on the
+  source, a sibling `|drawing| { of: a }` as the view — its title (`A-A (1:1)`,
+  `C (3:1)`) composes itself. GD&T: `|surface-finish| "Ra 1.6"`,
+  `|feature-control| "position" { tol: 0.05; datums: A }`, `|datum|` — seat on
+  a face with `||` or carry in a dimension's `[ ]`; datum letters come from
+  `>-` leaders (`body:seat >- "A"`).
 
 ### Floorplan (architectural)
 
@@ -395,7 +407,7 @@ same datum, `scale:`/`unit:`, anchors and dimensions. Build it in four passes:
 every *built-in* size is true physical mm converted through `unit:`.
 
 ```
-{ layout: floorplan; unit: m; scale: 0.02; density: 5 }   // 1:50, ~100 px per metre
+{ layout: floorplan; unit: m; scale: 0.02 }     // 1:50 — 80 px per metre
 
 |wall#outer| {                                  // draw: is the CENTRELINE
   draw: move(0, 0) right(7.2):north down(4.8):east
@@ -409,15 +421,16 @@ every *built-in* size is true physical mm converted through `unit:`.
   |door| { on: side; at: 0.6; hinge: end }
 ]
 
-|rect#counter| { width: 2.4; height: 0.6; translate: 5.9 0.3;
+|rect#counter| { width: 2.1; height: 0.6; translate: 6.05 0.4;
                  fill: --bg; stroke: --stroke-dark; stroke-width: 1 }
 |bed|  { translate: 1.2 1.2; rotate: 90 }
 |sofa| { symbol: corner; translate: 2 3.3 }
 |appliance| "F" { symbol: fridge; translate: 0.5 4.3 }
 "KITCHEN" { translate: 6 1.4 }                  // room names are plain sheet text
 
-outer:north (-) outer:south { side: left }      // → 4.8, centreline to centreline
-outer:north-in (-) bathwall:side-in { side: right }    // → 2.05, the clear span
+outer:north-in (-) outer:south-in { side: left }      // → 4.6 — the clear interior
+outer:north-in (-) bathwall:side-in { side: right }   // → 2.05 — the kitchen's depth
+outer:west (-) outer.entry (-) outer:east { side: bottom }  // locate the door
 ```
 
 - **Walls.** `|wall|` is a `|sketch|` whose `draw:` traces the centreline;
@@ -435,7 +448,8 @@ outer:north-in (-) bathwall:side-in { side: right }    // → 2.05, the clear sp
   sliding` (a slider takes no `hinge:`/`swing:`). `translate:` on one is an error.
 - **Fixtures.** `|bed|` (queen·king·double·single) · `|sofa|`
   (three·two·one·corner·stool — `one` is the armchair, `stool` the ⌀350 bar
-  seat) · `|dining|` (six·four·round — table *with* chairs) · `|bath|`
+  seat) · `|dining|` (six·four·round — sized by its **tabletop**, ⌀1000 for
+  `round`; the pull-back chairs extend the bbox) · `|bath|`
   (tub·shower·toilet·sink·double-sink — the last is one unit, two basins) ·
   `|appliance|` (stove·fridge·washer·dishwasher) ·
   `|stairs|` (`steps: N` required). `width`/`height` are floors that **stretch**
@@ -448,19 +462,23 @@ outer:north-in (-) bathwall:side-in { side: right }    // → 2.05, the clear sp
   `|sketch|`; room names and areas are sheet text placed with `translate:`.
   A casework `|rect|` takes the core `radius:` for a softened counter — mind
   that it is **sheet-space pixels**, not drawing units, so it does not scale
-  with the plan (at 1:50 and `density: 5`, `radius: 4` is 40 mm).
+  with the plan (at 1:50 and the default density, `radius: 4` is 50 mm).
 - **Dimensions** anchor on the wall's own named runs, which answer three ways:
-  the bare `:segment` is the **centreline**, where a structural drawing
-  measures, and every named run also derives its two **face anchors** — `-in`
-  (the enclosed side on a closed run, the left of the pen's travel on an open
-  one) and `-out`. So the overall reads face to face
-  (`outer:west-out (-) outer:east-out`) and a room reads its **clear** span
-  (`outer:north-in (-) bathwall:head-out`), which is what a listing plan
-  publishes. A name of your own ending `-in`/`-out` on a wall errors. A named
-  **edge**'s extension line springs from the end nearest the dimension line, so
-  it leaves a corner and runs away from the plan, never down a wall face. Mind
-  the axis — an edge dimensions **across** itself, so a horizontal span names
-  the two vertical runs.
+  every named run derives its two **face anchors** — `-in` (the enclosed side
+  on a closed run, the left of the pen's travel on an open one) and `-out` —
+  and the bare `:segment` is the **centreline**, where a structural drawing
+  measures. **Dimension inside faces by default**: a room reads its **clear**
+  span (`outer:north-in (-) bathwall:side-in`) and the overall the shell's
+  clear interior — what a listing plan publishes. A name of your own ending
+  `-in`/`-out` on a wall errors. A named **edge**'s extension line springs
+  from the end nearest the dimension line, so it leaves a corner and runs away
+  from the plan, never down a wall face. Mind the axis — an edge dimensions
+  **across** itself, so a horizontal span names the two vertical runs; and an
+  id'd opening anchors at its centre, so a chain locates a door along its wall
+  (`outer:west (-) outer.entry (-) outer:east`).
+- **The print look is a theme, never authoring**: render with
+  `--theme blueprint` (Colour & theming) for white-on-cyanotype; a plan's
+  default stays black-on-white.
 
 ### Schematic
 
@@ -470,7 +488,7 @@ them); 1–2-pin parts and labels are satellites seated at the pin their wire
 touches. No auto-create — unknown bare ids error.
 
 ```
-{ layout: schematic; }
+{ layout: schematic; |vcc::label| { symbol: power } [ "5V" ] }
 |component#u1| "AMS1117-3.3" [
   |pin#vin| { side: left; number: 3; }
   |pin#gnd| { side: bottom; number: 1; }
@@ -479,7 +497,7 @@ touches. No auto-create — unknown bare ids error.
 |J#j1| "3V3 OUT" { pins: 4; rotate: 180; }
 |C#c1| "22u"
 
-u1.vin - |vcc|              // capsule label (define |vcc::label| { symbol: power } [ "5V" ])
+u1.vin - |vcc|              // the power-flag capsule, defined above
 u1.vout - c1 - |gnd|        // a chain PASSES THROUGH a 2-pin part: series circuit
 u1.vout - j1.p3 "3V3"       // net name = the wire's label, set beside the trace
 j1.p1 -> "NSTDBY"           // one-ended label wire; the marker shapes the tag
