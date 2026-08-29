@@ -3216,8 +3216,8 @@ surface, while every drawing-global mechanism (`|sketch|`, `|hole|`, `|note|`,
 
 **True-size defaults.** A floorplan type's intrinsic sizes — a wall's
 `thickness:`, an opening's `width:`, every fixture body — are **physical
-millimetres**, converted to drawing units at desugar through the scope's
-`unit:` ([15.1](#151-the-container-the-datum--the-scale)): a bed is
+millimetres**, converted to drawing units through the scope's `unit:` where
+each is read ([15.1](#151-the-container-the-datum--the-scale)): a bed is
 1500 × 2000 mm whether the file drafts in `m` or `mm`. An **authored** value is
 drawing units like everything else — at `unit: m`, a 100 mm partition reads
 `thickness: 0.1`.
@@ -3975,7 +3975,8 @@ class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box 
 per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clearance`,
 `routing`, `density`) settle on the root; a drawing (or floorplan) scope's `scale:` (the ratio) ×
 `unit:` × the root `density:` fold into its one internal px-per-unit, and a
-floorplan type's mm defaults convert through the same `unit:`
+floorplan scope's `unit:` is stamped for its types' mm defaults to convert
+through where each is read
 ([SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 15.11](#1511-floorplan--the-architectural-dialect)); the per-type smart label (text / caption / symbol / link
 label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
 `a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
