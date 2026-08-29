@@ -16,7 +16,7 @@ use super::schematic::lowered_chain;
 use super::types;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Decl, Value};
+use crate::syntax::ast::{Child, Decl, Value, decl_of};
 
 /// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
@@ -98,7 +98,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     let chain = lowered_chain(n);
     let opens = is_drawing_body(&chain, &n.style);
     if is_page_body(&chain) {
-        if let Some(d) = find(&n.style, "scale") {
+        if let Some(d) = decl_of(&n.style, "scale") {
             return Err(Error::at(
                 d.span,
                 "a '|page|' carries no 'scale:' — 'density:' sets its pixels per millimetre (root), a drawing's 'scale:' its drafting ratio",
@@ -118,7 +118,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
             ctx.thickness = Some(t);
         }
         stamp(&mut n.style, &ctx, n.span)?;
-    } else if ctx.in_drawing && find(&n.style, "scale").is_some() {
+    } else if ctx.in_drawing && decl_of(&n.style, "scale").is_some() {
         // A node-level ratio override inside a drawing scope [SPEC 15.1].
         stamp(&mut n.style, &ctx, n.span)?;
     }
@@ -138,9 +138,9 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
 fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx, span: Span) -> Result<(), Error> {
     style.retain(|d| d.name != PX_PER_UNIT);
     let base = ctx.unit_mm * ctx.density;
-    let decl = match find(style, "scale") {
+    let decl = match decl_of(style, "scale") {
         None => number_decl(base, span),
-        Some(d) => match single(d) {
+        Some(d) => match d.single() {
             Some(Value::Number(r)) if *r > 0.0 => number_decl(r * base, d.span),
             Some(Value::Expr(src)) => Decl {
                 name: PX_PER_UNIT.into(),
@@ -182,7 +182,7 @@ pub(crate) fn mm_to_units(mm: f64, unit_mm: f64) -> f64 {
 /// this stamp at the read site (`layout::floorplan::wall`).
 fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
     style.retain(|d| d.name != WALL_THICKNESS);
-    if !chain.iter().any(|t| t == "wall") || find(style, "thickness").is_some() {
+    if !chain.iter().any(|t| t == "wall") || decl_of(style, "thickness").is_some() {
         return;
     }
     let units = if chain.iter().any(|t| t == "partition") {
@@ -223,8 +223,8 @@ fn stamp_unit_mm(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: 
 /// The nearest authored `thickness:` in a scope's own decls — drawing units.
 /// A malformed value is validation's to report; the walk just declines it.
 fn read_thickness(style: &[Decl]) -> Option<f64> {
-    match find(style, "thickness").map(single) {
-        Some(Some(Value::Number(n))) if *n > 0.0 => Some(*n),
+    match decl_of(style, "thickness").and_then(Decl::single) {
+        Some(Value::Number(n)) if *n > 0.0 => Some(*n),
         _ => None,
     }
 }
@@ -233,10 +233,10 @@ fn read_thickness(style: &[Decl]) -> Option<f64> {
 /// Only the fold's own scopes (root, pages, drawings) are read, so an
 /// `|axis|`'s quoted tick suffix never meets this enum.
 fn read_unit(style: &[Decl]) -> Result<Option<f64>, Error> {
-    let Some(d) = find(style, "unit") else {
+    let Some(d) = decl_of(style, "unit") else {
         return Ok(None);
     };
-    let mm = match single(d) {
+    let mm = match d.single() {
         Some(Value::Ident(u)) => match u.as_str() {
             "mm" => Some(1.0),
             "cm" => Some(10.0),
@@ -252,26 +252,12 @@ fn read_unit(style: &[Decl]) -> Result<Option<f64>, Error> {
 
 /// The root `density:` — px per mm, default 4, must be positive [SPEC 15.1].
 fn read_density(user_root: &[Decl]) -> Result<f64, Error> {
-    let Some(d) = find(user_root, "density") else {
+    let Some(d) = decl_of(user_root, "density") else {
         return Ok(4.0);
     };
-    match single(d) {
+    match d.single() {
         Some(Value::Number(n)) if *n > 0.0 => Ok(*n),
         _ => Err(Error::at(d.span, "'density' must be > 0")),
-    }
-}
-
-fn find<'a>(style: &'a [Decl], name: &str) -> Option<&'a Decl> {
-    style.iter().rev().find(|d| d.name == name)
-}
-
-fn single(d: &Decl) -> Option<&Value> {
-    match d.groups.as_slice() {
-        [group] => match group.as_slice() {
-            [v] => Some(v),
-            _ => None,
-        },
-        _ => None,
     }
 }
 
@@ -327,7 +313,7 @@ mod tests {
             style
                 .iter()
                 .find(|d| d.name == WALL_THICKNESS)
-                .and_then(|d| match single(d) {
+                .and_then(|d| match d.single() {
                     Some(Value::Number(n)) => Some(*n),
                     _ => None,
                 })

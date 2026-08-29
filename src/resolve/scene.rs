@@ -426,12 +426,9 @@ fn sample_points(
     funcs: &FuncTable,
 ) -> Result<Option<ResolvedValue>, Error> {
     // The value must be a single scalar: a `(…)` group or a call.
-    let src = match d.groups.as_slice() {
-        [group] => match group.as_slice() {
-            [Value::Expr(s)] => s.clone(),
-            [Value::Call(c)] => call_src(c),
-            _ => return Ok(None),
-        },
+    let src = match d.single() {
+        Some(Value::Expr(s)) => s.clone(),
+        Some(Value::Call(c)) => call_src(c),
         _ => return Ok(None),
     };
     let expr = Expr::parse(&src).map_err(|e| Error::at(d.span, e.0))?;
@@ -492,17 +489,10 @@ fn value_src(v: &Value) -> String {
 
 /// The `samples:` count from a node's own block (default 2 — a straight segment).
 fn sample_count(style: &[Decl]) -> usize {
-    style
-        .iter()
-        .find(|d| d.name == "samples")
-        .and_then(|d| match d.groups.as_slice() {
-            [group] => match group.as_slice() {
-                [Value::Number(n)] if *n >= 2.0 => Some(*n as usize),
-                _ => None,
-            },
-            _ => None,
-        })
-        .unwrap_or(2)
+    match crate::syntax::ast::decl_of(style, "samples").and_then(Decl::single) {
+        Some(Value::Number(n)) if *n >= 2.0 => *n as usize,
+        _ => 2,
+    }
 }
 
 /// A resolved text node [SPEC 3/6]: content carrying the text properties

@@ -346,9 +346,7 @@ impl<'a> Ctx<'a> {
         // never does. A value check, wearer-independent; not a context gate.
         // (The async sequence message's wavy |line| is engine-lowered at
         // layout, never authored, so it never passes here.)
-        if d.name == "stroke-style"
-            && matches!(single_value(d), Some(Value::Ident(s)) if s == "wavy")
-        {
+        if d.name == "stroke-style" && matches!(d.single(), Some(Value::Ident(s)) if s == "wavy") {
             out.push(
                 Diagnostic::error(
                     d.span,
@@ -518,7 +516,7 @@ impl<'a> Ctx<'a> {
         }
         match d.name.as_str() {
             "opacity" => {
-                if let Some(Value::Number(n)) = single_value(d)
+                if let Some(Value::Number(n)) = d.single()
                     && !(0.0..=1.0).contains(n)
                 {
                     out.push(
@@ -545,7 +543,7 @@ impl<'a> Ctx<'a> {
             // A connector's generated pin count and a pin's number [SPEC 16.2]
             // — counts, judged here like any other value shape.
             "pins" | "number" => {
-                let count = match single_value(d) {
+                let count = match d.single() {
                     Some(Value::Number(n)) => Some(*n),
                     _ => None,
                 };
@@ -562,7 +560,7 @@ impl<'a> Ctx<'a> {
             }
             // A wall's poché depth [SPEC 15.11/17] — drawing units, > 0.
             "thickness" => {
-                let ok = matches!(single_value(d), Some(Value::Number(n)) if *n > 0.0);
+                let ok = matches!(d.single(), Some(Value::Number(n)) if *n > 0.0);
                 if !ok {
                     out.push(
                         Diagnostic::error(d.span, "'thickness' takes a number > 0")
@@ -573,7 +571,8 @@ impl<'a> Ctx<'a> {
             // A flight's tread count [SPEC 15.11] — an integer ≥ 2; one step
             // is a threshold, not a stair.
             "steps" => {
-                let ok = matches!(single_value(d), Some(Value::Number(n)) if n.fract() == 0.0 && *n >= 2.0);
+                let ok =
+                    matches!(d.single(), Some(Value::Number(n)) if n.fract() == 0.0 && *n >= 2.0);
                 if !ok {
                     out.push(
                         Diagnostic::error(d.span, "'steps' takes a tread count ≥ 2")
@@ -595,8 +594,7 @@ impl<'a> Ctx<'a> {
                         "'swing' opens the leaf left or right of the pen's travel",
                     )
                 };
-                let ok =
-                    matches!(single_value(d), Some(Value::Ident(s)) if words.contains(&s.as_str()));
+                let ok = matches!(d.single(), Some(Value::Ident(s)) if words.contains(&s.as_str()));
                 if !ok {
                     out.push(Diagnostic::error(d.span, message).code(Code::MALFORMED_VALUE));
                 }
@@ -606,7 +604,7 @@ impl<'a> Ctx<'a> {
             // the nearest built static while the emitted CSS asked for another,
             // so a number outside the set errors instead of drifting.
             "font-weight" => {
-                if let Some(Value::Number(n)) = single_value(d)
+                if let Some(Value::Number(n)) = d.single()
                     && !matches!(*n as u16, 400 | 500 | 600 | 700)
                 {
                     out.push(
@@ -1033,14 +1031,4 @@ fn is_gradient(v: &Value) -> bool {
         c.name.as_str(),
         "gradient" | "linear-gradient" | "radial-gradient"
     ))
-}
-
-fn single_value(d: &Decl) -> Option<&Value> {
-    match d.groups.as_slice() {
-        [group] => match group.as_slice() {
-            [v] => Some(v),
-            _ => None,
-        },
-        _ => None,
-    }
 }

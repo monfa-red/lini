@@ -282,6 +282,20 @@ pub struct Decl {
 }
 
 impl Decl {
+    /// The declaration's value when it is exactly **one** — one group of one
+    /// item, which is what every scalar property declares (`width: 40`,
+    /// `steps: 12`, `unit: mm`). `None` for a list, a tuple of groups, or an
+    /// empty value; a reader that wants a particular shape matches on this.
+    pub(crate) fn single(&self) -> Option<&Value> {
+        match self.groups.as_slice() {
+            [group] => match group.as_slice() {
+                [v] => Some(v),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     /// The declaration's value read as a **single ident** — what every
     /// keyword-valued property is (`layout: tree`, `side: left`, `unit: mm`).
     /// `None` when the value is not a lone bare word.
@@ -311,11 +325,16 @@ impl Decl {
     }
 }
 
-/// The ident `name` is set to in a declaration list, **last-wins** — the
-/// cascade's within-block law [SPEC 4], stated once so no reader can disagree
-/// with the lowering about which value a block actually declares.
+/// The declaration of `name` in a list, **last-wins** — the cascade's
+/// within-block law [SPEC 4], stated once so no reader can disagree with the
+/// lowering about which value a block actually declares.
+pub(crate) fn decl_of<'a>(decls: &'a [Decl], name: &str) -> Option<&'a Decl> {
+    decls.iter().rev().find(|d| d.name == name)
+}
+
+/// …and that declaration's value read as an ident, the common case.
 pub(crate) fn ident_of<'a>(decls: &'a [Decl], name: &str) -> Option<&'a str> {
-    decls.iter().rev().find(|d| d.name == name)?.ident()
+    decl_of(decls, name)?.ident()
 }
 
 /// The `layout:` a block declares — the reading that decides which engine a

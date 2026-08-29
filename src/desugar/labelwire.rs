@@ -249,11 +249,8 @@ fn restates_default(ty: &str, d: &Decl) -> bool {
 }
 
 fn lone_ident(d: &Decl) -> Option<&str> {
-    match d.groups.as_slice() {
-        [group] => match group.as_slice() {
-            [Value::Ident(s)] => Some(s),
-            _ => None,
-        },
+    match d.single() {
+        Some(Value::Ident(s)) => Some(s),
         _ => None,
     }
 }

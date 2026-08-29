@@ -21,7 +21,7 @@
 //! the two judgements agree.
 
 use crate::resolve::NodeKind;
-use crate::syntax::ast::{Decl, Node, Value};
+use crate::syntax::ast::{Decl, Node, Value, decl_of, ident_of};
 
 /// The chrome children a node in a drawing scope generates, parser-shaped —
 /// the caller lowers them like authored children.
@@ -147,14 +147,8 @@ fn stairs_chrome(node: &Node, chain: &[String]) -> Vec<Node> {
     if !chain.iter().any(|c| c == "stairs") {
         return Vec::new();
     }
-    let steps = match node
-        .style
-        .iter()
-        .rev()
-        .find(|d| d.name == "steps")
-        .map(single)
-    {
-        Some(Some(Value::Number(n))) if *n >= 2.0 => *n as usize,
+    let steps = match decl_of(&node.style, "steps").and_then(Decl::single) {
+        Some(Value::Number(n)) if *n >= 2.0 => *n as usize,
         _ => return Vec::new(),
     };
     (0..steps - 1)
@@ -166,20 +160,7 @@ fn stairs_chrome(node: &Node, chain: &[String]) -> Vec<Node> {
 /// A door's `symbol:` as written — `single` unless a bare ident says otherwise;
 /// an unknown one is validation's to report, and reads as the default here.
 fn door_symbol(style: &[Decl]) -> &str {
-    match style.iter().rev().find(|d| d.name == "symbol").map(single) {
-        Some(Some(Value::Ident(s))) => s.as_str(),
-        _ => "single",
-    }
-}
-
-fn single(d: &Decl) -> Option<&Value> {
-    match d.groups.as_slice() {
-        [group] => match group.as_slice() {
-            [v] => Some(v),
-            _ => None,
-        },
-        _ => None,
-    }
+    ident_of(style, "symbol").unwrap_or("single")
 }
 
 /// One piece of a producer that emits several at once — a break's cut edges, an
