@@ -306,17 +306,6 @@ fn every_generated_id_carries_the_prefix() {
 /// can reach stands out as a stale promise rather than hiding in the gap.
 /// Every entry compiles below — the reachability check is the render itself,
 /// not a grep.
-/// A wall with one door and one window — every opening hook in one scene.
-const FLOORPLAN_OPENINGS: &str = "{ layout: floorplan; unit: m; scale: 0.05 }\n\
-     |wall#w| { draw: move(0, 0) right(6):run; } [\n\
-       |door| { on: run; at: 1 }\n\
-       |window| { on: run; at: 3.5 }\n\
-     ]\n";
-
-/// A flight of stairs — the tread chrome and the up arrow in one scene.
-const FLOORPLAN_STAIRS: &str = "{ layout: floorplan; unit: m; scale: 0.05 }\n\
-     |stairs| { steps: 10 }\n";
-
 const UNSAMPLED: &[(&str, &str)] = &[
     (
         "lini-stray",
@@ -335,22 +324,6 @@ const UNSAMPLED: &[(&str, &str)] = &[
         // The fourth quadrant — the samples turn parts 90° and 180° only.
         "{ layout: schematic }\n|R#r1| { rotate: 270 }\n|C#c1|\nr1 - c1\n",
     ),
-    (
-        // A floorplan's openings [SPEC 15.11] — the leaf and its quarter swing
-        // arc off a door, the sill pair off a window. One scene wears all
-        // three; `samples/floorplan.lini` will too, once it lands.
-        "lini-door-leaf",
-        FLOORPLAN_OPENINGS,
-    ),
-    ("lini-door-swing", FLOORPLAN_OPENINGS),
-    ("lini-window-sill", FLOORPLAN_OPENINGS),
-    (
-        // A flight's generated chrome [SPEC 15.11] — the risers across it and
-        // the one up arrow, both filled from `steps:`.
-        "lini-stair-tread",
-        FLOORPLAN_STAIRS,
-    ),
-    ("lini-stair-arrow", FLOORPLAN_STAIRS),
     (
         "lini-net-run-turned",
         // A net run stood on end [SPEC 16.4] — the label's own pose turns it.

@@ -1,0 +1,107 @@
+// A one-bedroom condominium at 1:50 [SPEC 15.11] — the drawing engine wearing
+// an architect's vocabulary. A `|wall|` traces the **centreline** and grows the
+// 200 mm poché outline around it (`|partition|` is the 100 mm interior define);
+// the `|door|` / `|window|` openings ride their wall's `[ ]`, stationed by
+// `on:` / `at:`, and clip that outline at the jambs while drawing their own
+// leaf, quarter swing arc and sill pair. The six fixture families draw
+// true-size bodies — a bed is 1500 × 2000 mm whether the file drafts in `m` or
+// `mm` — over a `--bg` fill, so furniture masks the floor it sits on. Counters,
+// the island, casework and the balcony deck are plain `|rect|`s and the north
+// arrow is a `|sketch|`: SPEC 15.11's parts-library escape.
+{
+  density: 5;
+  |slab::rect| { fill: --bg; stroke: --stroke-dark; stroke-width: 1; }
+  |room::block| {
+    layout: flow; align: center; gap: 2; font-size: 11; letter-spacing: 1;
+  }
+}
+
+|floorplan#unit| "UNIT 12A — ONE BEDROOM · 65 m²" { unit: m; scale: 0.02; } [
+
+  // ── The shell. One centreline loop; `close():west` mitres the seam like any
+  // other corner, and every opening below cuts its own gap out of the poché.
+  |wall#outer| {
+    draw: move(0, 0) point():nw right(9.6):north point():ne down(6.8):east
+          point():se left(9.6):south point():sw close():west;
+    // the corner `point()`s are the dimension strings' feet — an extension
+    // line off a corner runs away from the plan, never through an opening
+  } [
+    |door#entry| { on: east; at: 0.6; width: 0.95; swing: right; }
+    // hinged at the north jamb, opening into the flat
+    |door#slider| { on: west; at: 3.4; width: 2.4; symbol: sliding; }
+    // the balcony slider — two panels, no arc
+    |window#w1| { on: north; at: 1; width: 2; }
+    |window#w2| { on: north; at: 6.2; width: 1.6; }
+    |window#w3| { on: south; at: 6.6; width: 1.8; }
+  ]
+
+  |partition#bedwall| {
+    draw: move(0, 3.8) right(4.6):head down(3):side point():foot;
+  } [
+    |door#bed-door| { on: side; at: 0.4; width: 0.9; swing: right; }
+    // 'right' of the pen's travel — the leaf opens into the bedroom
+  ]
+  |partition#bathwall| {
+    draw: move(9.6, 4) point():tee left(2.9):head down(2.8):side;
+  } [
+    |door#bath-door| { on: side; at: 1; width: 0.8; hinge: end; }
+    // hung on the far jamb, and 'swing:' left by default — into the bathroom
+  ]
+
+  // ── Casework: counters, the island, the wardrobe and the balcony deck.
+  |slab#deck| { width: 1.7; height: 2.4; translate: -0.95 2.2; }
+  |slab| { width: 2.8; height: 0.6; translate: 7 0.4; }
+  // the kitchen run, against the north wall
+  |slab| { width: 2; height: 0.8; translate: 7.2 2; }
+  // the island
+  |slab| { width: 1.1; height: 0.55; translate: 2 1.75; }
+  // the coffee table
+  |slab| { width: 0.45; height: 0.45; translate: 0.6 4.15; }
+  // a nightstand
+  |slab| { width: 0.6; height: 1.4; translate: 4.25 6; }
+  // the wardrobe
+  |slab| { width: 1.2; height: 0.55; translate: 7.35 4.325; }
+  // the vanity top
+
+  // ── Fixtures. Each body masks what it overlaps, so the casework reads under
+  // the appliances that sit in it; an `|appliance|`'s label centres **in** its
+  // box (the F / DW / W/D convention), every other fixture's reads beside it.
+  |appliance| { symbol: stove; translate: 6.4 0.4; }
+  |appliance| "F" { symbol: fridge; translate: 8.1 0.4; }
+  |appliance| "DW" { symbol: dishwasher; translate: 7.8 2; }
+  |appliance| "W/D" { symbol: washer; translate: 5.2 6.4; }
+  |bath| { symbol: sink; translate: 6.8 2; }
+  |sofa| { translate: 2 0.65; }
+  |dining| { translate: 4.3 2.6; }
+  |bed| { translate: 1.8 4.95; }
+  |bath| { symbol: sink; translate: 7.35 4.325; }
+  |bath| { symbol: toilet; rotate: 180; translate: 9.15 5.4; }
+  |bath| { symbol: tub; translate: 7.6 6.325; }
+
+  // ── The sheet's own text: room names and authored areas [SPEC 15.11].
+  |room| { translate: 2.2 2.75; } [ "LIVING / DINING" "23.9 m²" ]
+  |room| { translate: 7.4 3.2; } [ "KITCHEN" ]
+  |room| { translate: 3.3 6.1; } [ "BEDROOM" "12.8 m²" ]
+  |room| { translate: 5.65 4.6; } [ "HALL" ]
+  |room| { translate: 8.5 4.4; } [ "BATH" "7.3 m²" ]
+  |room| { translate: -0.95 2.2; } [ "BALCONY" ]
+
+  // The north arrow a plan needs is a `|sketch|` define — SPEC 24 reserves the
+  // type, the pen already draws it.
+  |sketch#north| {
+    draw: move(-0.95, 5.05) line(0.22, 0.72) line(-0.22, -0.2) line(-0.22, 0.2)
+          close();
+    fill: --stroke-dark; stroke: none;
+  }
+  |room| { translate: -0.95 4.78; } [ "N" ]
+
+  // ── Dimensions read the **centreline**, where architects measure.
+  outer:nw (-) outer:ne { side: top; }
+  // → 9.6
+  outer:sw (-) bedwall:foot (-) outer:se { side: bottom; }
+  // → 4.6 · 5.0 — the bedroom wall, located along the south
+  outer:ne (-) bathwall:tee (-) outer:se { side: right; }
+  // → 4.0 · 2.8 — the bathroom wall, located along the east
+  outer:ne (-) outer:se { side: right; }
+  // → 6.8 — the overall, stacked outside its own chain
+]

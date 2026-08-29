@@ -1,0 +1,944 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/floorplan_parts.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-894.84 -680.5 1789.68 1380" width="1789.68" height="1380" class="lini lini-scope-e671c23f">
+  <style>
+    .lini-scope-e671c23f { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 10px; font-weight: 500; color: black; }
+    .lini-scope-e671c23f .lini-canvas { fill: white; }
+    .lini-scope-e671c23f .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-e671c23f .lini-path { stroke-dasharray: none; }
+    .lini-scope-e671c23f .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-e671c23f .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-e671c23f .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-e671c23f .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 8px; font-weight: 400; }
+    .lini-scope-e671c23f .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 8px; }
+    .lini-scope-e671c23f .lini-wall { fill: black; stroke: none; }
+    .lini-scope-e671c23f .lini-door-leaf { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-e671c23f .lini-door-swing { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-e671c23f .lini-window-sill { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-e671c23f .lini-stair-tread { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-e671c23f .lini-stair-arrow { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-e671c23f .lini-bed { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-sofa { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-dining { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-bath { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-appliance { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-stairs { fill: white; stroke: black; stroke-width: 1; }
+    .lini-scope-e671c23f .lini-head { font-size: 12px; }
+    .lini-scope-e671c23f .lini-cap { color: #888; }
+  </style>
+  <defs>
+    <pattern id="lini-hatch-fecd99e1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
+    <path id="lini-g1400-0" d="…"/>
+    <path id="lini-g1400-1" d="…"/>
+    <path id="lini-g1400-28" d="…"/>
+    <path id="lini-g1400-38" d="…"/>
+    <path id="lini-g1400-56" d="…"/>
+    <path id="lini-g1400-62" d="…"/>
+    <path id="lini-g1400-81" d="…"/>
+    <path id="lini-g1400-88" d="…"/>
+    <path id="lini-g1400-94" d="…"/>
+    <path id="lini-g1400-119" d="…"/>
+    <path id="lini-g1400-122" d="…"/>
+    <path id="lini-g1400-126" d="…"/>
+    <path id="lini-g1400-132" d="…"/>
+    <path id="lini-g1400-1653" d="…"/>
+    <path id="lini-g1400-1657" d="…"/>
+    <path id="lini-g1400-1779" d="…"/>
+    <path id="lini-g1400-1831" d="…"/>
+    <path id="lini-g1500-0" d="…"/>
+    <path id="lini-g1500-1" d="…"/>
+    <path id="lini-g1500-27" d="…"/>
+    <path id="lini-g1500-28" d="…"/>
+    <path id="lini-g1500-34" d="…"/>
+    <path id="lini-g1500-38" d="…"/>
+    <path id="lini-g1500-56" d="…"/>
+    <path id="lini-g1500-57" d="…"/>
+    <path id="lini-g1500-62" d="…"/>
+    <path id="lini-g1500-65" d="…"/>
+    <path id="lini-g1500-81" d="…"/>
+    <path id="lini-g1500-88" d="…"/>
+    <path id="lini-g1500-94" d="…"/>
+    <path id="lini-g1500-119" d="…"/>
+    <path id="lini-g1500-122" d="…"/>
+    <path id="lini-g1500-126" d="…"/>
+    <path id="lini-g1500-132" d="…"/>
+    <path id="lini-g1500-157" d="…"/>
+    <path id="lini-g1500-177" d="…"/>
+    <path id="lini-g1500-202" d="…"/>
+    <path id="lini-g1500-203" d="…"/>
+    <path id="lini-g1500-209" d="…"/>
+    <path id="lini-g1500-213" d="…"/>
+    <path id="lini-g1500-232" d="…"/>
+    <path id="lini-g1500-233" d="…"/>
+    <path id="lini-g1500-238" d="…"/>
+    <path id="lini-g1500-241" d="…"/>
+    <path id="lini-g1500-256" d="…"/>
+    <path id="lini-g1500-259" d="…"/>
+    <path id="lini-g1500-264" d="…"/>
+    <path id="lini-g1500-265" d="…"/>
+    <path id="lini-g1500-271" d="…"/>
+    <path id="lini-g1500-296" d="…"/>
+    <path id="lini-g1500-299" d="…"/>
+    <path id="lini-g1500-303" d="…"/>
+    <path id="lini-g1500-310" d="…"/>
+    <path id="lini-g1500-315" d="…"/>
+    <path id="lini-g1500-334" d="…"/>
+    <path id="lini-g1500-335" d="…"/>
+    <path id="lini-g1500-340" d="…"/>
+    <path id="lini-g1500-341" d="…"/>
+    <path id="lini-g1500-1652" d="…"/>
+    <path id="lini-g1500-1653" d="…"/>
+    <path id="lini-g1500-1654" d="…"/>
+    <path id="lini-g1500-1656" d="…"/>
+    <path id="lini-g1500-1657" d="…"/>
+    <path id="lini-g1500-1660" d="…"/>
+    <path id="lini-g1500-1779" d="…"/>
+    <path id="lini-g1500-1781" d="…"/>
+    <path id="lini-g1500-1788" d="…"/>
+    <path id="lini-g1500-1816" d="…"/>
+    <path id="lini-g1500-1817" d="…"/>
+    <path id="lini-g1500-1828" d="…"/>
+    <path id="lini-g1500-1994" d="…"/>
+  </defs>
+  <rect class="lini-canvas" x="-894.84" y="-680.5" width="1789.68" height="1380"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-floorplan lini-drawing lini-block" data-id="parts" transform="translate(0,0)">
+      <rect x="-874.84" y="-660.5" width="1749.68" height="1321" rx="0" ry="0"/>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-612.5)">
+        <rect x="-21.668" y="-6" width="43.336" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-157" transform="translate(-21.668 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(-9.124 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-81" transform="translate(0.228 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-81" transform="translate(7.54 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(14.852 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M -96 -8 L 96 -8 L 96 8 L -96 8 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 120 -4 L 312 -4 L 312 4 L 120 4 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 336 -16 L 528 -16 L 528 16 L 336 16 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" style="fill: white; stroke: black; stroke-width: 1" transform="translate(-517.16,-612.5)">
+        <path d="M 552 -8 L 744 -8 L 744 8 L 552 8 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" style="fill: url(#lini-hatch-fecd99e1); stroke: black; stroke-width: 1" transform="translate(-517.16,-612.5)">
+        <path d="M 768 -8 L 960 -8 L 960 8 L 768 8 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 1016 -48 L 1152 -48 L 1152 72 L 1136 72 L 1136 -32 L 1016 -32 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 1203.111 13.668 A 152 152 0 0 1 1388.889 13.668 L 1379.111 26.332 A 136 136 0 0 0 1212.889 26.332 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-508.5)">
+        <rect x="-23.745" y="-5" width="47.49" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-23.745 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-18.875 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(-12.845 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-10.515 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-8.185 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(0.285 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1654" transform="translate(5.215 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(10.605 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(17.175 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-508.5)">
+        <rect x="-34.9" y="-5" width="69.8" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-1994" transform="translate(-34.9 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-296" transform="translate(-32.32 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-26.18 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-20.73 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-16.78 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-12.89 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-10.56 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-6.67 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-4.34 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(1.69 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1994" transform="translate(7.47 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(12.38 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1653" transform="translate(17.31 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(21.76 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(28.33 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-508.5)">
+        <rect x="-32.135" y="-5" width="64.27" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-32.135 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(-28.245 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-22.435 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(-20.105 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-256" transform="translate(-14.575 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-9.275 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(-3.495 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(2.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(7.095 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(11.965 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(16.895 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1779" transform="translate(23.465 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1656" transform="translate(26.065 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-508.5)">
+        <rect x="-18.465" y="-5" width="36.93" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-232" transform="translate(-18.465 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-14.695 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(-12.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(-10.035 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(-7.705 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1828" transform="translate(-2.775 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1828" transform="translate(1.735 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(6.245 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(12.385 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-508.5)">
+        <rect x="-40.745" y="-5" width="81.49" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-238" transform="translate(-40.745 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-34.935 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-29.485 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(-25.595 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(-20.065 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1816" transform="translate(-14.255 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1656" transform="translate(-10.865 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1657" transform="translate(-4.795 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1817" transform="translate(0.875 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(6.595 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(11.465 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(17.185 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(22.715 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(26.605 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(28.935 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(34.965 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-508.5)">
+        <rect x="-32.11" y="-5" width="64.22" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-264" transform="translate(-32.11 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-23.21 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-20.88 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-16.99 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(-13.04 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-7.32 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(1.15 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(6.68 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(12.71 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(16.66 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(22.44 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(28.16 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-508.5)">
+        <rect x="-36.13" y="-5" width="72.26" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-177" transform="translate(-36.13 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-30.68 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(-26.73 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(-18.87 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(-13.94 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-8.41 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-2.38 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(3.4 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(8.93 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(14.65 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(20.43 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(24.32 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(28.27 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-203" transform="translate(30.6 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-380.5)">
+        <rect x="-23.366" y="-6" width="46.732" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-34" transform="translate(-23.366 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-94" transform="translate(-13.75 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-94" transform="translate(-2.79 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-122" transform="translate(8.17 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(16.55 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M -96 224 L -36 224 L -36 240 L -96 240 Z M 36 224 L 96 224 L 96 240 L 36 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(0,232)">
+          <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-36" y1="-8" x2="-36" y2="-80"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M -36 -80 A 72 72 0 0 1 36 -8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 120 224 L 180 224 L 180 240 L 120 240 Z M 252 224 L 312 224 L 312 240 L 252 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(216,232)">
+          <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-36" y1="8" x2="-36" y2="80"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M -36 80 A 72 72 0 0 0 36 8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 336 224 L 396 224 L 396 240 L 336 240 Z M 468 224 L 528 224 L 528 240 L 468 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(432,232)">
+          <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="36" y1="-8" x2="36" y2="-80"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M 36 -80 A 72 72 0 0 0 -36 -8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 552 224 L 612 224 L 612 240 L 552 240 Z M 684 224 L 744 224 L 744 240 L 684 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(648,232)">
+          <rect x="-36" y="-8" width="72" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="36" y1="8" x2="36" y2="80"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M 36 80 A 72 72 0 0 1 -36 8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 768 224 L 804 224 L 804 240 L 768 240 Z M 924 224 L 960 224 L 960 240 L 924 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(864,232)">
+          <rect x="-60" y="-8" width="120" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-60" y1="-8" x2="-60" y2="-68"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M -60 -68 A 60 60 0 0 1 0 -8"/>
+          </g>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="60" y1="-8" x2="60" y2="-68"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M 60 -68 A 60 60 0 0 0 0 -8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 984 224 L 1008 224 L 1008 240 L 984 240 Z M 1152 224 L 1176 224 L 1176 240 L 1152 240 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(1080,232)">
+          <rect x="-72" y="-8" width="144" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-72" y1="-8" x2="0" y2="-8"/>
+          </g>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="72" y1="8" x2="0" y2="8"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 1200 228 L 1260 228 L 1260 236 L 1200 236 Z M 1332 228 L 1392 228 L 1392 236 L 1332 236 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(1296,232)">
+          <rect x="-36" y="-4" width="72" height="8" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-36" y1="-4" x2="-36" y2="-76"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M -36 -76 A 72 72 0 0 1 36 -4"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-272.5)">
+        <rect x="-22.51" y="-5" width="45.02" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-22.51 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-17.64 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-13.75 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-8.3 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-4.35 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(1.87 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(6.8 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(9.13 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-232" transform="translate(14.85 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(18.62 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-272.5)">
+        <rect x="-25.685" y="-5" width="51.37" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-25.685 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-20.815 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-16.925 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-11.475 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-7.525 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(-1.305 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(3.625 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(7.575 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(9.905 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(15.985 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(21.795 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-272.5)">
+        <rect x="-20.305" y="-5" width="40.61" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-213" transform="translate(-20.305 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-14.585 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-8.805 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(-0.335 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(4.595 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(6.925 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-232" transform="translate(12.645 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(16.415 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-272.5)">
+        <rect x="-23.48" y="-5" width="46.96" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-213" transform="translate(-23.48 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-17.76 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-11.98 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1788" transform="translate(-3.51 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(1.42 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(5.37 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(7.7 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(13.78 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(19.59 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(346.84,-272.5)">
+        <rect x="-35.365" y="-5" width="70.73" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-35.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-341" transform="translate(-30.495 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-264" transform="translate(-25.105 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(-16.205 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-10.065 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(-4.035 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(-1.705 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(3.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(9.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(15.395 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(21.175 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(27.315 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(29.645 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(562.84,-272.5)">
+        <rect x="-34.225" y="-5" width="68.45" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-34.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-341" transform="translate(-29.355 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-264" transform="translate(-23.965 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(-15.065 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-8.925 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(-2.895 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(-0.565 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(4.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(9.235 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(11.565 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(13.895 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(20.035 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(22.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(28.145 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(778.84,-272.5)">
+        <rect x="-31.585" y="-5" width="63.17" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-241" transform="translate(-31.585 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-29.255 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-21.145 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1994" transform="translate(-13.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-296" transform="translate(-10.785 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-4.645 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(0.805 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(4.755 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(8.645 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(10.975 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(14.865 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(17.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(23.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1994" transform="translate(29.005 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,-132.5)">
+        <rect x="-61.68" y="-6" width="123.36" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-157" transform="translate(-61.68 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-65" transform="translate(-49.136 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-88" transform="translate(-44.896 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-34" transform="translate(-35.22 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-94" transform="translate(-25.604 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-157" transform="translate(-14.644 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(-2.1 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1788" transform="translate(9.512 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(17.428 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-132" transform="translate(25.244 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(32.892 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-65" transform="translate(42.244 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-122" transform="translate(46.484 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(54.864 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M -96 472 L -48 472 L -48 488 L -96 488 Z M 48 472 L 96 472 L 96 488 L 48 488 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-window lini-block" transform="translate(0,480)">
+          <rect x="-48" y="-8" width="96" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-48" y1="-2.6667" x2="48" y2="-2.6667"/>
+          </g>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-48" y1="2.6667" x2="48" y2="2.6667"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 120 472 L 136 472 L 136 488 L 120 488 Z M 296 472 L 312 472 L 312 488 L 296 488 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-window lini-block" transform="translate(216,480)">
+          <rect x="-80" y="-8" width="160" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-80" y1="-2.6667" x2="80" y2="-2.6667"/>
+          </g>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-80" y1="2.6667" x2="80" y2="2.6667"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-partition lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 336 476 L 384 476 L 384 484 L 336 484 Z M 480 476 L 528 476 L 528 484 L 480 484 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-window lini-block" transform="translate(432,480)">
+          <rect x="-48" y="-4" width="96" height="8" rx="0" ry="0"/>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-48" y1="-1.3333" x2="48" y2="-1.3333"/>
+          </g>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-48" y1="1.3333" x2="48" y2="1.3333"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-wall lini-sketch" transform="translate(-517.16,-612.5)">
+        <path d="M 552 472 L 568 472 L 568 488 L 552 488 Z M 624 472 L 648 472 L 648 488 L 624 488 Z M 728 472 L 744 472 L 744 488 L 728 488 Z" fill-rule="evenodd"/>
+        <g class="lini-node lini-door lini-block" transform="translate(596,480)">
+          <rect x="-28" y="-8" width="56" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-door-leaf lini-line" transform="translate(0,0)">
+            <line x1="-28" y1="-8" x2="-28" y2="-64"/>
+          </g>
+          <g class="lini-node lini-door-swing lini-path" transform="translate(0,0)">
+            <path d="M -28 -64 A 56 56 0 0 1 28 -8"/>
+          </g>
+        </g>
+        <g class="lini-node lini-window lini-block" transform="translate(688,480)">
+          <rect x="-40" y="-8" width="80" height="16" rx="0" ry="0"/>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-40" y1="-2.6667" x2="40" y2="-2.6667"/>
+          </g>
+          <g class="lini-node lini-window-sill lini-line" transform="translate(0,0)">
+            <line x1="-40" y1="2.6667" x2="40" y2="2.6667"/>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-stairs lini-path" transform="translate(346.84,-132.5)">
+        <path d="M -36 -40 L 36 -40 L 36 40 L -36 40 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-18.245 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-13.375 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(-9.485 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-296" transform="translate(-3.765 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(2.375 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(7.245 56.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1656" transform="translate(12.175 56.58) scale(0.01 -0.01)"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="20" x2="36" y2="20"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="0" x2="36" y2="0"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="-20" x2="36" y2="-20"/>
+        </g>
+        <g class="lini-node lini-stair-arrow lini-path" transform="translate(0,0)">
+          <path d="M 0 30 L 0 -40 M -8.8 -31.2 L 0 -40 L 8.8 -31.2"/>
+        </g>
+      </g>
+      <g class="lini-node lini-stairs lini-path" transform="translate(562.84,-132.5)">
+        <path d="M -36 -80 L 36 -80 L 36 80 L -36 80 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-18.095 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-13.225 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(-9.335 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-296" transform="translate(-3.615 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(2.525 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(7.395 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1660" transform="translate(12.325 96.58) scale(0.01 -0.01)"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="60" x2="36" y2="60"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="40" x2="36" y2="40"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="20" x2="36" y2="20"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="0" x2="36" y2="0"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="-20" x2="36" y2="-20"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="-40" x2="36" y2="-40"/>
+        </g>
+        <g class="lini-node lini-stair-tread lini-line" transform="translate(0,0)">
+          <line x1="-36" y1="-60" x2="36" y2="-60"/>
+        </g>
+        <g class="lini-node lini-stair-arrow lini-path" transform="translate(0,0)">
+          <path d="M 0 70 L 0 -80 M -8.8 -71.2 L 0 -80 L 8.8 -71.2"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,-24.5)">
+        <rect x="-29.195" y="-5" width="58.39" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-1653" transform="translate(-29.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1654" transform="translate(-24.745 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(-19.355 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1652" transform="translate(-12.785 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-3.885 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(2.255 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-232" transform="translate(7.975 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(11.745 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(17.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(22.975 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(25.305 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,-24.5)">
+        <rect x="-18.26" y="-5" width="36.52" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-335" transform="translate(-18.26 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-10.23 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-7.9 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-1.76 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(2.13 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1781" transform="translate(7.94 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1654" transform="translate(12.87 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,-24.5)">
+        <rect x="-31.585" y="-5" width="63.17" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-241" transform="translate(-31.585 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-29.255 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-21.145 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1994" transform="translate(-13.365 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-296" transform="translate(-10.785 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-4.645 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(0.805 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(4.755 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(8.645 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(10.975 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(14.865 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(17.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(23.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-1994" transform="translate(29.005 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,-24.5)">
+        <rect x="-34.895" y="-5" width="69.79" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-34.895 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-335" transform="translate(-31.005 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-22.975 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-14.615 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-8.585 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-0.475 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(5.555 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(11.335 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(19.385 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(23.335 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(29.115 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,131.5)">
+        <rect x="-43.954" y="-6" width="87.908" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-27" transform="translate(-43.954 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-38" transform="translate(-35.514 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-34" transform="translate(-27.734 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(-18.118 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1788" transform="translate(-6.506 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(1.41 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-94" transform="translate(9.226 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-56" transform="translate(20.186 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(27.786 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(37.138 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bed lini-path" transform="translate(-517.16,131.5)">
+        <path d="M -60 -80 L 60 -80 L 60 80 L -60 80 Z M -53.6 -73.6 L -3.2 -73.6 L -3.2 -45.6 L -53.6 -45.6 Z M 3.2 -73.6 L 53.6 -73.6 L 53.6 -45.6 L 3.2 -45.6 Z M -60 -13.6 L 60 -13.6"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-209" transform="translate(-16.07 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.93 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-3.9 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(1.88 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(8.02 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(10.35 96.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bed lini-path" transform="translate(-301.16,131.5)">
+        <path d="M -36 -80 L 36 -80 L 36 80 L -36 80 Z M -29.6 -73.6 L 29.6 -73.6 L 29.6 -45.6 L -29.6 -45.6 Z M -36 -13.6 L 36 -13.6"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-13.555 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-8.685 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-6.355 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(-0.575 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(5.505 96.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(7.835 96.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-sofa lini-path" transform="translate(-85.16,131.5)">
+        <path d="M -88 -36 L 88 -36 L 88 36 L -88 36 Z M -72 36 L -72 -20 L 72 -20 L 72 36"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-12.545 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(-8.655 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-2.845 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(1.105 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(6.825 52.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-sofa lini-path" transform="translate(130.84,131.5)">
+        <path d="M -64 -36 L 64 -36 L 64 36 L -64 36 Z M -48 36 L -48 -20 L 48 -20 L 48 36"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-8.975 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-335" transform="translate(-5.085 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(2.945 52.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-sofa lini-path" transform="translate(346.84,131.5)">
+        <path d="M -96 -96 L 96 -96 L 96 -24 L -24 -24 L -24 96 L -96 96 Z M -24 80 L -80 80 L -80 -80 L 80 -80 L 80 -24"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-203" transform="translate(-15.48 112.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.95 112.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-3.92 112.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(0.03 112.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(5.81 112.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(11.53 112.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,403.5)">
+        <rect x="-46.956" y="-6" width="93.912" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-34" transform="translate(-46.956 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-65" transform="translate(-37.34 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-88" transform="translate(-33.1 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-65" transform="translate(-23.424 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-88" transform="translate(-19.184 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-57" transform="translate(-9.508 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1788" transform="translate(5.032 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-27" transform="translate(12.948 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(21.388 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-132" transform="translate(30.74 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-62" transform="translate(38.388 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-dining lini-path" transform="translate(-517.16,403.5)">
+        <path d="M -72 -36 L 72 -36 L 72 36 L -72 36 Z M -66 -72 L -30 -72 L -30 -36 L -66 -36 Z M -66 36 L -30 36 L -30 72 L -66 72 Z M -18 -72 L 18 -72 L 18 -36 L -18 -36 Z M -18 36 L 18 36 L 18 72 L -18 72 Z M 30 -72 L 66 -72 L 66 -36 L 30 -36 Z M 30 36 L 66 36 L 66 72 L 30 72 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-6.085 88.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-1.215 88.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-340" transform="translate(1.115 88.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-dining lini-path" transform="translate(-301.16,403.5)">
+        <path d="M -48 -32 L 48 -32 L 48 32 L -48 32 Z M -42 -68 L -6 -68 L -6 -32 L -42 -32 Z M -42 32 L -6 32 L -6 68 L -42 68 Z M 6 -68 L 42 -68 L 42 -32 L 6 -32 Z M 6 32 L 42 32 L 42 68 L 6 68 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-232" transform="translate(-9.765 84.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-5.995 84.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(0.035 84.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(5.815 84.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,403.5)">
+        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -18 -84 L 18 -84 L 18 -48 L -18 -48 Z M -84 -18 L -48 -18 L -48 18 L -84 18 Z M -18 48 L 18 48 L 18 84 L -18 84 Z M 48 -18 L 84 -18 L 84 18 L 48 18 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-299" transform="translate(-13.84 100.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.89 100.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-3.86 100.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(1.92 100.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(7.7 100.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bath lini-path" transform="translate(130.84,403.5)">
+        <path d="M -68 -30 L 68 -30 L 68 30 L -68 30 Z M -48.8 -22.8 L 48.8 -22.8 A 12 12 0 0 1 60.8 -10.8 L 60.8 10.8 A 12 12 0 0 1 48.8 22.8 L -48.8 22.8 A 12 12 0 0 1 -60.8 10.8 L -60.8 -10.8 A 12 12 0 0 1 -48.8 -22.8 Z M 42 0 A 3.6 3.6 0 1 1 49.2 0 A 3.6 3.6 0 1 1 42 0 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-7.905 46.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-4.015 46.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-202" transform="translate(1.765 46.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bath lini-path" transform="translate(346.84,403.5)">
+        <path d="M -36 -36 L 36 -36 L 36 36 L -36 36 Z M -36 -36 L 36 36 M 36 -36 L -36 36 M -5.6 0 A 5.6 5.6 0 1 1 5.6 0 A 5.6 5.6 0 1 1 -5.6 0 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-17.205 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(-12.335 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-6.525 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-335" transform="translate(-0.495 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(7.535 52.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(13.255 52.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bath lini-path" transform="translate(562.84,403.5)">
+        <path d="M -28 -16 L -13.6 -16 L -13.6 16 L -28 16 Z M -23.2 0 A 25.6 14 0 1 1 28 0 A 25.6 14 0 1 1 -23.2 0 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-310" transform="translate(-12.095 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-8.205 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-2.175 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(0.155 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(2.485 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(8.205 32.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-bath lini-path" transform="translate(778.84,403.5)">
+        <path d="M -20 -16 L 20 -16 L 20 16 L -20 16 Z M -13.6 0 A 13.6 10.4 0 1 1 13.6 0 A 13.6 10.4 0 1 1 -13.6 0 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-9.14 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-4.27 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(-1.94 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-256" transform="translate(3.84 32.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-head lini-block" transform="translate(-813.16,603.5)">
+        <rect x="-40.296" y="-6" width="80.592" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-1" transform="translate(-40.296 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-119" transform="translate(-30.944 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-119" transform="translate(-22.852 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-81" transform="translate(-14.76 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-65" transform="translate(-7.448 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1" transform="translate(-3.208 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-88" transform="translate(6.144 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-28" transform="translate(15.82 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-38" transform="translate(25.7 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(33.48 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-appliance lini-path" transform="translate(-517.16,603.5)">
+        <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -20.64 -12 A 8.64 8.64 0 1 1 -3.36 -12 A 8.64 8.64 0 1 1 -20.64 -12 Z M 3.36 -12 A 8.64 8.64 0 1 1 20.64 -12 A 8.64 8.64 0 1 1 3.36 -12 Z M -20.64 12 A 8.64 8.64 0 1 1 -3.36 12 A 8.64 8.64 0 1 1 -20.64 12 Z M 3.36 12 A 8.64 8.64 0 1 1 20.64 12 A 8.64 8.64 0 1 1 3.36 12 Z"/>
+      </g>
+      <g class="lini-node lini-appliance lini-path" transform="translate(-301.16,603.5)">
+        <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -24 14.4 L 24 14.4"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-56" transform="translate(-2.75 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-appliance lini-path" transform="translate(-85.16,603.5)">
+        <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z M -18.4 -18.4 L 18.4 -18.4 L 18.4 18.4 L -18.4 18.4 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-157" transform="translate(-4.81 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-appliance lini-path" transform="translate(130.84,603.5)">
+        <path d="M -24 -24 L 24 -24 L 24 24 L -24 24 Z"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-34" transform="translate(-8.4 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-157" transform="translate(-1.22 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-517.16,655.5)">
+        <rect x="-12.955" y="-5" width="25.91" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-303" transform="translate(-12.955 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-8.085 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-4.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-334" transform="translate(1.835 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(7.235 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-301.16,655.5)">
+        <rect x="-13.995" y="-5" width="27.99" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-232" transform="translate(-13.995 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-10.225 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-6.275 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(-3.945 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-233" transform="translate(2.195 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(8.275 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(-85.16,655.5)">
+        <rect x="-16.915" y="-5" width="33.83" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-335" transform="translate(-16.915 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(-8.885 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(-3.435 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(1.435 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(7.245 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(12.965 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-cap lini-block" transform="translate(130.84,655.5)">
+        <rect x="-26.49" y="-5" width="52.98" height="10" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-209" transform="translate(-26.49 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-20.35 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(-18.02 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(-13.15 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-335" transform="translate(-7.34 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-177" transform="translate(0.69 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(6.14 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-238" transform="translate(11.01 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-213" transform="translate(16.82 3.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(22.54 3.58) scale(0.01 -0.01)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,675.5)">
+        <rect x="-67.872" y="-4" width="135.744" height="8" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1400-132" transform="translate(-67.872 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-62" transform="translate(-63.632 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-38" transform="translate(-58.064 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-56" transform="translate(-51.856 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-81" transform="translate(-47.624 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-94" transform="translate(-43.584 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-94" transform="translate(-37.008 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-122" transform="translate(-30.432 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-119" transform="translate(-25.704 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-81" transform="translate(-21.112 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1" transform="translate(-17.072 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-88" transform="translate(-11.712 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-119" transform="translate(-4.208 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1" transform="translate(0.384 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-122" transform="translate(5.744 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-132" transform="translate(10.472 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-126" transform="translate(14.712 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1831" transform="translate(21.008 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-126" transform="translate(30.064 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-119" transform="translate(34.504 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-38" transform="translate(39.096 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-28" transform="translate(43.448 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1653" transform="translate(51.192 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1657" transform="translate(54.632 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1779" transform="translate(59.104 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1653" transform="translate(60.992 2.864) scale(0.008 -0.008)"/>
+          <use href="#lini-g1400-1653" transform="translate(64.432 2.864) scale(0.008 -0.008)"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>
