@@ -75,7 +75,7 @@ pub fn list_themes() -> &'static [(&'static str, &'static str)] {
         ("high-contrast", "maximal contrast, light + dark (a11y)"),
         (
             "blueprint",
-            "white linework on Prussian blue — the diazo print, one look",
+            "white linework on cyanotype blue — the diazo print, one look",
         ),
     ]
 }
@@ -201,57 +201,62 @@ fn high_contrast() -> Vec<(&'static str, ResolvedValue)> {
     ]
 }
 
-/// The blueprint — white linework on Prussian-blue paper, the diazo print look,
+/// The blueprint — white linework on cyanotype-blue paper, the diazo print look,
 /// one look in every mode. Only the black-and-white roles are repainted; the
 /// named-hue palette [SPEC 10.2] passes through as the **dark arm** it was
-/// collapsed to, since the paper sits at that arm's own lightness (OKLCH L 0.30
-/// against the dark default's 0.23): a hue's `-ink` still reads as text straight
-/// on the paper, and its `-wash` / `-soft` still read as surfaces over it — which
-/// the light arm's pale tiers, pasted on as bright plates, do not. `text-color`,
-/// the fonts and the weights are not colours of the paper: they pass through.
+/// collapsed to, because a hue's `-ink` is the tier that must carry *text*: only
+/// the dark arm's (L 0.83–0.92) reads on paper at L 0.438, where the light arm's
+/// (L ≈ 0.40) is the paper. The surface tiers pay for that — `-soft` (L 0.37) and
+/// `-wash` (L 0.28) now sit *below* the paper, wells rather than cards — but each
+/// keeps its `-deep` edge [SPEC 14.6], which is what holds a blue series apart
+/// from blue paper. `text-color`, the fonts and the weights are not colours of
+/// the paper: they pass through.
 fn blueprint() -> Vec<(&'static str, ResolvedValue)> {
     // Linework is the paper's own white at strength — one pen, many pressures,
     // so a line crossing a filled shape blends toward it instead of greying it
     // (the reasoning behind `--lini-stroke-light` [SPEC 10.1]).
     let pen = |a: f64| rgba(255.0, 255.0, 255.0, a);
     vec![
-        // The paper: OKLCH (0.30, 0.093, 253) — Prussian blue, the diazo ground.
-        ("bg", hx("002e5b")),
-        ("sheet", hx("002e5b")),
+        // The paper: OKLCH (0.438, 0.143, 255) — the cyanotype blue, a shade
+        // lighter and a good deal bluer than a Prussian ground. Every white the
+        // pen lays down loses punch at this lightness (white-on-paper contrast
+        // 13.6 → 8.0), so each alpha below is raised to hold its old *step*.
+        ("bg", hx("00509e")),
+        ("sheet", hx("00509e")),
         ("fg", hx("edf5fb")),
-        // A body sits one step up from the paper (L 0.355) — opaque, so it still
+        // A body sits one step up from the paper (L 0.485) — opaque, so it still
         // masks what it overlaps, and blue, so nothing reads as a white plate.
-        ("fill", hx("0f3d69")),
-        ("stroke", pen(0.78)),
+        ("fill", hx("2f6199")),
+        ("stroke", pen(0.85)),
         // The primary drafting tone: full white. A floorplan's poché fills with
         // it [SPEC 15.11], so walls read solid white on blue.
         ("stroke-dark", idn("white")),
-        ("stroke-light", pen(0.45)),
+        ("stroke-light", pen(0.6)),
         ("accent", hx("7adff7")),
         ("accent-text", hx("0a2c4e")),
-        ("muted", pen(0.62)),
-        ("danger", hx("f97770")),
+        ("muted", pen(0.72)),
+        ("danger", hx("ffa295")),
         ("warn", hx("f3bd5c")),
-        ("stray", hx("f97770")),
-        ("group-stroke", pen(0.4)),
-        ("group-fill", pen(0.05)),
-        ("header-fill", pen(0.1)),
-        ("icon-fill", pen(0.18)),
-        ("caption-color", pen(0.62)),
-        ("footer-color", pen(0.62)),
-        ("grid", pen(0.16)),
+        ("stray", hx("ffa295")),
+        ("group-stroke", pen(0.55)),
+        ("group-fill", pen(0.07)),
+        ("header-fill", pen(0.14)),
+        ("icon-fill", pen(0.25)),
+        ("caption-color", pen(0.72)),
+        ("footer-color", pen(0.72)),
+        ("grid", pen(0.22)),
         // The tooltip card inverts the paper, as it does in every theme.
         ("tip-bg", hx("edf5fb")),
-        ("tip-fg", hx("002e5b")),
+        ("tip-fg", hx("00509e")),
         // A print is flat: the shadow is a whisper, not a lift.
         ("shadow-color", rgba(0.0, 0.0, 0.0, 0.18)),
         // The schematic roles [SPEC 16.6]: wires and net tags as lighter tints
         // of the pen, part bodies the same faint card as any other fill.
         ("wire", hx("a8d8f0")),
-        ("component-fill", hx("0f3d69")),
+        ("component-fill", hx("2f6199")),
         ("component-stroke", idn("white")),
         ("label-ink", hx("7bd9de")),
-        ("pin-number", pen(0.55)),
+        ("pin-number", pen(0.65)),
     ]
 }
 
@@ -343,14 +348,14 @@ mod tests {
     }
 
     #[test]
-    fn blueprint_is_one_look_on_prussian_paper() {
+    fn blueprint_is_one_look_on_cyanotype_paper() {
         let css = builtin_css("blueprint").unwrap();
         // A blueprint is a blueprint in either mode: no arms, no color-scheme.
         assert!(!css.contains("light-dark("), "{css}");
         assert!(!css.contains("color-scheme"), "{css}");
         // The paper, and the pen a floorplan's poché fills with [SPEC 15.11].
-        assert!(css.contains("--lini-bg: #002e5b;"), "{css}");
-        assert!(css.contains("--lini-sheet: #002e5b;"), "{css}");
+        assert!(css.contains("--lini-bg: #00509e;"), "{css}");
+        assert!(css.contains("--lini-sheet: #00509e;"), "{css}");
         assert!(css.contains("--lini-stroke-dark: white;"), "{css}");
     }
 
@@ -370,8 +375,9 @@ mod tests {
 
     #[test]
     fn blueprint_hues_are_the_dark_arm() {
-        // The named-hue palette [SPEC 10.2] passes through: the paper is dark,
-        // so every hue takes its dark-mode job rather than a repainted one.
+        // The named-hue palette [SPEC 10.2] passes through: the `-ink` tier is
+        // text, and only the dark arm's reads on the paper — so every hue takes
+        // its dark-mode job rather than a repainted one.
         let bp = builtin_css("blueprint").unwrap();
         let dark = builtin_css("dark").unwrap();
         for line in ["--lini-teal-ink: ", "--lini-rose-soft: ", "--lini-amber: "] {

@@ -122,7 +122,7 @@ fn a_builtin_theme_round_trips_through_its_own_printed_css() {
         },
     )
     .expect("compile");
-    assert!(direct.contains("#002e5b"), "the paper bakes in: {direct}");
+    assert!(direct.contains("#00509e"), "the paper bakes in: {direct}");
     assert!(!direct.contains("var("), "{direct}");
 }
 
@@ -141,7 +141,7 @@ fn a_themed_live_compile_stays_overridable_by_host_css() {
     )
     .expect("compile");
     assert!(svg.contains("@layer lini.defaults"), "{svg}");
-    assert!(svg.contains("--lini-fill: #0f3d69;"), "{svg}");
+    assert!(svg.contains("--lini-fill: #2f6199;"), "{svg}");
     assert!(svg.contains("fill: var(--lini-fill)"), "{svg}");
 }
 

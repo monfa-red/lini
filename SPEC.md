@@ -4744,7 +4744,7 @@ marker composing "VIEW A (2:1)" — an arrow defines no capture, so it is title 
 over a view's smart label; construction links are built,
 [SPEC 15.8](#158-assemblies-views-sheets--titles)); imports / modules / namespaces
 for shared themes and part libraries; animation; native PNG / WebP export.
-(The **`blueprint` theme** — white linework on Prussian blue, any diagram —
+(The **`blueprint` theme** — white linework on cyanotype blue, any diagram —
 shipped as a `--theme` builtin, [SPEC 20](#20-cli); a floorplan's default
 stays black-on-white.)
 

@@ -2648,3 +2648,170 @@ values checked (SKILL 4.8 / 2.05, README 7.2 / 7.0).
   `fixtures/draw.rs` 299 · `wall/mod.rs` 299 · `wall/join.rs` 283 ·
   `fixtures/mod.rs` 229 · `mod.rs` 167 · `face.rs` 113 · `label.rs` 54 — all
   comfortably inside the ~500 LOC line.
+
+---
+
+## Phase 14 — Blueprint theme, round 2 (user, 2026-08-29)
+
+**Goal**: the two things the user hit using Phase 10's theme live — a
+transparent page behind the figure in `lini serve`, and a paper one shade
+too dark — fixed at the mechanism, not per-theme.
+
+- [x] **The served pane paints the theme's paper.** `serve::theme_style`
+      declares the theme's `--lini-*` on the page's `:root`; each preview
+      pane paints `background: var(--lini-bg, <today>)`. Both modes, no
+      blueprint special-case, and an unthemed serve is byte-for-byte the
+      look it had.
+- [x] **The paper lightens to `#00509e`** — OKLCH (0.438, 0.143, 255), the
+      user's own value, kept after rendering the alternatives.
+- [x] **Everything that hung off the old paper re-tuned**: the body fill,
+      every white-alpha wash and pen pressure, `danger`/`stray`, `tip-fg`.
+- [x] **The hue-arm call revisited at the new lightness** — light arm
+      rendered again and rejected again, for a *different* reason.
+- [x] Four proofs re-rendered, read, and refreshed in
+      `plans/refs-floorplan/final-renders/blueprint-*` (full + 0.3 thumb);
+      coverage sweep re-read (`palette`, `text_tables`, `mindmap`,
+      `sequence`, `icons`, `drawing_sheet`, `chart_hero`).
+- [x] Tests re-pinned (the var-name-set roster test untouched and passing);
+      `cargo fmt --all --check`, `cargo test`, `cargo clippy --all-targets`
+      clean; wasm parity ran green, no rebuild owed.
+
+### Execution log
+
+2026-08-29, one session. Baseline **1475 passed / 0 failed** → after **1477 /
+0** (+2 in `src/serve/mod.rs`). Smoke-tested over HTTP in Chrome on all four
+combinations (playground / single file × themed / unthemed).
+
+#### 1 · The page is what paints the paper
+
+SPEC 18's law — *a figure paints no background it was not given* — is right,
+and it is exactly why white linework arrived on a white page: `serve`'s panes
+painted `white` (file mode) and nothing (the playground) as literals. A
+compiled figure can't supply the answer either: the live SVG declares only the
+`--lini-*` it **uses**, so a scene with no background carries no `--lini-bg` at
+all (proved by `render::mod`'s own test).
+
+So the server hands the page the palette:
+
+- `serve::theme_style(opts)` runs `opts.theme_css` through the same
+  `extract_lini_vars` the compile path uses and emits one
+  `<style>:root { --lini-…; }</style>`; a declaration carrying `<` is dropped
+  (a theme file is CSS and must not close the `<style>` it lands in). No
+  theme → empty string.
+- Both pages carry a `{{THEME}}` slot (`single.html` already had the
+  `{{TITLE}}` replace; `dir_mode` now does the same one replace), and each
+  pane reads the same variable: `#svg-host { background: var(--lini-bg, white) }`
+  and `#preview svg { background: var(--lini-bg, transparent) }`. The
+  fallbacks *are* today's look, so an unthemed serve is unchanged.
+
+One mechanism, three properties for free: any theme's paper lands (not just
+blueprint), a light theme paints white on its own, and a `light-dark()` theme
+resolves against the page's colour-scheme like every other CSS value.
+
+#### 2 · The paper: `#00509e`, the user's value, after rendering the rivals
+
+| | value | OKLCH |
+|---|---|---|
+| was | `#002e5b` | (0.302, 0.093, 253) |
+| **now** | **`#00509e`** | **(0.438, 0.143, 255)** |
+
+Two rivals were rendered before keeping it:
+
+- **The palette literal the user asked about.** `--blue`'s light arm offers
+  `-deep` `#2774ce` (L 0.560 — far too light to be paper) and `-ink` `#004496`
+  (0.404, 0.148, 258), genuinely near. Rendered as paper (floorplan, charts,
+  `palette`) it prints beautifully — but L 0.404 sits **in the dead zone**: the
+  dark-arm `-soft` tier lives at L 0.369–0.385, so a soft fill has a ΔL of
+  0.02–0.035 against it and the `palette` proof's *blue* row visibly melts into
+  the sheet. At 0.438 the same tier reads at ΔL 0.053–0.069, on the other side
+  of the paper but with the step back. **No literal; the family consistency
+  isn't worth a tier that disappears.**
+- **A calmer paper at the same lightness** — `#19538f` (C 0.115) — reads
+  denim, not print. At L 0.44 it is the chroma that keeps it a blueprint.
+
+**What moved with the paper.** Every white the pen lays down loses punch at
+L 0.438 (white-on-paper contrast 13.6 → 8.0), so each alpha rose to hold its
+old *step*:
+
+| role | was | now | why |
+|---|---|---|---|
+| `fill` / `component-fill` | `#0f3d69` | `#2f6199` | still one step up (L 0.485), same 1.25 contrast the old card had |
+| `stroke` | white .78 | **.85** | contrast 8.8 → 6.2 |
+| `stroke-light` | .45 | **.60** | ΔL 0.328 → 0.335, held |
+| `muted` / `caption` / `footer` | .62 | **.72** | contrast 6.1 → 4.9; white tops out at 8.0, so this step *cannot* be fully held — 4.9 is still past AA |
+| `pin-number` | .55 | **.65** | |
+| `group-stroke` | .40 | **.55** | |
+| `group-fill` / `header-fill` / `icon-fill` / `grid` | .05 / .10 / .18 / .16 | **.07 / .14 / .25 / .22** | each matched on ΔL (0.037 / 0.074 / 0.130 / 0.113 vs the old 0.035 / 0.074 / 0.134 / 0.116) |
+| `danger` / `stray` | `#f97770` | `#ffa295` | L 0.72 gave 3.0 on the new paper; L 0.82 gives 4.1 |
+| `tip-fg` | `#002e5b` | `#00509e` | the tooltip still inverts the paper |
+
+Unchanged and deliberate: `fg`, `stroke-dark` (`white` — the poché tone),
+`accent` / `accent-text`, `warn`, `wire`, `label-ink`, `component-stroke`,
+`shadow-color`, `tip-bg`.
+
+Docs follow the pigment: "Prussian blue" → "cyanotype blue" in `list_themes`,
+SPEC 24's deferred-list aside and README's theming line.
+
+#### 3 · The hue arm: still dark, for a new reason
+
+Phase 10 kept the dark arm because *the paper sat at that arm's lightness*.
+That reason is gone — at L 0.438 the dark arm's surfaces sit **below** the
+paper. Rendered the light arm again against the new paper (`palette`,
+`charts`, `text_tables`, `hero`) and it is still the wrong call, now
+decisively:
+
+- **Light arm** — charts turn into pastel chalk on blue and are frankly
+  lovely, but `-ink` is the tier that carries **text**, and the light arm's
+  (L ≈ 0.40) *is* the paper: `text_tables`' `coloured` / `out` and both styled
+  link labels vanish, and the `palette` proof's own "Ink" chip loses its
+  label. Worse at this paper than at the old one, not better.
+- **Dark arm** (kept) — `-ink` at L 0.83–0.92 reads as text anywhere on the
+  sheet. The price is that `-soft` (L 0.37) and `-wash` (L 0.28) are now wells
+  rather than cards; they hold because every soft fill carries its `-deep` rim
+  [SPEC 14.6], which is what keeps a blue series off blue paper.
+
+No new machinery was considered: mixing tiers per role is a palette-level
+feature (a seed table per theme), which Phase 10 already ruled out.
+
+#### 4 · The renders
+
+Read at full size and at 0.3×: **floorplan** — the deliverable, now
+unmistakably a cyanotype: solid white poché, white fixture linework, and the
+thumbnail still reads as a plan. **hero** — hue cards recess into the sheet
+with bright ink and rims. **charts** — series separation holds, every soft
+fill rimmed by its deep; the `surge` band is now a *lighter* plate (the grid
+wash) instead of a near-invisible one. **schematic** — pale wires, white part
+outlines on the faint card, cyan net tags, crisper than before. Sweep:
+`drawing_sheet` is the best of them (a real title-block sheet), `text_tables`
+and `icons` fully legible, `mindmap` reads as coloured stamps.
+
+#### 5 · Tests
+
+- `src/serve/mod.rs` (new): `a_theme_reaches_the_page_as_root_variables`
+  (`<style>:root {`, the paper in it, empty without a theme) and
+  `both_pages_take_the_theme_and_paint_its_paper` (both halves of the one
+  mechanism — the `{{THEME}}` slot and the `var(--lini-bg, …)` pane — pinned
+  for both pages, so removing either half fails).
+- Re-pinned to the new paper: `blueprint_is_one_look_on_cyanotype_paper`
+  (renamed with the pigment) and `tests/cli.rs`'s round-trip (`#00509e`) and
+  live-compile (`--lini-fill: #2f6199`) assertions.
+- Untouched and still green: `blueprint_covers_the_whole_role_roster` (the
+  var-name-set equality audit) and `blueprint_hues_are_the_dark_arm`.
+
+### Carry-over notes
+
+- **The wash tier is now a visibly dark plate.** Phase 10's `|band|` note
+  generalizes at a mid-lightness paper: `sequence.lini`'s `--purple-wash` loop
+  frame and `chart_hero`'s bands read as dark wells on the blue. Both are
+  *sample-authored* colours over a dark-arm hue, identical under `--theme
+  dark`; if it is ever worth fixing it belongs to the wash tier, not the theme.
+- **`--paper` in `playground.html` is still dead** (defined light + dark, worn
+  by nothing). The pane's fallback stays `transparent` on purpose — that is
+  today's look — so the variable stays unused; delete it next time that CSS is
+  opened.
+- **Still no theme picker in the playground** (Phase 10's call, unchanged):
+  `--theme` on the command line and the host-CSS recipe already answer it.
+- **`src/theme.rs` is 400 LOC** — the next built-in should move the palettes
+  into their own module (Phase 10's note, still open).
+- **`compile_static()` in wasm still has no theme parameter** (Phase 10),
+  unchanged by this round.

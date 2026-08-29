@@ -316,7 +316,11 @@
         justify-content: center;
         padding: 2px;
       }
+      /* The paper behind the figure is the theme's own (`--lini-bg`, declared
+         on `:root` by the server when `--theme` is set) — a figure paints no
+         background it was not given. Unthemed, the sheet stays see-through. */
       #preview svg {
+        background: var(--lini-bg, transparent);
         display: block;
         max-width: 100%;
         height: auto;
@@ -399,6 +403,7 @@
         }
       }
     </style>
+    {{THEME}}
   </head>
   <body class="show-code show-preview" data-tab="code">
     <div class="topbar">

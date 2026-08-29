@@ -10,12 +10,12 @@
 //! Every caller-supplied path goes through [`resolve_in_root`], so a request can
 //! only ever read or write a `.lini` file inside DIR — never escape it.
 
-use super::{ServeTarget, State, http};
+use super::{ServeTarget, State, http, theme_style};
 use crate::Options;
 use std::net::TcpStream;
 use std::path::{Component, Path, PathBuf};
 
-const PAGE: &str = include_str!("playground.html");
+pub(super) const PAGE: &str = include_str!("playground.html");
 
 fn root(state: &State) -> &Path {
     match &state.target {
@@ -32,7 +32,8 @@ pub(super) fn handle(
     let root = root(state);
     match (req.method.as_str(), req.path.as_str()) {
         ("GET", "/") => {
-            http::write_response(stream, 200, "text/html; charset=utf-8", PAGE.as_bytes())
+            let html = PAGE.replace("{{THEME}}", &theme_style(&state.opts));
+            http::write_response(stream, 200, "text/html; charset=utf-8", html.as_bytes())
         }
         ("GET", "/api/files") => serve_list(stream, root),
         ("GET", "/api/file") => serve_file(stream, root, &req.query),

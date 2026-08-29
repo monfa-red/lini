@@ -64,8 +64,11 @@
                 justify-content: center;
                 background: #2a2a2a;
             }
+            /* The paper behind the figure is the theme's own (`--lini-bg`,
+            declared on `:root` by the server when `--theme` is set) — a figure
+            paints no background it was not given. White with no theme. */
             #svg-host {
-                background: white;
+                background: var(--lini-bg, white);
                 padding: 16px;
                 border-radius: 6px;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -91,6 +94,7 @@
                 max-width: 80ch;
             }
         </style>
+        {{THEME}}
     </head>
     <body>
         <header>

@@ -8,14 +8,14 @@
 //! generation counter; the SSE handler watches that counter. A 15 s heartbeat
 //! keeps proxies from closing the idle stream.
 
-use super::{ServeTarget, State, http};
+use super::{ServeTarget, State, http, theme_style};
 use std::io::Write;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 
-const PAGE: &str = include_str!("single.html");
+pub(super) const PAGE: &str = include_str!("single.html");
 
 fn file(state: &State) -> &Path {
     match &state.target {
@@ -57,7 +57,9 @@ pub(super) fn handle(
 
 fn serve_page(stream: &mut TcpStream, state: &State) -> std::io::Result<()> {
     let title = file(state).display().to_string();
-    let html = PAGE.replace("{{TITLE}}", &http::html_escape(&title));
+    let html = PAGE
+        .replace("{{TITLE}}", &http::html_escape(&title))
+        .replace("{{THEME}}", &theme_style(&state.opts));
     http::write_response(stream, 200, "text/html; charset=utf-8", html.as_bytes())
 }
 
