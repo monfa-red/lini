@@ -3500,9 +3500,8 @@ landing line alone, and its text obstructs nothing, exactly as a link label
 does not ([SPEC 9](#9-links)).
 
 **Net text stands off its wire, never on it.** The name sits a constant
-`net-label-offset` clear of the centreline — the diagram convention (a label
-riding its wire, the wire opened behind it) is not a sheet's, and a schematic
-wire is never cut ([16.5](#165-wires)). Which side:
+`net-label-offset` clear of the centreline — a schematic wire is never cut
+([16.5](#165-wires)). Which side:
 
 | Run | Text |
 |---|---|
@@ -3758,7 +3757,7 @@ out of scope.
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `column` | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid--tree) |
-| `cell` · `span` | grid or schematic box child (`cell` — ordinal on a schematic) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
+| `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--anchors--satellites)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
@@ -3808,7 +3807,7 @@ text props. Its own properties:
 
 | Property | Value | Default | Notes |
 |---|---|---|---|
-| `clearance` | number | 16 (a drawing's dimensions: 4) | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
+| `clearance` | number | 16 (a drawing's dimensions: 4; a schematic scope: 10) | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
 | `routing` | `orthogonal` · `natural` · `straight` | `orthogonal` | wiring strategy; scene config, cascades ([ROUTING.md](ROUTING.md)). |
 | `along` | fraction list | auto | label positions along the route. |
 | `marker` · `marker-start` · `marker-end` | marker | from the operator | endpoint glyphs ([SPEC 7](#7-nodes)). |
