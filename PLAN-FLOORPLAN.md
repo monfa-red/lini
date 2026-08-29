@@ -85,8 +85,9 @@ no burner grates.
   tweak, no snapshot) is **stashed** on this branch
   (`git stash list` → "pre-blueprint dangling edit"). Leave it stashed; it is
   the user's, not this plan's.
-- `tests/spec_blocks.rs` carries a ledger row for SPEC block **#57** (the
-  §25 floorplan example) — Phase 5 removes it and the block must compile.
+- The SPEC block **#57** excuse row in `tests/spec_blocks.rs` was removed
+  after Phase 1 — the §25 example compiles; the block is guarded like any
+  other from here on.
 
 ### Cross-phase invariants (verify each against source at session start — they drift)
 
@@ -366,6 +367,17 @@ Every site in the predicate family was reconciled through it (greps
 - A `|door|`'s `at:` had to join the `at:` homonym row; the misuse message for
   `symbol:` is now long (ten homes) — accepted rather than blurring the owner
   list.
+- **Rulings (session lead, 2026-08-28), closing both surprises:** (1) the
+  bare-`entry` shorthand was a SPEC error — §25 and 15.11 now write
+  `outer.entry` (sealed bodies hold, no carve-out). (2) The five chrome
+  classes are **pulled from SPEC 18 until their emitters land** — Phase 3
+  restores the floorplan hook-family row with `lini-door-leaf` /
+  `lini-door-swing` / `lini-window-sill`, Phase 4 extends it with
+  `lini-stair-tread` / `lini-stair-arrow`, each landing together with sample
+  coverage so `tests/hooks.rs` stays green; the repo's existing guard IS the
+  deferral mechanism, no second ledger. With the path fix the §25 block
+  compiles today, so the `spec_blocks.rs` #57 excuse row is removed now, not
+  in Phase 5. Tree returns to green with this commit.
 
 ### Carry-over notes
 
@@ -464,7 +476,11 @@ outline drawn.
       reference draws rect + centre line — if that reads better at 1:50,
       propose the SPEC tweak in the log rather than silently diverging).
 - [ ] Openings as geometry: an id'd opening anchors dimensions at its centre
-      (`outer:west (-) entry (-) outer:east` renders the location chain).
+      (`outer:west (-) outer.entry (-) outer:east` renders the location
+      chain).
+- [ ] Restore the SPEC 18 floorplan hook-family row with `lini-door-leaf` ·
+      `lini-door-swing` · `lini-window-sill` — emitted as one rule each and
+      worn in a rendered snapshot so `tests/hooks.rs` passes (Phase 1 ruling).
 - [ ] Snapshot + **visual PNG check**: all four hinge/swing poses, each door
       symbol, a window, a door at a segment end, two openings on one wall —
       light and dark.
@@ -495,6 +511,9 @@ variants; `|stairs|` generates.
 - [ ] `|stairs|`: `steps: N` (required, ≥ 2) generates treads at 250 mm pitch
       × 900 mm width + the direction arrow; `width`/`height` override.
 - [ ] Unknown `symbol:` errors with a suggestion (shared machinery).
+- [ ] Extend SPEC 18's floorplan hook-family row with `lini-stair-tread` ·
+      `lini-stair-arrow`, worn in a rendered snapshot (`tests/hooks.rs`
+      green — Phase 1 ruling).
 - [ ] Snapshot + **visual PNG check**: one sheet laying out every fixture ×
       every variant at `unit: m`, verified by eye at 1:50.
 
@@ -512,8 +531,8 @@ deferred slots pinned, everything green.
       + fixtures + room text + dimension chains), matching §25's example in
       spirit; render, **look at it** (light + dark), iterate until it reads
       like a real-estate plan.
-- [ ] Remove the `tests/spec_blocks.rs` #57 ledger row — the §25 block must
-      compile as written.
+- [x] Remove the `tests/spec_blocks.rs` #57 ledger row — the §25 block must
+      compile as written. (Done early, after Phase 1's path-fix ruling.)
 - [ ] `tests/deferred.rs`: one pinned test per reachable SPEC 24 Floorplans
       slot (computed areas — n/a if no syntax is reachable; curved-segment
       opening → the error; others n/a — mirror the file's conventions).

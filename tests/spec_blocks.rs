@@ -324,13 +324,6 @@ const SPEC_LEDGER: &[Row] = &[
         "file        = [ stylesheet ] { drawn }              # setup block, then drawn statements in source order",
         Kind::NotLini("the language grammar [SPEC 22]"),
     ),
-    (
-        57,
-        "{ layout: floorplan; unit: m; scale: 0.02 }        // 1 : 50 — thickness defaults 200 mm",
-        Kind::Fragment(
-            "the floorplan dialect [SPEC 15.11] — compiles once 'layout: floorplan' lands; PLAN-FLOORPLAN's last phase removes this row",
-        ),
-    ),
 ];
 
 /// The `ROUTING.md` ledger — one fence, and it is a file tree.

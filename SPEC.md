@@ -3251,7 +3251,8 @@ outline** at the two jambs — a profile clip, not `break:`
 no `|breakline|` draws, and each jamb closes flat across the thickness. An
 opening's own geometry is that jamb-to-jamb box — `width` × `thickness`,
 seated on the segment — so an id'd opening anchors a dimension at its centre
-(`outer:west (-) entry (-) outer:east`, the location chain along a wall); it
+(`outer:west (-) outer.entry (-) outer:east`, the location chain along a
+wall — a dot-path, the sealed-body rule as everywhere, [SPEC 9](#9-links)); it
 is placed by `on:` / `at:` alone, so `translate:` on an opening errors.
 `hinge: start | end` picks the jamb by the segment's draw direction;
 `swing: left | right` the side the leaf opens toward — `left` is the left of
@@ -3937,7 +3938,6 @@ families:
 | sequence | `lini-sequence-tab` · `lini-sequence-guard` · `lini-sequence-message` |
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
-| floorplan | `lini-door-leaf` · `lini-door-swing` · `lini-window-sill` · `lini-stair-tread` · `lini-stair-arrow` ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)'s generated chrome) |
 | schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 | marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--anchors--satellites)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
@@ -4918,6 +4918,6 @@ db      --> api     "record"
 |appliance| { symbol: fridge; translate: 0.5 4.3 }
 "STUDIO 27 m²" { translate: 2.6 2.4 }
 
-outer:west (-) outer:east { side: top }                  // → 7.2 — centreline to centreline
-outer:west (-) entry (-) outer:east { side: bottom }     // the door's location chain
+outer:west (-) outer:east { side: top }                       // → 7.2 — centreline to centreline
+outer:west (-) outer.entry (-) outer:east { side: bottom }    // the door's location chain
 ```
