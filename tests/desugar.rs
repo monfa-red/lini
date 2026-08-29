@@ -899,9 +899,11 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
         root.contains("wall-thickness: 0.2;"),
         "200 mm reads 0.2 drawing units at unit: m — {root}"
     );
-    // An opening's clear width is stamped the same way [SPEC 15.11] — 900 mm
-    // for a door, 1200 mm for a window, through the scope's `unit:` — and its
-    // chrome lowers as real children, one leaf + one arc, two sills.
+    // An opening's clear width is not a size the fold could resolve either
+    // (`width:` is the cascade's), so it takes the same `unit-mm:` stamp a
+    // fixture does and reads its 900 mm / 1200 mm true size through it
+    // [SPEC 15.11] — and its chrome lowers as real children, one leaf + one
+    // arc, two sills.
     let openings = desugar_source(
         "{ layout: floorplan; unit: m; scale: 0.02 }\n\
          |wall#w| { draw: move(0, 0) right(7.2):north; } [\n\
@@ -911,11 +913,11 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
          ]\n",
     )
     .unwrap();
-    assert!(openings.contains("opening-width: 0.9;"), "{openings}");
-    assert!(openings.contains("opening-width: 1.2;"), "{openings}");
-    assert!(
-        !openings.contains("opening-width: 1.4;"),
-        "an authored width needs no fallback: {openings}"
+    assert_eq!(
+        openings.matches("unit-mm: 1000;").count(),
+        3,
+        "one per opening, the authored width included — the stamp carries the \
+         unit, never a size: {openings}"
     );
     // (the class-chain form counts wearers only — the rule line above states
     // the bare class.)

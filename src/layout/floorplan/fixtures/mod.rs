@@ -15,7 +15,6 @@
 //! generated chrome, counted at desugar and filled here.
 
 use super::super::ir::{Bbox, PlacedNode};
-use crate::desugar::scale::{UNIT_MM, mm_to_units};
 use crate::error::Error;
 use crate::layout::drawing::geometry::n;
 use crate::resolve::{NodeKind, ResolvedInst, ResolvedValue};
@@ -50,10 +49,9 @@ pub(in crate::layout) fn plan(inst: &ResolvedInst, own: f64) -> Result<Option<Bo
     let Some(ty) = family(&inst.type_chain) else {
         return Ok(None);
     };
-    // Only desugar knows the scope's `unit:` (nearest-wins, [SPEC 15.1]), so
-    // it stamps the millimetres per drawing unit and the **one** conversion
-    // function turns the mm grid into units here [SPEC 15.11].
-    let per_mm = mm_to_units(1.0, inst.attrs.number(UNIT_MM).unwrap_or(1.0)) * own;
+    // The mm grid into pixels: one drawing unit per millimetre through the
+    // scope's own `unit:`, the shared true-size reader [SPEC 15.11].
+    let per_mm = super::true_size(&inst.attrs, 1.0) * own;
     let steps = (ty == "stairs").then(|| inst.attrs.number("steps").unwrap_or(2.0));
     let sym = symbol(inst, ty, steps)?;
     let (w0, h0) = (sym.extent.0 * per_mm, sym.extent.1 * per_mm);

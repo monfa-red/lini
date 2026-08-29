@@ -25,8 +25,18 @@ pub(in crate::layout) mod wall;
 /// Whether a container opens a **floorplan** scope [SPEC 15.11] — the dialect's
 /// own reading, for the vocabulary gate; everything mechanical asks the drawing
 /// twin, since a floorplan is a drawing.
-pub(super) fn is_floorplan(attrs: &AttrMap) -> bool {
-    crate::resolve::is_floorplan(attrs)
+pub(super) use crate::resolve::is_floorplan;
+
+/// A true-size default in drawing units [SPEC 15.11]: physical millimetres read
+/// through the scope's `unit:`, which the scale fold stamped on the node
+/// ([`crate::desugar::scale::UNIT_MM`] — that walk is the only place a scope's
+/// unit is known). **The** reader, so a wall's thickness, an opening's clear
+/// width and a fixture's body all state the law once. An unstamped node is one
+/// the fold never reached, where `unit:` is its own default of millimetres
+/// [SPEC 15.1] — so the conversion is right there too, never a raw number.
+pub(super) fn true_size(attrs: &AttrMap, mm: f64) -> f64 {
+    use crate::desugar::scale::{UNIT_MM, mm_to_units};
+    mm_to_units(mm, attrs.number(UNIT_MM).unwrap_or(1.0))
 }
 
 /// The floorplan family a type belongs to [SPEC 15.11] — the one dispatch, so

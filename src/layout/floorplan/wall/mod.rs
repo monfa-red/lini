@@ -39,12 +39,12 @@ pub(in crate::layout) fn offset(
     // Nearest-wins [SPEC 15.11]: a cascaded `thickness:` on the wall itself
     // (authored or rule-borne), else the desugar-stamped fallback — the
     // partition define / scope value / 200 mm default, already in drawing
-    // units. The raw-mm constant only guards a fold desugar never saw.
+    // units — else the true size itself, for a fold that never ran.
     let units = inst
         .attrs
         .number("thickness")
         .or_else(|| inst.attrs.number(crate::desugar::scale::WALL_THICKNESS))
-        .unwrap_or(crate::desugar::scale::WALL_MM);
+        .unwrap_or_else(|| super::true_size(&inst.attrs, crate::desugar::scale::WALL_MM));
     let h = units * own / 2.0;
     // The openings resolve against the **folded** centreline — the one child
     // that reads down from its part [SPEC 15.11] — and their stations are what

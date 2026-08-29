@@ -25,7 +25,6 @@ use super::super::drawing::geometry::{P, dist, n};
 use super::super::drawing::pen::Folded;
 use super::super::ir::{Bbox, PlacedNode};
 use super::{FpKind, fp_kind};
-use crate::desugar::scale::{DOOR_MM, OPENING_WIDTH, WINDOW_MM};
 use crate::error::{Code, Error};
 use crate::layout::geom::unit;
 use crate::math;
@@ -197,18 +196,19 @@ fn locate(folded: &Folded, p0: P, p1: P) -> Option<(usize, usize)> {
     })
 }
 
+/// The openings' clear widths [SPEC 15.11] — physical millimetres, the
+/// reader's, never a class-rule literal (see `ledger::defaults`).
+const DOOR_MM: f64 = 900.0;
+const WINDOW_MM: f64 = 1200.0;
+
 /// An opening's clear width in drawing units [SPEC 15.11]: a cascaded `width:`
-/// (authored or rule-borne) first, else the desugar-stamped true-size fallback.
-/// The raw-mm constant only guards a tree desugar never walked.
+/// (authored or rule-borne) first, else its type's true size through the
+/// scope's own `unit:`.
 fn width_of(node: &ResolvedInst) -> f64 {
-    node.attrs
-        .number("width")
-        .or_else(|| node.attrs.number(OPENING_WIDTH))
-        .unwrap_or(if node.type_chain.iter().any(|t| t == "window") {
-            WINDOW_MM
-        } else {
-            DOOR_MM
-        })
+    node.attrs.number("width").unwrap_or_else(|| {
+        let window = node.type_chain.iter().any(|t| t == "window");
+        super::true_size(&node.attrs, if window { WINDOW_MM } else { DOOR_MM })
+    })
 }
 
 /// How an opening names itself in an error — its id, else its written type.

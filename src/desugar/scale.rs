@@ -13,6 +13,7 @@
 
 use super::nest::{in_drawing_scope, is_drawing_body, is_page_body};
 use super::schematic::lowered_chain;
+use super::types;
 use crate::error::Error;
 use crate::span::Span;
 use crate::syntax::ast::{Child, Decl, Value};
@@ -20,35 +21,36 @@ use crate::syntax::ast::{Child, Decl, Value};
 /// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
 
-/// The generated internal attr carrying a wall's **resolved fallback**
-/// `thickness:` in drawing units [SPEC 15.11] — what the wall reads when no
-/// cascaded `thickness:` reaches it. Stamped here because this walk is the
-/// one place the scope's `unit:` (nearest-wins, pages included) is known.
-pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
-
-/// The generated internal attr carrying an opening's **resolved fallback**
-/// `width:` in drawing units [SPEC 15.11] — the clear opening a `|door|` /
-/// `|window|` reads when no cascaded `width:` reaches it. Stamped beside the
-/// wall's thickness, and for the same reason: only this walk knows `unit:`.
-pub(crate) const OPENING_WIDTH: &str = "opening-width";
+// ── The floorplan's true-size stamps [SPEC 15.11] ──
+//
+// A floorplan type's intrinsic sizes are physical millimetres read through the
+// scope's `unit:`, and this walk is the **only** place that unit is known
+// (nearest-wins, pages included) — so it stamps what the layout readers need.
+// Two stamps, and the split is the one question "can the walk resolve this?":
+//
+// - `unit-mm:` carries the **input**, for a size the walk cannot resolve: a
+//   fixture body's millimetres come from the `symbol:` variant and an opening's
+//   from its type, then `width:` / `height:` stretch the result — all cascade,
+//   all past this walk. The reader converts, through [`mm_to_units`].
+// - `wall-thickness:` carries a **resolved value**, for the one size that is
+//   not on the node at all: `thickness:` inherits nearest-wins from the scope
+//   ([SPEC 17] `Inherit::Engine`, resolve carries no such channel), so only the
+//   walk can say what a wall without its own value falls back to.
 
 /// The generated internal attr carrying the scope's **millimetres per drawing
-/// unit** [SPEC 15.11] — stamped on a fixture, whose body size is not a single
-/// fallback the walk could resolve: it depends on the `symbol:` variant, which
-/// only the cascade knows, and then stretches to the resolved box. So the two
-/// stamps above carry a *resolved value*, and this one carries the *scope's
-/// `unit:`* for the reader to convert with — the same reason, since this walk
-/// is still the one place `unit:` is known.
+/// unit**, for every reader of a true-size default — the openings and the
+/// fixtures. A wall takes the resolved stamp below instead, so it needs none.
 pub(crate) const UNIT_MM: &str = "unit-mm";
+
+/// The generated internal attr carrying a wall's **resolved fallback**
+/// `thickness:` in drawing units — what the wall reads when no cascaded
+/// `thickness:` reaches it.
+pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
 
 /// The true-size wall defaults [SPEC 15.11] — physical millimetres, the
 /// reader's (never a class-rule literal; see `ledger::defaults`).
 pub(crate) const WALL_MM: f64 = 200.0;
 const PARTITION_MM: f64 = 100.0;
-
-/// …and the openings' clear widths [SPEC 15.11], likewise physical.
-pub(crate) const DOOR_MM: f64 = 900.0;
-pub(crate) const WINDOW_MM: f64 = 1200.0;
 
 /// The unit / density context carried down the lowered tree.
 struct ScaleCtx {
@@ -120,11 +122,8 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         // A node-level ratio override inside a drawing scope [SPEC 15.1].
         stamp(&mut n.style, &ctx, n.span)?;
     }
-    if ctx.in_drawing && chain.iter().any(|t| t == "wall") {
-        stamp_wall_thickness(&mut n.style, &ctx, &chain, n.span);
-    }
     if ctx.in_drawing {
-        stamp_opening_width(&mut n.style, &ctx, &chain, n.span);
+        stamp_wall_thickness(&mut n.style, &ctx, &chain, n.span);
         stamp_unit_mm(&mut n.style, &ctx, &chain, n.span);
     }
     ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &chain, &n.style);
@@ -183,7 +182,7 @@ pub(crate) fn mm_to_units(mm: f64, unit_mm: f64) -> f64 {
 /// this stamp at the read site (`layout::floorplan::wall`).
 fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
     style.retain(|d| d.name != WALL_THICKNESS);
-    if find(style, "thickness").is_some() {
+    if !chain.iter().any(|t| t == "wall") || find(style, "thickness").is_some() {
         return;
     }
     let units = if chain.iter().any(|t| t == "partition") {
@@ -199,42 +198,19 @@ fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String],
     });
 }
 
-/// Stamp an opening's fallback clear `width:` [SPEC 15.11] — 900 mm for a
-/// door, 1200 mm for a window — through the scope's `unit:`, exactly as the
-/// wall's thickness is stamped: an authored `width:` needs no fallback, and a
-/// rule-borne one wins over the stamp at the read site
-/// (`layout::floorplan::opening`).
-fn stamp_opening_width(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
-    style.retain(|d| d.name != OPENING_WIDTH);
-    let has = |t: &str| chain.iter().any(|c| c == t);
-    let mm = if has("door") {
-        DOOR_MM
-    } else if has("window") {
-        WINDOW_MM
-    } else {
-        return;
-    };
-    if find(style, "width").is_some() {
-        return;
-    }
-    style.push(Decl {
-        name: OPENING_WIDTH.into(),
-        groups: vec![vec![Value::Number(mm_to_units(mm, ctx.unit_mm))]],
-        span,
-    });
-}
-
-/// Stamp a fixture's scope `unit:` [SPEC 15.11] — the millimetres per drawing
-/// unit its true-size body converts through. Every fixture takes it, since a
-/// family's mm sizes are picked by the cascaded `symbol:` and the body then
-/// stretches to a cascaded `width:` / `height:` — all resolved past this walk,
-/// so what travels is the unit, not a size.
+/// Stamp the scope's `unit:` on every node that reads a true-size default at
+/// layout [SPEC 15.11] — the openings (900 mm / 1200 mm clear by type) and the
+/// fixtures (a body in millimetres picked by the cascaded `symbol:`, then
+/// stretched to a cascaded `width:` / `height:`). None of those is a size this
+/// walk could resolve, so what travels is the unit and
+/// [`crate::layout::floorplan::true_size`] converts with it.
 fn stamp_unit_mm(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
     style.retain(|d| d.name != UNIT_MM);
-    if !crate::desugar::types::FIXTURES
+    let reads_true_size = types::OPENINGS
         .iter()
-        .any(|f| chain.iter().any(|t| t == f))
-    {
+        .chain(types::FIXTURES)
+        .any(|t| chain.iter().any(|c| c == t));
+    if !reads_true_size {
         return;
     }
     style.push(Decl {

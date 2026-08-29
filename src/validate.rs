@@ -41,10 +41,9 @@ const INTERNAL: &[&str] = &[
     "clip",
     "of-title",
     "mount",
-    "px-per-unit",
-    "wall-thickness",
-    "opening-width",
-    "unit-mm",
+    crate::desugar::scale::PX_PER_UNIT,
+    crate::desugar::scale::WALL_THICKNESS,
+    crate::desugar::scale::UNIT_MM,
     "field",
     "font-scale",
 ];
