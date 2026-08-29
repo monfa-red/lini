@@ -1386,7 +1386,9 @@ one home** (the implementation's ledger module), so the whole look is tuned from
 one place. The root's `padding` (20) frames the whole scene — the SVG margin.
 
 The chrome constants below have no ledger row — they are engine anatomy, listed
-here once.
+here once. So are the chart-plane sizes ([SPEC 14.1](#141-the-chart-plane)): a
+chart defaults **360 × 220**, a pie / radial chart a **280** square — a chart
+cannot size to its content, so these stand in for `auto`.
 
 The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
