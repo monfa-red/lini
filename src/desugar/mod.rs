@@ -20,7 +20,7 @@ mod mint;
 mod nest;
 mod page;
 pub(crate) mod pose;
-mod scale;
+pub(crate) mod scale;
 pub(crate) mod scene;
 pub(crate) mod schematic;
 mod synth;

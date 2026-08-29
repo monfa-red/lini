@@ -17,6 +17,7 @@ use crate::resolve::{AttrMap, ResolvedInst};
 
 #[cfg(test)]
 mod tests;
+pub(in crate::layout) mod wall;
 
 /// Whether a container opens a **floorplan** scope [SPEC 15.11] — the dialect's
 /// own reading, for the vocabulary gate; everything mechanical asks the drawing

@@ -431,28 +431,173 @@ Every site in the predicate family was reconciled through it (greps
 **Goal**: a `|wall|` renders as SPEC 15.11's wall — centreline authored,
 outline drawn.
 
-- [ ] The one mm→units conversion function; `thickness:` resolved through
+- [x] The one mm→units conversion function; `thickness:` resolved through
       inheritance (scope → wall), default 200 mm; `|partition|` 100 mm.
-- [ ] The offset walk (`layout/floorplan/wall.rs`, new module): centreline
+- [x] The offset walk (`layout/floorplan/wall.rs`, new module): centreline
       polyline/arc path → closed outline at ±t/2, mitred at joins, flat caps
       on open ends, `close()` seams mitred like any corner; arcs offset to
       concentric arcs (radius ± t/2); reject `curve()` in a wall (error).
       Property-test the geometry where practical (e.g. outline area ≈
       centreline length × t for gentle paths; offset segments parallel at
       distance t/2).
-- [ ] Fill/paint: solid `--stroke-dark`, `stroke: none` (the template row);
+- [x] Fill/paint: solid `--stroke-dark`, `stroke: none` (the template row);
       verify `fill: --bg` (hollow) and `fill: hatch(45)` read correctly.
-- [ ] Geometry bbox = outline bbox; anchors: `:segment`s stay centreline
+- [x] Geometry bbox = outline bbox; anchors: `:segment`s stay centreline
       (dimensions read centreline stations — the architectural convention),
       bbox sides/corners read the outline. Dims, leaders, mates against walls
       under test.
-- [ ] Overlap composition: two solid walls crossing/meeting read seamless
+- [x] Overlap composition: two solid walls crossing/meeting read seamless
       (visual check); a wall respects source-order painting.
-- [ ] Snapshot tests + **visual PNG check** (resvg): an L-corner, a T-meet of
+- [x] Snapshot tests + **visual PNG check** (resvg): an L-corner, a T-meet of
       two walls, a closed rectangle loop, an arc wall segment, open-ended run.
 
 ### Execution log
+
+2026-08-28, one session. Baseline 1419 passed / 0 failed → after 1432 / 0;
+`cargo fmt`, `cargo clippy --all-targets` clean.
+
+**Thickness inheritance — where it landed.** The `desugar::scale` walk (the
+carry-over's `ScaleCtx` model) gained `thickness: Option<f64>`, read at the
+root and at every drawing-scope entry beside `unit:`. Every wall-family node
+in a drawing scope gets a generated internal **`wall-thickness:`** attr (the
+`px-per-unit` pattern: `pub(crate)` const in `scale.rs`, whitelisted in
+`validate.rs::INTERNAL`, retain-then-push so desugar stays a byte fixed
+point) carrying its **resolved fallback** in drawing units. Precedence, and
+why: a wall's own authored `thickness:` suppresses the stamp (the cascade
+already carries it); **a `|partition|`'s 100 mm beats the scope's inherited
+value** — SPEC 8 calls it "a define, nothing more", and a define's bundle
+value sits *at the node*, above inheritance, so the read-site emulation
+preserves that (`{ thickness: 0.15 }` on the scope re-sizes plain walls,
+never partitions); then the nearest scope value; then 200 mm. The mm
+defaults convert through `mm_to_units` (its `allow(dead_code)` dropped); the
+read site (`layout/floorplan/wall.rs`) does `attrs.number("thickness")` —
+inline *or rule-borne*, so a `|wall| { thickness: … }` class rule wins over
+the stamp exactly as the cascade ranks it — else the stamp. `thickness`
+value shape (`number > 0`) rides `validate.rs::check_value` beside `steps`.
+
+**The offset walk** (`layout/floorplan/wall.rs`, 444 LOC): hooks in
+`layout/mod.rs`'s Sketch branch right after `pen::fold` (= SPEC 15.10 step 1,
+after the fold, before the bboxes), gated on `fp_kind == Wall`; it rewrites
+`Folded.subs/d/geometry` to the outline and leaves `segments` (centreline
+stations), so dims/`:segment`s read the centreline while the bbox, paint,
+and `SketchGeo.outline` (leader ray-casts) read the outline — no other
+module changed. Algorithm, per centreline subpath (**one contiguous run**,
+the structure Phase 3 cuts into):
+1. **Raw parallels**: a line shifts along its side normal (`left(d) = (d.1,
+   −d.0)`, y-down); an arc offsets concentric — `r + h` when `sweep == left`
+   (left of travel is outside a clockwise arc), else `r − h`, endpoints moved
+   radially, flags kept.
+2. **Joins** at each vertex (and across the seam for a closed run — the wrap
+   join re-runs the first element and seats its trimmed copy back at the
+   head): coincident ends snap (tangent-continuous — fillets, tangent arcs);
+   an **outside** corner mitres by tangent-line intersection (a line extends
+   in place; an arc gets a straight tangent connector — SVG's own join
+   geometry), bevelling at **limit 4** via `cos θ > 1 − 2∕4² = 7/8` (θ the
+   wedge between the runs); an **inside** corner trims both elements to
+   their carriers' true crossing — exact line×line, line×circle,
+   circle×circle, candidate nearest the corner that lies on both spans, arc
+   `large` recomputed from the swept angle — falling back to a straight
+   connect when elements are too short to reach it.
+3. **Assembly**: closed run → two closed loops, the right side reversed
+   (opposite windings, so even-odd and nonzero agree on the band); open run
+   → one loop: left chain, flat butt cap at the endpoint (no extension),
+   right chain reversed, cap home.
+
+**Errors** (codes Y014 `wall-curve`, Y015 `arc-under-thickness`; catalog
+snapshot re-blessed): `curve()` per SPEC 21 verbatim; an arc errors when
+`r < t∕2 − ε` with the radius printed in drawing units (`r_px / own`) —
+`r == t∕2` stays **legal**: the inner face degenerates to the centre point,
+which is well-defined (a half-disc wall), and SPEC says "under".
+
+**Decisions / findings:**
+
+1. **Even-odd stands.** A wall is a sketch and keeps the pen's even-odd law:
+   two *crossing subpaths in one wall node* would unfill their overlap. The
+   windings are built so nonzero would agree for sane walls, but the law is
+   the pen's — draw meeting walls as **separate nodes** (as §25 does) and
+   paint order merges them seamlessly. Verified visually: T-meet and full
+   crossing of two solid walls read seamless, light and dark.
+2. **Sketch paint bbox now uses `half_stroke()`** (`layout/mod.rs`): it used
+   raw `stroke-width / 2`, which inflates a `stroke: none` sketch's bbox by
+   1 px and would have pushed every wall's bbox anchors off the outline.
+   `AttrMap::half_stroke` is the one owner of "how far paint reaches"
+   (0 for `stroke: none`), so the fix is the shared reader, not a wall
+   special case. No sample churn (no committed sample has an unpainted
+   sketch stroke).
+3. `tests/desugar.rs`'s "no baked thickness" guard matched the *substring*
+   `thickness:` and tripped on the generated `wall-thickness:`; the match is
+   now space-anchored (still catches any rule/node literal) and the test
+   *positively* pins the stamp — `wall-thickness: 200;` at unit mm,
+   `0.2` at `unit: m`.
+4. `PathSeg::reverse` promoted `pub(in crate::layout)` (was private);
+   `desugar::scale` promoted `pub(crate)` — the stamp const and
+   `mm_to_units` are its exports.
+5. **Property tests are deterministic sweeps** (no fuzz dep, `crate::math`
+   only — the libm determinism test rejects `f64::sin/cos`): a straight run
+   at bearings 0..360×7° is an exact L×t rectangle (area *and* perimeter);
+   mitred zig-zags and arc bands hold area = centreline length × t exactly
+   (the outer miter kite equals the inner trim; (r+h)²−(r−h)² does the same
+   for arcs) — measured by an independent sampled-shoelace oracle over the
+   placed `SketchGeo.outline`.
+
+**Visual pass** (resvg → PNG, read by eye, light + dark): L-corner (square
+outer miter, crisp inner notch, flat caps); T-meet + crossing of two solid
+walls (seamless); closed rectangle (two concentric loops, courtyard empty);
+arc wall (concentric band, radial butt caps); ~12° hairpin (bevel, no
+spike); hollow (`fill: --bg; stroke: --stroke-dark` double-line) and
+`fill: hatch(45)` bands with junctions showing, both masking correctly; the
+§25 block renders real walls — solid poché rectangle, partition tee-ing in
+seamlessly, top dim reading 7.2 (centreline), matching
+`plans/refs-floorplan/20sw-b1.webp`'s look. One false alarm worth logging:
+an early gallery scene "showed huge filled regions" — those were correct
+200 mm-default walls at `density: 1` (200 px wide); authored test walls
+should state a thickness or a sane unit/scale.
+
 ### Carry-over notes
+
+**For Phase 3 (openings):**
+- **The run structure to cut into**: `wall::offset_run` offsets one
+  centreline subpath via `side(segs, closed, h, left)` → two joined side
+  chains, then assembles loops. A gap at stations `a..b` on a straight
+  segment splits **both side chains** at those parameters and assembles
+  multiple loops, each jamb capped by a straight `Line` across the thickness
+  — from `p + h·normal(dir, true)` to `p + h·normal(dir, false)` at station
+  point `p` — exactly the open-run butt cap's construction (`push_line`,
+  `normal` are right there). Suggested shape: pass per-segment gap intervals
+  into `offset_run` and cut in `side` before the joins run (a gap never
+  coincides with a corner: overrun validation guarantees it stays inside
+  the segment).
+- **The segment table** lives on `Folded.segments` / `SketchGeo.segments` —
+  **centreline** coordinates, already ×`own` (px). `on:` resolves there
+  (`Segment::Edge(a, b)` carries direction; reject `Arc`/`Circle` — the
+  curved-segment error; `Point` is not a segment). `at:`/`width:` are
+  drawing units ×`own`; their 900/1200 mm *defaults* need the same
+  desugar-time stamping `wall-thickness:` got — **extend
+  `scale::stamp_wall_thickness`'s pattern** (the walk is the only place
+  `unit_mm` is known; layout cannot convert mm), one internal attr per
+  true-size fallback, whitelisted in `validate::INTERNAL`.
+- **Where the cut runs**: inside `wall::offset` (called from
+  `layout/mod.rs`'s Sketch branch with the wall's `ResolvedInst` — the
+  openings are `inst.children`, resolved and gate-checked by then: host,
+  `on:` present, no `translate:`, sliding-pose law all already hold).
+  Station laws that need folded geometry (unknown segment + suggestion,
+  arc segment, overrun, overlap) belong there too — one law per site.
+- An opening's own geometry (the `width × thickness` jamb-to-jamb box) is
+  what makes `outer:west (-) outer.entry (-) outer:east` read the true
+  location chain — today it reads 0 and 7.2 (an opening still has no box;
+  expected). Mind `at:`'s frame: it measures from the segment's **draw
+  start**, and §25's `south` is drawn right-to-left.
+- Restore the SPEC 18 floorplan hook-family row **with** the leaf/swing/sill
+  emitters and rendered sample coverage in the same commit —
+  `tests/hooks.rs` is the guard (Phase 1 ruling).
+- The wall's placed node carries `attrs["path"]` (outline `d`),
+  `sketch.outline` (outline subs — leader targets), `sketch.segments`
+  (centreline). Door/window chrome should follow the `place_features` /
+  `chrome::fill` pattern for generated children.
+
+**For Phase 4 (fixtures):** nothing new beyond Phase 1's notes; the
+mm-fallback stamping pattern above applies to fixture bodies too if their
+sizes are read at layout.
 
 ---
 

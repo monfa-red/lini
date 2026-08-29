@@ -537,8 +537,14 @@ fn layout_inst(
         if !children.is_empty() && !part {
             let _ = lay_out_container_children(&mut children, &inst.attrs, inst.span, own)?;
         }
-        let folded = drawing::pen::fold(inst, own)?;
-        let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+        let mut folded = drawing::pen::fold(inst, own)?;
+        // A wall's outline replaces its centreline for paint and the geometry
+        // bbox [SPEC 15.11] — offset after the fold, before the bboxes
+        // ([SPEC 15.10] step 1); its `:segment`s stay centreline stations.
+        if floorplan::fp_kind(&inst.type_chain) == Some(floorplan::FpKind::Wall) {
+            floorplan::wall::offset(&mut folded, inst, own)?;
+        }
+        let half = inst.attrs.half_stroke();
         sketch_d = Some(folded.d);
         drawing::breaks::fill_chrome(&mut children, &folded.cuts);
         drawing::edges::fill(&mut children, "edges", &folded.edges);

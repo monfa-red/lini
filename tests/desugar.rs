@@ -872,14 +872,20 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
         "{out}"
     );
     // A true-size default is never a class-rule literal [SPEC 15.11] — the
-    // reader converts it through the scope's `unit:`, so nothing here states a
-    // thickness, a door width, or a hinge.
-    for baked in ["thickness:", "hinge:", "swing:"] {
+    // reader converts it through the scope's `unit:`, so no rule and no node
+    // states a `thickness:` (the space-anchored match spares the generated
+    // `wall-thickness:` fallback, which is the reader's, below), a door
+    // width, or a hinge.
+    for baked in [" thickness:", " hinge:", " swing:"] {
         assert!(
             !out.contains(baked),
             "{baked} must not bake into a rule: {out}"
         );
     }
+    // The wall carries its resolved **fallback** instead — the generated
+    // internal `wall-thickness:`, 200 mm through the scope's unit (mm here),
+    // stamped where the scale fold knows the unit [SPEC 15.11].
+    assert!(out.contains("wall-thickness: 200;"), "{out}");
     // The scale fold reaches a floorplan scope: 1:50 in metres at density 4.
     let root = desugar_source(
         "{ layout: floorplan; unit: m; scale: 0.02 }\n\
@@ -887,6 +893,10 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
     )
     .unwrap();
     assert!(root.contains("px-per-unit: 80;"), "{root}");
+    assert!(
+        root.contains("wall-thickness: 0.2;"),
+        "200 mm reads 0.2 drawing units at unit: m — {root}"
+    );
 }
 
 #[test]

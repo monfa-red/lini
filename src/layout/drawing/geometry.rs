@@ -83,7 +83,7 @@ impl PathSeg {
 
     /// The segment walked the other way (endpoints swapped; an arc's sweep
     /// flips, a cubic swaps its controls).
-    fn reverse(&self) -> PathSeg {
+    pub(in crate::layout) fn reverse(&self) -> PathSeg {
         match *self {
             PathSeg::Line { from, to } => PathSeg::Line { from: to, to: from },
             PathSeg::Arc {

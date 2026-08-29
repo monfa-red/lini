@@ -42,6 +42,7 @@ const INTERNAL: &[&str] = &[
     "of-title",
     "mount",
     "px-per-unit",
+    "wall-thickness",
     "field",
     "font-scale",
 ];
@@ -556,6 +557,16 @@ impl<'a> Ctx<'a> {
                         "'number' takes an integer"
                     };
                     out.push(Diagnostic::error(d.span, msg).code(Code::MALFORMED_VALUE));
+                }
+            }
+            // A wall's poché depth [SPEC 15.11/17] — drawing units, > 0.
+            "thickness" => {
+                let ok = matches!(single_value(d), Some(Value::Number(n)) if *n > 0.0);
+                if !ok {
+                    out.push(
+                        Diagnostic::error(d.span, "'thickness' takes a number > 0")
+                            .code(Code::MALFORMED_VALUE),
+                    );
                 }
             }
             // A flight's tread count [SPEC 15.11] — an integer ≥ 2; one step

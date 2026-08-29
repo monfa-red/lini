@@ -20,11 +20,26 @@ use crate::syntax::ast::{Child, Decl, Value};
 /// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
 
+/// The generated internal attr carrying a wall's **resolved fallback**
+/// `thickness:` in drawing units [SPEC 15.11] — what the wall reads when no
+/// cascaded `thickness:` reaches it. Stamped here because this walk is the
+/// one place the scope's `unit:` (nearest-wins, pages included) is known.
+pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
+
+/// The true-size wall defaults [SPEC 15.11] — physical millimetres, the
+/// reader's (never a class-rule literal; see `ledger::defaults`).
+pub(crate) const WALL_MM: f64 = 200.0;
+const PARTITION_MM: f64 = 100.0;
+
 /// The unit / density context carried down the lowered tree.
 struct ScaleCtx {
     density: f64,
     unit_mm: f64,
     in_drawing: bool,
+    /// The nearest authored floorplan-scope `thickness:` (drawing units) —
+    /// the inherited slot a wall without its own value falls back to
+    /// [SPEC 15.11].
+    thickness: Option<f64>,
 }
 
 /// Fold the whole lowered scene. `user_root` is the root's own decl list —
@@ -40,6 +55,7 @@ pub(super) fn fold(
         density,
         unit_mm,
         in_drawing: root_drawing,
+        thickness: read_thickness(user_root),
     };
     if root_drawing {
         stamp(user_root, &ctx, Span::empty())?;
@@ -56,6 +72,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         density: ctx.density,
         unit_mm: ctx.unit_mm,
         in_drawing: ctx.in_drawing,
+        thickness: ctx.thickness,
     };
     let chain = lowered_chain(n);
     let opens = is_drawing_body(&chain, &n.style);
@@ -76,10 +93,16 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         if let Some(u) = read_unit(&n.style)? {
             ctx.unit_mm = u;
         }
+        if let Some(t) = read_thickness(&n.style) {
+            ctx.thickness = Some(t);
+        }
         stamp(&mut n.style, &ctx, n.span)?;
     } else if ctx.in_drawing && find(&n.style, "scale").is_some() {
         // A node-level ratio override inside a drawing scope [SPEC 15.1].
         stamp(&mut n.style, &ctx, n.span)?;
+    }
+    if ctx.in_drawing && chain.iter().any(|t| t == "wall") {
+        stamp_wall_thickness(&mut n.style, &ctx, &chain, n.span);
     }
     ctx.in_drawing = in_drawing_scope(opens, ctx.in_drawing, &chain, &n.style);
     for c in &mut n.children {
@@ -120,9 +143,46 @@ fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx, span: Span) -> Result<(), Error>
 /// It lives beside the `unit:` reader because that is where the scope's
 /// millimetres-per-unit is known; every true-size consumer calls this one
 /// function.
-#[cfg_attr(not(test), allow(dead_code))] // the wall / opening / fixture readers land in phases 2–4
 pub(crate) fn mm_to_units(mm: f64, unit_mm: f64) -> f64 {
     mm / unit_mm
+}
+
+/// Stamp a wall's resolved fallback thickness [SPEC 15.11], nearest-wins:
+/// the wall's own authored `thickness:` needs no stamp (it is the nearest
+/// value, and the cascade already carries it); a `|partition|`'s 100 mm is
+/// its define's value — **at** the node, so it beats the scope's inherited
+/// slot exactly as the SPEC 8 bundle would ([SPEC 8]: "a define, nothing
+/// more"); then the nearest scope-authored value; then the 200 mm default.
+/// The mm defaults convert through the scope's `unit:` here — the true-size
+/// law — while authored values pass untouched (they are drawing units).
+/// Recomputed from the same authored inputs every walk, so desugar stays
+/// idempotent; rule-borne `thickness:` is resolve's to cascade and wins over
+/// this stamp at the read site (`layout::floorplan::wall`).
+fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: Span) {
+    style.retain(|d| d.name != WALL_THICKNESS);
+    if find(style, "thickness").is_some() {
+        return;
+    }
+    let units = if chain.iter().any(|t| t == "partition") {
+        mm_to_units(PARTITION_MM, ctx.unit_mm)
+    } else {
+        ctx.thickness
+            .unwrap_or_else(|| mm_to_units(WALL_MM, ctx.unit_mm))
+    };
+    style.push(Decl {
+        name: WALL_THICKNESS.into(),
+        groups: vec![vec![Value::Number(units)]],
+        span,
+    });
+}
+
+/// The nearest authored `thickness:` in a scope's own decls — drawing units.
+/// A malformed value is validation's to report; the walk just declines it.
+fn read_thickness(style: &[Decl]) -> Option<f64> {
+    match find(style, "thickness").map(single) {
+        Some(Some(Value::Number(n))) if *n > 0.0 => Some(*n),
+        _ => None,
+    }
 }
 
 /// The nearest authored `unit:` as millimetres per drawing unit [SPEC 15.1].
@@ -203,5 +263,61 @@ mod tests {
         assert_eq!(mm_to_units(200.0, mm_per_unit("m")), 0.2);
         // The scope default: no `unit:` at all is millimetres [SPEC 15.1].
         assert_eq!(mm_to_units(900.0, 1.0), 900.0);
+    }
+
+    /// The wall's fallback stamp [SPEC 15.11], nearest-wins: an authored
+    /// value on the wall suppresses it; a `|partition|`'s 100 mm define beats
+    /// the scope's inherited slot; the scope's value beats the 200 mm
+    /// default; the mm defaults convert through the scope's `unit:`.
+    #[test]
+    fn the_wall_thickness_stamp_resolves_nearest_wins() {
+        let ctx = |unit_mm: f64, thickness: Option<f64>| ScaleCtx {
+            density: 4.0,
+            unit_mm,
+            in_drawing: true,
+            thickness,
+        };
+        let stamped = |style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[&str]| {
+            let chain: Vec<String> = chain.iter().map(|s| s.to_string()).collect();
+            stamp_wall_thickness(style, ctx, &chain, Span::empty());
+            style
+                .iter()
+                .find(|d| d.name == WALL_THICKNESS)
+                .and_then(|d| match single(d) {
+                    Some(Value::Number(n)) => Some(*n),
+                    _ => None,
+                })
+        };
+        let wall = ["wall", "sketch"];
+        let partition = ["partition", "wall", "sketch"];
+
+        let mut s = Vec::new();
+        assert_eq!(
+            stamped(&mut s, &ctx(1000.0, None), &wall),
+            Some(0.2),
+            "the 200 mm default, through unit: m"
+        );
+        let mut s = Vec::new();
+        assert_eq!(
+            stamped(&mut s, &ctx(1000.0, Some(0.5)), &wall),
+            Some(0.5),
+            "the scope's authored value, drawing units untouched"
+        );
+        let mut s = Vec::new();
+        assert_eq!(
+            stamped(&mut s, &ctx(1000.0, Some(0.5)), &partition),
+            Some(0.1),
+            "the partition define is at the node — it beats the scope"
+        );
+        let mut s = vec![Decl {
+            name: "thickness".into(),
+            groups: vec![vec![Value::Number(2.0)]],
+            span: Span::empty(),
+        }];
+        assert_eq!(
+            stamped(&mut s, &ctx(1000.0, Some(0.5)), &wall),
+            None,
+            "an authored wall value needs no fallback"
+        );
     }
 }
