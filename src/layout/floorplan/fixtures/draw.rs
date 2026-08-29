@@ -29,6 +29,10 @@ const SEAT_R: f64 = 80.0;
 const TOP_R: f64 = 60.0;
 const CHAIR_R: f64 = 50.0;
 
+/// A drain's radius — the one dot every basin waters to, so a tub, a sink and
+/// each bowl of a double sink all say "drain" in the same stroke.
+const DRAIN: f64 = 45.0;
+
 /// The variant's drawing. `size` is its SPEC body in millimetres — a tabletop
 /// for `|dining|`, the piece itself everywhere else.
 pub(super) fn symbol(ty: &str, variant: &str, size: (f64, f64)) -> Sym {
@@ -122,28 +126,58 @@ const PAN_STEPS: usize = 6;
 /// A chair, plan-side: a plain square — the seat's own outline is the symbol.
 const CHAIR: f64 = 450.0;
 
-/// A dining set: the tabletop with `per` chairs on each long side, seated
-/// flush against it, so the pair of rows is exactly what extends the bbox.
+/// How far a chair stands **off** the tabletop edge [SPEC 15.11]. Flush, the
+/// two outlines share a line and the set reads as one slab with lugs; pulled
+/// back, each chair is its own piece and the table keeps its own edge. Tuned
+/// by eye at 1:50, where it lands just over 5 px.
+const PULL_BACK: f64 = 55.0;
+
+/// How far a chair's centre sits from the tabletop's own half-extent.
+const CHAIR_OFF: f64 = PULL_BACK + CHAIR / 2.0;
+
+/// A dining set: the tabletop with `per` chairs on each long side, each pulled
+/// back off the edge, so the pair of rows is what extends the bbox.
 fn dining((w, h): (f64, f64), per: usize) -> Sym {
     let mut shapes = vec![rect(-w / 2.0, -h / 2.0, w / 2.0, h / 2.0, TOP_R)];
     let step = w / per as f64;
     for i in 0..per {
         let x = -w / 2.0 + step * (i as f64 + 0.5);
         for side in [-1.0, 1.0] {
-            shapes.push(box_at(x, side * (h + CHAIR) / 2.0, CHAIR, CHAIR, CHAIR_R));
+            shapes.push(box_at(
+                x,
+                side * (h / 2.0 + CHAIR_OFF),
+                CHAIR,
+                CHAIR,
+                CHAIR_R,
+            ));
         }
     }
-    Sym::new((w, h + 2.0 * CHAIR), shapes)
+    Sym::new((w, h + 2.0 * (CHAIR + PULL_BACK)), shapes)
 }
 
-/// The round table: the top, and one chair at each quadrant.
+/// The round table: the top, and one chair pulled back at each quadrant.
 fn round_table((w, h): (f64, f64)) -> Sym {
     let mut shapes = vec![Shape::Oval(0.0, 0.0, w / 2.0, h / 2.0)];
     for side in [-1.0, 1.0] {
-        shapes.push(box_at(0.0, side * (h + CHAIR) / 2.0, CHAIR, CHAIR, CHAIR_R));
-        shapes.push(box_at(side * (w + CHAIR) / 2.0, 0.0, CHAIR, CHAIR, CHAIR_R));
+        shapes.push(box_at(
+            0.0,
+            side * (h / 2.0 + CHAIR_OFF),
+            CHAIR,
+            CHAIR,
+            CHAIR_R,
+        ));
+        shapes.push(box_at(
+            side * (w / 2.0 + CHAIR_OFF),
+            0.0,
+            CHAIR,
+            CHAIR,
+            CHAIR_R,
+        ));
     }
-    Sym::new((w + 2.0 * CHAIR, h + 2.0 * CHAIR), shapes)
+    Sym::new(
+        (w + 2.0 * (CHAIR + PULL_BACK), h + 2.0 * (CHAIR + PULL_BACK)),
+        shapes,
+    )
 }
 
 /// The bathroom set. Each is the piece's footprint plus the one detail that
@@ -195,18 +229,21 @@ fn bath(variant: &str, (w, h): (f64, f64)) -> Sym {
         // would nest three outlines where every real plan draws two.
         "sink" => vec![
             rect(x0, y0, x1, y1, 60.0),
-            Shape::Oval(0.0, 0.0, 45.0, 45.0),
+            Shape::Oval(0.0, 0.0, DRAIN, DRAIN),
         ],
-        // …and the kitchen run's double bowl is **one unit**: its own rim, and
-        // two square-ish basins dropped in it — not two sinks side by side.
+        // …and the kitchen run's double bowl is **one unit**: its own rim, two
+        // square-ish basins dropped in it — not two sinks side by side — and
+        // the drain each of them waters to, the single sink's own dot.
         "double-sink" => {
             const RIM: f64 = 60.0;
             let (bw, bh) = ((w - 3.0 * RIM) / 2.0, h - 2.0 * RIM);
-            vec![
-                rect(x0, y0, x1, y1, 40.0),
-                box_at(-(bw + RIM) / 2.0, 0.0, bw, bh, 50.0),
-                box_at((bw + RIM) / 2.0, 0.0, bw, bh, 50.0),
-            ]
+            let mut shapes = vec![rect(x0, y0, x1, y1, 40.0)];
+            for side in [-1.0, 1.0] {
+                let cx = side * (bw + RIM) / 2.0;
+                shapes.push(box_at(cx, 0.0, bw, bh, 50.0));
+                shapes.push(Shape::Oval(cx, 0.0, DRAIN, DRAIN));
+            }
+            shapes
         }
         // The tub: the rim, the rounded basin inside it, and the drain at the
         // tap end — the one detail that says which way it lies.
@@ -215,7 +252,7 @@ fn bath(variant: &str, (w, h): (f64, f64)) -> Sym {
             vec![
                 body,
                 rect(x0 + RIM, y0 + RIM, x1 - RIM, y1 - RIM, 150.0),
-                Shape::Oval(x1 - 280.0, 0.0, 45.0, 45.0),
+                Shape::Oval(x1 - 280.0, 0.0, DRAIN, DRAIN),
             ]
         }
     };

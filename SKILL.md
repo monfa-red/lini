@@ -433,7 +433,7 @@ outer:north (-) outer:south { side: left }      // → 4.8, centreline to centre
   `swing: left|right` (left of the pen's travel), `symbol: single | double |
   sliding` (a slider takes no `hinge:`/`swing:`). `translate:` on one is an error.
 - **Fixtures.** `|bed|` (queen·king·double·single) · `|sofa|`
-  (three·two·one·corner·stool — `one` is the armchair, `stool` the ⌀400 bar
+  (three·two·one·corner·stool — `one` is the armchair, `stool` the ⌀350 bar
   seat) · `|dining|` (six·four·round — table *with* chairs) · `|bath|`
   (tub·shower·toilet·sink·double-sink — the last is one unit, two basins) ·
   `|appliance|` (stove·fridge·washer·dishwasher) ·

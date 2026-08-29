@@ -791,14 +791,14 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-299" transform="translate(11.53 112.58) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-sofa lini-path" transform="translate(346.84,295.5)">
-        <path d="M -16 0 A 16 16 0 1 1 16 0 A 16 16 0 1 1 -16 0 Z"/>
+      <g class="lini-node lini-sofa lini-path" transform="translate(346.84,297.5)">
+        <path d="M -14 0 A 14 14 0 1 1 14 0 A 14 14 0 1 1 -14 0 Z"/>
         <g class="lini-text">
-          <use href="#lini-g1500-303" transform="translate(-11.575 32.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-310" transform="translate(-6.705 32.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(-2.815 32.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(3.215 32.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-259" transform="translate(9.245 32.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(-11.575 30.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-310" transform="translate(-6.705 30.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-2.815 30.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(3.215 30.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-259" transform="translate(9.245 30.58) scale(0.01 -0.01)"/>
         </g>
       </g>
       <g class="lini-node lini-head lini-block" transform="translate(-813.16,471.5)">
@@ -812,31 +812,31 @@ input_file: samples/floorplan_parts.lini
           <use href="#lini-g1500-57" transform="translate(13.852 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-517.16,479.5)">
-        <path d="M -67.2 -36 L 67.2 -36 A 4.8 4.8 0 0 1 72 -31.2 L 72 31.2 A 4.8 4.8 0 0 1 67.2 36 L -67.2 36 A 4.8 4.8 0 0 1 -72 31.2 L -72 -31.2 A 4.8 4.8 0 0 1 -67.2 -36 Z M -62 -72 L -34 -72 A 4 4 0 0 1 -30 -68 L -30 -40 A 4 4 0 0 1 -34 -36 L -62 -36 A 4 4 0 0 1 -66 -40 L -66 -68 A 4 4 0 0 1 -62 -72 Z M -62 36 L -34 36 A 4 4 0 0 1 -30 40 L -30 68 A 4 4 0 0 1 -34 72 L -62 72 A 4 4 0 0 1 -66 68 L -66 40 A 4 4 0 0 1 -62 36 Z M -14 -72 L 14 -72 A 4 4 0 0 1 18 -68 L 18 -40 A 4 4 0 0 1 14 -36 L -14 -36 A 4 4 0 0 1 -18 -40 L -18 -68 A 4 4 0 0 1 -14 -72 Z M -14 36 L 14 36 A 4 4 0 0 1 18 40 L 18 68 A 4 4 0 0 1 14 72 L -14 72 A 4 4 0 0 1 -18 68 L -18 40 A 4 4 0 0 1 -14 36 Z M 34 -72 L 62 -72 A 4 4 0 0 1 66 -68 L 66 -40 A 4 4 0 0 1 62 -36 L 34 -36 A 4 4 0 0 1 30 -40 L 30 -68 A 4 4 0 0 1 34 -72 Z M 34 36 L 62 36 A 4 4 0 0 1 66 40 L 66 68 A 4 4 0 0 1 62 72 L 34 72 A 4 4 0 0 1 30 68 L 30 40 A 4 4 0 0 1 34 36 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-517.16,475.1)">
+        <path d="M -67.2 -36 L 67.2 -36 A 4.8 4.8 0 0 1 72 -31.2 L 72 31.2 A 4.8 4.8 0 0 1 67.2 36 L -67.2 36 A 4.8 4.8 0 0 1 -72 31.2 L -72 -31.2 A 4.8 4.8 0 0 1 -67.2 -36 Z M -62 -76.4 L -34 -76.4 A 4 4 0 0 1 -30 -72.4 L -30 -44.4 A 4 4 0 0 1 -34 -40.4 L -62 -40.4 A 4 4 0 0 1 -66 -44.4 L -66 -72.4 A 4 4 0 0 1 -62 -76.4 Z M -62 40.4 L -34 40.4 A 4 4 0 0 1 -30 44.4 L -30 72.4 A 4 4 0 0 1 -34 76.4 L -62 76.4 A 4 4 0 0 1 -66 72.4 L -66 44.4 A 4 4 0 0 1 -62 40.4 Z M -14 -76.4 L 14 -76.4 A 4 4 0 0 1 18 -72.4 L 18 -44.4 A 4 4 0 0 1 14 -40.4 L -14 -40.4 A 4 4 0 0 1 -18 -44.4 L -18 -72.4 A 4 4 0 0 1 -14 -76.4 Z M -14 40.4 L 14 40.4 A 4 4 0 0 1 18 44.4 L 18 72.4 A 4 4 0 0 1 14 76.4 L -14 76.4 A 4 4 0 0 1 -18 72.4 L -18 44.4 A 4 4 0 0 1 -14 40.4 Z M 34 -76.4 L 62 -76.4 A 4 4 0 0 1 66 -72.4 L 66 -44.4 A 4 4 0 0 1 62 -40.4 L 34 -40.4 A 4 4 0 0 1 30 -44.4 L 30 -72.4 A 4 4 0 0 1 34 -76.4 Z M 34 40.4 L 62 40.4 A 4 4 0 0 1 66 44.4 L 66 72.4 A 4 4 0 0 1 62 76.4 L 34 76.4 A 4 4 0 0 1 30 72.4 L 30 44.4 A 4 4 0 0 1 34 40.4 Z"/>
         <g class="lini-text">
-          <use href="#lini-g1500-303" transform="translate(-6.085 88.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-241" transform="translate(-1.215 88.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-340" transform="translate(1.115 88.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-303" transform="translate(-6.085 92.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-241" transform="translate(-1.215 92.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-340" transform="translate(1.115 92.98) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-301.16,483.5)">
-        <path d="M -43.2 -32 L 43.2 -32 A 4.8 4.8 0 0 1 48 -27.2 L 48 27.2 A 4.8 4.8 0 0 1 43.2 32 L -43.2 32 A 4.8 4.8 0 0 1 -48 27.2 L -48 -27.2 A 4.8 4.8 0 0 1 -43.2 -32 Z M -38 -68 L -10 -68 A 4 4 0 0 1 -6 -64 L -6 -36 A 4 4 0 0 1 -10 -32 L -38 -32 A 4 4 0 0 1 -42 -36 L -42 -64 A 4 4 0 0 1 -38 -68 Z M -38 32 L -10 32 A 4 4 0 0 1 -6 36 L -6 64 A 4 4 0 0 1 -10 68 L -38 68 A 4 4 0 0 1 -42 64 L -42 36 A 4 4 0 0 1 -38 32 Z M 10 -68 L 38 -68 A 4 4 0 0 1 42 -64 L 42 -36 A 4 4 0 0 1 38 -32 L 10 -32 A 4 4 0 0 1 6 -36 L 6 -64 A 4 4 0 0 1 10 -68 Z M 10 32 L 38 32 A 4 4 0 0 1 42 36 L 42 64 A 4 4 0 0 1 38 68 L 10 68 A 4 4 0 0 1 6 64 L 6 36 A 4 4 0 0 1 10 32 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-301.16,479.1)">
+        <path d="M -43.2 -32 L 43.2 -32 A 4.8 4.8 0 0 1 48 -27.2 L 48 27.2 A 4.8 4.8 0 0 1 43.2 32 L -43.2 32 A 4.8 4.8 0 0 1 -48 27.2 L -48 -27.2 A 4.8 4.8 0 0 1 -43.2 -32 Z M -38 -72.4 L -10 -72.4 A 4 4 0 0 1 -6 -68.4 L -6 -40.4 A 4 4 0 0 1 -10 -36.4 L -38 -36.4 A 4 4 0 0 1 -42 -40.4 L -42 -68.4 A 4 4 0 0 1 -38 -72.4 Z M -38 36.4 L -10 36.4 A 4 4 0 0 1 -6 40.4 L -6 68.4 A 4 4 0 0 1 -10 72.4 L -38 72.4 A 4 4 0 0 1 -42 68.4 L -42 40.4 A 4 4 0 0 1 -38 36.4 Z M 10 -72.4 L 38 -72.4 A 4 4 0 0 1 42 -68.4 L 42 -40.4 A 4 4 0 0 1 38 -36.4 L 10 -36.4 A 4 4 0 0 1 6 -40.4 L 6 -68.4 A 4 4 0 0 1 10 -72.4 Z M 10 36.4 L 38 36.4 A 4 4 0 0 1 42 40.4 L 42 68.4 A 4 4 0 0 1 38 72.4 L 10 72.4 A 4 4 0 0 1 6 68.4 L 6 40.4 A 4 4 0 0 1 10 36.4 Z"/>
         <g class="lini-text">
-          <use href="#lini-g1500-232" transform="translate(-9.765 84.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(-5.995 84.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-315" transform="translate(0.035 84.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-299" transform="translate(5.815 84.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-232" transform="translate(-9.765 88.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-5.995 88.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(0.035 88.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(5.815 88.98) scale(0.01 -0.01)"/>
         </g>
       </g>
-      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,467.5)">
-        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -14 -84 L 14 -84 A 4 4 0 0 1 18 -80 L 18 -52 A 4 4 0 0 1 14 -48 L -14 -48 A 4 4 0 0 1 -18 -52 L -18 -80 A 4 4 0 0 1 -14 -84 Z M -80 -18 L -52 -18 A 4 4 0 0 1 -48 -14 L -48 14 A 4 4 0 0 1 -52 18 L -80 18 A 4 4 0 0 1 -84 14 L -84 -14 A 4 4 0 0 1 -80 -18 Z M -14 48 L 14 48 A 4 4 0 0 1 18 52 L 18 80 A 4 4 0 0 1 14 84 L -14 84 A 4 4 0 0 1 -18 80 L -18 52 A 4 4 0 0 1 -14 48 Z M 52 -18 L 80 -18 A 4 4 0 0 1 84 -14 L 84 14 A 4 4 0 0 1 80 18 L 52 18 A 4 4 0 0 1 48 14 L 48 -14 A 4 4 0 0 1 52 -18 Z"/>
+      <g class="lini-node lini-dining lini-path" transform="translate(-85.16,463.1)">
+        <path d="M -48 0 A 48 48 0 1 1 48 0 A 48 48 0 1 1 -48 0 Z M -14 -88.4 L 14 -88.4 A 4 4 0 0 1 18 -84.4 L 18 -56.4 A 4 4 0 0 1 14 -52.4 L -14 -52.4 A 4 4 0 0 1 -18 -56.4 L -18 -84.4 A 4 4 0 0 1 -14 -88.4 Z M -84.4 -18 L -56.4 -18 A 4 4 0 0 1 -52.4 -14 L -52.4 14 A 4 4 0 0 1 -56.4 18 L -84.4 18 A 4 4 0 0 1 -88.4 14 L -88.4 -14 A 4 4 0 0 1 -84.4 -18 Z M -14 52.4 L 14 52.4 A 4 4 0 0 1 18 56.4 L 18 84.4 A 4 4 0 0 1 14 88.4 L -14 88.4 A 4 4 0 0 1 -18 84.4 L -18 56.4 A 4 4 0 0 1 -14 52.4 Z M 56.4 -18 L 84.4 -18 A 4 4 0 0 1 88.4 -14 L 88.4 14 A 4 4 0 0 1 84.4 18 L 56.4 18 A 4 4 0 0 1 52.4 14 L 52.4 -14 A 4 4 0 0 1 56.4 -18 Z"/>
         <g class="lini-text">
-          <use href="#lini-g1500-299" transform="translate(-13.84 100.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-271" transform="translate(-9.89 100.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-315" transform="translate(-3.86 100.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-265" transform="translate(1.92 100.58) scale(0.01 -0.01)"/>
-          <use href="#lini-g1500-209" transform="translate(7.7 100.58) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-299" transform="translate(-13.84 104.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-271" transform="translate(-9.89 104.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-315" transform="translate(-3.86 104.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-265" transform="translate(1.92 104.98) scale(0.01 -0.01)"/>
+          <use href="#lini-g1500-209" transform="translate(7.7 104.98) scale(0.01 -0.01)"/>
         </g>
       </g>
       <g class="lini-node lini-head lini-block" transform="translate(-813.16,635.5)">
@@ -888,7 +888,7 @@ input_file: samples/floorplan_parts.lini
         </g>
       </g>
       <g class="lini-node lini-bath lini-path" transform="translate(346.84,653.5)">
-        <path d="M -28.8 -18 L 28.8 -18 A 3.2 3.2 0 0 1 32 -14.8 L 32 14.8 A 3.2 3.2 0 0 1 28.8 18 L -28.8 18 A 3.2 3.2 0 0 1 -32 14.8 L -32 -14.8 A 3.2 3.2 0 0 1 -28.8 -18 Z M -23.2 -13.2 L -6.4 -13.2 A 4 4 0 0 1 -2.4 -9.2 L -2.4 9.2 A 4 4 0 0 1 -6.4 13.2 L -23.2 13.2 A 4 4 0 0 1 -27.2 9.2 L -27.2 -9.2 A 4 4 0 0 1 -23.2 -13.2 Z M 6.4 -13.2 L 23.2 -13.2 A 4 4 0 0 1 27.2 -9.2 L 27.2 9.2 A 4 4 0 0 1 23.2 13.2 L 6.4 13.2 A 4 4 0 0 1 2.4 9.2 L 2.4 -9.2 A 4 4 0 0 1 6.4 -13.2 Z"/>
+        <path d="M -28.8 -18 L 28.8 -18 A 3.2 3.2 0 0 1 32 -14.8 L 32 14.8 A 3.2 3.2 0 0 1 28.8 18 L -28.8 18 A 3.2 3.2 0 0 1 -32 14.8 L -32 -14.8 A 3.2 3.2 0 0 1 -28.8 -18 Z M -23.2 -13.2 L -6.4 -13.2 A 4 4 0 0 1 -2.4 -9.2 L -2.4 9.2 A 4 4 0 0 1 -6.4 13.2 L -23.2 13.2 A 4 4 0 0 1 -27.2 9.2 L -27.2 -9.2 A 4 4 0 0 1 -23.2 -13.2 Z M -18.4 0 A 3.6 3.6 0 1 1 -11.2 0 A 3.6 3.6 0 1 1 -18.4 0 Z M 6.4 -13.2 L 23.2 -13.2 A 4 4 0 0 1 27.2 -9.2 L 27.2 9.2 A 4 4 0 0 1 23.2 13.2 L 6.4 13.2 A 4 4 0 0 1 2.4 9.2 L 2.4 -9.2 A 4 4 0 0 1 6.4 -13.2 Z M 11.2 0 A 3.6 3.6 0 1 1 18.4 0 A 3.6 3.6 0 1 1 11.2 0 Z"/>
         <g class="lini-text">
           <use href="#lini-g1500-209" transform="translate(-27.465 34.58) scale(0.01 -0.01)"/>
           <use href="#lini-g1500-271" transform="translate(-21.325 34.58) scale(0.01 -0.01)"/>

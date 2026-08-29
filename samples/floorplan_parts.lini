@@ -124,13 +124,14 @@
   |sofa| "two" { symbol: two; translate: 2.7 12.95; }
   |sofa| "one" { symbol: one; translate: 5.4 12.95; }
   |sofa| "corner" { symbol: corner; translate: 8.1 12.2; }
-  |sofa| "stool" { symbol: stool; translate: 10.8 13.2; }
+  |sofa| "stool" { symbol: stool; translate: 10.8 13.225; }
 
-  // A `|dining|` is sized by its **tabletop**; the chairs extend the bbox.
+  // A `|dining|` is sized by its **tabletop**; the chairs stand a small
+  // pull-back off its edge, and that pair of rows is what extends the bbox.
   |head| { translate: -3.7 15.4; } [ "DINING" ]
-  |dining| "six" { translate: 0 15.5; }
-  |dining| "four" { symbol: four; translate: 2.7 15.55; }
-  |dining| "round" { symbol: round; translate: 5.4 15.35; }
+  |dining| "six" { translate: 0 15.445; }
+  |dining| "four" { symbol: four; translate: 2.7 15.495; }
+  |dining| "round" { symbol: round; translate: 5.4 15.295; }
 
   // The sanitaryware. A toilet is **one** silhouette — the cistern's shoulders
   // flowing into the rounded pan — and `double-sink` is one unit with two

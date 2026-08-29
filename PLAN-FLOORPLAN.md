@@ -2045,3 +2045,216 @@ the meaning).
   the same thing.
 - **`src/theme.rs` is now 394 LOC** — still inside the ~500 line, but the
   next built-in should probably move the palettes into their own module.
+
+---
+
+## Phase 11 — Art direction round (user, 2026-08-29)
+
+**Goal**: eight precise adjustments the user asked for while reviewing
+`samples/floorplan.lini`. Three are symbol edits (stool size, sink drains,
+chair pull-back — SPEC 15.11 already amended for two of them); the other five
+are **sample-source art direction**, turning the showpiece into a condo whose
+north and south walls are party walls and whose whole west side is glazed onto
+a full-height balcony. **No engine changes, no SPEC edits** — if an item needs
+one, stop and report.
+
+- [x] **Stool ⌀350** (SPEC row already says 350): shrink the variant; after
+      looking, deepen the showpiece island slightly if that reads better —
+      one or the other, or both. Three stools stay, respaced.
+- [x] **The double sink's basins get their drain holes** — the single sink's
+      45 mm drain-dot language, one per basin (`fixtures/draw.rs`).
+- [x] **A shower joins the bathroom** — same side as the tub, the other
+      corner, free-standing (it need not touch anything).
+- [x] **A second nightstand**, mirroring the existing one on the bed's other
+      side.
+- [x] **The balcony extends** along the west side to near-full height — try
+      ~6.0 m and the full 6.8 m, keep whichever reads more like a real condo
+      balcony (log the call).
+- [x] **The bedroom gets large west glazing** onto the balcony — a generous
+      window (or pair) on its west wall; check how it composes with the
+      living room's existing sliding door `D2`.
+- [x] **Delete `W1` (south) and both north windows** — north and south are
+      party walls against neighbouring units: blank poché, no openings. The
+      kitchen and living room lose their north light, which is correct for a
+      condo.
+- [x] **Dining chairs pull back off the tabletop edge** (SPEC row already
+      says so) — a visible gap in `six` / `four` / `round`, tuned **by eye**
+      at 1:50; the catalog shows all three variants, so it re-blesses too.
+- [x] Consequentials: schedule tags renumber sensibly (the new bedroom
+      window can be `W1`); the dimension chains stay honest now that the west
+      wall carries openings; `--strict` clean; conformance snapshots for
+      **both** samples re-blessed only after LOOKING (full + 0.3 thumb, light
+      **and** dark); `plans/refs-floorplan/final-renders/` refreshed
+      **including a fresh `blueprint-floorplan.png`** (Phase 10's carry-over
+      — it predates the stool and chair SPEC tweaks); `cargo xtask wasm` if
+      the parity test complains; regen artifacts only if variant data shape
+      changed.
+- [x] `cargo fmt` / `cargo test` / `cargo clippy --all-targets` clean; one
+      purposeful commit; never push.
+
+### Execution log
+
+2026-08-29, one session. Baseline **1469 passed / 0 failed** → after **1469 /
+0** — no test added or removed; three existing assertions were re-pinned to the
+new sizes. `cargo fmt --all --check`, `cargo clippy --all-targets`, `lini fmt
+--check` and `--strict` over both samples: clean. `gen-schema` / `gen-grammars`
+produce **no diff** (a variant row is layout data, not ledger data); `cargo
+xtask wasm` rebuilt — the parity test fails misleadingly on any `src/` or sample
+change. **No SPEC edit made or owed**, and no engine mechanism moved: the three
+`src/` edits are symbol geometry, everything else is sample source.
+
+#### 1 · The stool, and the island under it — **both**
+
+`variants()`'s row is ⌀350 now. Looked at against the 450 dining chairs it is
+the shrink that does the work: the stool stops competing with a chair and reads
+as the one round thing on the plan. The island was deepened **as well**, 0.8 →
+0.9 m (`translate: 7.2 2.05`, so it grows southward and the kitchen walkway
+holds at 0.9 m) — at 0.8 the 600 dishwasher left only 100 mm of counter above
+and below it, which read as a box jammed in a slot. Three stools stay, on the
+same 0.5 m pitch, moved 2.65 → 2.75 so they keep exactly the 75 mm clear off the
+counter edge they had. Not "one or the other": the two fix different things, the
+stool's read and the island's proportion.
+
+#### 2 · The drains — one constant, three wearers
+
+The 45 mm dot was already written twice (the tub's, the sink's). Rather than a
+third literal, `DRAIN = 45.0` is now the one owner and the tub, the sink and
+**each bowl** of the double sink all draw it. The double sink is 5 subpaths now
+(rim · basin · drain · basin · drain), pinned in
+`the_stool_the_double_sink_and_the_one_piece_toilet`.
+
+#### 3 · The shower, and the bathroom that had to make room
+
+`|bath| { symbol: shower; translate: 9.05 6.25 }` — 900 square, seated flush in
+the **south-east** corner, which is the other end of the tub's own wall. It
+stands **150 mm clear of the tub**: free-standing, touching nothing, exactly as
+asked. The toilet slid north (5.4 → 5.0) to open that corner, which also spaces
+it evenly — 200 mm off the vanity, 600 mm off the shower — and the `BATH` label
+moved to `8.35 5.55`, the room's own middle. The bathroom now reads vanity NW ·
+toilet E · tub SW · shower SE, which is the reference plan's own arrangement.
+
+#### 4 · The second nightstand
+
+`3 4.075`, the mirror of `0.6 4.075` about the bed's centre (x = 1.8). Both sit
+flush on the partition at the bed's head with the same 225 mm either side of the
+mattress — the pair is what makes the bedroom read as a bedroom rather than a
+bed with a box beside it.
+
+#### 5 · The balcony: **7.0 m**, face to face — and why not 6.8
+
+Four lengths rendered side by side (2.4 as-was · 6.0 · 6.8 · 7.0):
+
+| Height | Where its ends land | Read |
+|---|---|---|
+| 2.4 | a bay against the living room | the old composition; a bay, not a balcony |
+| 6.0 | inset 0.4 m from each building corner | the ends relate to nothing — the slab floats |
+| 6.8 | on the north/south wall **centrelines** | a 100 mm notch at each corner, plainly visible at 6× (crop kept) |
+| **7.0** | on the shell's **outer faces** | plan and balcony read as **one envelope** — `20sw-b1.webp`'s own composition |
+
+7.0 won and is what landed (`width: 1.7; height: 7; translate: -0.95 3.4`).
+"Full 6.8" is the centreline measure; measured where a slab actually meets a
+building — at the wall faces — full is **7.0**, and the difference is the
+100 mm notch above. The `BALCONY` text recentred to `-0.95 3.4`.
+
+#### 6 · The west glazing, and how it composes with D2
+
+`|window#w1| "W1" { on: west; at: 0.5; width: 2 }`. `west` is the `close()` run,
+drawn south → north, so `at: 0.5` seats the near jamb at y = 6.3 and the far one
+at 4.3: **2.0 m of a 2.85 m bedroom wall**, centred inside 25 mm, with a 0.4 m
+nib to the south corner and 0.45 m to the partition. Against D2 (y 1.0 … 3.4) it
+gives the west face one rhythm — glazing, a nib either side of the bedroom
+partition's centreline at 3.8 (0.4 above, 0.5 below), glazing — so the two
+openings read as one glazed elevation broken only where the partition lands.
+**A pair was considered and dropped**: two 1 m lights read as portholes at 1:50
+next to a 2.4 m slider, and MINIMAL wins.
+
+#### 7 · The party walls
+
+`|window#w1|`/`#w2` (north) and `#w3` "W1" (south) are gone; the shell now
+carries D1 (east), D2 + the new W1 (west) and nothing else. The bedroom window
+takes the `#w1` id and the `"W1"` tag, so the schedule reads **D1 · D2 · D3 · D4
+· W1**, contiguous, with no renumbering anywhere else. A comment on the wall
+states the reason so the sample teaches it: north and south are party walls
+against the neighbouring units, and every opening a stacked unit gets is on the
+entry side or the balcony side.
+
+#### 8 · The chair pull-back: 55 mm, and the chair stays 450
+
+`PULL_BACK = 55.0` mm, with `CHAIR_OFF = PULL_BACK + CHAIR / 2` the one number
+both `dining()` and `round_table()` seat a chair by. At 1:50 / `density: 5` that
+is **5.5 px** — the smallest gap that still reads as *two pieces* rather than
+one slab with lugs, judged at 1× (not at a crop's magnification, where anything
+reads). The chair stays **450 × 450**: SPEC 15.11's table pins that number and
+this phase makes no SPEC edit, so the whole gap is pull-back and none of it is a
+smaller chair. Extents grow accordingly — `six` 1800 × 1910, `four` 1200 × 1810,
+`round` 2210 square — which SPEC allows in as many words ("its chairs … extending
+the bbox").
+
+#### Consequentials swept
+
+- **The north arrow had to move.** The balcony took the whole left column.
+  Three placements were rendered: at mid-height in the far margin it floats;
+  **bottom-left** (`move(-2.5, 6.05)`, `"N"` at `-2.5 5.78`) reads as sheet
+  chrome in the sheet's own corner, which is where a north point belongs. Left
+  margin beyond the balcony is 0.92 m against 0.7 m of dimension rows on the
+  right — the sheet stays balanced.
+- **Phase 9's window-tag carry-over is dissolved, not re-exposed.** The two
+  untagged north windows — whose tags seated under the sofa and the kitchen
+  counter — no longer exist. The one window left seats its tag in clear bedroom
+  floor and reads upright with no help (a west run's bearing is −90°, already
+  ISO-upright).
+- **The dimension chains are unchanged and re-verified in the render.** All
+  four rows anchor on wall runs; each witness line springs from the corner
+  nearest its own dim line and runs away from the plan, so the two new west
+  openings cost nothing. **No west location row was added**: `side: left` stacks
+  outside the geometry on that side, which now means outside the balcony — it
+  would swallow the north arrow's margin for a chain the plan does not need.
+- Catalog re-tiled for the two size changes, every row keeping its **one bottom
+  baseline** (Phase 7's mechanism): `stool` 13.2 → 13.225 (⌀350), `six` 15.5 →
+  15.445, `four` 15.55 → 15.495, `round` 15.35 → 15.295.
+- SKILL.md's fixture bullet: the stool is ⌀350.
+
+#### Visual pass
+
+`--static` → `resvg`, read by eye, **light and dark**: both samples full size
+and at `--zoom 0.3` thumbnail (eight PNGs); the four-up balcony comparison; a 6×
+before/after of the balcony's north-west corner (6.8's notch vs 7.0's flush);
+three north-arrow placements side by side; 3× crops of the island, the bathroom,
+the bedroom and the dining set; a 6× crop of the west wall through D2 and W1;
+and `--theme blueprint` full size and thumbnail. Finals overwritten in
+`plans/refs-floorplan/final-renders/` — `fp-*`, `parts-*` and
+`blueprint-floorplan{,-thumb}.png` (Phase 10's carry-over closed). `spec25-*`
+were **not** re-rendered: SPEC §25 has no dining set, no stool and no double
+sink, so nothing this phase changed reaches it (the `spec_blocks` test still
+compiles it).
+
+What the looking changed: the island's depth (the stool shrink alone left the
+dishwasher jammed), the balcony's length twice, the north arrow's placement, the
+toilet's slide north and the `BATH` label's move, and the pull-back value (70 mm
+was tried first and read as a chair that had left the table).
+
+### Carry-over notes
+
+- **The balcony's edge line runs past the west openings.** The deck's east edge
+  sits exactly on the wall's outer face, so where an opening cuts the poché the
+  slab's own line shows through the gap: `W1` reads as three lines (deck edge +
+  two sills) and `D2`'s outer panel is doubled by it. That is the honest
+  drawing — a balcony slab does abut the building past its glazing, and both
+  reference plans draw it — but it is the one place a line inside an opening is
+  not the opening's own. If it ever reads wrong, the fix is in the sample (inset
+  the deck 50 mm), never in the engine.
+- **The bathroom is full.** Vanity NW · toilet E · tub SW · shower SE, with
+  150 mm between the tub and the shower. Another fixture wants a bigger room,
+  not a tighter pack.
+- **The dining chair is still 450 × 450.** The whole visible gap is pull-back,
+  because SPEC's table pins the chair. If the user wants the chairs *smaller*
+  too — the "a tiny bit smaller maybe" half of the ask — that is a SPEC 15.11
+  table edit plus one constant here (`CHAIR`), and it moves both samples again.
+- `draw.rs` is 299 LOC — comfortably inside the ~500 line, but it is now the
+  biggest file in `fixtures/`.
+- Nothing user-reserved was touched: `mirror:` on a wall (Phase 6 finding A), a
+  negative `width:` (B), `scale:` inheritance into a nested drawing scope (C),
+  the chrome-count boundary (D), `radius:` being sheet-space pixels and
+  `DIM_CLEARANCE` not scaling with `density:` are all open exactly as Phases
+  6–10 left them.
+

@@ -45,9 +45,9 @@ fn each_family_defaults_to_its_first_variant_at_true_size() {
         assert_eq!(body(by_id(&l.nodes, "f")), (w, h), "{ty}");
     }
     // A dining set is sized by its **tabletop**, and its chairs extend the
-    // bbox: 1800 × 900 plus a 450 row on each long side.
+    // bbox: 1800 × 900 plus a 450 row pulled 55 back on each long side.
     let l = laid(&plan("|dining#f|\n"));
-    assert_eq!(body(by_id(&l.nodes, "f")), (1800.0, 1800.0));
+    assert_eq!(body(by_id(&l.nodes, "f")), (1800.0, 1910.0));
 }
 
 /// `symbol:` picks the variant [SPEC 15.11] — including through the cascade,
@@ -61,9 +61,9 @@ fn a_symbol_picks_the_variant_inline_or_from_a_rule() {
          |bath#f|\n",
     );
     assert_eq!(body(by_id(&l.nodes, "f")), (700.0, 400.0));
-    // The round table's four quadrant chairs push ⌀1200 out to 2100 square.
+    // The round table's four quadrant chairs push ⌀1200 out to 2210 square.
     let l = laid(&plan("|dining#f| { symbol: round }\n"));
-    assert_eq!(body(by_id(&l.nodes, "f")), (2100.0, 2100.0));
+    assert_eq!(body(by_id(&l.nodes, "f")), (2210.0, 2210.0));
 }
 
 /// The mattress sizes [SPEC 15.11]. `queen` is the default a bare `|bed|`
@@ -123,7 +123,8 @@ fn a_fillet_turns_with_the_corner_it_rounds() {
 }
 
 /// The bar stool is one round stroke; the double sink is **one unit** with two
-/// basins (never two sinks side by side); and the toilet is **one** continuous
+/// basins (never two sinks side by side), each watering to the same drain dot
+/// the single sink and the tub draw; and the toilet is **one** continuous
 /// silhouette — the cistern's shoulders flowing into the rounded pan, with no
 /// second outline crossing it [SPEC 15.11].
 #[test]
@@ -135,13 +136,13 @@ fn the_stool_the_double_sink_and_the_one_piece_toilet() {
     };
     assert_eq!(
         drawn("|sofa#f| { symbol: stool }\n"),
-        ((400.0, 400.0), 1),
+        ((350.0, 350.0), 1),
         "a plain round seat"
     );
     assert_eq!(
         drawn("|bath#f| { symbol: double-sink }\n"),
-        ((800.0, 450.0), 3),
-        "the unit and its two basins"
+        ((800.0, 450.0), 5),
+        "the unit, its two basins, and a drain in each"
     );
     assert_eq!(
         drawn("|bath#f| { symbol: toilet }\n"),

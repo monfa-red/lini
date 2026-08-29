@@ -30,10 +30,12 @@
     // hinged at the north jamb, opening into the flat
     |door#slider| "D2" { on: west; at: 3.4; width: 2.4; symbol: sliding; }
     // the balcony slider — two panels, no arc
-    |window#w1| { on: north; at: 1; width: 2; }
-    |window#w2| { on: north; at: 6.2; width: 1.6; }
-    |window#w3| "W1" { on: south; at: 6.6; width: 1.8; }
+    |window#w1| "W1" { on: west; at: 0.5; width: 2; }
+    // the bedroom's own glazing onto the same balcony
   ]
+  // North and south are **party walls** against the neighbouring units, so
+  // they carry no openings at all — blank poché, the way a condo stacks. Every
+  // opening a unit gets is on the entry side (east) or the balcony side (west).
 
   |partition#bedwall| { draw: move(0, 3.8) right(4.6):head down(3):side; } [
     |door#bed-door| "D3" { on: side; at: 0.4; width: 0.9; swing: right; }
@@ -45,15 +47,17 @@
   ]
 
   // ── Casework: counters, the island, the wardrobe and the balcony deck.
-  |slab#deck| { width: 1.7; height: 2.4; translate: -0.95 2.2; }
+  |slab#deck| { width: 1.7; height: 7; translate: -0.95 3.4; }
+  // the balcony runs the whole west face, corner to corner with the shell
   |slab| { width: 2.8; height: 0.6; translate: 7 0.4; }
   // the kitchen run, against the north wall
-  |slab| { width: 2; height: 0.8; translate: 7.2 2; radius: 4; }
+  |slab| { width: 2; height: 0.9; translate: 7.2 2.05; radius: 4; }
   // the island — `radius:` is core, and sheet-space px: 4 is 40 mm at 1:50
   |slab| { width: 1.1; height: 0.55; translate: 2 1.75; }
   // the coffee table
   |slab| { width: 0.45; height: 0.45; translate: 0.6 4.075; }
-  // a nightstand
+  |slab| { width: 0.45; height: 0.45; translate: 3 4.075; }
+  // a nightstand either side of the bed's head
   |slab| { width: 0.6; height: 1.4; translate: 4.25 6; }
   // the wardrobe
   |slab| { width: 1.2; height: 0.55; translate: 7.35 4.325; }
@@ -64,37 +68,41 @@
   // box (the F / DW / W/D convention), every other fixture's reads beside it.
   |appliance| { symbol: stove; translate: 6.4 0.4; }
   |appliance| "F" { symbol: fridge; translate: 8.1 0.4; }
-  |appliance| "DW" { symbol: dishwasher; translate: 7.7 2; }
+  |appliance| "DW" { symbol: dishwasher; translate: 7.7 2.05; }
   |appliance| "W/D" { symbol: washer; translate: 5.2 6.4; }
-  |bath| { symbol: double-sink; translate: 6.8 2; }
+  |bath| { symbol: double-sink; translate: 6.8 2.05; }
   // the kitchen run's bowl — one unit, two basins
-  |sofa| { symbol: stool; translate: 6.7 2.65; }
-  |sofa| { symbol: stool; translate: 7.2 2.65; }
-  |sofa| { symbol: stool; translate: 7.7 2.65; }
-  // three ⌀400 stools pulled up to the island's open side
+  |sofa| { symbol: stool; translate: 6.7 2.75; }
+  |sofa| { symbol: stool; translate: 7.2 2.75; }
+  |sofa| { symbol: stool; translate: 7.7 2.75; }
+  // three ⌀350 stools pulled up to the island's open side
   |sofa| { translate: 2 0.55; }
   |dining| { translate: 4.3 2.6; }
   |bed| { translate: 1.8 4.85; }
   |bath| { symbol: sink; translate: 7.35 4.325; }
-  |bath| { symbol: toilet; rotate: 180; translate: 9.15 5.4; }
+  |bath| { symbol: toilet; rotate: 180; translate: 9.15 5; }
   |bath| { symbol: tub; translate: 7.6 6.325; }
+  |bath| { symbol: shower; translate: 9.05 6.25; }
+  // free-standing in the other corner of the tub's own wall — a fixture has to
+  // clear what it overlaps, never touch it
 
   // ── The sheet's own text: room names and authored areas [SPEC 15.11].
   |room| { translate: 2.2 2.75; } [ "LIVING / DINING" "23.9 m²" ]
   |room| { translate: 7.4 3.2; } [ "KITCHEN" ]
   |room| { translate: 3.3 6.1; } [ "BEDROOM" "12.8 m²" ]
   |room| { translate: 5.65 4.6; } [ "HALL" ]
-  |room| { translate: 8.5 4.4; } [ "BATH" "7.3 m²" ]
-  |room| { translate: -0.95 2.2; } [ "BALCONY" ]
+  |room| { translate: 8.35 5.55; } [ "BATH" "7.3 m²" ]
+  |room| { translate: -0.95 3.4; } [ "BALCONY" ]
 
   // The north arrow a plan needs is a `|sketch|` define — SPEC 24 reserves the
-  // type, the pen already draws it.
+  // type, the pen already draws it. The balcony now takes the whole west face,
+  // so the arrow drops into the sheet's own bottom-left margin instead.
   |sketch#north| {
-    draw: move(-0.95, 5.05) line(0.22, 0.72) line(-0.22, -0.2) line(-0.22, 0.2)
+    draw: move(-2.5, 6.05) line(0.22, 0.72) line(-0.22, -0.2) line(-0.22, 0.2)
           close();
     fill: --stroke-dark; stroke: none;
   }
-  |room| { translate: -0.95 4.78; } [ "N" ]
+  |room| { translate: -2.5 5.78; } [ "N" ]
 
   // ── Dimensions read the **centreline**, where architects measure. A wall's
   // named run is the anchor an architect names: an edge's extension line
