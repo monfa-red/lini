@@ -523,6 +523,9 @@
       }
       // --------------------------------------------------------------
 
+      // <lini:tokenizer> — lifted whole by `tests/playground.rs`, which runs
+      // it in node over every sample and diffs it against `lini::highlight_html`
+      // byte for byte. Nothing between the markers may touch the DOM.
       const esc = (s) =>
         s.replace(
           /[&<>"]/g,
@@ -536,12 +539,17 @@
         );
 
       // ---- syntax highlighting -------------------------------------
-      // A small tokenizer, the grammar's third home. It preserves every
-      // character (escaped) so the highlighted <pre> lines up glyph-for-
-      // glyph with the textarea above it — hence hand-written, while its word
-      // lists come from the same source the editor grammars do: the region
-      // marked `<lini:generated>` is written by `cargo xtask gen-grammars`
-      // and guarded byte-identical by `tests/grammar.rs`.
+      // The browser's copy of `lini::highlight_html` — same tokens, same
+      // classes, same output. It exists because this page carries no wasm and
+      // the overlay must re-colour on every keystroke, so a round trip is not
+      // an option; it is a *copy*, not a second grammar, and `tests/playground.rs`
+      // holds it byte-identical to the Rust scanner over every sample.
+      //
+      // It preserves every character (escaped) so the highlighted <pre> lines
+      // up glyph-for-glyph with the textarea above it. Its word lists come
+      // from the same source the editor grammars do: the region marked
+      // `<lini:generated>` is written by `cargo xtask gen-grammars` and
+      // guarded byte-identical by `tests/grammar.rs`.
       function tokenize(src) {
         let out = "";
         let i = 0;
@@ -742,6 +750,7 @@
         }
         return out;
       }
+      // </lini:tokenizer>
       function renderHighlight() {
         highlight.innerHTML = tokenize(editor.value) + "\n";
         highlight.scrollTop = editor.scrollTop;

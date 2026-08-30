@@ -21,11 +21,18 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      # `tests/playground.rs` runs the page's tokenizer in node and diffs it
+      # against `lini::highlight_html`. `LINI_JS_REQUIRED=1` turns its local
+      # skip into a failure, so a missing node reports as a missing node rather
+      # than as a green run that compared nothing.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
       - run: cargo build --verbose
-      - run: cargo test --verbose
+      - run: LINI_JS_REQUIRED=1 cargo test --verbose
 
   # The browser artifact must compile every sample to the same bytes the binary
   # does (`tests/wasm.rs`). Its own job: it needs a wasm target, node, and two
