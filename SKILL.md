@@ -79,8 +79,9 @@ a link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
   padding, `font-size` bake at compile time — use literals or `name = 5;` bindings.
 - **No coordinate property.** Layout places nodes; to place absolutely use
   `pin: center; translate: x y` (parent-local coordinates, y grows down).
-- **No `text-align`** — a text's lines align by its container's `align` (cross
-  axis) / `justify`. Split intents: wrap text in its own `|block| { align: start; }`.
+- **No `text-align`** — a text's lines align by its container's *horizontal*
+  packing knob: `justify` in a row (the default), `align` in a column or grid.
+  Split intents: wrap text in its own `|block| { justify: start; }`.
 - **`id.child` paths glue** (no spaces): `kitchen.bowl`. `a:left` forces a link
   side. Paths resolve exactly in scope — never searched, never auto-created.
 - Comments are `// …` only. Identifiers are `[a-zA-Z_][a-zA-Z0-9_-]*`,
@@ -110,7 +111,8 @@ scales, captions and link labels included.
   never grows the parent.
 - **`translate: x y`** nudges any node after placement (layout-neutral);
   **`rotate: N`** turns about the bbox centre. Both work on text too.
-- Flow containers: `direction: row | column` (default column), `gap` (default
+- Flow containers: `direction: row | column` (default row — source order flows
+  the way it reads), `gap` (default
   36; 12 inside shapes/topics), `align` (cross axis) / `justify` (main axis):
   `start | center | end | stretch | evenly | origin` — no-ops without slack
   (explicit size or fixed tracks).
@@ -520,7 +522,7 @@ restraint plus a few deliberate moves:
    Define the pairing once (`|svc::box| { fill: --teal-wash; stroke: --teal-ink;
    color: --teal-ink; }`) and instantiate — never repeat paint per node.
 2. **Name regions with `|group|` + its caption label** (`|group#edge| "Edge"
-   { direction: row; } [ … ]`). Groups organize; boxes state.
+   { gap: 20; } [ … ]`). Groups organize; boxes state.
 3. **Refined over heavy**: keep strokes thin (1.5–2), body text
    `normal`/`medium`; save bold and strong colour for titles, one hero node, a
    `|badge|`. One gradient per scene at most (`fill: gradient(--sky, --purple);

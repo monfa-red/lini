@@ -1,10 +1,9 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/drawing_annotations.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-412.8268 -349 825.6536 717" width="825.6536" height="717" class="lini lini-scope-3d044d79">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-682.178 -192 1364.3561 403" width="1364.3561" height="403" class="lini lini-scope-3d044d79">
   <style>
     .lini-scope-3d044d79 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini-scope-3d044d79 .lini-canvas { fill: white; }
@@ -88,9 +87,9 @@ input_file: samples/drawing_annotations.lini
     <path id="lini-g1500-137" d="…"/>
     <path id="lini-g1500-1653" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-412.8268" y="-349" width="825.6536" height="717"/>
+  <rect class="lini-canvas" x="-682.178" y="-192" width="1364.3561" height="403"/>
   <g class="lini-scene">
-    <g class="lini-node lini-drawing lini-block" data-id="plate-view" transform="translate(0,-157)">
+    <g class="lini-node lini-drawing lini-block" data-id="plate-view" transform="translate(-269.3512,0)">
       <rect x="-392.8268" y="-172" width="785.6536" height="344" rx="0" ry="0"/>
       <g class="lini-node lini-rect lini-box lini-block" data-id="plate" transform="translate(8.7772,-11)">
         <rect x="-300" y="-140" width="600" height="280" rx="0" ry="0"/>
@@ -351,7 +350,7 @@ input_file: samples/drawing_annotations.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-drawing lini-block" data-id="bracket-view" transform="translate(0,200)">
+    <g class="lini-node lini-drawing lini-block" data-id="bracket-view" transform="translate(420.8268,0)">
       <rect x="-241.3512" y="-129" width="482.7025" height="258" rx="0" ry="0"/>
       <g class="lini-node lini-sketch" data-id="bracket" transform="translate(52.9038,2.5)">
         <path d="M -120 90 L 102 90 A 18 18 0 0 0 120 72 L 120 -90 Z" fill-rule="evenodd"/>
@@ -479,7 +478,7 @@ input_file: samples/drawing_annotations.lini
         <polyline points="-1.6,-1.2 -132.2,-99.15 -140.2,-99.15"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(52.9038,2.5)">
-        <polygon points="-0,0 -10.8,-5.6 -8.4,-8.8"/>
+        <polygon points="0,0 -10.8,-5.6 -8.4,-8.8"/>
       </g>
       <g class="lini-text lini-dim-text">
         <use href="#lini-g1400-27" transform="translate(-186.3042 -92.354) scale(0.012 -0.012)"/>

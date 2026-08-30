@@ -2,7 +2,7 @@
 // a reusable value or function (read in any expression), and a parametric `points:`
 // draws a curve. Everything folds to literals at compile time.
 {
-  gap: 20; padding: 24;
+  direction: column; gap: 20; padding: 24;
   base = 90;
   // a variable — a reusable value, read bare in any expression
   scale(n) = (base * 1.2 ^ n);

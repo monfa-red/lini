@@ -74,11 +74,17 @@ fn field_value(style: &[Decl], key: &str) -> Option<String> {
     }
 }
 
-/// One field cell: the muted caption stacked over the value (a `|cell|` is a
-/// column-flow block, so its two children stack). Tight vertical padding keeps
-/// the block compact. The title cell spans the columns.
+/// One field cell: the muted caption stacked over the value. ISO 7200 reads the
+/// caption *over* its field, so the cell states `direction: column` itself
+/// rather than leaning on the flow default (`row` since [SPEC 11]). Tight
+/// vertical padding keeps the block compact. The title cell spans the columns.
 fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) -> Node {
     let mut style = vec![
+        Decl {
+            name: "direction".into(),
+            groups: vec![vec![Value::Ident("column".into())]],
+            span,
+        },
         Decl {
             name: "padding".into(),
             groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],

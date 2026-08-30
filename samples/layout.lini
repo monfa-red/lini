@@ -1,7 +1,7 @@
 // Positioning & spacing — pin (the 9 named anchor points), translate (a
 // post-placement nudge), and the 1/2/4-value padding & gap forms. Palette colours.
 {
-  direction: row; gap: 24; padding: 24; align: start;
+  gap: 24; padding: 24; align: start;
   |dot::block| { font-size: 12; }
 }
 

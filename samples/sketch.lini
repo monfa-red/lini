@@ -1,7 +1,7 @@
 // The sketch pen [SPEC 15.3] in an ordinary flow — profiles, corner modifiers,
 // mirrors, and the drafting line styles, all usable outside a drawing.
 {
-  direction: row; gap: 48; align: center;
+  gap: 48; align: center;
 }
 
 // Chamfer + fillet + a punched bore (even-odd subpaths).

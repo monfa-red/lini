@@ -204,10 +204,11 @@ pub fn num(n: f64) -> String {
     }
     let s = format!("{:.4}", n);
     let trimmed = s.trim_end_matches('0').trim_end_matches('.');
-    if trimmed.is_empty() || trimmed == "-" {
-        "0".to_string()
-    } else {
-        trimmed.to_string()
+    // A tiny negative rounds to `-0.0000` → `-0`: a sign on a zero is noise
+    // that churns snapshots, so anything rounding to zero prints `0`.
+    match trimmed {
+        "" | "-" | "-0" => "0".to_string(),
+        t => t.to_string(),
     }
 }
 

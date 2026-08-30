@@ -3,7 +3,7 @@
 // size. `|sign|` is a larger preset and an ordinary wireable node. Source for
 // assets/icons.png.
 {
-  gap: 16; padding: 8 28 24 28; align: center; clearance: 14;
+  direction: column; gap: 16; padding: 8 28 24 28; align: center; clearance: 14;
   |-| { stroke: --gray-ink; stroke-width: 2; }
 
   |row| { align: end; }
@@ -25,7 +25,7 @@
 }
 
 |lbl| "Icons"
-|group| { gap: 40; direction: row; fill: none; } [
+|group| { gap: 40; fill: none; } [
   |tile| [
     |icon| { symbol: house; }
     |cap| "default"

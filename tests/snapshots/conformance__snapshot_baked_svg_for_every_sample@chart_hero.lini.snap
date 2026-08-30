@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/chart_hero.lini
 ---
@@ -689,7 +688,7 @@ input_file: samples/chart_hero.lini
         </g>
         <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Direct: 15 (15%)</title>
-          <polygon points="-72.6093,-48.2037 -67.3225,-54.8027 -61.4381,-60.8749 -55.0084,-66.3664 -48.0905,-71.2284 -40.7456,-75.4178 -33.0392,-78.8974 -25.0395,-81.6364 -16.8175,-83.6103 -8.4462,-84.8017 -0,-85.2 0,4.55"/>
+          <polygon points="-72.6093,-48.2037 -67.3225,-54.8027 -61.4381,-60.8749 -55.0084,-66.3664 -48.0905,-71.2284 -40.7456,-75.4178 -33.0392,-78.8974 -25.0395,-81.6364 -16.8175,-83.6103 -8.4462,-84.8017 0,-85.2 0,4.55"/>
         </g>
         <g class="lini-text lini-chart-title">
           <use href="#lini-g1600-126" transform="translate(-58.261 -97.188) scale(0.014 -0.014)"/>

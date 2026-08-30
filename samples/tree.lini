@@ -1,5 +1,5 @@
 {
-  gap: 64;
+  direction: column; gap: 64;
 }
 
 |column| "Organisation" { layout: tree; } [

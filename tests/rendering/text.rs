@@ -316,19 +316,24 @@ fn a_wrapped_box_is_a_routing_obstacle_at_its_wrapped_size() {
 
 #[test]
 fn line_alignment_rides_the_holding_boxes_knob() {
-    // `align: start` on the box holding the text left-flushes its lines
-    // [SPEC 6]: the first (wider) line's centre sits right of the second's.
-    let svg =
-        render_live("|block#t| { max-width: 120; align: start } [ \"wider line\\nshort\" ]\n");
-    let xs: Vec<f64> = scrape(&svg, "<tspan x=\"")
-        .iter()
-        .map(|x| x.parse().unwrap())
-        .collect();
-    assert_eq!(xs.len(), 2, "{svg}");
-    assert!(
-        xs[0] > xs[1],
-        "start-aligned: the wider line's centre sits right: {xs:?}"
-    );
+    // The *horizontal* packing knob of the box holding the text left-flushes its
+    // lines [SPEC 6] — `justify` in a row (the default direction), `align` in a
+    // column — so the first (wider) line's centre sits right of the second's.
+    for holder in [
+        "|block#t| { max-width: 120; justify: start }",
+        "|block#t| { max-width: 120; direction: column; align: start }",
+    ] {
+        let svg = render_live(&format!("{holder} [ \"wider line\\nshort\" ]\n"));
+        let xs: Vec<f64> = scrape(&svg, "<tspan x=\"")
+            .iter()
+            .map(|x| x.parse().unwrap())
+            .collect();
+        assert_eq!(xs.len(), 2, "{svg}");
+        assert!(
+            xs[0] > xs[1],
+            "{holder}: the wider line's centre sits right: {xs:?}"
+        );
+    }
     // Default stays centred — both lines share one x (today's output).
     let svg = render_live("|block#t| [ \"wider line\\nshort\" ]\n");
     let xs = scrape(&svg, "<tspan x=\"");

@@ -12,7 +12,8 @@
   density: 4; clearance: 16;
   |slab::rect| { fill: --bg; stroke: --stroke-dark; stroke-width: 1; }
   |room::block| {
-    layout: flow; align: center; gap: 2; font-size: 11; letter-spacing: 1;
+    // the name stacks over the area, both lines centred
+    layout: flow; direction: column; align: center; gap: 2; font-size: 11; letter-spacing: 1;
   }
 }
 

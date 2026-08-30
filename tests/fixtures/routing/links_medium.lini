@@ -2,7 +2,9 @@
 // common routing pattern at once.
 
 {
-  direction: row; gap: 40; clearance: 12;
+  gap: 40; clearance: 12;
+  |group| { direction: column; }
+  // the scene runs left to right; each room stacks its treats
   .loud { stroke: --red; }
   .quiet { stroke: --blue; }
   .happy { stroke: --green; }

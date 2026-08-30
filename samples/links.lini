@@ -3,7 +3,9 @@
 // either end) — plus template-internal links: a |define| whose body links its own
 // children, so every instance routes itself.
 {
-  gap: 36; padding: 24;
+  direction: column; gap: 36; padding: 24;
+  |group| { direction: column; }
+  // the boards stack; each holds one specimen per line
 
   |room::group| { gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink; } [
     |box#inlet| "in" {

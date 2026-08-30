@@ -1,10 +1,9 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/drawing_assembly.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-624.2763 -280.75 1248.5525 561.5" width="1248.5525" height="561.5" class="lini lini-scope-b496e48f">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-695.3682 -222.25 1390.7365 463.5" width="1390.7365" height="463.5" class="lini lini-scope-b496e48f">
   <style>
     .lini-scope-b496e48f { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini-scope-b496e48f .lini-canvas { fill: white; }
@@ -78,9 +77,9 @@ input_file: samples/drawing_assembly.lini
     <path id="lini-g1600-341" d="…"/>
     <path id="lini-g1600-1797" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-624.2763" y="-280.75" width="1248.5525" height="561.5"/>
+  <rect class="lini-canvas" x="-695.3682" y="-222.25" width="1390.7365" height="463.5"/>
   <g class="lini-scene">
-    <g class="lini-node lini-drawing lini-block" data-id="pump" transform="translate(0,-58.5)">
+    <g class="lini-node lini-drawing lini-block" data-id="pump" transform="translate(-71.092,0)">
       <rect x="-604.2763" y="-202.25" width="1208.5525" height="404.5" rx="0" ry="0"/>
       <g class="lini-node lini-steel lini-sketch" data-id="barrel" transform="translate(39.7763,64.25)">
         <path d="M -360 0 L -360 -92 L -120 -92 L -120 -116 L 120 -116 L 120 -92 L 360 -92 L 360 0 L 360 92 L 120 92 L 120 116 L -120 116 L -120 92 L -360 92 Z" fill-rule="evenodd"/>
@@ -186,7 +185,7 @@ input_file: samples/drawing_assembly.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-table lini-group lini-block" data-id="bom" transform="translate(0,214.25)">
+    <g class="lini-node lini-table lini-group lini-block" data-id="bom" transform="translate(616.2763,0)">
       <rect x="-58.092" y="-45.5" width="116.184" height="91" rx="8" ry="8"/>
       <rect class="lini-gutter" x="-34.092" y="-45.5" width="1" height="91" fill="#444"/>
       <rect class="lini-gutter" x="27.092" y="-45.5" width="1" height="91" fill="#444"/>

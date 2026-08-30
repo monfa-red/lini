@@ -6,7 +6,7 @@
 //   lini samples/paint.lini --theme dark --bake-vars -o dark.svg
 //   lini theme dark > my-theme.css      // a starting point for your own
 {
-  gap: 26; padding: 26; font-size: 13;
+  direction: column; gap: 26; padding: 26; font-size: 13;
 
   |card::box| { width: 240; height: 70; stroke: none; color: white; }
 }

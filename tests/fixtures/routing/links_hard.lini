@@ -3,6 +3,8 @@
 
 {
   layout: grid; columns: repeat(3); gap: 38; clearance: 12;
+  |group| { direction: column; }
+  // each compass cell stacks its pair, so the hub's fans contend
   .hot { stroke: --red; stroke-width: 3; }
   .cool { stroke: --blue; }
   .attention { stroke: --orange; }

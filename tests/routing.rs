@@ -694,7 +694,7 @@ fn uncontended_fan_ports_take_their_side_centres() {
 /// group, the **right** side wins and the fan draws the tidy T.
 #[test]
 fn a_fans_shared_side_is_priced_over_the_whole_fan() {
-    let src = "{ direction: row; gap: 40; clearance: 12; |group| { gap: 36 } }\n\
+    let src = "{ gap: 40; clearance: 12; |group| { direction: column; gap: 36 } }\n\
                |oval#cat| \"Cat\"\n\
                |group#k| [\n  |box#bowl| \"Bowl\"\n  |box#water| \"Water\"\n]\n\
                cat -> k.bowl & k.water\n";

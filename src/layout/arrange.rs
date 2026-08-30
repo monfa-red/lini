@@ -242,11 +242,11 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
     }
 }
 
-/// A flow's main axis from `direction` [SPEC 11], default `column`. `radial`
+/// A flow's main axis from `direction` [SPEC 11], default `row`. `radial`
 /// belongs to a chart, which owns its subtree and never reaches here.
 fn read_flow_direction(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Axis, Error> {
     match attrs.get("direction") {
-        None => Ok(Axis::Column),
+        None => Ok(Axis::Row),
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
             "column" => Ok(Axis::Column),
             "row" => Ok(Axis::Row),

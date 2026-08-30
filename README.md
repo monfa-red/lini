@@ -17,7 +17,7 @@
 cat -> dog -> bird
 ```
 
-One line is a complete figure: three boxes, two arrows, sensible spacing. You place the boxes; Lini routes the links.
+One line is a complete figure: three boxes reading left to right, two arrows, sensible spacing. You place the boxes; Lini routes the links.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.svg" alt="A colourful service map rendered by Lini" width="440">
@@ -82,13 +82,13 @@ store ---> api "ack"                 // dotted arrow
 **Containers lay their children out** — style in `{ }`, children in `[ ]`:
 
 ```
-|group#services| "Services" { direction: row; gap: 24 } [
+|group#services| "Services" { direction: column; gap: 24 } [
   |box#api|  "API"
   |box#auth| "Auth"
 ]
 ```
 
-A flow orients with `direction: row` / `column`; a `grid` is sized by `columns` / `rows` and placed with `cell:` / `span:`; `pin` and `translate` lift a child out of the flow.
+A flow runs its children along one axis — `direction: row` (the default: source order reads left to right) or `column`; a `grid` is sized by `columns` / `rows` and placed with `cell:` / `span:`; `pin` and `translate` lift a child out of the flow.
 
 ---
 

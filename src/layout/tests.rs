@@ -624,17 +624,18 @@ fn scale_inherits_nearest_ancestor_wins() {
 
 #[test]
 fn translate_scales_by_the_parent() {
-    // A column flow: the x offset between the boxes is the translate alone,
-    // in drawing units × the parent's scale [SPEC 15.1].
+    // A column flow (stated — the default is `row` [SPEC 11]) puts no advance on
+    // x, so the x offset between the boxes is the translate alone, in drawing
+    // units × the parent's scale [SPEC 15.1].
     let nudge = |src: &str| {
         let l = lay_out(src);
         l.nodes[1].cx - l.nodes[0].cx
     };
     let plain = nudge(
-        "|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
+        "{ direction: column }\n|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
     );
     let scaled = nudge(
-        "{ scale: 3 }\n|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
+        "{ direction: column; scale: 3 }\n|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
     );
     assert!((plain - 5.0).abs() < 0.01, "plain={plain}");
     assert!((scaled - 15.0).abs() < 0.01, "scaled={scaled}");
