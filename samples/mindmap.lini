@@ -4,6 +4,13 @@
 // `.lini-level-N` depth ramp, and `max-width: 160` topic wrap. Branch wires
 // are desugar-generated; the dotted cross-link is authored and stays neutral.
 
+{
+  // A topic stacks its card content by default [SPEC 11]; here the icon reads
+  // as part of the title, so each branch card stays one line tall and the tier
+  // sits level whether or not it carries a glyph.
+  |topic| { direction: row; }
+}
+
 |mindmap| "Product Vision" { padding: 16; } [
   |topic#ship| "Shipping cadence" [
     |icon| {

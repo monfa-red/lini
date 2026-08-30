@@ -6,8 +6,9 @@
 
 {
   font-family: "Google Sans"; direction: column; gap: 24; padding: 26;
-  |box| { direction: column; gap: 15; }
-  // a card stacks its title, price and body copy
+  |box| { gap: 15; }
+  // a card stacks by default [SPEC 11]; this only opens the gutter, for
+  // three lines of copy rather than an icon over a word
   .card-title { font-size: 17; font-weight: bold; }
   .card-brief { font-size: 15; font-weight: medium; color: --teal-deep; }
 

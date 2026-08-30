@@ -1,8 +1,9 @@
 // Text & tables [SPEC 3, 5, 6, 8, 9, 12]: a bare "…" is a <text> leaf that
 // carries its own text style in place; `max-width:` wraps a card's long label
 // to fit — the wrapped size is the measured size, so the grid tracks read it —
-// and the holding box's horizontal packing knob flushes the lines (`justify` in
-// a row box, the default; `align` in a column or a grid); a table's `align` reads one
+// and the holding box's horizontal packing knob flushes the lines (`align` in a
+// column box — a card stacks its content [SPEC 11] — or a grid; `justify` in a
+// row box); a table's `align` reads one
 // value per column, reaching the header band and every body cell; a cell may
 // carry its own `{ }` block ("Lime" below — fmt keeps the block and lifts that
 // row out of the aligned grid); and a link's [ ] labels are the same styleable
@@ -43,11 +44,11 @@
 
 |grid#cards| { columns: repeat(3); gap: 14; } [
   |box#c1| "Ship the release notes to every customer" {
-    max-width: 150; justify: start;
+    max-width: 150; align: start;
   }
   |box#c2| "Rotate the signing keys before the audit window" { max-width: 150; }
   |box#c3| "Archive dashboards nobody has opened this quarter" {
-    max-width: 150; justify: end;
+    max-width: 150; align: end;
   }
 ]
 

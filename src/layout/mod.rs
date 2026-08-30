@@ -505,8 +505,9 @@ fn layout_inst(
     // datum-place at the part's origin, rigid with it [SPEC 15.4]; a child that
     // owns a layout — or is sheet content (a note, the title) — arranges its
     // interior as usual and places as one box.
-    let part =
-        ctx.drawing && !owns_layout(&inst.attrs) && !drawing::is_sheet(inst.kind, &inst.type_chain);
+    let part = ctx.drawing
+        && !owns_layout(inst.kind, &inst.type_chain, &inst.attrs)
+        && !drawing::is_sheet(inst.kind, &inst.type_chain);
     let child_ctx = Ctx {
         scale: own,
         // A **bundle** — a layout-owning wrapper of sheet content — stays in
@@ -705,8 +706,20 @@ fn layout_inst(
 /// chart / sequence / drawing) or a flow `direction:` (`|row|` / `|column|`).
 /// In a drawing scope such a child seals: it lays out as usual and places as
 /// one box [SPEC 15.1]; everything else datum-places its children as features.
-fn owns_layout(attrs: &crate::resolve::AttrMap) -> bool {
-    attrs.get("layout").is_some() || attrs.get("direction").is_some()
+///
+/// A **card**'s `direction` is not such a request: a closed shape and a
+/// `|topic|` stack their content by type ([SPEC 11], [`ledger::defaults::is_card`]),
+/// so a `|hole|`, a `|rect|`, a `|balloon|` stays geometry — its `[ ]` are the
+/// part's features, as they were before the class had a `direction` at all.
+/// This is the post-cascade twin of `desugar::nest::seals_drawing_scope`, which
+/// reads the *authored* style and so never saw a bundled default.
+fn owns_layout(
+    kind: crate::resolve::NodeKind,
+    type_chain: &[String],
+    attrs: &crate::resolve::AttrMap,
+) -> bool {
+    attrs.get("layout").is_some()
+        || (attrs.get("direction").is_some() && !crate::ledger::defaults::is_card(kind, type_chain))
 }
 
 // ───────────────────────────── Tests ─────────────────────────────

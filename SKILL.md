@@ -80,8 +80,9 @@ a link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
 - **No coordinate property.** Layout places nodes; to place absolutely use
   `pin: center; translate: x y` (parent-local coordinates, y grows down).
 - **No `text-align`** — a text's lines align by its container's *horizontal*
-  packing knob: `justify` in a row (the default), `align` in a column or grid.
-  Split intents: wrap text in its own `|block| { justify: start; }`.
+  packing knob: `justify` in a row, `align` in a column or grid — so `align` in
+  a card, which stacks. Split intents: wrap text in its own
+  `|block| { justify: start; }`.
 - **`id.child` paths glue** (no spaces): `kitchen.bowl`. `a:left` forces a link
   side. Paths resolve exactly in scope — never searched, never auto-created.
 - Comments are `// …` only. Identifiers are `[a-zA-Z_][a-zA-Z0-9_-]*`,
@@ -112,8 +113,9 @@ scales, captions and link labels included.
 - **`translate: x y`** nudges any node after placement (layout-neutral);
   **`rotate: N`** turns about the bbox centre. Both work on text too.
 - Flow containers: `direction: row | column` (default row — source order flows
-  the way it reads), `gap` (default
-  36; 12 inside shapes/topics), `align` (cross axis) / `justify` (main axis):
+  the way it reads; a closed shape's and a `|topic|`'s children are **card
+  content** and stack instead, so an icon sits over its label), `gap` (default
+  36; 8 in card content), `align` (cross axis) / `justify` (main axis):
   `start | center | end | stretch | evenly | origin` — no-ops without slack
   (explicit size or fixed tracks).
 - Grid: `columns` **required** — `columns: 80, auto, repeat(3)`; `rows`

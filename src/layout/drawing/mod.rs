@@ -172,7 +172,9 @@ impl SheetView for super::PlacedNode {
 /// children, so it seats whole, never grounds a mate, and reports one union
 /// extent to the packer.
 pub(in crate::layout) fn is_bundle<T: SheetView>(n: &T) -> bool {
-    super::owns_layout(n.attrs()) && !n.kids().is_empty() && n.kids().iter().all(sheet_node)
+    super::owns_layout(n.kind(), n.types(), n.attrs())
+        && !n.kids().is_empty()
+        && n.kids().iter().all(sheet_node)
 }
 
 /// Sheet content, tree-aware: a sheet leaf or a bundle of them [SPEC 15/15.5].
@@ -287,7 +289,7 @@ pub(super) fn place_features(
 /// as one box. Chrome stays with whatever generated it.
 fn ride_view(node: &mut super::PlacedNode, v: &breaks::ViewMap, base_model: P, base_disp: P) {
     if node.rotation != 0.0
-        || super::owns_layout(&node.attrs)
+        || super::owns_layout(node.kind, &node.type_chain, &node.attrs)
         || node.sketch.as_ref().is_some_and(|g| !g.view.is_identity())
     {
         return;

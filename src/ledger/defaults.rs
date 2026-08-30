@@ -96,20 +96,54 @@ pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     }
 }
 
+/// The card-content gutter [SPEC 11] — the space between an icon and its label
+/// inside a closed shape. Tighter than the container default `36`: these are one
+/// node's parts, not arranged siblings, and a Phosphor glyph carries margin of its
+/// own, so the perceived gap runs wider than the number.
+pub(crate) const CARD_GAP: f64 = 8.0;
+
+/// The card-content carve [SPEC 11]: a closed shape's — and a `|topic|`'s —
+/// children are card content (an icon over its label), not arranged nodes. They
+/// **stack**, at the tighter [`CARD_GAP`]. Every member of the class takes this
+/// one bundle; the root, `|block|`, `|group|`, and the frameless wrappers are
+/// containers, and keep the flow defaults (`row`, `36`).
+fn card_content() -> Vec<Decl> {
+    vec![id("direction", "column"), n("gap", CARD_GAP)]
+}
+
+/// The card-content class itself — who wears [`card_content`]. Stated **once**,
+/// here, because two readers need the same answer: the bundles below, and the
+/// drawing scope's "did this node ask for a layout of its own?" test
+/// ([`crate::layout::owns_layout`]) — a card's stacking default is the type's,
+/// not a request to arrange, so it must never seal a drawing scope
+/// ([SPEC 15.1]). `|row|` / `|column|` state `direction` too and are *not*
+/// cards: they are the frameless wrappers, and they do seal.
+///
+/// Only the types that **declare** the bundle are named — a derived one carries
+/// its base in the chain (`|rect|` → `box`, `|balloon|` / `|hole|` → the `Oval`
+/// kind, `|mindmap|` → `topic`, a user's `|card::box|` → `box`).
+pub(crate) fn is_card(kind: NodeKind, type_chain: &[String]) -> bool {
+    matches!(
+        kind,
+        NodeKind::Oval | NodeKind::Hex | NodeKind::Cyl | NodeKind::Diamond | NodeKind::Slant
+    ) || type_chain
+        .iter()
+        .any(|t| matches!(t.as_str(), "box" | "topic"))
+}
+
 /// A primitive's complete default set (paint + geometry).
 pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
     use NodeKind::*;
     // Closed, content-sized primitives share paint + box-model defaults.
     let sized = || {
-        vec![
+        let mut b = vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
             n("stroke-width", 2.0),
             n("padding", 20.0),
-            // A shape's children are card content (an icon beside a label),
-            // not arranged nodes — tighter than the container default 36.
-            n("gap", 12.0),
-        ]
+        ];
+        b.extend(card_content());
+        b
     };
     match kind {
         // The bare rectangle [SPEC 7]: frameless, no padding — like a `div`.
@@ -166,13 +200,19 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
 pub fn template_bundle(name: &str) -> Vec<Decl> {
     match name {
         // The default node: a rounded, framed card over the bare `|block|` base.
-        "box" => vec![
-            var("fill", "fill"),
-            var("stroke", "stroke"),
-            n("stroke-width", 2.0),
-            n("padding", 20.0),
-            n("radius", 8.0),
-        ],
+        // A card, so its interior is card content ([`card_content`]) — the base's
+        // container `direction` / `gap` do not reach a `|box|` (nor a `|rect|`).
+        "box" => {
+            let mut b = vec![
+                var("fill", "fill"),
+                var("stroke", "stroke"),
+                n("stroke-width", 2.0),
+                n("padding", 20.0),
+                n("radius", 8.0),
+            ];
+            b.extend(card_content());
+            b
+        }
         "rect" => vec![n("radius", 0.0)],
         "group" => vec![
             var("stroke", "group-stroke"),
@@ -257,16 +297,18 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // The tree's structural node [SPEC 12/8]: a compact framed card over the
         // bare |block| base — like |box|'s paint tier so a bare topic reads, at a
         // tighter card padding. The tree engine reads topic nesting for structure.
-        "topic" => vec![
-            var("fill", "fill"),
-            var("stroke", "stroke"),
-            n("stroke-width", 2.0),
-            n("radius", 8.0),
-            pair("padding", 8.0, 14.0),
-            // A topic's children are card content (a title's icon/badge), not
-            // arranged nodes — tighter than the block default 36.
-            n("gap", 12.0),
-        ],
+        "topic" => {
+            let mut b = vec![
+                var("fill", "fill"),
+                var("stroke", "stroke"),
+                n("stroke-width", 2.0),
+                n("radius", 8.0),
+                pair("padding", 8.0, 14.0),
+            ];
+            // A topic is a card too — its `[ ]` content stacks ([`card_content`]).
+            b.extend(card_content());
+            b
+        }
         // The mindmap root card [SPEC 8]: the node **is** the visible root
         // topic, so its bundle carries the ramp's root tier and the wrap cap.
         // The scope trio (`layout: tree; direction: bilateral; routing:
@@ -889,6 +931,40 @@ mod tests {
         assert_eq!(num(&boxt, "padding"), Some(20.0));
         assert_eq!(num(&boxt, "stroke-width"), Some(2.0));
         assert!(has(&boxt, "fill") && has(&boxt, "stroke"));
+    }
+
+    /// [SPEC 11]: exactly the types [`is_card`] names wear [`card_content`] —
+    /// the class the bundles build and the class `layout::owns_layout` reads
+    /// are the same class, so a card can never both stack and seal a drawing
+    /// scope. `|column|` states the same `direction` and is *not* a card; the
+    /// `gap` is what tells them apart, so the pair is asserted together.
+    #[test]
+    fn the_card_content_class_is_one_class() {
+        let stacks = |b: &[Decl]| {
+            ident(b, "direction").as_deref() == Some("column") && num(b, "gap") == Some(CARD_GAP)
+        };
+        for kind in NodeKind::ALL {
+            assert_eq!(
+                stacks(&primitive_bundle(kind)),
+                is_card(kind, &[]),
+                "primitive |{}|",
+                kind.as_str()
+            );
+        }
+        for (name, _) in crate::desugar::types::TEMPLATES {
+            let chain = [(*name).to_string()];
+            assert_eq!(
+                stacks(&template_bundle(name)),
+                is_card(NodeKind::Block, &chain),
+                "template |{name}|"
+            );
+        }
+        // The wrapper that states `direction: column` and is not card content.
+        assert!(!is_card(NodeKind::Block, &["column".to_string()]));
+        assert_eq!(
+            ident(&template_bundle("column"), "direction").as_deref(),
+            Some("column")
+        );
     }
 
     #[test]

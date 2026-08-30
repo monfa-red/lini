@@ -1523,8 +1523,10 @@ properties. This part is the family; each section states just its delta.
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
 `direction: row` and `gap: 36` — source order flows the way it reads, so
-`cat -> dog -> bird` runs left to right (a shape's or a `|topic|`'s children are card
-content, so those default to `12`); padding defaults per [SPEC 10.5](#105-layout-constants-baked),
+`cat -> dog -> bird` runs left to right (a **closed shape**'s or a `|topic|`'s children
+are card content, not arranged nodes, so those stack instead — `direction: column`,
+`gap: 8` — and an icon sits over its label; `|block|`, `|group|`, and the frameless
+wrappers are containers and keep the flow pair); padding defaults per [SPEC 10.5](#105-layout-constants-baked),
 the root's framing the whole rendered scene — links and labels included — out to the
 SVG edge.
 
@@ -1605,8 +1607,10 @@ their links to the router ([SPEC 9](#9-links)). `flow` is 1D flex, `grid` is 2D,
 ### Flex — `align` / `justify`
 
 `layout: flow` runs its children along one axis, set by `direction` (`row`
-horizontal — the default — `column` vertical). `justify` runs *along* the flow
-(main axis), `align` runs *across* it (cross axis). Both default `center`.
+horizontal — the default, and `column` in card content — [SPEC 11](#11-the-layout-model)).
+`justify` runs *along* the flow (main axis), `align` runs *across* it (cross axis).
+Both default `center` — so the knob that flushes a box's text horizontally is
+`justify` in a row box and `align` in a column one, a card included.
 
 | Value | `justify` (main axis) | `align` (cross axis) |
 |---|---|---|
@@ -3757,8 +3761,8 @@ out of scope.
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
 | `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
-| `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (chart, tree) | [SPEC 11](#11-the-layout-model) |
-| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
+| `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
+| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 8 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid--tree) |
 | `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--anchors--satellites)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
