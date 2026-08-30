@@ -1000,8 +1000,7 @@ both ways. The six relations, shown end-side:
 | `-++` | exactly one |
 
 A lone `-o` (no max) errors; the hollow ring exists only inside the ER
-cardinality glyphs — a standalone hollow endpoint is deferred
-([SPEC 24](#24-deferred)). The ops are sugar over the `marker:` set (`one`,
+cardinality glyphs and has no standalone endpoint form. The ops are sugar over the `marker:` set (`one`,
 `exactly-one`, `zero-or-one`, `one-or-many`, `zero-or-many`, `crow` —
 [SPEC 7](#7-nodes)); `marker*:` overrides.
 
@@ -4060,7 +4059,7 @@ lini theme [NAME]
 |---|---|
 | `-o FILE` | Output path (default stdout). |
 | `--format svg\|html` | `svg` (default) or HTML wrapper. |
-| `--check` | Parse + resolve only — layout/render errors still surface on a full compile. (`fmt --check` is that subcommand's own flag — below.) |
+| `--check` | Parse + validate + resolve only — layout/render errors still surface on a full compile. (`fmt --check` is that subcommand's own flag — below.) |
 | `--port N` | `lini serve` only — the preview port (default 7700). |
 | `--json` | Emit diagnostics as a JSON document (stable codes, severity, spans, related spans, machine-applicable fixes — [SPEC 21](#21-errors)) instead of SVG; the tooling/LSP form. Exit 1 if any error-level diagnostic fired. |
 | `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `high-contrast`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
@@ -4152,7 +4151,7 @@ error.
 | Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` · `'padding' takes one value, not a comma list` · `'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom` |
 | Legacy space-separated list | `'data' takes comma-separated values — 'data: 9, 15, 24'` ([SPEC 2](#2-lexical-syntax)) |
 | Deferred property | `'legend' is named but not built yet — see SPEC 24` — a named-but-unbuilt row ([SPEC 24](#24-deferred)) errors, so accepting it can never freeze the non-behaviour |
-| Property on a link that has no link meaning | `'routing' is a scope's strategy — one scope, one strategy; set it on the container` (per-link routing is deferred; `clearance:` **is** a link's, [ROUTING.md](ROUTING.md)) |
+| Property on a link that has no link meaning | `'routing' is a scope's strategy — one scope, one strategy; set it on the container` (`clearance:` **is** a link's, [ROUTING.md](ROUTING.md)) |
 | `radius` on a non-rect primitive | `'radius' rounds a rect or a polyline join — rounding a '\|hex\|' is deferred` ([SPEC 24](#24-deferred)) |
 | Arbitrary numeric `font-weight` | `'font-weight' takes normal, medium, semibold, bold, or 400, 500, 600, 700` (100–900 is deferred) |
 | Gradient in a text-colour slot | `'color' takes a flat colour — a gradient fills a shape, and gradient-on-text is deferred` |
@@ -4601,7 +4600,9 @@ they compose the ER cardinality marker ([SPEC 9](#9-links)) and mean nothing els
 `o` is valid only next to a max glyph (`-o<`, `+o-`, …), so it never collides with an id or
 the round measuring op `(o)` (delimited by parens). A leading `+` not followed by a digit
 starts a cardinality op, mirroring `-`. The digit `0` is **not** part of any operator — a
-hollow endpoint is `marker-end: circle`, never `-o`.
+round endpoint is `marker-end: circle` (a larger *filled* dot,
+[SPEC 7](#7-nodes); the standalone hollow ring is deferred,
+[SPEC 24](#24-deferred)), never `-o`.
 
 Inside a `(…)` expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the
 sample parameters `u` / `x` are keywords, and the math-function names (`sin`, `exp`,
@@ -4622,9 +4623,6 @@ slot, in this section's order, so the two can be diffed item by item.
 
 **Core**
 
-- **per-link routing** — `routing:` selects a **scope's** strategy (one scope,
-  one strategy — [SPEC 11](#11-the-layout-model), [ROUTING.md](ROUTING.md)); on a
-  link's own block or a `\|-\|` rule it is an error. (`clearance:` *is* a link's.)
 - **flow / grid callouts** — the one-ended leader (`a <- "THRU"`) is a drawing's
   ([SPEC 15.7](#157-leaders-notes--line-conventions)); the same shape in a flow or
   a schematic is an error.
@@ -4633,9 +4631,6 @@ slot, in this section's order, so the two can be diffed item by item.
   ([SPEC 15](#15-drawing)).
 - **fractional / `fr` grid tracks** — a track is a size, `auto`, or
   `repeat(N[, size])`; equal tracks are `repeat(N)` ([SPEC 12](#12-flow-grid--tree)).
-- **a standalone hollow-circle endpoint** (marker and operator) — today `circle`
-  is a larger *filled* `dot`, and the hollow ring appears only inside the ER
-  cardinality glyphs ([SPEC 7](#7-nodes), [SPEC 9](#9-links)).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
 - arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
