@@ -310,10 +310,11 @@ Text is **Google Sans** (SIL OFL), the bundled proportional family Lini also mea
 
 ```
 lini [options] <input.lini>
-lini fmt     [--check] [--stdout] <input.lini>
-lini serve   [--port N] [--static] [PATH]
-lini desugar <input.lini>
-lini theme   [NAME]
+lini fmt       [--check] [--stdout] <input.lini>
+lini serve     [--port N] [--static] [PATH]
+lini desugar   <input.lini>
+lini highlight <input.lini>
+lini theme     [NAME]
 ```
 
 | Flag | Meaning |
@@ -328,7 +329,7 @@ lini theme   [NAME]
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence warnings, or promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`), carry a **stable code** (`V001` unknown-property, `R008` unknown-endpoint, …), and suggest fixes — an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*, and `--json` hands a tool the exact edit. `lini desugar` prints a file with its sugar expanded.
+Errors are LSP-formatted (`file:line:col: error: …`), carry a **stable code** (`V001` unknown-property, `R008` unknown-endpoint, …), and suggest fixes — an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*, and `--json` hands a tool the exact edit. `lini desugar` prints a file with its sugar expanded; **`lini highlight`** prints it as `<span class="tok-*">` HTML — the same scanner the playground, the VS Code and Zed grammars, `mdbook-lini` and the wasm build all wear, so a listing colours identically wherever it lands.
 
 **`lini serve`** is a live preview at `localhost:7700` — and a browser playground. Point it at a folder and it lists the `.lini` files inside; pick one to open it in a small editor, source left, diagram rendering live right. Syntax highlighting, a draggable split, light/dark following your system. `Ctrl`/`Cmd`-`S` renders; **Save** writes back.
 
@@ -373,8 +374,9 @@ The whole language is published as a **machine-readable contract, generated from
 - **[`schema/lini.schema.json`](https://github.com/monfa-red/lini/blob/main/schema/lini.schema.json)** — every primitive, template, role, and property, with owners, value shape, resolved default, inheritance channel, deferred flags, and a compiled example each. [`schema/reference.md`](https://github.com/monfa-red/lini/blob/main/schema/reference.md) is the compact human mirror.
 - **`lini … --json`** — diagnostics with stable codes, spans, and fixes an editor can apply verbatim.
 - **Editor grammars** — VS Code and Zed highlighting under [`editors/`](https://github.com/monfa-red/lini/tree/main/editors), keyword lists generated from the ledger so a new property highlights the moment it lands.
+- **One syntax highlighter** — `lini::highlight_html` for a crate, `lini highlight` for a build step, `highlight()` for the browser build. It reads the same word lists the editor grammars do and preserves every byte of the source, so a listing in a book, on a site, or in the playground wears one colouring.
 
-A CI drift test regenerates all three and asserts byte-equality, so a stale checkout fails rather than shipping.
+A CI drift test regenerates all three grammars and asserts byte-equality, and holds the highlighter to the same words, so a stale checkout fails rather than shipping.
 
 ---
 

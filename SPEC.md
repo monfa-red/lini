@@ -4057,6 +4057,7 @@ their `along:` fractions (auto-distributed when unset).
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
+lini highlight <input.lini>
 lini serve [--port N] [--static] [--theme NAME|FILE|A/B] [PATH]
 lini theme [NAME]
 ```
@@ -4108,6 +4109,20 @@ descendant or id rule, or a user template can set ([SPEC 8](#8-templates)), so
 they are a cascade-phase artefact — the structure desugar does show (each cell
 in its `|cell|`, an entity's label as its title `|header|`) is the part that
 needs no column count.
+
+**`lini highlight`** prints the file as `<span class="tok-…">` HTML — the one
+syntax highlighter, at a shell. It is **lexical**: it never parses, so a file
+mid-edit still colours and the only failure left is I/O; and it is
+**byte-preserving** — strip the tags, undo the four entity escapes, and the
+source comes back exactly, which is what lets a host drop the output into a
+`<pre>` and trust the listing. Newlines pass through as newlines (a caller that
+cannot carry one rewrites them itself). The classes are the token kinds — `comment`
+`string` `number` `const` `keyword` `type` `type-user` `prop` `prop-user` `var`
+`op` `class` `punct` — and the words behind them come from the same source the
+editor grammars do ([SPEC 22](#22-grammar)), so a new type or property colours
+the moment it has a ledger row. The same scanner is `lini::highlight_html` to a
+crate and `highlight()` to the browser build; a host that can link Rust should,
+and this subcommand is for the one that cannot.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2 I/O ·
 3 invalid CLI.

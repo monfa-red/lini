@@ -311,3 +311,73 @@ fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+// ── `lini highlight`: the build-time door onto the one scanner ──
+
+/// The subcommand is a wrapper and must stay one: what it prints is what
+/// `lini::highlight_html` returns, byte for byte, from a file and from stdin
+/// alike — the same guarantee `tests/wasm.rs` gives the browser export
+/// [SPEC 20 / 22].
+#[test]
+fn highlight_prints_exactly_what_the_library_returns() {
+    let bin = env!("CARGO_BIN_EXE_lini");
+    let source = "{ layout: sequence; --brand: #ff6600; }\n\n\
+                  |box#a| \"A <&> B\" .hot { fill: --teal-wash; }\n\
+                  // a comment\n\
+                  a -> b \"then\"\n";
+    let want = lini::highlight_html(source);
+
+    let dir = std::env::temp_dir().join(format!("lini-highlight-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("temp dir");
+    let file = dir.join("h.lini");
+    std::fs::write(&file, source).unwrap();
+
+    let from_file = Command::new(bin)
+        .args(["highlight", file.to_str().unwrap()])
+        .output()
+        .expect("spawn lini");
+    assert_eq!(from_file.status.code(), Some(0));
+    assert_eq!(String::from_utf8_lossy(&from_file.stdout), want);
+
+    let mut child = Command::new(bin)
+        .args(["highlight", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("spawn lini");
+    std::io::Write::write_all(child.stdin.as_mut().unwrap(), source.as_bytes()).unwrap();
+    let from_stdin = child.wait_with_output().expect("wait for lini");
+    assert_eq!(from_stdin.status.code(), Some(0));
+    assert_eq!(String::from_utf8_lossy(&from_stdin.stdout), want);
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Highlighting is lexical, so a file the compiler rejects still lists — which
+/// is the whole point for an editor and for a docs page showing a mistake.
+/// Only I/O fails.
+#[test]
+fn highlight_colours_a_file_that_does_not_compile() {
+    let bin = env!("CARGO_BIN_EXE_lini");
+    let out = Command::new(bin)
+        .args(["highlight", "/nonexistent.lini"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .expect("spawn lini");
+    assert_eq!(out.status.code(), Some(2), "a missing file is an I/O error");
+
+    let mut child = Command::new(bin)
+        .args(["highlight", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("spawn lini");
+    std::io::Write::write_all(child.stdin.as_mut().unwrap(), b"|box#a| { colr: red; }\n").unwrap();
+    let out = child.wait_with_output().expect("wait for lini");
+    assert_eq!(out.status.code(), Some(0));
+    assert!(
+        String::from_utf8_lossy(&out.stdout).contains("<span class=\"tok-prop-user\">colr</span>"),
+        "an unknown property still colours, weakly"
+    );
+}

@@ -56,6 +56,11 @@ enum Command {
         /// Input .lini file (use '-' for stdin)
         input: String,
     },
+    /// Print a file as syntax-highlighted HTML — <span class="tok-*"> runs
+    Highlight {
+        /// Input .lini file (use '-' for stdin)
+        input: String,
+    },
     /// List the built-in themes, or print one as a --lini-* CSS file
     Theme {
         /// A theme name to print; omitted → list them all.
@@ -139,6 +144,7 @@ fn main() -> ExitCode {
             theme,
         }) => return run_serve(path, port, static_mode, theme.as_deref()),
         Some(Command::Desugar { input }) => return run_desugar(&input),
+        Some(Command::Highlight { input }) => return run_highlight(&input),
         Some(Command::Theme { name }) => return run_theme(name.as_deref()),
         None => match parsed.compile {
             Some(c) => c,
@@ -401,6 +407,22 @@ fn run_desugar(input_arg: &str) -> ExitCode {
         }
     }
 }
+
+/// `lini highlight` — the build-time door onto [`lini::highlight_html`], for a
+/// host that renders a listing without linking the crate (the website's
+/// no-dependency build; any static-site generator).
+///
+/// It never parses, so a file mid-edit still highlights and the only failure
+/// left is I/O — the same bargain an editor's tokenizer strikes [SPEC 20].
+fn run_highlight(input_arg: &str) -> ExitCode {
+    let (_, source) = match read_input(input_arg) {
+        Ok(fs) => fs,
+        Err(code) => return code,
+    };
+    print!("{}", lini::highlight_html(&source));
+    ExitCode::SUCCESS
+}
+
 fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool) {
     let start = Instant::now();
     let source = match std::fs::read_to_string(input) {
