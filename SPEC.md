@@ -4193,7 +4193,7 @@ error.
 | Auto-create near-miss | `'cta' auto-creates a new box; did you mean 'cat'?` (warning — edit distance ≤ 2 or case-fold vs names known in scope, [SPEC 3](#implicit-nodes)) |
 | Chain mixes operators | `link chain mixes operators 'X' and 'Y'` |
 | Chain < 2 nodes | `link requires at least two endpoints` |
-| Bare `o` marker | `'-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'` |
+| Bare `o` marker | `'-o' needs a max glyph — write '-o<' or '-o+'; the hollow ring is an ER component only` |
 | Missing required property | `'\|line\|' requires 'points'` |
 | `->` in the stylesheet | `'->' draws a link on the canvas — style every link with '\|-\| { stroke: … }' in a '{ }' block` |
 | `\|-\|` / `\|link\|` as an instance | `a link is drawn by an operator — '\|-\|' only styles links (write 'a -> b')` / `links are drawn by operators, not the '\|link\|' type` |
@@ -4601,8 +4601,8 @@ they compose the ER cardinality marker ([SPEC 9](#9-links)) and mean nothing els
 the round measuring op `(o)` (delimited by parens). A leading `+` not followed by a digit
 starts a cardinality op, mirroring `-`. The digit `0` is **not** part of any operator — a
 round endpoint is `marker-end: circle` (a larger *filled* dot,
-[SPEC 7](#7-nodes); the standalone hollow ring is deferred,
-[SPEC 24](#24-deferred)), never `-o`.
+[SPEC 7](#7-nodes); the hollow ring exists only inside the ER glyphs),
+never `-o`.
 
 Inside a `(…)` expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the
 sample parameters `u` / `x` are keywords, and the math-function names (`sin`, `exp`,

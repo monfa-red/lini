@@ -246,36 +246,15 @@ fn main() -> ExitCode {
         };
     }
 
-    // Lint + the property validation pass [SPEC 17/21]: error-level
-    // diagnostics always print and fail the compile; warnings print unless
-    // `--no-warn` and fail only under `--strict`.
     let mut warnings_were_emitted = false;
-    let mut validation_failed = false;
-    if let Ok(diags) = lini::lint_str(&source) {
-        for d in &diags {
-            let is_error = d.level == lini::Level::Error;
-            if is_error || !cli.no_warn {
-                eprintln!("{}", d.display_with_source(&source, &filename));
-            }
-            validation_failed |= is_error;
-            warnings_were_emitted |= !is_error && !cli.no_warn;
-        }
-    }
-    if validation_failed {
-        return ExitCode::from(1);
-    }
-
-    // Compile and collect the routing relaxations in one layout pass — the link
-    // router is expensive, so we don't route once for the SVG and again for warnings.
+    // Validate, compile, and collect warnings in one authoritative pipeline.
     match lini::compile_str_checked(&source, &opts) {
-        Ok((svg, route_diags)) => {
+        Ok((svg, diags)) => {
             if !cli.no_warn {
-                // Impossible links and law breaches — ROUTING requires these
-                // never be silent.
-                for d in &route_diags {
+                for d in &diags {
                     eprintln!("{}", d.display_with_source(&source, &filename));
                 }
-                warnings_were_emitted |= !route_diags.is_empty();
+                warnings_were_emitted |= !diags.is_empty();
             }
             if let Some(out_path) = cli.output {
                 if let Err(e) = std::fs::write(&out_path, svg.as_bytes()) {

@@ -66,23 +66,6 @@ fn compiles(src: &str) {
 // ───────────────────────────────── Core ─────────────────────────────────
 
 #[test]
-fn a_standalone_hollow_circle_endpoint() {
-    // The hollow ring lives only inside the ER cardinality glyphs: `o` is an
-    // operator glyph only next to a max glyph [SPEC 23]…
-    insta::assert_snapshot!(
-        refusal("|box#a|\n|box#b|\na -o b\n"),
-        @"test.lini:3:3: error: '-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'"
-    );
-    // …and there is no marker name for it either — `circle` is the larger
-    // *filled* dot [SPEC 7].
-    insta::assert_snapshot!(
-        refusal("|box#a|\n|box#b|\na -> b { marker-end: ring }\n"),
-        @"test.lini:3:1: error: invalid marker value 'ring'"
-    );
-    compiles("|box#a|\n|box#b|\na -> b { marker-end: circle }\n");
-}
-
-#[test]
 fn gradient_fills_on_text() {
     // `color:` is the text colour of a whole subtree, so it takes a flat one…
     insta::assert_snapshot!(
@@ -475,9 +458,24 @@ fn imports_modules_and_namespaces() {
 // whose leniency would freeze the same way.
 
 #[test]
+fn no_standalone_hollow_circle_endpoint() {
+    // The hollow ring is only an ER cardinality component; `circle` remains
+    // the larger filled-dot marker [SPEC 7/9/23].
+    insta::assert_snapshot!(
+        refusal("|box#a|\n|box#b|\na -o b\n"),
+        @"test.lini:3:3: error: '-o' needs a max glyph — write '-o<' or '-o+'; the hollow ring is an ER component only"
+    );
+    insta::assert_snapshot!(
+        refusal("|box#a|\n|box#b|\na -> b { marker-end: ring }\n"),
+        @"test.lini:3:1: error: invalid marker value 'ring'"
+    );
+    compiles("|box#a|\n|box#b|\na -> b { marker-end: circle }\n");
+}
+
+#[test]
 fn per_link_routing() {
     // `routing:` picks a **scope's** strategy — one scope, one strategy
-    // [SPEC 11, ROUTING]. Per-link routing used to work by accident.
+    // [SPEC 11, ROUTING]. A link cannot override its scope's engine.
     insta::assert_snapshot!(
         refusal("|box#a|\n|box#b|\na -> b { routing: natural }\n"),
         @"test.lini:3:10: error: 'routing' is a scope's strategy — one scope, one strategy; set it on the container"

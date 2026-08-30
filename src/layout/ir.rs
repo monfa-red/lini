@@ -13,7 +13,7 @@ pub struct LaidOut {
     /// them.
     pub strays: Vec<Stray>,
     /// The schematic's connection dots [SPEC 16.5], generated from the drawn
-    /// wires ([`crate::layout::schematic::junctions`]). They are **wire
+    /// wires (the schematic junction pass). They are **wire
     /// chrome**, so they ride here and not in `nodes`: a dot sits on a point
     /// the router already drew through, so it is no obstacle and no landing
     /// (the scene index must see the scene that was routed), and it draws
@@ -29,7 +29,7 @@ pub struct LaidOut {
     /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
     pub canvas_fill: Option<ResolvedValue>,
     /// Distinct gradients [SPEC 10.3], collected post-layout: paint use-sites are
-    /// rewritten to the def's content-addressed `url(#…)` [`crate::name`] and the
+    /// rewritten to the def's content-addressed `url(#…)` and the
     /// definitions emitted into `<defs>`. Empty unless the scene paints with one.
     pub gradients: Vec<GradientDef>,
     /// Distinct hatches [SPEC 10.3] — the drafting section-line texture —

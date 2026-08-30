@@ -1819,7 +1819,7 @@ fn auto_create_is_untouched_outside_a_schematic_scope() {
     // sequence, and a plain container beside a schematic.
     for src in [
         "a -> b\n",
-        "{ layout: grid; cols: 2 }\na -> b\n",
+        "{ layout: grid; columns: repeat(2) }\na -> b\n",
         "{ layout: tree }\n|topic#t| \"T\"\n",
         "{ layout: sequence }\na -> b \"hi\"\n",
         "|schematic#s| [\n  |component#u7| [ |pin#a| ]\n]\n|group#g| [\n  x -> y\n]\n",

@@ -605,7 +605,7 @@ impl<'a> Lexer<'a> {
             }
             None => Err(Error::at(
                 Span::new(p.saturating_sub(1), *p + 1),
-                "'-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'",
+                "'-o' needs a max glyph — write '-o<' or '-o+'; the hollow ring is an ER component only",
             )),
         }
     }

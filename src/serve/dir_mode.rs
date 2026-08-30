@@ -98,17 +98,15 @@ fn serve_compile(
     let opts = &opts;
     let src = String::from_utf8_lossy(&req.body);
     let name = "playground.lini";
-    let lints = crate::lint_str(&src).unwrap_or_default();
     // Best-effort extras, present whenever the source parses: render also
     // formats the buffer, and the desugar pane shows the expanded form.
     let formatted = opt_json(crate::format_source(&src).ok());
     let desugared = opt_json(crate::desugar_source(&src).ok());
 
     let json = match crate::compile_str_checked(&src, opts) {
-        Ok((svg, route_diags)) => {
-            let diags: Vec<String> = lints
+        Ok((svg, compile_diags)) => {
+            let diags: Vec<String> = compile_diags
                 .iter()
-                .chain(route_diags.iter())
                 .map(|d| d.display_with_source(&src, name).to_string())
                 .collect();
             format!(

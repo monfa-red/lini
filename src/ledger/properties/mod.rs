@@ -928,7 +928,7 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // `routing:` picks a **scope's** strategy — one scope, one strategy
     // [SPEC 11, ROUTING]. It reaches a link through the scope-link channel, so
-    // it is not a link's own property: per-link routing is deferred [SPEC 24].
+    // it is not a link's own property: one scope has one routing strategy.
     row("routing", &[Root], One(Kind::Ident), Engine, ScopeLink),
     row("along", &[Link], List(Kind::Number), Engine, No),
     // A wire's corner rounding radius [SPEC 16.5/17]: `auto` (the default) is

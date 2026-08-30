@@ -245,6 +245,18 @@ impl Diagnostic {
             source,
         )
     }
+
+    /// Turn an error-level diagnostic into the compiler's fatal error form.
+    pub(crate) fn into_error(self) -> Error {
+        debug_assert_eq!(self.level, Level::Error);
+        Error {
+            message: self.message,
+            span: self.span,
+            related: self.related,
+            code: self.code,
+            suggestion: self.suggestion.map(Box::new),
+        }
+    }
 }
 
 /// Stamp a phase onto every untriaged diagnostic in a pass's output.

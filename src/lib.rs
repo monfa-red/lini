@@ -116,20 +116,25 @@ pub fn compile_str(src: &str) -> Result<String, Error> {
 }
 
 pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
-    let program = resolve_pipeline(src, opts)?;
-    let mut laid_out = layout_stage(&program)?;
-    render::lower_paints(&mut laid_out);
-    Ok(finish_svg(&laid_out, opts))
+    compile_str_checked(src, opts).map(|(svg, _)| svg)
 }
 
-/// Compile to SVG **and** collect the routing diagnostics in a single layout
-/// pass. The CLI's default path needs both (the SVG to emit, the diagnostics
-/// to warn); routing through here runs the link router once instead of twice.
+/// Validate and compile to SVG, collecting validation and routing warnings in
+/// the same result. Any error-level validation diagnostic rejects the compile.
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
-    let program = resolve_pipeline(src, opts)?;
-    let mut laid_out = layout_stage(&program)?;
+    let (program, mut diags) = validated_resolve_pipeline(src, opts)?;
+    let (svg, later_diags) = compile_program_checked(&program, opts)?;
+    diags.extend(later_diags);
+    Ok((svg, diags))
+}
+
+fn compile_program_checked(
+    program: &resolve::Program,
+    opts: &Options,
+) -> Result<(String, Vec<Diagnostic>), Error> {
+    let mut laid_out = layout_stage(program)?;
     render::lower_paints(&mut laid_out);
-    let mut diags = error::stamp_phase(layout::layout_hints(&laid_out, &program), Phase::Layout);
+    let mut diags = error::stamp_phase(layout::layout_hints(&laid_out, program), Phase::Layout);
     diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
     Ok((finish_svg(&laid_out, opts), diags))
 }
@@ -164,7 +169,9 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, b
     // Validation errors stop the compile [SPEC 20] — mirror that: only route on
     // a clean validation, so layout never runs on a rejected file.
     if !had_error {
-        match compile_str_checked(src, opts) {
+        match resolve_pipeline(src, opts)
+            .and_then(|program| compile_program_checked(&program, opts))
+        {
             Ok((_, route_diags)) => {
                 for d in &route_diags {
                     had_error |= d.level == Level::Error;
@@ -205,14 +212,14 @@ pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
     Ok(error::stamp_phase(out, Phase::Validate))
 }
 
-/// Lex, parse, and resolve. Verifies semantic correctness without running
+/// Validate, resolve, and reject any error-level diagnostic without running
 /// layout or render. The CLI's `--check` flag goes through here.
 pub fn check(src: &str) -> Result<(), Error> {
     check_with(src, &Options::default())
 }
 
 pub fn check_with(src: &str, opts: &Options) -> Result<(), Error> {
-    let _ = resolve_pipeline(src, opts)?;
+    let _ = validated_resolve_pipeline(src, opts)?;
     Ok(())
 }
 
@@ -226,7 +233,7 @@ pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
 /// [`validate_str`] with options — a sample sweeping suite passes `base_dir`
 /// so file-relative image assets resolve [SPEC 7].
 pub fn validate_str_with(src: &str, opts: &Options) -> Result<Vec<Violation>, Error> {
-    let program = resolve_pipeline(src, opts)?;
+    let (program, _) = validated_resolve_pipeline(src, opts)?;
     let laid_out = layout_stage(&program)?;
     Ok(layout::validate_routing(&laid_out))
 }
@@ -270,6 +277,25 @@ fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error
     resolve::resolve_with_env(&lowered, &theme, env).map_err(|e| e.in_phase(Phase::Resolve))
 }
 
+/// The single acceptance gate shared by every public compile/check surface.
+/// Warnings continue down the pipeline; the first error-level diagnostic
+/// becomes the fatal error carried by the public `Result` API.
+fn validated_resolve_pipeline(
+    src: &str,
+    opts: &Options,
+) -> Result<(resolve::Program, Vec<Diagnostic>), Error> {
+    let diags = lint_str(src)?;
+    if let Some(diag) = diags
+        .iter()
+        .find(|diag| diag.level == Level::Error)
+        .cloned()
+    {
+        return Err(diag.into_error());
+    }
+    let program = resolve_pipeline(src, opts)?;
+    Ok((program, diags))
+}
+
 /// Lex + parse, each stamped with its phase code at the boundary — the single
 /// funnel every pipeline shares [decision 7].
 fn parse_stage(src: &str) -> Result<syntax::ast::File, Error> {
@@ -301,10 +327,8 @@ pub mod testing {
     pub use crate::layout::LaidOut;
     pub use crate::layout::ir::PlacedNode;
 
-    /// **Does this source compile clean?** — one verdict over the whole front
-    /// end: `Ok(())` when the property/lint pass [SPEC 17/21] raises no
-    /// error-level diagnostic *and* the full compile succeeds, else the first
-    /// refusal rendered the way the CLI prints it.
+    /// **Does this source compile clean?** — the public compiler's verdict,
+    /// rendered the way the CLI prints it.
     ///
     /// The two suites that judge a whole source by whether it compiles — the
     /// deferred-surface ledger (`tests/deferred.rs`) and the SPEC fenced-block
@@ -312,14 +336,6 @@ pub mod testing {
     /// "compiles clean" means one thing and a lint-phase gate can never hide
     /// behind a clean render.
     pub fn compile_verdict(src: &str, filename: &str) -> Result<(), String> {
-        match crate::lint_str(src) {
-            Err(e) => return Err(e.display_with_source(src, filename).to_string()),
-            Ok(diags) => {
-                if let Some(d) = diags.iter().find(|d| d.level == crate::Level::Error) {
-                    return Err(d.display_with_source(src, filename).to_string());
-                }
-            }
-        }
         crate::compile_str(src)
             .map(|_| ())
             .map_err(|e| e.display_with_source(src, filename).to_string())

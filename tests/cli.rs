@@ -162,6 +162,23 @@ fn check_with_propagates_resolve_errors() {
     );
 }
 
+#[test]
+fn every_compile_surface_rejects_validation_errors() {
+    let src = "|box#a| { colr: red; }\n";
+    assert!(
+        lini::lint_str(src)
+            .expect("lint")
+            .iter()
+            .any(|diag| diag.level == lini::Level::Error)
+    );
+    for err in [
+        lini::compile_str(src).expect_err("compile must validate"),
+        lini::check(src).expect_err("check must validate"),
+    ] {
+        assert!(err.message.contains("unknown property 'colr'"), "{err}");
+    }
+}
+
 fn extract_viewbox_w(svg: &str) -> f64 {
     let vb = svg
         .lines()
@@ -281,6 +298,15 @@ fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
     std::fs::write(&bad, "|box#a| { colr: red; }\n").unwrap();
     let (code, err) = run(&["--no-warn", bad.to_str().unwrap(), "-o", "/dev/null"]);
     assert_eq!(code, Some(1), "validation errors always fail: {err}");
+    assert!(err.contains("unknown property 'colr'"), "{err}");
+
+    // The cheap check path applies the same acceptance gate.
+    let (code, err) = run(&["--check", bad.to_str().unwrap()]);
+    assert_eq!(
+        code,
+        Some(1),
+        "--check must reject validation errors: {err}"
+    );
     assert!(err.contains("unknown property 'colr'"), "{err}");
 
     std::fs::remove_dir_all(&dir).ok();

@@ -380,9 +380,9 @@ A CI drift test regenerates all three and asserts byte-equality, so a stale chec
 
 ## Status
 
-**1.0.0-beta — feature-complete for 1.0.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen and the [stability contract](https://github.com/monfa-red/lini/blob/main/ROADMAP.md) holds: syntax, property names, value shapes, defaults, diagnostic codes, and the theming surface (`--lini-*` vars, `.lini-*` classes, SVG structure) don't break before a 2.0 — growth is additive.
+**1.0 release candidate.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen: syntax, property names, value shapes, defaults, diagnostic codes, and the theming surface (`--lini-*` vars, `.lini-*` classes, SVG structure) remain compatible throughout 1.x, with new capabilities added without breaking existing diagrams.
 
-Every layout lowers to the same primitives, so theming, baking, and diffing work everywhere. The formatter, dev server, schema, and structured diagnostics ship in the one binary. What remains before 1.0 is soak and polish — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
+Every layout lowers to the same primitives, so theming, baking, and diffing work everywhere. The formatter, dev server, schema, and structured diagnostics ship in the one binary.
 
 ---
 

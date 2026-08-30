@@ -860,7 +860,7 @@ fn role_accepts(role: &str, kind: &str, chain: &[String]) -> bool {
 fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
     // Scene config: the correction is where to *put* it, not a list of owners.
     // `routing:` is the scope's strategy — one scope, one strategy [SPEC 11,
-    // ROUTING]; per-link routing is deferred [SPEC 24].
+    // ROUTING]. A link cannot select a second strategy inside that scope.
     match name {
         "density" => return "'density' is scene config — set it in the root block".to_string(),
         "routing" => {
