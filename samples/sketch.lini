@@ -1,87 +1,113 @@
-// The sketch pen [SPEC 15.3] drawing Lini's own wordmark: three glyph outlines
-// in one `draw:`, an eyebrow, a dot — every edge an orthogonal run or a
-// circular arc. The tangent `arc(r, deg)` continues the heading and sweeps, so
-// a round cap is 180° at the stroke's half-width and a hook 90° at its radius;
-// the two-point `arc(dx, dy, r)` takes the minor arc between endpoints already
-// known. What repeats states once — `pattern: grid(2, 1, 122, 0)` sets the
-// second eyebrow 122 to the right, `grid(1, 3, 0, 44.333)` stacks the dots.
-// The strip below carries what the wordmark has no use for: corner modifiers,
-// an even-odd bore, both readings of `mirror:`, a cubic, a phantom position.
+// The sketch pen [SPEC 15.3] as a specimen board — nine captioned tiles, one
+// feature each. Corner modifiers (`chamfer` / `fillet`) and an even-odd
+// `circle()` bore; `angle(deg, n)`'s bearing — 0 up, clockwise — walked round a
+// hexagon in 60° steps, the sixth edge left to `close()`; the two-point
+// `arc(dx, dy, r)` at its tightest legal radius, `r` exactly half the chord.
+// Both readings of `mirror:`: an open subpath **fuses** end-to-end and generates
+// its axis `|centerline|`, a closed one is **duplicated**. `pattern:`
+// [SPEC 15.4] in both forms — `grid()` located by its first hole, `radial()` by
+// the ring centre, which generates its `|pitch-circle|`. The line conventions
+// [SPEC 15.7]: a dashed `|hidden|` cut, a manual `|centerline|` overhanging the
+// profile, `stroke-style: phantom` for an alternate position. What repeats
+// states once — `|view::drawing| { scale: 0.5 }` is the 1 : 2 ratio for all
+// nine, `|arm::sketch|` the curve both positions wear — and `justify: end`
+// bottoms every tile in its row, so the captions share a baseline. Lini's own
+// wordmark drew this pen's first showcase; it lives in `logo.lini` now.
 {
-  direction: column; gap: 34; align: center; padding: 26;
+  layout: grid; columns: repeat(3); gap: 30 34; justify: end; padding: 30;
 
   |tile::column| { gap: 10; align: center; }
   |cap::block| { font-size: 12; color: --muted; }
+  |view::drawing| { scale: 0.5; }
   |arm::sketch| {
     draw: move(-30, 8) right(16) curve(10, 0, 14, -14, 26, -16) right(18);
     fill: none;
   }
 }
 
-|drawing#wordmark| { scale: 0.5; } [
-  // `l`, `n`, `i` — three closed subpaths, one fill.
-  |sketch#glyphs| {
-    draw: move(0, 9) down(97) arc(34, -180) up(25) arc(9, -180) down(25)
-          arc(16, 180) up(97) arc(9, -180) close()
-          move(154, 131) up(25) arc(34, -180) down(25) arc(9, -180) up(25)
-          arc(16, 180) down(25) arc(9, -180) close()
-          move(172, 81) down(25) arc(34, -90) arc(9, -180) arc(16, 90) up(25)
-          arc(9, -180) close();
-    fill: #e9536c; stroke: none;
-  }
-
-  // The eyebrow: a notch, a cap, the 264° dome, a cap — four tangent arcs.
-  |sketch#brow| {
-    draw: move(52.292, 52.5) arc(13.416, 0, 9) arc(4.5, -96.379)
-          arc(18, -263.621) arc(4.5, -96.379) close();
-    pattern: grid(2, 1, 122, 0); fill: #9c8cee; stroke: none;
-  }
-
-  |sketch#dot| {
-    draw: move(222, 9) down(8.333) arc(9, -180) up(8.333) arc(9, -180) close();
-    pattern: grid(1, 3, 0, 44.333); fill: #e9536c; stroke: none; opacity: 0.75;
-  }
+|tile| [
+  |view| [
+    |sketch#plate| {
+      draw: move(0, 0) right(52) chamfer(9) down(30) left(52) fillet(9) close()
+            move(26, 15) circle(7);
+    }
+  ]
+  |cap| "chamfer · fillet · bore"
 ]
 
-|row#strip| { gap: 34; align: end; } [
-  |tile| [
-    |drawing| { scale: 0.5; } [
-      |sketch#plate| {
-        draw: move(0, 0) right(52) chamfer(9) down(30) left(52) fillet(9)
-              close()
-              move(26, 15) circle(7);
-      }
-    ]
-    |cap| "chamfer · fillet · bore"
+|tile| [
+  |view| [
+    |sketch#nut| {
+      draw: move(-12, -20.78) angle(90, 24) angle(150, 24) angle(210, 24)
+            angle(270, 24) angle(330, 24) close();
+    }
   ]
+  |cap| "angle — 0 up, clockwise"
+]
 
-  |tile| [
-    |drawing| { scale: 0.5; } [
-      // Draw the half, get the whole — and the axis centreline with it.
-      |sketch#pin| {
-        draw: move(-25, 0) up(9) right(20):collar down(4) right(30) down(5);
-        mirror: x-axis;
-      }
-    ]
-    |cap| "mirror — fused"
+|tile| [
+  |view| [
+    |sketch#slot| {
+      draw: move(-16, -11) right(32) arc(0, 22, 11) left(32) arc(0, -22, 11)
+            close();
+    }
   ]
+  |cap| "arc — the two-point form"
+]
 
-  |tile| [
-    |drawing| { scale: 0.5; } [
-      // A closed subpath reflects as a second copy.
-      |sketch#clip| {
-        draw: move(-24, -10) right(16) down(20) left(16) close();
-        mirror: y-axis;
-      }
-    ]
-    |cap| "mirror — twinned"
+|tile| [
+  |view| [
+    // Draw the half, get the whole — and the axis centreline with it.
+    |sketch#pin| {
+      draw: move(-25, 0) up(9) right(20):collar down(4) right(30) down(5);
+      mirror: x-axis;
+    }
   ]
+  |cap| "mirror — fused"
+]
 
-  |tile| [
-    |drawing| { scale: 0.5; } [
-      |arm|
-      |arm#raised| { translate: 0 -20; stroke-style: phantom; }
-    ]
-    |cap| "curve · alternate position"
+|tile| [
+  |view| [
+    // A closed subpath reflects as a second copy.
+    |sketch#clip| {
+      draw: move(-24, -10) right(16) down(20) left(16) close();
+      mirror: y-axis;
+    }
   ]
+  |cap| "mirror — twinned"
+]
+
+|tile| [
+  |view| [
+    |sketch#strap| { draw: move(-30, -12) right(60) down(24) left(60) close(); } [
+      |hole#bolt| { width: 8; translate: -21 0; pattern: grid(4, 1, 14, 0); }
+    ]
+  ]
+  |cap| "pattern — grid"
+]
+
+|tile| [
+  |view| [
+    |sketch#flange| { draw: move(0, 0) circle(22) circle(7); } [
+      |hole#bolt| { width: 6; pattern: radial(6, 14.5); }
+    ]
+  ]
+  |cap| "pattern — radial"
+]
+
+|tile| [
+  |view| [
+    |sketch#body| { draw: move(-26, -14) right(52) down(28) left(52) close(); }
+    |hidden#vee| { draw: move(-11, 14) line(11, -15) line(11, 15); }
+    |centerline| { points: 0 -20, 0 20; }
+  ]
+  |cap| "hidden · centre line"
+]
+
+|tile| [
+  |view| [
+    |arm|
+    |arm#raised| { translate: 0 -20; stroke-style: phantom; }
+  ]
+  |cap| "curve · alternate position"
 ]

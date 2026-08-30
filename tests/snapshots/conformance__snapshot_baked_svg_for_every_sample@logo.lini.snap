@@ -1,0 +1,39 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/logo.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-25 -25 290 190" width="290" height="190" class="lini lini-scope-4d765d80">
+  <style>
+    .lini-scope-4d765d80 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-4d765d80 .lini-canvas { fill: white; }
+    .lini-scope-4d765d80 .lini-sketch { fill: #e9536c; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-25" y="-25" width="290" height="190"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-sketch" data-id="glyphs" transform="translate(0,0)">
+      <path d="M 0 9 L 0 106 A 34 34 0 0 0 68 106 L 68 81 A 9 9 0 0 0 50 81 L 50 106 A 16 16 0 0 1 18 106 L 18 9 A 9 9 0 0 0 0 9 Z M 154 131 L 154 106 A 34 34 0 0 0 86 106 L 86 131 A 9 9 0 0 0 104 131 L 104 106 A 16 16 0 0 1 136 106 L 136 131 A 9 9 0 0 0 154 131 Z M 172 81 L 172 106 A 34 34 0 0 0 206 140 A 9 9 0 0 0 206 122 A 16 16 0 0 1 190 106 L 190 81 A 9 9 0 0 0 172 81 Z" fill-rule="evenodd"/>
+    </g>
+    <g class="lini-node lini-sketch" data-id="brow" style="fill: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-sketch" style="fill: #9c8cee" transform="translate(0,0)">
+        <path d="M 52.292 52.5 A 9 9 0 0 1 65.708 52.5 A 4.5 4.5 0 0 0 72.416 52.5 A 18 18 0 1 0 45.583 52.501 A 4.5 4.5 0 0 0 52.292 52.5 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-sketch" style="fill: #9c8cee" transform="translate(122,0)">
+        <path d="M 52.292 52.5 A 9 9 0 0 1 65.708 52.5 A 4.5 4.5 0 0 0 72.416 52.5 A 18 18 0 1 0 45.583 52.501 A 4.5 4.5 0 0 0 52.292 52.5 Z" fill-rule="evenodd"/>
+      </g>
+    </g>
+    <g class="lini-node lini-sketch" data-id="dot" style="fill: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-sketch" style="opacity: 0.75" transform="translate(0,0)">
+        <path d="M 222 9 L 222 17.333 A 9 9 0 0 0 240 17.333 L 240 9 A 9 9 0 0 0 222 9 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-sketch" style="opacity: 0.75" transform="translate(0,44.3333)">
+        <path d="M 222 9 L 222 17.333 A 9 9 0 0 0 240 17.333 L 240 9 A 9 9 0 0 0 222 9 Z" fill-rule="evenodd"/>
+      </g>
+      <g class="lini-node lini-sketch" style="opacity: 0.75" transform="translate(0,88.6667)">
+        <path d="M 222 9 L 222 17.333 A 9 9 0 0 0 240 17.333 L 240 9 A 9 9 0 0 0 222 9 Z" fill-rule="evenodd"/>
+      </g>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

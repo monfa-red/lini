@@ -1,26 +1,23 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/pcb.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-294 -244 588 488" width="588" height="488" class="lini lini-scope-1bcbbebf">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-274 -224 548 448" width="548" height="448" class="lini lini-scope-3d7c7088">
   <style>
-    .lini-scope-1bcbbebf { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 12px; font-weight: 500; color: black; }
-    .lini-scope-1bcbbebf .lini-canvas { fill: url(#lini-gradient-f006bf96); }
-    .lini-scope-1bcbbebf .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-1bcbbebf .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-1bcbbebf .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-1bcbbebf .lini-chip { stroke: none; color: white; }
-    .lini-scope-1bcbbebf .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
-    .lini-scope-1bcbbebf .lini-passive { fill: #484848; stroke: none; color: #eeeeee; }
-    .lini-scope-1bcbbebf .lini-link { fill: none; stroke: #cb8b00; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-1bcbbebf .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-1bcbbebf .lini-link .lini-marker { fill: #cb8b00; }
+    .lini-scope-3d7c7088 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 12px; font-weight: 500; color: black; }
+    .lini-scope-3d7c7088 .lini-canvas { fill: url(#lini-gradient-c569053c); }
+    .lini-scope-3d7c7088 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-3d7c7088 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-3d7c7088 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-3d7c7088 .lini-chip { stroke: none; color: white; }
+    .lini-scope-3d7c7088 .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
+    .lini-scope-3d7c7088 .lini-passive { fill: #303030; stroke: none; color: white; }
+    .lini-scope-3d7c7088 .lini-link { fill: none; stroke: #f4c450; stroke-width: 2; stroke-dasharray: none; }
   </style>
   <defs>
     <linearGradient id="lini-gradient-d8ec708d" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
-    <linearGradient id="lini-gradient-f006bf96" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#94e2b5"/><stop offset="100%" stop-color="#79e3da"/></linearGradient>
+    <linearGradient id="lini-gradient-c569053c" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#029045"/><stop offset="100%" stop-color="#008046"/></linearGradient>
     <path id="lini-g1500-0" d="…"/>
     <path id="lini-g1500-1" d="…"/>
     <path id="lini-g1500-27" d="…"/>
@@ -42,7 +39,7 @@ input_file: samples/pcb.lini
     <path id="lini-g1500-157" d="…"/>
     <path id="lini-g1500-1828" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-294" y="-244" width="588" height="488"/>
+  <rect class="lini-canvas" x="-274" y="-224" width="548" height="448"/>
   <g class="lini-scene">
     <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-d8ec708d); font-size: 24px" transform="translate(0,0)">
       <rect x="-90" y="-90" width="180" height="180" rx="5" ry="5"/>
@@ -52,13 +49,13 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-137" transform="translate(11.256 8.592) scale(0.024 -0.024)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="c1" transform="translate(-220,-180)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c1" transform="translate(-200,-160)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-28" transform="translate(-4.44 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-pad lini-box lini-block" data-id="usb" transform="translate(-55,-180)">
+    <g class="lini-node lini-pad lini-box lini-block" data-id="usb" transform="translate(-50,-160)">
       <rect x="-75" y="-28" width="150" height="56" rx="8" ry="8"/>
       <g class="lini-text">
         <use href="#lini-g1500-137" transform="translate(-18.372 4.296) scale(0.012 -0.012)"/>
@@ -68,20 +65,20 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-28" transform="translate(9.492 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="r1" transform="translate(110,-180)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r1" transform="translate(100,-160)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-122" transform="translate(-3.69 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="rf" style="fill: #9084ff" transform="translate(220,-180)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="rf" style="fill: #9084ff" transform="translate(200,-160)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-122" transform="translate(-6.99 4.296) scale(0.012 -0.012)"/>
         <use href="#lini-g1500-56" transform="translate(0.39 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="flash" style="fill: #9084ff" transform="translate(-220,-90)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="flash" style="fill: #9084ff" transform="translate(-200,-80)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-56" transform="translate(-18.324 4.296) scale(0.012 -0.012)"/>
@@ -91,7 +88,7 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-62" transform="translate(9.756 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="pwr" style="fill: #e96490" transform="translate(-220,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="pwr" style="fill: #e96490" transform="translate(-200,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-119" transform="translate(-13.008 4.296) scale(0.012 -0.012)"/>
@@ -99,21 +96,21 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-122" transform="translate(5.628 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="c2" transform="translate(-220,90)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c2" transform="translate(-200,80)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-28" transform="translate(-4.44 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="osc" transform="translate(220,-90)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="osc" transform="translate(200,-80)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-94" transform="translate(-12.828 4.296) scale(0.012 -0.012)"/>
         <use href="#lini-g1500-126" transform="translate(-2.868 4.296) scale(0.012 -0.012)"/>
         <use href="#lini-g1500-28" transform="translate(3.948 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="motor" style="fill: #00ace2" transform="translate(220,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="motor" style="fill: #00ace2" transform="translate(200,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-87" transform="translate(-22.26 4.296) scale(0.012 -0.012)"/>
@@ -123,19 +120,19 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-122" transform="translate(14.88 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="r2" transform="translate(220,90)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r2" transform="translate(200,80)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-122" transform="translate(-3.69 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="c3" transform="translate(-220,180)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c3" transform="translate(-200,160)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-28" transform="translate(-4.44 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="adc" style="fill: #00b66e" transform="translate(-110,180)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="adc" style="fill: #989898" transform="translate(-100,160)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-1" transform="translate(-12.924 4.296) scale(0.012 -0.012)"/>
@@ -143,7 +140,7 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-28" transform="translate(4.044 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="sens" style="fill: #00b8ac" transform="translate(0,180)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="sens" style="fill: #00b8ac" transform="translate(0,160)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-126" transform="translate(-14.544 4.296) scale(0.012 -0.012)"/>
@@ -152,13 +149,13 @@ input_file: samples/pcb.lini
         <use href="#lini-g1500-126" transform="translate(7.728 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-passive lini-box lini-block" data-id="r3" transform="translate(110,180)">
-      <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r3" transform="translate(100,160)">
+      <rect x="-27" y="-21" width="54" height="42" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-122" transform="translate(-3.69 4.296) scale(0.012 -0.012)"/>
       </g>
     </g>
-    <g class="lini-node lini-chip lini-box lini-block" data-id="imu" style="fill: #cb8b00; color: #6d3b00" transform="translate(220,180)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="imu" style="fill: #cb8b00; color: #6d3b00" transform="translate(200,160)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
         <use href="#lini-g1500-65" transform="translate(-11.004 4.296) scale(0.012 -0.012)"/>
@@ -169,124 +166,103 @@ input_file: samples/pcb.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="usb" data-to="mcu">
-      <path d="M -12.5 -152 L -12.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-12.5,-89.5 -17,-98.5 -8,-98.5"/>
+      <path d="M -10 -132 L -10 -90"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
-      <path d="M -22.5 -152 L -22.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-22.5,-89.5 -27,-98.5 -18,-98.5"/>
+      <path d="M -20 -132 L -20 -90"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
-      <path d="M -32.5 -152 L -32.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-32.5,-89.5 -37,-98.5 -28,-98.5"/>
+      <path d="M -30 -132 L -30 -90"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="mcu">
-      <path d="M -42.5 -152 L -42.5 -93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-42.5,-89.5 -47,-98.5 -38,-98.5"/>
+      <path d="M -40 -132 L -40 -90"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="rf">
-      <path d="M 0 -90 L 0 -115.5 A 10 10 0 0 1 10 -125.5 L 205 -125.5 A 20 20 0 0 0 225 -145.5 L 225 -146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="225,-150.5 229.5,-141.5 220.5,-141.5"/>
+      <path d="M 0 -90 L 0 -101 A 10 10 0 0 1 10 -111 L 186 -111 A 19 19 0 0 0 205 -130 L 205 -130"/>
     </g>
     <g class="lini-link" data-from="rf" data-to="r1">
-      <path d="M 215 -150 L 215 -145.5 A 10 10 0 0 1 205 -135.5 L 120 -135.5 A 10 10 0 0 1 110 -145.5 L 110 -155.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="110,-159.5 114.5,-150.5 105.5,-150.5"/>
+      <path d="M 195 -130 L 195 -130 A 10 10 0 0 1 185 -120 L 110 -120 A 10 10 0 0 1 100 -130 L 100 -139"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
-      <path d="M -190 -10 L -93.5 -10"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-10 -98.5,-5.5 -98.5,-14.5"/>
+      <path d="M -170 -15 L -90 -15"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
-      <path d="M -190 0 L -93.5 0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,0 -98.5,4.5 -98.5,-4.5"/>
+      <path d="M -170 -5 L -90 -5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
-      <path d="M -190 10 L -93.5 10"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,10 -98.5,14.5 -98.5,5.5"/>
+      <path d="M -170 5 L -90 5"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="mcu">
-      <path d="M -190 20 L -93.5 20"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,20 -98.5,24.5 -98.5,15.5"/>
+      <path d="M -170 15 L -90 15"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
-      <path d="M -190 -100 L -160 -100 A 30 30 0 0 1 -130 -70 L -130 -50 A 10 10 0 0 0 -120 -40 L -93.5 -40"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-40 -98.5,-35.5 -98.5,-44.5"/>
+      <path d="M -170 -80 L -90 -80"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
-      <path d="M -190 -90 L -160 -90 A 20 20 0 0 1 -140 -70 L -140 -50 A 20 20 0 0 0 -120 -30 L -93.5 -30"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-30 -98.5,-25.5 -98.5,-34.5"/>
+      <path d="M -170 -70 L -90 -70"/>
     </g>
     <g class="lini-link" data-from="flash" data-to="mcu">
-      <path d="M -190 -80 L -160 -80 A 10 10 0 0 1 -150 -70 L -150 -50 A 30 30 0 0 0 -120 -20 L -93.5 -20"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-20 -98.5,-15.5 -98.5,-24.5"/>
+      <path d="M -170 -60 L -90 -60"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
-      <path d="M 90 -15 L 186.5 -15"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,-15 181.5,-10.5 181.5,-19.5"/>
+      <path d="M 90 -20 L 170 -20"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
-      <path d="M 90 -5 L 186.5 -5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,-5 181.5,-0.5 181.5,-9.5"/>
+      <path d="M 90 -10 L 170 -10"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
-      <path d="M 90 5 L 186.5 5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,5 181.5,9.5 181.5,0.5"/>
+      <path d="M 90 0 L 170 0"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="motor">
-      <path d="M 90 15 L 186.5 15"/>
-      <polygon class="lini-marker lini-marker-arrow" points="190.5,15 181.5,19.5 181.5,10.5"/>
+      <path d="M 90 10 L 170 10"/>
     </g>
     <g class="lini-link" data-from="osc" data-to="motor">
-      <path d="M 220 -69 L 220 -33.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,-29.5 215.5,-38.5 224.5,-38.5"/>
+      <path d="M 200 -59 L 200 -30"/>
     </g>
     <g class="lini-link" data-from="osc" data-to="mcu">
-      <path d="M 193 -90 L 150 -90 A 10 10 0 0 0 140 -80 L 140 -35 A 10 10 0 0 1 130 -25 L 93.5 -25"/>
-      <polygon class="lini-marker lini-marker-arrow" points="89.5,-25 98.5,-29.5 98.5,-20.5"/>
+      <path d="M 173 -80 L 140 -80 A 10 10 0 0 0 130 -70 L 130 -40 A 10 10 0 0 1 120 -30 L 90 -30"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="sens">
-      <path d="M 15 90 L 15 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="15,150.5 10.5,141.5 19.5,141.5"/>
+      <path d="M 15 90 L 15 130"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="sens">
-      <path d="M 5 90 L 5 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="5,150.5 0.5,141.5 9.5,141.5"/>
+      <path d="M 5 90 L 5 130"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="adc">
-      <path d="M -5 90 L -5 105 A 20 20 0 0 1 -25 125 L -95 125 A 10 10 0 0 0 -105 135 L -105 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-105,150.5 -109.5,141.5 -100.5,141.5"/>
+      <path d="M -5 90 L -5 95 A 20 20 0 0 1 -25 115 L -85 115 A 10 10 0 0 0 -95 125 L -95 130"/>
     </g>
     <g class="lini-link" data-from="mcu" data-to="adc">
-      <path d="M -15 90 L -15 105 A 10 10 0 0 1 -25 115 L -95 115 A 20 20 0 0 0 -115 135 L -115 146.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-115,150.5 -119.5,141.5 -110.5,141.5"/>
+      <path d="M -15 90 L -15 95 A 10 10 0 0 1 -25 105 L -85 105 A 20 20 0 0 0 -105 125 L -105 130"/>
     </g>
     <g class="lini-link" data-from="usb" data-to="c1">
-      <path d="M -130 -180 L -189.5 -180"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-193.5,-180 -184.5,-184.5 -184.5,-175.5"/>
+      <path d="M -125 -160 L -173 -160"/>
     </g>
     <g class="lini-link" data-from="pwr" data-to="c2">
-      <path d="M -220 30 L -220 65.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-220,69.5 -224.5,60.5 -215.5,60.5"/>
+      <path d="M -195 30 L -195 59"/>
+    </g>
+    <g class="lini-link" data-from="pwr" data-to="c2">
+      <path d="M -205 30 L -205 59"/>
     </g>
     <g class="lini-link" data-from="motor" data-to="r2">
-      <path d="M 220 30 L 220 65.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,69.5 215.5,60.5 224.5,60.5"/>
+      <path d="M 200 30 L 200 59"/>
     </g>
     <g class="lini-link" data-from="imu" data-to="r2">
-      <path d="M 220 150 L 220 114.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="220,110.5 224.5,119.5 215.5,119.5"/>
+      <path d="M 200 130 L 200 101"/>
     </g>
     <g class="lini-link" data-from="imu" data-to="mcu">
-      <path d="M 190 180 L 173.5 180 A 10 10 0 0 1 163.5 170 L 163.5 35 A 10 10 0 0 0 153.5 25 L 93.5 25"/>
-      <polygon class="lini-marker lini-marker-arrow" points="89.5,25 98.5,20.5 98.5,29.5"/>
+      <path d="M 170 165 L 163.5 165 A 20 20 0 0 1 143.5 145 L 143.5 40 A 10 10 0 0 0 133.5 30 L 90 30"/>
+    </g>
+    <g class="lini-link" data-from="imu" data-to="mcu">
+      <path d="M 170 155 L 163.5 155 A 10 10 0 0 1 153.5 145 L 153.5 40 A 20 20 0 0 0 133.5 20 L 90 20"/>
     </g>
     <g class="lini-link" data-from="adc" data-to="c3">
-      <path d="M -140 180 L -189.5 180"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-193.5,180 -184.5,175.5 -184.5,184.5"/>
+      <path d="M -130 165 L -173 165"/>
+    </g>
+    <g class="lini-link" data-from="adc" data-to="c3">
+      <path d="M -130 155 L -173 155"/>
     </g>
     <g class="lini-link" data-from="sens" data-to="r3">
-      <path d="M 30 180 L 46.5 180 A 10 10 0 0 0 56.5 170 L 56.5 134.5 A 10 10 0 0 1 66.5 124.5 L 100 124.5 A 10 10 0 0 1 110 134.5 L 110 155.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="110,159.5 105.5,150.5 114.5,150.5"/>
+      <path d="M 30 160 L 41.5 160 A 10 10 0 0 0 51.5 150 L 51.5 124.5 A 10 10 0 0 1 61.5 114.5 L 90 114.5 A 10 10 0 0 1 100 124.5 L 100 139"/>
     </g>
   </g>
 </svg>

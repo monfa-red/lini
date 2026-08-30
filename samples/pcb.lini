@@ -4,7 +4,7 @@
 // circuit family is `layout: schematic` [SPEC 16] — see `schematic*.lini`.
 {
   // the board — soft-tier surfaces flip with the theme (light mint / dark green)
-  fill: gradient(--green-soft, --teal-soft); layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;
+  fill: gradient(#029045, #008046); layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 20; padding: 34; font-size: 12;
 
   |chip::box| {
     width: 60; height: 60; stroke: none; radius: 5; color: white; padding: 0;
@@ -13,11 +13,11 @@
     width: 150; height: 56; stroke: none; fill: --amber-soft; color: --amber-ink;
   }
   |passive::box| {
-    width: 54; height: 42; stroke: none; fill: --gray-ink; color: --gray-wash; radius: 2; padding: 0;
+    width: 54; height: 42; stroke: none; fill: #303030; color: white; radius: 5; padding: 0;
   }
 
   clearance: 10;
-  |-| { stroke: --amber; stroke-width: 2; }
+  |-| { stroke: #f4c450; stroke-width: 2; }
 }
 
 // the hero: a big gradient MCU spanning the centre
@@ -40,48 +40,51 @@
 |passive#r2| "R" { cell: 5 4; }
 
 |passive#c3| "C" { cell: 1 5; }
-|chip#adc| "ADC" { cell: 2 5; fill: --green; }
+|chip#adc| "ADC" { cell: 2 5; fill: --gray; }
 |chip#sens| "SENS" { cell: 3 5; fill: --teal; }
 |passive#r3| "R" { cell: 4 5; }
 |chip#imu| "IMU" { cell: 5 5; fill: --amber; color: --amber-ink; }
 
 // ── copper traces ──
 // USB data bus (top)
-usb:bottom -> mcu:top
-usb:bottom -> mcu:top
-usb:bottom -> mcu:top
-usb:bottom -> mcu:top
-mcu:top -> rf:bottom
-rf:bottom -> r1:bottom
+usb:bottom - mcu:top
+usb:bottom - mcu:top
+usb:bottom - mcu:top
+usb:bottom - mcu:top
+mcu:top - rf:bottom
+rf:bottom - r1:bottom
 
 // power rails + flash bus (left)
-pwr:right -> mcu:left
-pwr:right -> mcu:left
-pwr:right -> mcu:left
-pwr:right -> mcu:left
-flash:right -> mcu:left
-flash:right -> mcu:left
-flash:right -> mcu:left
+pwr:right - mcu:left
+pwr:right - mcu:left
+pwr:right - mcu:left
+pwr:right - mcu:left
+flash:right - mcu:left
+flash:right - mcu:left
+flash:right - mcu:left
 
 // motor control bus (right)
-mcu:right -> motor:left
-mcu:right -> motor:left
-mcu:right -> motor:left
-mcu:right -> motor:left
-osc -> motor:top
-osc:left -> mcu:right
+mcu:right - motor:left
+mcu:right - motor:left
+mcu:right - motor:left
+mcu:right - motor:left
+osc - motor:top
+osc:left - mcu:right
 
 // sensor + adc buses (bottom)
-mcu:bottom -> sens:top
-mcu:bottom -> sens:top
-mcu:bottom -> adc:top
-mcu:bottom -> adc:top
+mcu:bottom - sens:top
+mcu:bottom - sens:top
+mcu:bottom - adc:top
+mcu:bottom - adc:top
 
 // passives — short decoupling hops
-usb:left -> c1:right
-pwr:bottom -> c2:top
-motor:bottom -> r2:top
-imu:top -> r2:bottom
-imu -> mcu:right
-adc:left -> c3:right
-sens -> r3:top
+usb:left - c1:right
+pwr:bottom - c2:top
+pwr:bottom - c2:top
+motor:bottom - r2:top
+imu:top - r2:bottom
+imu - mcu:right
+imu - mcu:right
+adc:left - c3:right
+adc:left - c3:right
+sens - r3:top
