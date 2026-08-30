@@ -57,7 +57,9 @@
 
 a -> b "styled by |-|"
 // wears the global label look — teal, bold, 12
-b -> c [ "nudged & turned" {
-  translate: 0 -10; rotate: -6; color: --red-ink; text-shadow: 1 1 2 --gray-ink;
-} ]
+b -> c [
+  "nudged & turned" {
+    translate: 0 -10; rotate: -6; color: --red-ink; text-shadow: 1 1 2 --gray-ink;
+  }
+]
 // one label overrides — text-shadow rides the label leaf, like any text prop

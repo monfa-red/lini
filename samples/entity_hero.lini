@@ -38,12 +38,13 @@
 ]
 |entity#cart| "Cart" {
   pin: center; translate: 176 -171; stroke: --rose-ink; fill: --rose-wash;
-} [ "items" "int" "updated" "timestamp" ]
+} [
+  "items"   "int"
+  "updated" "timestamp"
+]
 |entity#category| "Category" { pin: center; translate: -195 -143; } [
-  "name"
-  "varchar"
-  "slug"
-  "varchar"
+  "name" "varchar"
+  "slug" "varchar"
 ]
 
 user -o< order
