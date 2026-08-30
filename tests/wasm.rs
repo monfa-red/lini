@@ -1,5 +1,5 @@
-//! The browser artifact compiles every sample **byte-identically** to the
-//! binary.
+//! The browser artifact compiles — and highlights — every sample
+//! **byte-identically** to the binary.
 //!
 //! `crates/lini-wasm` is a binding layer with no compiler logic of its own, and
 //! this is what keeps it that way: the moment someone reimplements a lowering
@@ -88,12 +88,22 @@ fn wasm_matches_the_binary_on_every_sample() {
         // fixture's compile silently overwrite the sample's — the "drift"
         // it then reported was two different sources, not two engines.
         let name = format!("{i}-{stem}");
-        let native = lini::compile_str(&lini::testing::read_sample(path))
+        let source = lini::testing::read_sample(path);
+        let native = lini::compile_str(&source)
             .unwrap_or_else(|e| panic!("{stem} does not compile natively: {e}"));
         let browser = std::fs::read_to_string(out.join(format!("{name}.svg")))
             .unwrap_or_else(|_| format!("<the driver wrote no output for {name}>"));
         if native != browser {
             drift.push(describe(&name, &native, &browser));
+        }
+        // The binding layer carries a tokenizer as well as a compiler, and it
+        // is bound the same way — one call through to the library, guarded the
+        // same way [SPEC 22].
+        let native = lini::highlight_html(&source);
+        let browser = std::fs::read_to_string(out.join(format!("{name}.html")))
+            .unwrap_or_else(|_| format!("<the driver highlighted nothing for {name}>"));
+        if native != browser {
+            drift.push(describe(&format!("{name} (highlight)"), &native, &browser));
         }
     }
 

@@ -2,10 +2,11 @@
 //!
 //! A binding layer and nothing else: every function here forwards to the
 //! library's own entry point ([`lini::compile_str_with`], [`lini::desugar_source`],
-//! [`lini::diagnostics_json`]), so a browser runs the *same* engine as the
-//! binary — byte for byte, guarded by `tests/wasm.rs`. No compiler logic lives
-//! in this crate, and none may: a second lowering path is exactly the drift the
-//! byte-equality test exists to catch.
+//! [`lini::diagnostics_json`], [`lini::highlight_html`]), so a browser runs the
+//! *same* engine as the binary — byte for byte, guarded by `tests/wasm.rs`. No
+//! compiler logic lives in this crate, and none may: a second lowering path —
+//! or a second tokenizer — is exactly the drift the byte-equality test exists
+//! to catch.
 
 use lini::{Options, OutputFormat};
 use wasm_bindgen::prelude::*;
@@ -60,6 +61,15 @@ pub fn desugar(src: &str) -> Result<String, JsError> {
 #[wasm_bindgen]
 pub fn format(src: &str) -> Result<String, JsError> {
     lini::format_source(src).map_err(js_err)
+}
+
+/// The source as `<span class="tok-…">` HTML — what `lini highlight` prints,
+/// and the same scanner the VS Code and Zed grammars take their words from
+/// [SPEC 22]. Never throws: highlighting is lexical, so a file mid-keystroke
+/// still colours, which is exactly what a live editor wants.
+#[wasm_bindgen]
+pub fn highlight(src: &str) -> String {
+    lini::highlight_html(src)
 }
 
 /// The compiler's version, so a page can show which engine it is running.
