@@ -44,7 +44,7 @@ mod vocab;
 mod vscode;
 mod zed;
 
-pub use highlight::highlight_html;
+pub use highlight::{highlight_css, highlight_html};
 pub use playground::splice_playground;
 pub use vscode::vscode_grammar;
 pub use zed::zed_highlights;

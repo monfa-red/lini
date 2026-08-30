@@ -63,10 +63,13 @@ pub fn format(src: &str) -> Result<String, JsError> {
     lini::format_source(src).map_err(js_err)
 }
 
-/// The source as `<span class="tok-…">` HTML — what `lini highlight` prints,
-/// and the same scanner the VS Code and Zed grammars take their words from
-/// [SPEC 22]. Never throws: highlighting is lexical, so a file mid-keystroke
-/// still colours, which is exactly what a live editor wants.
+/// The source as `<span class="lini-tok-…">` HTML — what `lini highlight`
+/// prints, from the same scanner the VS Code and Zed grammars take their words
+/// from [SPEC 22]. Never throws: highlighting is lexical, so a file
+/// mid-keystroke still colours, which is exactly what a live editor wants.
+///
+/// The palette those spans wear is static, so it has no export here — a page
+/// ships `lini highlight --css` at build time [SPEC 20].
 #[wasm_bindgen]
 pub fn highlight(src: &str) -> String {
     lini::highlight_html(src)

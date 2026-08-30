@@ -353,6 +353,30 @@ fn highlight_prints_exactly_what_the_library_returns() {
     std::fs::remove_dir_all(&dir).ok();
 }
 
+/// `--css` prints the palette those spans wear, from the same place — so a
+/// host never hand-copies thirteen rules to colour what the markup names.
+#[test]
+fn highlight_css_prints_the_palette_the_markup_wears() {
+    let out = Command::new(env!("CARGO_BIN_EXE_lini"))
+        .args(["highlight", "--css"])
+        .output()
+        .expect("spawn lini");
+    assert_eq!(out.status.code(), Some(0));
+    let css = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(css, lini::highlight_css());
+    for class in ["comment", "string", "type", "prop", "punct"] {
+        assert!(css.contains(&format!(".lini-tok-{class}")), "{css}");
+    }
+
+    // Neither an input nor --css is a usage error, not a silent empty file.
+    let bare = Command::new(env!("CARGO_BIN_EXE_lini"))
+        .arg("highlight")
+        .output()
+        .expect("spawn lini");
+    assert_eq!(bare.status.code(), Some(3));
+    assert!(bare.stdout.is_empty());
+}
+
 /// Highlighting is lexical, so a file the compiler rejects still lists — which
 /// is the whole point for an editor and for a docs page showing a mistake.
 /// Only I/O fails.
@@ -377,7 +401,8 @@ fn highlight_colours_a_file_that_does_not_compile() {
     let out = child.wait_with_output().expect("wait for lini");
     assert_eq!(out.status.code(), Some(0));
     assert!(
-        String::from_utf8_lossy(&out.stdout).contains("<span class=\"tok-prop-user\">colr</span>"),
+        String::from_utf8_lossy(&out.stdout)
+            .contains("<span class=\"lini-tok-prop-user\">colr</span>"),
         "an unknown property still colours, weakly"
     );
 }

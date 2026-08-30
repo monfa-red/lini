@@ -3954,6 +3954,7 @@ families:
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (`font-size: 12; font-weight: normal` — no annotation leaf inlines its size) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
 | floorplan | `lini-door-leaf` (a door's leaf, a slider's panels) · `lini-door-swing` (the quarter arc) · `lini-window-sill` · `lini-stair-tread` (a flight's risers) · `lini-stair-arrow` (its up arrow) ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) |
 | schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
+| highlight | `lini-tok-{kind}` — a source **listing**'s token spans, not a figure's: `lini highlight` writes them and `lini highlight --css` paints them ([SPEC 20](#20-cli)) |
 | marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--anchors--satellites)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
 The last family is the odd one out: its classes carry **structure, not paint**.
@@ -4057,7 +4058,7 @@ their `along:` fractions (auto-distributed when unset).
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
-lini highlight <input.lini>
+lini highlight [--css] <input.lini>
 lini serve [--port N] [--static] [--theme NAME|FILE|A/B] [PATH]
 lini theme [NAME]
 ```
@@ -4110,19 +4111,32 @@ they are a cascade-phase artefact — the structure desugar does show (each cell
 in its `|cell|`, an entity's label as its title `|header|`) is the part that
 needs no column count.
 
-**`lini highlight`** prints the file as `<span class="tok-…">` HTML — the one
-syntax highlighter, at a shell. It is **lexical**: it never parses, so a file
-mid-edit still colours and the only failure left is I/O; and it is
+**`lini highlight`** prints the file as `<span class="lini-tok-…">` HTML — the
+one syntax highlighter, at a shell. It is **lexical**: it never parses, so a
+file mid-edit still colours and the only failure left is I/O; and it is
 **byte-preserving** — strip the tags, undo the four entity escapes, and the
 source comes back exactly, which is what lets a host drop the output into a
 `<pre>` and trust the listing. Newlines pass through as newlines (a caller that
-cannot carry one rewrites them itself). The classes are the token kinds — `comment`
-`string` `number` `const` `keyword` `type` `type-user` `prop` `prop-user` `var`
-`op` `class` `punct` — and the words behind them come from the same source the
-editor grammars do ([SPEC 22](#22-grammar)), so a new type or property colours
-the moment it has a ledger row. The same scanner is `lini::highlight_html` to a
-crate and `highlight()` to the browser build; a host that can link Rust should,
-and this subcommand is for the one that cannot.
+cannot carry one rewrites them itself). The classes are the token kinds, under
+the reserved prefix like every other name Lini writes into a host document
+([SPEC 18](#18-svg-output), [SPEC 23](#23-reserved-words)): `lini-tok-` +
+`comment` · `string` · `number` · `const` · `keyword` · `type` · `type-user` ·
+`prop` · `prop-user` · `var` · `op` · `class` · `punct`. The words behind them
+come from the same source the editor grammars do ([SPEC 22](#22-grammar)), so a
+new type or property colours the moment it has a ledger row.
+
+**`lini highlight --css`** prints the **token palette** those spans wear —
+nine `--lini-tok-*` role variables as `light-dark()` pairs, then the rules that
+paint the thirteen classes from them — so the markup and its colours come from
+one place and a listing reads the same in a book, on a site, and in the
+playground. The role defaults are layered (`@layer lini.defaults`), so a host
+re-tints one by redeclaring its variable with no `!important`; the sheet sets no
+`color-scheme`, leaving the light/dark choice to whatever the host has set on
+the listing's ancestors.
+
+The same scanner is `lini::highlight_html` to a crate and `highlight()` to the
+browser build; a host that can link Rust should, and this subcommand is for the
+one that cannot.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2 I/O ·
 3 invalid CLI.
@@ -4597,7 +4611,10 @@ names are free as ids and ids are free as type names** — `|block#oval|` is fin
 The **`lini-` prefix** is reserved for generated names: desugar generates the type
 classes (`.lini-block`, `.lini-box`, `.lini-<define>`) and mints ids
 (`#lini-topic-N` — [SPEC 12](#12-flow-grid--tree)), so a user class or an authored id
-may not begin `lini-`. User classes are emitted `.lini-style-<name>`.
+may not begin `lini-`. User classes are emitted `.lini-style-<name>`. The
+highlighter's token classes (`.lini-tok-<kind>` — [SPEC 20](#20-cli)) take the
+same prefix for the same reason: they land in a *host's* document, where an
+unprefixed name would collide.
 
 The side names **`top`, `bottom`, `left`, `right`** are **not** reserved — they are
 keywords only after an endpoint's `:` (`a:left`), so a node may be named `|box#left|`.

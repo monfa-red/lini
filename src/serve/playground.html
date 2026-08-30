@@ -46,15 +46,6 @@
         --err: #ff5555;
         --paper: #282a36;
         --shadow: rgba(0, 0, 0, 0.5);
-        --tok-comment: #6272a4;
-        --tok-string: #f1fa8c;
-        --tok-value: #bd93f9;
-        --tok-type: #8be9fd;
-        --tok-prop: #ff79c6;
-        --tok-var: #ffb86c;
-        --tok-op: #ff79c6;
-        --tok-class: #50fa7b;
-        --tok-punct: #7b7f9e;
       }
       :root[data-theme="light"] {
         color-scheme: light;
@@ -71,15 +62,6 @@
         --err: #cf222e;
         --paper: #ffffff;
         --shadow: rgba(0, 0, 0, 0.18);
-        --tok-comment: #8a8f98;
-        --tok-string: #0a7d2c;
-        --tok-value: #8250df;
-        --tok-type: #1078a8;
-        --tok-prop: #c2185b;
-        --tok-var: #b3530b;
-        --tok-op: #c2185b;
-        --tok-class: #1a7f37;
-        --tok-punct: #6e7781;
       }
       * {
         box-sizing: border-box;
@@ -261,49 +243,75 @@
         color: var(--text);
       }
 
-      .tok-comment {
-        color: var(--tok-comment);
+      /* <lini:palette> the token palette — regenerate with `cargo xtask gen-grammars`. */
+      /* Lini syntax highlighting — the token palette [SPEC 18].
+         Printed by `lini highlight --css`; re-tint a role by redeclaring its variable. */
+      @layer lini.defaults {
+        :root {
+          --lini-tok-comment: light-dark(#8a8f98, #6272a4);
+          --lini-tok-string: light-dark(#0a7d2c, #f1fa8c);
+          --lini-tok-value: light-dark(#8250df, #bd93f9);
+          --lini-tok-type: light-dark(#1078a8, #8be9fd);
+          --lini-tok-prop: light-dark(#c2185b, #ff79c6);
+          --lini-tok-var: light-dark(#b3530b, #ffb86c);
+          --lini-tok-op: light-dark(#c2185b, #ff79c6);
+          --lini-tok-class: light-dark(#1a7f37, #50fa7b);
+          --lini-tok-punct: light-dark(#6e7781, #7b7f9e);
+        }
+      }
+
+      .lini-tok-comment {
+        color: var(--lini-tok-comment);
         font-style: italic;
       }
-      .tok-string {
-        color: var(--tok-string);
+
+      .lini-tok-string {
+        color: var(--lini-tok-string);
       }
-      .tok-number,
-      .tok-const,
-      .tok-keyword {
-        color: var(--tok-value);
+
+      .lini-tok-number,
+      .lini-tok-const,
+      .lini-tok-keyword {
+        color: var(--lini-tok-value);
       }
-      .tok-type {
-        color: var(--tok-type);
+
+      .lini-tok-type {
+        color: var(--lini-tok-type);
         font-style: italic;
       }
-      .tok-prop {
-        color: var(--tok-prop);
+
+      .lini-tok-prop {
+        color: var(--lini-tok-prop);
       }
-      /* A user-defined type / an unknown property — the same hue, dimmed, so a
-         typo'd `padidng:` reads as not-in-the-ledger at a glance. */
-      .tok-type-user {
-        color: var(--tok-type);
+
+      .lini-tok-type-user {
+        color: var(--lini-tok-type);
         font-style: italic;
         opacity: 0.65;
       }
-      .tok-prop-user {
-        color: var(--tok-prop);
+
+      .lini-tok-prop-user {
+        color: var(--lini-tok-prop);
         opacity: 0.65;
       }
-      .tok-var {
-        color: var(--tok-var);
+
+      .lini-tok-var {
+        color: var(--lini-tok-var);
       }
-      .tok-op {
-        color: var(--tok-op);
+
+      .lini-tok-op {
+        color: var(--lini-tok-op);
       }
-      .tok-class {
-        color: var(--tok-class);
+
+      .lini-tok-class {
+        color: var(--lini-tok-class);
         font-style: italic;
       }
-      .tok-punct {
-        color: var(--tok-punct);
+
+      .lini-tok-punct {
+        color: var(--lini-tok-punct);
       }
+      /* </lini:palette> */
 
       .pane.preview {
         background: var(--bg);
@@ -561,7 +569,9 @@
           return m && m.index === i ? m[0] : null;
         };
         const emit = (cls, s) => {
-          out += cls ? `<span class="tok-${cls}">${esc(s)}</span>` : esc(s);
+          out += cls
+            ? `<span class="lini-tok-${cls}">${esc(s)}</span>`
+            : esc(s);
           i += s.length;
         };
         const prevWord = () => i > 0 && /[\w-]/.test(src[i - 1]);

@@ -11,7 +11,9 @@
 //! exhaustive per-set sweep — every ledger property, every built-in type, every
 //! value keyword — lives beside it in `src/grammar/highlight.rs`, and the
 //! playground's hand-written twin is held byte-identical to it by
-//! `tests/playground.rs`.)
+//! `tests/playground.rs`.) Its **palette** is generated too: the page splices
+//! `lini::highlight_css`, so the nine role variables and the thirteen rules a
+//! book and a site also ship exist once.
 //!
 //! Two guards sit beside the drift check: SPEC 23's own list of contextual
 //! value keywords is the fixture for the value-keyword set (the doc is the
@@ -48,15 +50,22 @@ fn zed_highlights_match_committed_byte_for_byte() {
 }
 
 /// The playground's tokenizer is hand-written (it must preserve every
-/// character); only its marked word-list region is generated, so the guard is a
-/// re-splice that must change nothing.
+/// character); what *is* generated are its two marked regions — the word lists
+/// and the token palette — so the guard is a re-splice that must change
+/// nothing. The palette is the same sheet `lini highlight --css` prints, which
+/// is what keeps the page from carrying a private copy of colours a book and a
+/// site also ship.
 #[test]
-fn playground_word_lists_match_committed_byte_for_byte() {
+fn playground_generated_regions_match_committed_byte_for_byte() {
     let src = read("src/serve/playground.html");
     assert_eq!(
         lini::splice_playground(&src),
         src,
-        "playground tokenizer drift — regenerate with `cargo xtask gen-grammars` and commit"
+        "playground drift — regenerate with `cargo xtask gen-grammars` and commit"
+    );
+    assert!(
+        src.contains(&lini::highlight_css().lines().next().unwrap().to_string()),
+        "the page no longer wears the generated palette"
     );
 }
 
@@ -127,14 +136,14 @@ fn every_home_carries_the_same_vocabulary() {
         }
         assert!(
             marks(probe, word, class),
-            "lini::highlight_html does not mark '{word}' as tok-{class} in {probe:?}"
+            "lini::highlight_html does not mark '{word}' as lini-tok-{class} in {probe:?}"
         );
     }
 }
 
-/// Whether highlighting `src` marks `word` with `tok-<class>`.
+/// Whether highlighting `src` marks `word` with `lini-tok-<class>`.
 fn marks(src: &str, word: &str, class: &str) -> bool {
-    lini::highlight_html(src).contains(&format!("<span class=\"tok-{class}\">{word}</span>"))
+    lini::highlight_html(src).contains(&format!("<span class=\"lini-tok-{class}\">{word}</span>"))
 }
 
 /// Whether `word` appears as a whole alternative of some regex alternation in

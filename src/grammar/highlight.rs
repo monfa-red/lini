@@ -1,7 +1,8 @@
 //! The syntax highlighter — the grammar's fourth home [SPEC 22 / 23], and the
 //! only one that is a scanner rather than a word list.
 //!
-//! [`highlight_html`] turns Lini source into `<span class="tok-…">` markup. It
+//! [`highlight_html`] turns Lini source into `<span class="lini-tok-…">` markup.
+//! It
 //! reads the same [`super::vocab`] sets the two editor grammars and the
 //! playground tokenizer do, so a new type, property, template, or glyph colours
 //! here the moment it has a row.
@@ -22,7 +23,14 @@
 
 use super::vocab::{COLOR_NAMES, builder_calls, properties, side_names, types, value_keywords};
 
-/// The token classes, mirroring the playground's `tok-*` stylesheet.
+/// The class every highlighted span wears, before its token kind. It carries
+/// the reserved prefix like every other name Lini writes into a host document
+/// ([SPEC 18](../../SPEC.md), [SPEC 23](../../SPEC.md)), so a page's own
+/// `.tok-string` can never repaint a Lini listing.
+const PREFIX: &str = "lini-tok-";
+
+/// The token classes. [`highlight_css`] paints them; the two are held together
+/// by `tests::every_token_class_has_a_rule`.
 ///
 /// `Plain` emits no span at all — most of a file is punctuation-free identifier
 /// text that needs no colour, and a span per word would triple the output.
@@ -66,12 +74,86 @@ impl Tok {
     }
 }
 
-/// Highlight `src` as HTML: `<span class="tok-…">` runs over escaped text.
+/// Highlight `src` as HTML: `<span class="lini-tok-…">` runs over escaped text.
 ///
 /// Newlines pass through as newlines — a caller that cannot carry a literal
 /// newline (an HTML block inside Markdown, say) rewrites them itself.
 pub fn highlight_html(src: &str) -> String {
     Scanner::new(src).run()
+}
+
+// ─────────────────────────────── the palette ───────────────────────────────
+
+/// The nine role variables, each a `light-dark()` pair — the **one** token
+/// palette. Nine roles for thirteen classes because some kinds share a colour
+/// and differ only in face: a number, a constant and a keyword are all values.
+///
+/// `(role, light, dark)`.
+const PALETTE: &[(&str, &str, &str)] = &[
+    ("comment", "#8a8f98", "#6272a4"),
+    ("string", "#0a7d2c", "#f1fa8c"),
+    ("value", "#8250df", "#bd93f9"),
+    ("type", "#1078a8", "#8be9fd"),
+    ("prop", "#c2185b", "#ff79c6"),
+    ("var", "#b3530b", "#ffb86c"),
+    ("op", "#c2185b", "#ff79c6"),
+    ("class", "#1a7f37", "#50fa7b"),
+    ("punct", "#6e7781", "#7b7f9e"),
+];
+
+/// One rule each, in the order they are written: `(classes, role, face)`. The
+/// `-user` pair is the same hue dimmed — a type with no ledger row and a
+/// typo'd `padidng:` read as not-in-the-ledger at a glance.
+const RULES: &[(&[&str], &str, &str)] = &[
+    (&["comment"], "comment", "  font-style: italic;\n"),
+    (&["string"], "string", ""),
+    (&["number", "const", "keyword"], "value", ""),
+    (&["type"], "type", "  font-style: italic;\n"),
+    (&["prop"], "prop", ""),
+    (
+        &["type-user"],
+        "type",
+        "  font-style: italic;\n  opacity: 0.65;\n",
+    ),
+    (&["prop-user"], "prop", "  opacity: 0.65;\n"),
+    (&["var"], "var", ""),
+    (&["op"], "op", ""),
+    (&["class"], "class", "  font-style: italic;\n"),
+    (&["punct"], "punct", ""),
+];
+
+/// The stylesheet [`highlight_html`]'s output wears — what `lini highlight
+/// --css` prints, what the playground splices, and what a book or a site ships
+/// beside its own CSS. One palette, so a listing reads the same everywhere.
+///
+/// The role variables sit in `@layer lini.defaults` and the rules unlayered,
+/// exactly as a compiled figure's do ([SPEC 18](../../SPEC.md)): a host
+/// re-tints a role by redeclaring the variable, with no `!important`.
+///
+/// It sets no `color-scheme` — that is the host's, and `light-dark()` reads
+/// whatever the host has set on the listing's ancestors, which is how one sheet
+/// serves a book's five themes and an editor's toggle alike.
+pub fn highlight_css() -> String {
+    let mut out = String::new();
+    out.push_str(
+        "/* Lini syntax highlighting — the token palette [SPEC 18].\n   \
+         Printed by `lini highlight --css`; re-tint a role by redeclaring its variable. */\n",
+    );
+    out.push_str("@layer lini.defaults {\n  :root {\n");
+    for (role, light, dark) in PALETTE {
+        out.push_str(&format!(
+            "    --{PREFIX}{role}: light-dark({light}, {dark});\n"
+        ));
+    }
+    out.push_str("  }\n}\n");
+    for (classes, role, face) in RULES {
+        let selector: Vec<String> = classes.iter().map(|c| format!(".{PREFIX}{c}")).collect();
+        out.push_str(&format!("\n{} {{\n", selector.join(",\n")));
+        out.push_str(&format!("  color: var(--{PREFIX}{role});\n"));
+        out.push_str(face);
+        out.push_str("}\n");
+    }
+    out
 }
 
 /// A word character as the surface grammar counts one: an ident may carry
@@ -131,7 +213,8 @@ impl<'a> Scanner<'a> {
         let text = &self.src[self.i..self.i + len];
         match tok.class() {
             Some(class) => {
-                self.out.push_str("<span class=\"tok-");
+                self.out.push_str("<span class=\"");
+                self.out.push_str(PREFIX);
                 self.out.push_str(class);
                 self.out.push_str("\">");
                 escape_into(&mut self.out, text);
@@ -552,16 +635,16 @@ mod tests {
 
     #[test]
     fn a_links_operator_is_the_only_marked_token() {
-        check("a -> b", "a <span class=\"tok-op\">-&gt;</span> b");
+        check("a -> b", "a <span class=\"lini-tok-op\">-&gt;</span> b");
     }
 
     #[test]
     fn a_capsule_marks_its_bars_and_its_builtin_type() {
         check(
             "|box|",
-            "<span class=\"tok-punct\">|</span>\
-             <span class=\"tok-type\">box</span>\
-             <span class=\"tok-punct\">|</span>",
+            "<span class=\"lini-tok-punct\">|</span>\
+             <span class=\"lini-tok-type\">box</span>\
+             <span class=\"lini-tok-punct\">|</span>",
         );
     }
 
@@ -569,7 +652,7 @@ mod tests {
     fn a_type_with_no_ledger_row_reads_as_user_defined() {
         let html = highlight_html("|widget|");
         assert!(
-            html.contains("<span class=\"tok-type-user\">widget</span>"),
+            html.contains("<span class=\"lini-tok-type-user\">widget</span>"),
             "{html}"
         );
     }
@@ -578,11 +661,11 @@ mod tests {
     fn an_id_after_the_hash_reads_as_a_type() {
         let html = highlight_html("|box#hero|");
         assert!(
-            html.contains("<span class=\"tok-punct\">#</span>"),
+            html.contains("<span class=\"lini-tok-punct\">#</span>"),
             "{html}"
         );
         assert!(
-            html.contains("<span class=\"tok-type\">hero</span>"),
+            html.contains("<span class=\"lini-tok-type\">hero</span>"),
             "{html}"
         );
     }
@@ -591,12 +674,12 @@ mod tests {
     fn a_ledger_property_outranks_one_that_is_only_well_formed() {
         let known = highlight_html("{ fill: red; }");
         assert!(
-            known.contains("<span class=\"tok-prop\">fill</span>"),
+            known.contains("<span class=\"lini-tok-prop\">fill</span>"),
             "{known}"
         );
         let typo = highlight_html("{ padidng: red; }");
         assert!(
-            typo.contains("<span class=\"tok-prop-user\">padidng</span>"),
+            typo.contains("<span class=\"lini-tok-prop-user\">padidng</span>"),
             "{typo}"
         );
     }
@@ -605,7 +688,7 @@ mod tests {
     fn a_palette_variable_is_marked_in_value_position() {
         let html = highlight_html("{ fill: --teal-wash; }");
         assert!(
-            html.contains("<span class=\"tok-var\">--teal-wash</span>"),
+            html.contains("<span class=\"lini-tok-var\">--teal-wash</span>"),
             "{html}"
         );
     }
@@ -614,11 +697,11 @@ mod tests {
     fn a_declared_variable_is_marked_in_structural_position() {
         let html = highlight_html("--brand: #ff6600;");
         assert!(
-            html.contains("<span class=\"tok-var\">--brand</span>"),
+            html.contains("<span class=\"lini-tok-var\">--brand</span>"),
             "{html}"
         );
         assert!(
-            html.contains("<span class=\"tok-const\">#ff6600</span>"),
+            html.contains("<span class=\"lini-tok-const\">#ff6600</span>"),
             "{html}"
         );
     }
@@ -627,7 +710,7 @@ mod tests {
     fn a_comment_runs_to_the_end_of_its_line() {
         check(
             "// note\na",
-            "<span class=\"tok-comment\">// note</span>\na",
+            "<span class=\"lini-tok-comment\">// note</span>\na",
         );
     }
 
@@ -637,7 +720,7 @@ mod tests {
     fn a_string_is_one_token_including_its_quotes() {
         let html = highlight_html("|box| \"Hi there\"");
         assert!(
-            html.contains("<span class=\"tok-string\">&quot;Hi there&quot;</span>"),
+            html.contains("<span class=\"lini-tok-string\">&quot;Hi there&quot;</span>"),
             "{html}"
         );
     }
@@ -646,7 +729,7 @@ mod tests {
     fn a_layout_name_is_a_keyword_in_value_position() {
         let html = highlight_html("{ layout: sequence; }");
         assert!(
-            html.contains("<span class=\"tok-keyword\">sequence</span>"),
+            html.contains("<span class=\"lini-tok-keyword\">sequence</span>"),
             "{html}"
         );
     }
@@ -655,12 +738,12 @@ mod tests {
     fn a_worn_class_is_marked_where_a_path_is_not() {
         let worn = highlight_html("a -> b .hot");
         assert!(
-            worn.contains("<span class=\"tok-class\">.hot</span>"),
+            worn.contains("<span class=\"lini-tok-class\">.hot</span>"),
             "{worn}"
         );
         let path = highlight_html("a.port -> b");
         assert!(
-            !path.contains("tok-class"),
+            !path.contains("lini-tok-class"),
             "an endpoint path is not a worn class: {path}"
         );
     }
@@ -710,7 +793,7 @@ mod tests {
     fn an_unclosed_capsule_stops_at_the_line_end() {
         let html = highlight_html("|box\na -> b");
         assert!(
-            html.contains("<span class=\"tok-op\">-&gt;</span>"),
+            html.contains("<span class=\"lini-tok-op\">-&gt;</span>"),
             "{html}"
         );
     }
@@ -733,7 +816,7 @@ mod tests {
         for name in properties() {
             let html = highlight_html(&format!("{{ {name}: 1; }}"));
             assert!(
-                html.contains(&format!("<span class=\"tok-prop\">{name}</span>")),
+                html.contains(&format!("<span class=\"lini-tok-prop\">{name}</span>")),
                 "property '{name}' does not colour as a ledger property: {html}"
             );
         }
@@ -746,10 +829,82 @@ mod tests {
         for name in types() {
             let html = highlight_html(&format!("|{name}|"));
             assert!(
-                html.contains(&format!("<span class=\"tok-type\">{name}</span>")),
+                html.contains(&format!("<span class=\"lini-tok-type\">{name}</span>")),
                 "type '{name}' does not colour as a built-in: {html}"
             );
         }
+    }
+
+    /// The markup and the palette are one surface, so neither may name a class
+    /// the other does not: every `Tok` that emits a span has exactly one rule,
+    /// and every rule paints a class the scanner can actually emit.
+    #[test]
+    fn every_token_class_has_a_rule() {
+        let kinds = [
+            Tok::Plain,
+            Tok::Comment,
+            Tok::String,
+            Tok::Number,
+            Tok::Const,
+            Tok::Keyword,
+            Tok::Type,
+            Tok::TypeUser,
+            Tok::Prop,
+            Tok::PropUser,
+            Tok::Var,
+            Tok::Op,
+            Tok::Class,
+            Tok::Punct,
+        ];
+        let painted: Vec<&str> = RULES
+            .iter()
+            .flat_map(|(cs, _, _)| cs.iter().copied())
+            .collect();
+        for kind in kinds {
+            let Some(class) = kind.class() else { continue };
+            assert_eq!(
+                painted.iter().filter(|c| **c == class).count(),
+                1,
+                "{kind:?} emits .{PREFIX}{class}, which the stylesheet paints \
+                 {} time(s)",
+                painted.iter().filter(|c| **c == class).count()
+            );
+        }
+        for class in &painted {
+            assert!(
+                kinds.iter().any(|k| k.class() == Some(class)),
+                "the stylesheet paints .{PREFIX}{class}, which no token emits"
+            );
+        }
+        for (_, role, _) in RULES {
+            assert!(
+                PALETTE.iter().any(|(r, _, _)| r == role),
+                "a rule paints from --{PREFIX}{role}, which the palette does not declare"
+            );
+        }
+    }
+
+    /// The sheet a host ships must actually name what the markup wears — the
+    /// reserved prefix included, since that is the whole point of the rename.
+    #[test]
+    fn the_stylesheet_paints_what_the_markup_wears() {
+        let css = highlight_css();
+        let html = highlight_html("|box#a| \"Hi\" { fill: red } // note\n");
+        for class in ["type", "string", "prop", "comment", "punct"] {
+            assert!(
+                html.contains(&format!("<span class=\"{PREFIX}{class}\">")),
+                "the markup does not wear .{PREFIX}{class}"
+            );
+            assert!(
+                css.contains(&format!(".{PREFIX}{class}")),
+                "the stylesheet does not paint .{PREFIX}{class}"
+            );
+        }
+        assert!(css.contains("@layer lini.defaults"), "{css}");
+        assert!(
+            !css.contains("color-scheme"),
+            "the palette leaves color-scheme to its host: {css}"
+        );
     }
 
     /// And over the remaining three value-position sets, so the sweep covers
@@ -760,14 +915,14 @@ mod tests {
         for name in value_keywords() {
             let html = highlight_html(&format!("{{ p: {name}; }}"));
             assert!(
-                html.contains(&format!("<span class=\"tok-keyword\">{name}</span>")),
+                html.contains(&format!("<span class=\"lini-tok-keyword\">{name}</span>")),
                 "value keyword '{name}' does not colour as a keyword: {html}"
             );
         }
         for name in builder_calls() {
             let html = highlight_html(&format!("{{ p: {name}(1); }}"));
             assert!(
-                html.contains(&format!("<span class=\"tok-type\">{name}</span>")),
+                html.contains(&format!("<span class=\"lini-tok-type\">{name}</span>")),
                 "builder call '{name}' does not colour as a call: {html}"
             );
         }
@@ -777,8 +932,8 @@ mod tests {
             // the guard is that it is marked at all.
             let html = highlight_html(&format!("{{ fill: {name}; }}"));
             assert!(
-                html.contains(&format!("<span class=\"tok-const\">{name}</span>"))
-                    || html.contains(&format!("<span class=\"tok-keyword\">{name}</span>")),
+                html.contains(&format!("<span class=\"lini-tok-const\">{name}</span>"))
+                    || html.contains(&format!("<span class=\"lini-tok-keyword\">{name}</span>")),
                 "colour name '{name}' is not marked at all: {html}"
             );
         }

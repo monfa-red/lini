@@ -56,10 +56,13 @@ enum Command {
         /// Input .lini file (use '-' for stdin)
         input: String,
     },
-    /// Print a file as syntax-highlighted HTML — <span class="tok-*"> runs
+    /// Print a file as syntax-highlighted HTML — <span class="lini-tok-*"> runs
     Highlight {
-        /// Input .lini file (use '-' for stdin)
-        input: String,
+        /// Input .lini file (use '-' for stdin); omitted with --css.
+        input: Option<String>,
+        /// Print the token palette those spans wear, as a CSS file, instead.
+        #[arg(long = "css")]
+        css: bool,
     },
     /// List the built-in themes, or print one as a --lini-* CSS file
     Theme {
@@ -144,7 +147,7 @@ fn main() -> ExitCode {
             theme,
         }) => return run_serve(path, port, static_mode, theme.as_deref()),
         Some(Command::Desugar { input }) => return run_desugar(&input),
-        Some(Command::Highlight { input }) => return run_highlight(&input),
+        Some(Command::Highlight { input, css }) => return run_highlight(input.as_deref(), css),
         Some(Command::Theme { name }) => return run_theme(name.as_deref()),
         None => match parsed.compile {
             Some(c) => c,
@@ -410,11 +413,20 @@ fn run_desugar(input_arg: &str) -> ExitCode {
 
 /// `lini highlight` — the build-time door onto [`lini::highlight_html`], for a
 /// host that renders a listing without linking the crate (the website's
-/// no-dependency build; any static-site generator).
+/// no-dependency build; any static-site generator). `--css` prints the palette
+/// those spans wear, so the markup and its colours come from one place.
 ///
 /// It never parses, so a file mid-edit still highlights and the only failure
 /// left is I/O — the same bargain an editor's tokenizer strikes [SPEC 20].
-fn run_highlight(input_arg: &str) -> ExitCode {
+fn run_highlight(input_arg: Option<&str>, css: bool) -> ExitCode {
+    if css {
+        print!("{}", lini::highlight_css());
+        return ExitCode::SUCCESS;
+    }
+    let Some(input_arg) = input_arg else {
+        eprintln!("error: an input file is required — or '--css' for the palette");
+        return ExitCode::from(3);
+    };
     let (_, source) = match read_input(input_arg) {
         Ok(fs) => fs,
         Err(code) => return code,
