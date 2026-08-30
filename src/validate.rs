@@ -445,25 +445,7 @@ impl<'a> Ctx<'a> {
     /// Root-block misuse: the root accepts scene config (universal, root,
     /// layout-owned for its own layout) — never a type-/role-owned property.
     fn check_root_decl(&self, d: &Decl, prop: &Property, out: &mut Vec<Diagnostic>) {
-        // Inheriting scene config (text props, `clearance`/`routing`) is valid
-        // on the root; a scope-link property with node owners (`format`) is
-        // judged against the root's layout, like any owned property.
-        if prop.inherit != Inherit::No && !prop.has_node_owner() {
-            return;
-        }
-        let ok = prop.owners.iter().any(|o| match o {
-            Owner::Universal | Owner::Root => true,
-            // A layout-owned property reads on the root only when the root
-            // *runs* that layout — `{ layout: flow; activation: none }` is the
-            // same misuse as `activation:` on a flow node [SPEC 21]. A dialect
-            // runs its parent engine, so it reads through the same predicate
-            // the `Owner::Type` arm below does.
-            Owner::Layout(l) => crate::resolve::layout_reads(&self.root_layout, l),
-            Owner::Link => false,
-            Owner::Type(t) => scope_reads_type(&self.root_layout, t),
-            Owner::Role(_) => false,
-        });
-        if !ok {
+        if !root_reads(&self.root_layout, prop) {
             out.push(
                 Diagnostic::error(d.span, misuse_message(&d.name, "the root block", prop))
                     .code(Code::MISUSED_PROPERTY),
@@ -785,6 +767,32 @@ fn container_layout(t: &str) -> Option<&'static str> {
 /// ([`crate::resolve::layout_reads`]): a `layout: floorplan` root reads
 /// `unit:`, the `|drawing|`'s own, because a floorplan *is* a drawing
 /// [SPEC 15.11].
+/// Whether a root running `layout` reads `prop` [SPEC 17] — the one answer to
+/// "is this scene config meaningful here", shared by the root-block validator
+/// above and by desugar, which must not stamp a default the root's engine
+/// cannot read (its output is itself a legal file [SPEC 20]).
+///
+/// Inheriting scene config (text props, `clearance` / `routing`) reaches every
+/// root; a scope-link property that *also* has node owners (`format`) is judged
+/// against the layout, like any owned property.
+pub(crate) fn root_reads(layout: &str, prop: &Property) -> bool {
+    if prop.inherit != Inherit::No && !prop.has_node_owner() {
+        return true;
+    }
+    prop.owners.iter().any(|o| match o {
+        Owner::Universal | Owner::Root => true,
+        // A layout-owned property reads on the root only when the root *runs*
+        // that layout — `{ layout: flow; activation: none }` is the same misuse
+        // as `activation:` on a flow node [SPEC 21]. A dialect runs its parent
+        // engine, so it reads through the same predicate the `Owner::Type` arm
+        // does.
+        Owner::Layout(l) => crate::resolve::layout_reads(layout, l),
+        Owner::Link => false,
+        Owner::Type(t) => scope_reads_type(layout, t),
+        Owner::Role(_) => false,
+    })
+}
+
 fn scope_reads_type(layout: &str, t: &str) -> bool {
     container_layout(t).is_some_and(|owner| crate::resolve::layout_reads(layout, owner))
 }

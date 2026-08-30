@@ -324,7 +324,18 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     if only_pages {
         layout_defaults.push(decl("padding", vec![Value::Number(0.0)]));
     }
-    let base = merge_decls(root_defaults(), &layout_defaults);
+    // Desugar's output is itself a legal file — `lini desugar` re-renders
+    // byte-identically [SPEC 20] — so a default it stamps must be one the
+    // root's own engine reads: a drawing root honours no `gap` [SPEC 17], and
+    // validation says so. The predicate is the root validator's own.
+    let root_layout = layout_of(&user_root).unwrap_or("flow");
+    let base: Vec<Decl> = merge_decls(root_defaults(), &layout_defaults)
+        .into_iter()
+        .filter(|d| {
+            crate::ledger::properties::get(&d.name)
+                .is_none_or(|p| crate::validate::root_reads(root_layout, p))
+        })
+        .collect();
     for d in merge_decls(base, &user_root) {
         stylesheet.push(StyleItem::RootDecl(d));
     }
