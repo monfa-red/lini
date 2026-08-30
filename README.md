@@ -127,7 +127,7 @@ Only the symbols a diagram uses are embedded.
 
 ## Charts
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.svg" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="700"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.svg" alt="Six Lini charts: grouped bars, smooth lines, a radar, a banded area, a pie, and sized bubbles" width="700"></p>
 
 `layout: chart` plots from data instead of pixels, working out the scale, ticks, gridlines, and a colour per series.
 
