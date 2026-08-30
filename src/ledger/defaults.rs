@@ -100,7 +100,7 @@ pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
 /// inside a closed shape. Tighter than the container default `36`: these are one
 /// node's parts, not arranged siblings, and a Phosphor glyph carries margin of its
 /// own, so the perceived gap runs wider than the number.
-pub(crate) const CARD_GAP: f64 = 8.0;
+pub(crate) const CARD_GAP: f64 = 10.0;
 
 /// The card-content carve [SPEC 11]: a closed shape's — and a `|topic|`'s —
 /// children are card content (an icon over its label), not arranged nodes. They
