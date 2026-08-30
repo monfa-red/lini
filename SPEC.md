@@ -1525,7 +1525,7 @@ properties. This part is the family; each section states just its delta.
 `direction: row` and `gap: 36` — source order flows the way it reads, so
 `cat -> dog -> bird` runs left to right (a **closed shape**'s or a `|topic|`'s children
 are card content, not arranged nodes, so those stack instead — `direction: column`,
-`gap: 10` — and an icon sits over its label; `|block|`, `|group|`, and the frameless
+`gap: 12` — and an icon sits over its label; `|block|`, `|group|`, and the frameless
 wrappers are containers and keep the flow pair); padding defaults per [SPEC 10.5](#105-layout-constants-baked),
 the root's framing the whole rendered scene — links and labels included — out to the
 SVG edge.
@@ -3762,7 +3762,7 @@ out of scope.
 |---|---|---|---|---|
 | `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
-| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 10 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
+| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 12 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid--tree) |
 | `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--anchors--satellites)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |

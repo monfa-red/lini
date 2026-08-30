@@ -115,7 +115,7 @@ scales, captions and link labels included.
 - Flow containers: `direction: row | column` (default row — source order flows
   the way it reads; a closed shape's and a `|topic|`'s children are **card
   content** and stack instead, so an icon sits over its label), `gap` (default
-  36; 10 in card content), `align` (cross axis) / `justify` (main axis):
+  36; 12 in card content), `align` (cross axis) / `justify` (main axis):
   `start | center | end | stretch | evenly | origin` — no-ops without slack
   (explicit size or fixed tracks).
 - Grid: `columns` **required** — `columns: 80, auto, repeat(3)`; `rows`
