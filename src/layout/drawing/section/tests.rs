@@ -17,6 +17,65 @@ fn a_plane_spans_the_view_and_names_its_ends() {
 }
 
 #[test]
+fn a_planes_thick_ends_stand_past_the_geometry() {
+    // The ISO anatomy [SPEC 15.8]: the chain line crosses the view and
+    // overhangs it, and the thick end strokes sit **just past** each end —
+    // clear of the outline, never on it. Both lengths are baked sheet
+    // constants: a plane crosses what it cuts, so the packer's `clearance`
+    // never moves it.
+    use crate::layout::drawing::section::plane::PLANE_END;
+    use crate::ledger::consts::{PLANE_OVERHANG, PLANE_THICK_END};
+
+    let span = |clearance: f64| {
+        let l = laid(&format!(
+            "{{ layout: drawing; density: 1; clearance: {clearance} }}\n             |rect#plate| {{ width: 120; height: 40 }}\n|plane#a| \"A\" {{ at: 0 }}\n",
+        ));
+        let plate = by_id(&l.nodes, "plate").bbox.max_y;
+        let cp = by_id(&l.nodes, "a");
+        let line = ends(cp);
+        let thick: Vec<(f64, f64)> = cp
+            .children
+            .iter()
+            .filter(|c| c.type_chain.iter().any(|t| t == PLANE_END))
+            .map(ends)
+            .collect();
+        (plate, line, thick)
+    };
+
+    let (plate, line, thick) = span(4.0);
+    assert!(
+        (line.1 - (plate + PLANE_OVERHANG + PLANE_THICK_END)).abs() < 0.01,
+        "the line overhangs the geometry by the stand-off and the end: {line:?} past {plate}"
+    );
+    assert_eq!(thick.len(), 2, "one thick end per end: {thick:?}");
+    for (near, far) in &thick {
+        let (inner, outer) = (near.abs().min(far.abs()), near.abs().max(far.abs()));
+        assert!(
+            (inner - (plate + PLANE_OVERHANG)).abs() < 0.01 && (outer - line.1).abs() < 0.01,
+            "the end stroke stands entirely past the outline: {inner}..{outer} vs {plate}"
+        );
+    }
+    // `clearance` packs annotation rows [SPEC 15.6]; the plane's anatomy is
+    // sheet-space chrome and does not read it.
+    assert_eq!(span(50.0).1, line, "the line is clearance-independent");
+    assert_eq!(span(200.0).2, thick, "so are its ends");
+}
+
+/// A placed `|plane|` piece's two `points:` stations along the line — the
+/// signed y of its ends (the test's planes all run vertically).
+#[cfg(test)]
+fn ends(n: &crate::layout::PlacedNode) -> (f64, f64) {
+    let Some(crate::resolve::ResolvedValue::List(pts)) = n.attrs.get("points") else {
+        panic!("a plane piece carries its points");
+    };
+    let y = |v: &crate::resolve::ResolvedValue| match v {
+        crate::resolve::ResolvedValue::Tuple(xy) => xy[1].as_number().expect("a number"),
+        _ => panic!("a point is a pair"),
+    };
+    (y(&pts[0]), y(&pts[1]))
+}
+
+#[test]
 fn at_off_the_model_errors() {
     assert_eq!(
         layout_err(

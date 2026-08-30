@@ -1393,11 +1393,13 @@ cannot size to its content, so these stand in for `auto`.
 The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
 ```
-dim clearance 4 (the drawing scope's link default)
+dim clearance 5 (the drawing scope's link default)
 dim-ext-gap 3    dim-ext-overshoot 3     halo-margin 2
 dim-arrow 12 × 4      datum-triangle 11   note-offset 14   note-landing 8
 hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
 center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 12
+plane-overhang 6 (then the 10 thick end, standing in it)   plane-arrow-shaft 13
+plane-letter-gap 7   plane-letter 12
 ```
 
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
@@ -2318,8 +2320,11 @@ units**; three settings turn them into pixels and paper:
   mate, or title reads it.
 
 The engine's pixels-per-unit is always **derived** — `ratio × unit-in-mm × density`
-— never authored; desugar folds the three into that one number, so `lini desugar`
-shows it ([SPEC 19](#19-compile-pipeline)). Draw a 300 mm bar as `right(300)` at
+— never authored. Desugar folds the two it owns, `unit:` and `density:`, into the
+scope's internal **`px-per-unit:`** — its pixels per unit *at ratio 1*, so
+`lini desugar` shows it ([SPEC 19](#19-compile-pipeline)); the ratio is an ordinary
+cascading property and multiplies it once, at layout, so a `scale:` from any tier
+(or from an ancestor) reaches the view. Draw a 300 mm bar as `right(300)` at
 the defaults and it renders 1200 px wide while every dimension still reads `300` —
 **measured values are always pre-scale**; an absurd rendered extent draws a hint
 naming the likely `scale:` fix ([SPEC 21](#21-errors)).
@@ -3814,7 +3819,7 @@ text props. Its own properties:
 
 | Property | Value | Default | Notes |
 |---|---|---|---|
-| `clearance` | number | 16 (a drawing's dimensions: 4; a schematic scope: 10) | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
+| `clearance` | number | 16 (a drawing's dimensions: 5; a schematic scope: 10) | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
 | `routing` | `orthogonal` · `natural` · `straight` | `orthogonal` | wiring strategy; scene config, cascades ([ROUTING.md](ROUTING.md)). |
 | `along` | fraction list | auto | label positions along the route. |
 | `marker` · `marker-start` · `marker-end` | marker | from the operator | endpoint glyphs ([SPEC 7](#7-nodes)). |
@@ -3994,8 +3999,9 @@ shadowing a built-in) surface here. What becomes explicit:
   instance.
 - *Scene config:* the scene defaults (`layout`, `padding`, `gap`, `font-size`,
   `clearance`, `routing`, `density`) settle on the root; a drawing (or
-  floorplan) scope's `scale:` (the ratio) × `unit:` × the root `density:` fold
-  into its one internal px-per-unit, and a floorplan scope's `unit:` is stamped
+  floorplan) scope's `unit:` × the root `density:` fold into its one internal
+  px-per-unit — its pixels per drawing unit at ratio 1, which the cascading
+  `scale:` multiplies at layout — and a floorplan scope's `unit:` is stamped
   for its types' mm defaults to convert through where each is read
   ([SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 15.11](#1511-floorplan--the-architectural-dialect)).
 - *Statements:* the per-type smart label (text / caption / symbol / link label /
@@ -4786,11 +4792,8 @@ stays black-on-white.)
 
 ## 25. Examples
 
-One worked example per family; the full per-feature gallery is the repo's
-`samples/` directory (one tested `.lini` file per feature — tables and entities,
-gradients, icons, every chart kind, the drawing set — tie bar with `break:`,
-bushing section, mated pump assembly, patterns, details, sheets — and a floorplan
-studio).
+One worked example per family; the full per-feature gallery is the reference
+implementation's `samples/` directory — one tested file per feature cluster.
 
 **A scene — grid, defines, groups, nested links:**
 

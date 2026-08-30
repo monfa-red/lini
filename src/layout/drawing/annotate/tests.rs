@@ -103,10 +103,10 @@ fn aligned_dims_pack_through_the_one_row_packer() {
     let o = |x: f64, y: f64| -(0.6 * x + 0.8 * y);
     let one = laid(&format!("{base}{dim}"));
     let (x, y, rot) = text_at(&one.nodes, "50");
-    // Bare stand-off: clearance (4) + arrow spread (2) to the line, the text
-    // centre lifted fs/2 + 2 above it — 14 out from the span.
+    // Bare stand-off: clearance + arrow spread (2) to the line, the text
+    // centre lifted fs/2 + 2 above it — clearance + 10 out from the span.
     assert!(
-        (o(x, y) - 14.0).abs() < 0.75,
+        (o(x, y) - (DIM_CLEARANCE + 10.0)).abs() < 0.75,
         "bare aligned seat: {}",
         o(x, y)
     );

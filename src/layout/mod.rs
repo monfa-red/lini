@@ -82,10 +82,13 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
         return finish(program, top_nodes, bbox, routed);
     }
 
-    let ctx = Ctx {
-        scale: effective_scale(&program.scene.attrs, 1.0, Span::empty())?,
-        drawing: false,
-    };
+    let ctx = effective_scale(
+        &program.scene.attrs,
+        NodeKind::Block,
+        &[],
+        Ctx::sheet(),
+        Span::empty(),
+    )?;
 
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
@@ -195,7 +198,14 @@ fn projection_line(w: &crate::resolve::ResolvedLink, a: (f64, f64), b: (f64, f64
 /// interiors are sheet-space.
 #[derive(Clone, Copy)]
 pub(crate) struct Ctx {
+    /// The multiplier itself — pixels per drawing unit, `base × ratio`, set
+    /// only by [`effective_scale`] so the three can never drift.
     pub scale: f64,
+    /// The enclosing scope's pixels per drawing unit **at ratio 1** — the
+    /// desugar-folded `unit:` × `density:` [SPEC 15.1]; 1 off a drawing.
+    pub base: f64,
+    /// The drafting ratio in force, nearest ancestor wins [SPEC 15.1].
+    pub ratio: f64,
     pub drawing: bool,
 }
 
@@ -203,6 +213,8 @@ impl Ctx {
     pub(crate) fn sheet() -> Self {
         Ctx {
             scale: 1.0,
+            base: 1.0,
+            ratio: 1.0,
             drawing: false,
         }
     }
@@ -244,25 +256,44 @@ pub(crate) fn stamp_line_align(child: &mut PlacedNode, align: LineAlign) {
     }
 }
 
-/// A node's effective multiplier: the desugar-folded `px-per-unit:` when
-/// present (a drawing scope / page — ratio × unit × density, [SPEC 15.1/18]),
-/// else its own `scale:` (sheet chrome pins 1), else the inherited one.
+/// A node's own **base** and **ratio** [SPEC 15.1], descended from its
+/// parent's — the pair whose product is its effective multiplier, pixels per
+/// drawing unit ([`Ctx::scale`]).
+///
+/// The base is the desugar-folded `px-per-unit:` where the node opens a scope
+/// (a drawing / floorplan, or a `|page|`'s paper millimetres — `unit:` × the
+/// root `density:`), **1** where the node is sheet content (an annotation
+/// draws in sheet space [SPEC 15.10], whatever ratio the view around it
+/// drafts at), else the enclosing scope's. The ratio is the node's own
+/// `scale:` — wherever the cascade found it — else the nearest ancestor's,
+/// which is what makes `scale:` the ordinary node property [SPEC 15.1] calls
+/// it: an element rule, an id rule and an ancestor's block reach a drawing
+/// exactly as its own block does. `drawing` is the caller's own seal test and
+/// rides through untouched.
 pub(crate) fn effective_scale(
     attrs: &crate::resolve::AttrMap,
-    inherited: f64,
+    kind: NodeKind,
+    type_chain: &[String],
+    ctx: Ctx,
     span: Span,
-) -> Result<f64, Error> {
-    let own = match attrs.get("px-per-unit") {
-        Some(v) => Some(v),
-        None => attrs.get("scale"),
-    };
-    match own {
-        None => Ok(inherited),
+) -> Result<Ctx, Error> {
+    let stamp = attrs.number("px-per-unit");
+    let sheet = stamp.is_none() && drawing::is_sheet(kind, type_chain);
+    let base = stamp.unwrap_or(if sheet { 1.0 } else { ctx.base });
+    let inherited = if sheet { 1.0 } else { ctx.ratio };
+    let ratio = match attrs.get("scale") {
+        None => inherited,
         Some(v) => match v.as_number() {
-            Some(s) if s > 0.0 => Ok(s),
-            _ => Err(Error::at(span, "'scale' must be > 0")),
+            Some(r) if r > 0.0 => r,
+            _ => return Err(Error::at(span, "'scale' must be > 0")),
         },
-    }
+    };
+    Ok(Ctx {
+        scale: base * ratio,
+        base,
+        ratio,
+        ..ctx
+    })
 }
 
 /// The attrs of the container at `scope` (`""` = the scene root) — shared by
@@ -476,7 +507,8 @@ fn layout_inst(
     if let Some(mut placed) = engine {
         mirror::expand(&mut placed)?;
         if placed.attrs.get("pattern").is_some() {
-            let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
+            let own =
+                effective_scale(&inst.attrs, inst.kind, &inst.type_chain, ctx, inst.span)?.scale;
             pattern::expand(&mut placed, own)?;
         }
         return Ok(placed);
@@ -500,7 +532,8 @@ fn layout_inst(
         return drawing::symbols::layout_node(inst, ty, path, program);
     }
 
-    let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
+    let scaled = effective_scale(&inst.attrs, inst.kind, &inst.type_chain, ctx, inst.span)?;
+    let own = scaled.scale;
     // In a drawing scope a shape's `[ ]` children are its **features** — they
     // datum-place at the part's origin, rigid with it [SPEC 15.4]; a child that
     // owns a layout — or is sheet content (a note, the title) — arranges its
@@ -509,11 +542,11 @@ fn layout_inst(
         && !owns_layout(inst.kind, &inst.type_chain, &inst.attrs)
         && !drawing::is_sheet(inst.kind, &inst.type_chain);
     let child_ctx = Ctx {
-        scale: own,
         // A **bundle** — a layout-owning wrapper of sheet content — stays in
         // the drawing scope [SPEC 15.5]: its drafting children lower here,
         // and the seat moves it whole.
         drawing: part || (ctx.drawing && drawing::is_bundle(inst)),
+        ..scaled
     };
 
     // Recurse into children first.

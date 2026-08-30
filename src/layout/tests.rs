@@ -623,6 +623,28 @@ fn scale_inherits_nearest_ancestor_wins() {
 }
 
 #[test]
+fn a_drawing_reads_its_ratio_wherever_the_cascade_found_it() {
+    // `scale:` is an ordinary node property, nearest ancestor wins
+    // [SPEC 15.1]: an ancestor's block and an element rule reach the view
+    // exactly as its own block does. The desugar fold hands the engine the
+    // scope's **base** — `unit:` × `density:` — and the ratio multiplies it
+    // once, here, whichever tier of the cascade carried it.
+    let geom = "[ |sketch#a| { draw: move(0, 0) right(100) down(50) left(100) close() } ]\n";
+    let w = |src: &str| lay_out(src).nodes[0].bbox.w();
+    let plain = w(&format!("|drawing#d| {geom}"));
+    assert!((plain - 402.0).abs() < 0.01, "1 : 1 at density 4: {plain}");
+    for src in [
+        format!("|drawing#d| {{ scale: 0.5 }} {geom}"),
+        format!("{{ scale: 0.5 }}\n|drawing#d| {geom}"),
+        format!("{{ |drawing| {{ scale: 0.5 }} }}\n|drawing#d| {geom}"),
+        format!("{{ #d {{ scale: 0.5 }} }}\n|drawing#d| {geom}"),
+    ] {
+        let half = w(&src);
+        assert!((half - 202.0).abs() < 0.01, "1 : 2 — {half} from {src}");
+    }
+}
+
+#[test]
 fn translate_scales_by_the_parent() {
     // A column flow (stated — the default is `row` [SPEC 11]) puts no advance on
     // x, so the x offset between the boxes is the translate alone, in drawing

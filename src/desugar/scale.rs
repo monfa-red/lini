@@ -79,7 +79,7 @@ pub(super) fn fold(
         thickness: read_thickness(user_root),
     };
     if root_drawing {
-        stamp(user_root, &ctx, Span::empty())?;
+        stamp(user_root, &ctx);
     }
     for c in instances.iter_mut() {
         walk(c, &ctx)?;
@@ -117,10 +117,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
         if let Some(t) = read_thickness(&n.style) {
             ctx.thickness = Some(t);
         }
-        stamp(&mut n.style, &ctx, n.span)?;
-    } else if ctx.in_drawing && decl_of(&n.style, "scale").is_some() {
-        // A node-level ratio override inside a drawing scope [SPEC 15.1].
-        stamp(&mut n.style, &ctx, n.span)?;
+        stamp(&mut n.style, &ctx);
     }
     if ctx.in_drawing {
         stamp_wall_thickness(&mut n.style, &ctx, &chain, n.span);
@@ -133,25 +130,16 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     Ok(())
 }
 
-/// Replace any prior stamp and push `px-per-unit = ratio × unit-mm × density`.
-/// A `(…)` ratio stays symbolic — resolve folds it — multiplied by the base.
-fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx, span: Span) -> Result<(), Error> {
+/// Replace any prior stamp and push the scope's `px-per-unit = unit-mm ×
+/// density` — its pixels per drawing unit **at ratio 1**. The drafting ratio
+/// is not folded in: `scale:` is an ordinary node property and the cascade
+/// owns it ([SPEC 15.1] — an element or id rule reaches a drawing exactly as
+/// its own block does, and a node states it against its scope's stamp), so it
+/// multiplies once, where the engine reads the pair
+/// ([`crate::layout::effective_scale`]).
+fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx) {
     style.retain(|d| d.name != PX_PER_UNIT);
-    let base = ctx.unit_mm * ctx.density;
-    let decl = match decl_of(style, "scale") {
-        None => number_decl(base, span),
-        Some(d) => match d.single() {
-            Some(Value::Number(r)) if *r > 0.0 => number_decl(r * base, d.span),
-            Some(Value::Expr(src)) => Decl {
-                name: PX_PER_UNIT.into(),
-                groups: vec![vec![Value::Expr(format!("({src}) * {base}"))]],
-                span: d.span,
-            },
-            _ => return Err(Error::at(d.span, "'scale' must be > 0")),
-        },
-    };
-    style.push(decl);
-    Ok(())
+    style.push(number_decl(ctx.unit_mm * ctx.density, Span::empty()));
 }
 
 /// **The** physical-millimetre → drawing-unit conversion [SPEC 15.11]: a

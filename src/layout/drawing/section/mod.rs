@@ -116,11 +116,12 @@ pub(in crate::layout) fn layout_detail(
     inst: &ResolvedInst,
     path: &str,
     program: &Program,
-    own: f64,
+    scaled: Ctx,
     marker: &ResolvedInst,
     host: &ResolvedInst,
     letter: &str,
 ) -> Result<Vec<PlacedNode>, Error> {
+    let own = scaled.scale;
     let center =
         super::super::anchors::translate(&marker.attrs, marker.span)?.unwrap_or((0.0, 0.0));
     let diameter = marker.attrs.number("width").ok_or_else(|| {
@@ -133,8 +134,8 @@ pub(in crate::layout) fn layout_detail(
     // re-entrant, a different scale the whole trick — then shift the region
     // centre onto the datum.
     let ctx = Ctx {
-        scale: own,
         drawing: true,
+        ..scaled
     };
     let mut clones = Vec::new();
     for c in host.children.iter().filter(|c| is_relaid_geometry(c)) {
@@ -164,12 +165,9 @@ pub(in crate::layout) fn layout_detail(
     for c in &inst.children {
         own_kids.push(layout_inst(c, &child_path(path, c), program, ctx)?);
     }
-    fill_of_title(
-        &mut own_kids,
-        "detail",
-        letter,
-        inst.attrs.number("scale").unwrap_or(1.0),
-    );
+    // The title reads the view's **effective** ratio [SPEC 15.8/15.1] — the
+    // one the engine drew at, wherever the cascade found it.
+    fill_of_title(&mut own_kids, "detail", letter, scaled.ratio);
 
     let mut kids = vec![clip_group, boundary_circle(marker, r)];
     kids.append(&mut annotations);

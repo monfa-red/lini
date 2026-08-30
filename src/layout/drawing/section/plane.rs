@@ -95,17 +95,22 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
         ));
     }
 
-    // The chain line spans the geometry across the axis, plus the overhang.
+    // The chain line spans the geometry across the axis, plus the overhang —
+    // the sheet stand-off past the outline (`PLANE_OVERHANG`) *and* the thick
+    // end stroke that stands in it, so the ends read past the geometry rather
+    // than on it [SPEC 15.8]. Both are baked sheet constants, like the centre
+    // mark's overhang: a plane crosses what it cuts, so it stands off nothing
+    // and the packer's `clearance` has no say in its anatomy.
     let (mut lo, mut hi) = project(geo, line_dir);
     lo -= PLANE_OVERHANG;
     hi += PLANE_OVERHANG;
     let at = |t: f64| (axis.0 * s + line_dir.0 * t, axis.1 * s + line_dir.1 * t);
-    let (a, b) = (at(lo), at(hi));
+    let (a, b) = (at(lo - PLANE_THICK_END), at(hi + PLANE_THICK_END));
     set_points(cp, a, b);
 
     let paint = Paint::of(&cp.attrs);
     let mut pieces = Vec::new();
-    // Thick end strokes, into the line from each end.
+    // Thick end strokes, from each end back to where the overhang begins.
     pieces.push(thick_end(
         cp,
         a,

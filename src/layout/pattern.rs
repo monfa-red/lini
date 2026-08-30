@@ -158,7 +158,11 @@ pub(super) fn carry(placed: &mut PlacedNode, places: &[Placement], level: Vec<Pl
     let bbox = carrier_bbox(&copies);
 
     // The carrier: identity + position, no paint of its own (inline `none`
-    // beats the type's class rule, so the union box never draws).
+    // beats the type's class rule, so the union box never draws). `opacity`
+    // joins fill and stroke here: the copies wear the node's fade, and a
+    // carrier that fades too would multiply it over them — one node, one fade
+    // [SPEC 5]. `1` rather than a removal, for the same reason `none` is: a
+    // class rule reaches the carrier whatever its attrs say.
     placed.children = copies;
     placed.bbox = bbox;
     placed.markers = Default::default();
@@ -174,6 +178,8 @@ pub(super) fn carry(placed: &mut PlacedNode, places: &[Placement], level: Vec<Pl
     placed
         .attrs
         .insert("stroke-width", ResolvedValue::Number(0.0));
+    placed.attrs.insert("opacity", ResolvedValue::Number(1.0));
+    placed.attrs.remove("shadow");
     placed.attrs.remove("path");
     placed.attrs.remove("points");
 }

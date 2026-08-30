@@ -6,10 +6,10 @@
 // never scaled by the view.
 /// The drawing scope's `clearance` default for its dimensions [SPEC 15.6] —
 /// pushed into the link base beside the thin stroke, below every user rule.
-/// Row offsets derive from painted bounds + clearance; 4 stands a first
-/// bottom row's value text 4 off the geometry, which puts its dim line at
-/// the old fixed offset (text reach 14 + 4 = 18) — the visual anchor.
-pub(crate) const DIM_CLEARANCE: f64 = 4.0;
+/// Row offsets derive from painted bounds + clearance; 5 stands a first
+/// bottom row's value text 5 off the geometry — a quarter more air than the
+/// 4 this started at, which drafted too cramped by eye.
+pub(crate) const DIM_CLEARANCE: f64 = 5.0;
 pub(crate) const EXT_GAP: f64 = 3.0;
 pub(crate) const EXT_OVERSHOOT: f64 = 3.0;
 /// The drafting-slender arrow, 3 : 1 [SPEC 15.6] — length × half-width, at

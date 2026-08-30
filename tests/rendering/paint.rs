@@ -338,3 +338,40 @@ fn a_drawings_drafting_symbols_emit_no_inline_style() {
     );
     assert!(!svg.contains("style=\""), "no inline style: {svg}");
 }
+
+#[test]
+fn a_patterned_node_fades_once() {
+    // `opacity` fades a node whole [SPEC 5], and a pattern's carrier paints
+    // nothing of its own [SPEC 15.4] — the copies wear the fade, the carrier
+    // neutralises it, so `0.5` never composites to `0.25`. Its fill, stroke
+    // and shadow are neutralised the same way.
+    let one = render_live(
+        "|sketch#a| { draw: move(0,0) right(40) down(40) left(40) close(); fill: red; opacity: 0.5 }\n",
+    );
+    assert_eq!(one.matches("opacity: 0.5").count(), 1, "{one}");
+
+    let many = render_live(
+        "|sketch#a| { draw: move(0,0) right(40) down(40) left(40) close(); fill: red; opacity: 0.5; pattern: grid(2, 1, 60, 0) }\n",
+    );
+    assert_eq!(
+        many.matches("opacity: 0.5").count(),
+        2,
+        "one fade per copy, none on the carrier: {many}"
+    );
+    assert!(
+        many.contains("stroke-width: 0; opacity: 1"),
+        "the carrier states the fade it does not apply, beside the paint it does not draw: {many}"
+    );
+
+    // The same law through the class path — a rule reaches the carrier
+    // whatever its attrs say, so the carrier states the diff.
+    let worn = render_live(
+        "{ .faded { opacity: 0.5; shadow: 2 2 3 } }\n|sketch#a| .faded { draw: move(0,0) right(40) down(40) left(40) close(); pattern: grid(2, 1, 60, 0) }\n",
+    );
+    assert_eq!(worn.matches("opacity: 1").count(), 1, "{worn}");
+    assert_eq!(
+        worn.matches("<g filter=").count(),
+        2,
+        "one shadow per copy, none on the carrier: {worn}"
+    );
+}

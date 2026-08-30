@@ -21,7 +21,8 @@ pub(in crate::layout) fn layout_node(
     program: &Program,
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
-    let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
+    let scaled = effective_scale(&inst.attrs, inst.kind, &inst.type_chain, ctx, inst.span)?;
+    let own = scaled.scale;
     // `of:` sources the view from a marker [SPEC 15.8]. A `|magnifier|` re-lays
     // the geometry it rings — a detail (a 2D re-render). A `|plane|` only names
     // the cut: the section face is authored here, and the marker composes the
@@ -31,18 +32,18 @@ pub(in crate::layout) fn layout_node(
             marker,
             host,
             letter,
-        }) => super::section::layout_detail(inst, path, program, own, marker, host, &letter)?,
+        }) => super::section::layout_detail(inst, path, program, scaled, marker, host, &letter)?,
         of => {
             let mut c = lay_out(
                 &inst.children,
                 path,
                 program,
-                own,
+                scaled,
                 inst.span,
                 Some(inst.span),
             )?;
             if let Some(super::section::OfView::Section { letter }) = of {
-                super::section::fill_of_title(&mut c, "section", &letter, ratio_of(&inst.attrs));
+                super::section::fill_of_title(&mut c, "section", &letter, scaled.ratio);
             }
             c
         }
@@ -73,8 +74,21 @@ pub(in crate::layout) fn layout_node(
 /// A **root** drawing (`{ layout: drawing; density: 1 }`): the file is the sheet. Children
 /// stay in scene coordinates — the root's padding frames them in `finish`.
 pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
-    let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
-    let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty(), None)?;
+    let scaled = effective_scale(
+        &program.scene.attrs,
+        crate::resolve::NodeKind::Block,
+        &[],
+        Ctx::sheet(),
+        Span::empty(),
+    )?;
+    let mut children = lay_out(
+        &program.scene.nodes,
+        "",
+        program,
+        scaled,
+        Span::empty(),
+        None,
+    )?;
     let extent = flow_extent(&children);
     anchors::place_pinned(&mut children, extent)?;
     Ok((children, extent))
@@ -90,13 +104,14 @@ fn lay_out(
     insts: &[ResolvedInst],
     path: &str,
     program: &Program,
-    own: f64,
+    scaled: Ctx,
     span: Span,
     owner: Option<Span>,
 ) -> Result<Vec<PlacedNode>, Error> {
+    let own = scaled.scale;
     let ctx = Ctx {
-        scale: own,
         drawing: true,
+        ..scaled
     };
     let mut kids = Vec::with_capacity(insts.len());
     for c in insts {
@@ -140,13 +155,6 @@ fn lay_out(
     let mut lowered = annotate::lower(&kids, &annotations, path, own, None, &seated, program)?;
     kids.append(&mut lowered);
     Ok(kids)
-}
-
-/// The view's drafting **ratio** — the authored `scale:` (default 1), read
-/// for the composed section / detail titles [SPEC 15.8]. The engine's
-/// multiplier is the folded `px-per-unit:` [SPEC 15.1], not this.
-fn ratio_of(attrs: &crate::resolve::AttrMap) -> f64 {
-    attrs.number("scale").unwrap_or(1.0)
 }
 
 /// The drawn extent of the in-flow children (pinned overlays never grow their

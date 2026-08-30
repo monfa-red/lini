@@ -163,19 +163,19 @@ fn every_sample_is_a_byte_identical_desugar_fixed_point() {
 
 #[test]
 fn the_scale_fold_stamps_px_per_unit() {
-    // ratio × unit-mm × density → the engine's one internal number [SPEC 15.1/18].
+    // unit-mm × density → the scope's pixels per drawing unit at ratio 1
+    // [SPEC 15.1/18]. The drafting ratio is *not* folded in: `scale:` is an
+    // ordinary node property, so the cascade owns it and the engine
+    // multiplies the pair once.
     let out = desugar_source("{ layout: drawing }\n|rect#r| { width: 10; height: 5 }\n").unwrap();
-    assert!(out.contains("px-per-unit: 4"), "defaults 1 × mm × 4: {out}");
+    assert!(out.contains("px-per-unit: 4"), "defaults mm × 4: {out}");
 
     let out = desugar_source(
         "{ density: 8; }\n|drawing#v| { scale: 2; unit: cm; } [ |rect#r| { width: 4; height: 2 } ]\n",
     )
     .unwrap();
-    assert!(
-        out.contains("px-per-unit: 160"),
-        "2 × 10 mm × 8 px/mm: {out}"
-    );
-    // The authored ratio stays visible beside the fold — titles read it.
+    assert!(out.contains("px-per-unit: 80"), "10 mm × 8 px/mm: {out}");
+    // The ratio stays where it was authored — the cascade's to deliver.
     assert!(out.contains("scale: 2"), "{out}");
 }
 
@@ -193,19 +193,27 @@ fn an_explicit_layout_drawing_opens_a_scope_it_does_not_seal() {
     // the seal reads, so it must not seal the scope against its own children —
     // `|group| { layout: drawing }` folds a child's `scale:` exactly as
     // `|drawing|` does.
-    let explicit =
-        desugar_source("|group#v| { layout: drawing } [ |rect#r| { scale: 2; width: 4 } ]\n")
-            .unwrap();
+    let plane = "|plane#a| \"A\" { at: 0 }\n";
+    let explicit = desugar_source(&format!(
+        "|group#v| {{ layout: drawing }} [ |rect#r| {{ width: 4 }}\n{plane} ]\n"
+    ))
+    .unwrap();
+    assert!(explicit.contains("px-per-unit: 4"), "mm × 4: {explicit}");
     assert!(
-        explicit.contains("px-per-unit: 8"),
-        "2 × mm × 4: {explicit}"
+        explicit.contains("chrome: plane"),
+        "the scope reaches its own children: {explicit}"
     );
-    let typed = desugar_source("|drawing#v| [ |rect#r| { scale: 2; width: 4 } ]\n").unwrap();
-    assert!(typed.contains("px-per-unit: 8"), "{typed}");
+    let typed = desugar_source(&format!(
+        "|drawing#v| [ |rect#r| {{ width: 4 }}\n{plane} ]\n"
+    ))
+    .unwrap();
+    assert!(typed.contains("chrome: plane"), "{typed}");
     // A child that owns a layout of its own still seals the inherited scope.
-    let sealed =
-        desugar_source("|drawing#v| [ |row#r| [ |rect#q| { scale: 2; width: 4 } ] ]\n").unwrap();
-    assert!(!sealed.contains("px-per-unit: 8"), "{sealed}");
+    let sealed = desugar_source(&format!(
+        "|drawing#v| [ |row#r| [ |rect#q| {{ width: 4 }}\n{plane} ] ]\n"
+    ))
+    .unwrap();
+    assert!(!sealed.contains("chrome: plane"), "{sealed}");
 }
 
 #[test]
@@ -888,13 +896,14 @@ fn a_floorplan_lowers_as_a_drawing_in_another_vocabulary() {
     // internal `wall-thickness:`, 200 mm through the scope's unit (mm here),
     // stamped where the scale fold knows the unit [SPEC 15.11].
     assert!(out.contains("wall-thickness: 200;"), "{out}");
-    // The scale fold reaches a floorplan scope: 1:50 in metres at density 4.
+    // The scale fold reaches a floorplan scope: metres at density 4 — the
+    // base; the 1:50 ratio rides `scale:` and multiplies it at layout.
     let root = desugar_source(
         "{ layout: floorplan; unit: m; scale: 0.02 }\n\
          |wall#w| { draw: move(0, 0) right(7.2):north; }\n",
     )
     .unwrap();
-    assert!(root.contains("px-per-unit: 80;"), "{root}");
+    assert!(root.contains("px-per-unit: 4000;"), "{root}");
     assert!(
         root.contains("wall-thickness: 0.2;"),
         "200 mm reads 0.2 drawing units at unit: m — {root}"
