@@ -1,77 +1,125 @@
-// Sourced views [SPEC 15.8] on an A3 sheet: the front view carries the A–A
-// cutting plane and a detail ring; `|drawing| { of: a }` authors the section
-// (hatched walls, the bore reading between them, a cross-drilled drain whose
-// dimension and leader **break** where they cross the hatched wall — the
-// crossing halos [SPEC 15.7]). `mirror:` reflects the walls **and their
-// features** [SPEC 15.3]: the drain lands in both, `2×` on its reading, while
-// the single bleed vent declines with `mirror: none`. `|drawing| { of: c }`
-// re-renders the
-// ringed port clipped to the circle, titled "C (3:1)" by composition — its
-// own drafting ratio, `scale: 3`. The tapped bush shows an internal thread
-// [SPEC 15.3]: the bore drawn as an inner even-odd subpath, the thin line at
-// the major out by 0.5413 × pitch, the bare leader composing `M12×2`.
+// Sourced views [SPEC 15.8] on an ISO 5457 A3 sheet: the front view carries the
+// A–A cutting plane and a detail ring; `|drawing| { of: a }` authors the section
+// and `{ of: c }` re-renders the ringed corner clipped to the circle at its own
+// ratio. A full section is a **cut solid**, not a slice: the hatched faces are
+// the material the plane cuts, and the edges **beyond** the plane — the far wall
+// of the circlip groove, the chamber floor's rim, the bore's exit, the port's
+// mouth — are authored at geometry weight behind them (Lini is 2D, so what
+// stands behind the cut is drawn, like the cut itself). `mirror:` reflects the
+// wall **and its features** [SPEC 15.3]: the coolant drilling lands in both,
+// `2×` on its reading, while the bleed vent declines with `mirror: none`.
+// A broken-out section at the right port cuts to its tapped bore, where
+// `thread:`'s sense flips [SPEC 15.3]: on an **inner** (even-odd hole)
+// subpath the run is the drilled minor and the thin line marks the **major**,
+// out by 0.5413 × pitch — outside the drawn bore, not in — and the bare
+// leader composes `M24×1.5` from the geometry. Adjacent parts hatch opposite
+// ways, a `|hole|`'s `thread:` draws the round view's ¾ arc, annotation
+// linework halos where it crosses geometry [SPEC 15.7], and the
+// `|title-block|`'s ISO 7200 field properties seat themselves in the frame's
+// corner.
 {
   |steel::sketch| { fill: hatch(45, 5); }
+  |bronze::sketch| { fill: hatch(-45, 4); }
 }
 
-|page#sheet| { sheet: a3 landscape; gap: 14; align: origin; } [
+|page#sheet| { sheet: a3 landscape; gap: 28; align: origin; } [
 
-  |drawing#front| "COOLING RING" { scale: 1; } [
-    |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }
-    |oval#bore| { width: 34; height: 34; fill: --bg; stroke: --stroke-dark; }
-    |oval#port| {
-      width: 8; height: 8; fill: --bg; stroke: --stroke-dark; pattern: radial(6, 28);
+  |drawing#front| "PUMP BODY" { scale: 1; } [
+    |sketch#body| {
+      draw: move(-62, 0) up(52) fillet(12) right(124) fillet(12):c1 down(104)
+            fillet(12) left(124) fillet(12) up(52) close();
+      fill: none;
+    } [
+      |hole#bolt| {
+        width: 8; translate: -46 -36; pattern: grid(2, 2, 92, 72); thread: 1.25;
+      }
+      // the cover's four tapped holes — the round view's ¾ thread arc
+    ]
+    |oval#chamber| { width: 64; height: 64; fill: --bg; stroke: --stroke-dark; }
+    |oval#seat| { width: 28; height: 28; fill: --bg; stroke: --stroke-dark; }
+    |oval#shaft| { width: 20; height: 20; fill: --bg; stroke: --stroke-dark; }
+    |hidden#drill| {
+      draw: move(-62, -11.19) right(32.02)
+            move(-62, 11.19) right(32.02);
+    }
+    // the left port's tap drill, hidden in the flange — its twin is broken out
+    |steel#port| {
+      draw: move(62, -22) left(38.76) fillet(3) arc(6.74, 10.81, 32) fillet(3)
+            right(32.02):m24 close();
+      // the port wall in local section: the chamber arc, the drilled ⌀22.38,
+      // the flange face — and a filleted cut boundary between them
+      revolve: x-axis;
+      // a bore of revolution about the port axis
+      thread: m24 1.5;
+      // the bore is an inner subpath, so the thread reads internal
     }
 
     |plane#a| "A" { at: 0; }
-    // a vertical plane, viewing right
-    |magnifier#c| "C" { width: 15; translate: 0 -28; }
-    // a port, ringed for detail
+    // a vertical plane on the chamber axis, viewing right
+    |magnifier#c| "C" { width: 30; translate: 48 -40; }
+    // a corner hole, ringed for detail
 
-    od (o) { side: right; }
-    // ⌀80 — clear of the vertical A–A
-    bore (o) { side: left; }
-    // ⌀34
+    body:left (-) body:right { side: bottom; }
+    // 124 across the flange
+    body:top (-) body:bottom { side: right; }
+    // 104
+    chamber (o) { side: left; }
+    // ⌀64 — the diametral line, its value carried out past the rim
+    port:m24 <- "THRU, 2×" { side: right; }
+    // → M24×1.5 THRU, 2× — the spec composes from the drilled bore and the
+    // pitch, the authored words following it [SPEC 15.3]
+    body.bolt <- "4× M8×1.25, 16 DEEP" { side: bottom; }
   ]
 
   |drawing#sec| { of: a; scale: 1; } [
+    |sketch#beyond| {
+      draw: move(-22, -35) down(70)
+            move(-19, -35) down(70)
+            move(12, -32) down(64)
+            move(26, -10) down(20)
+            move(-6, 0) circle(11.19);
+      fill: none;
+    }
+    // beyond the cutting plane, at geometry weight: the circlip groove's far
+    // wall, the chamber floor's rim, the bore's exit, the port's mouth
+
     |steel#wall| {
-      draw: move(-40, -8) right(23) down(16) left(23) close();
-      // the left ring wall
-      mirror: y-axis;
-      // → both walls (the bore between)
+      draw: move(-26, -52) right(52) down(38) left(14) up(18) left(31) up(3)
+            left(3) down(3) left(4) close();
+      // one wall: the flange, the back wall's leg, the circlip groove
+      mirror: x-axis;
+      // → both walls (the chamber between)
     } [
-      |hole#drain| { width: 4; translate: -28.5 0; }
-      // a cross-drilled drain, mid-wall — off the axis, so the mirror hands
-      // it to both walls: one feature, two copies, '2×' on the reading
-      |hole#vent| { width: 2; translate: -22 -4.5; mirror: none; }
+      |hole#coolant| { width: 6; translate: -8 -42; }
+      // a cross-drilled coolant hole, mid-wall — off the axis, so the mirror
+      // hands it to both walls: one feature, two copies, '2×' on the reading
+      |hole#vent| { width: 4; translate: 16 -42; mirror: none; }
       // a bleed vent drilled in one wall only — it declines the reflection
     ]
-    |centerline| { points: 0 -20, 0 20; }
-    // the revolve axis
+    |bronze#bush| {
+      draw: move(12, -14) right(14) down(4) left(14) close();
+      mirror: x-axis;
+    }
+    // the shaft bush, pressed in — adjacent parts hatch opposite ways
+    |centerline| { points: -34 0, 34 0; }
+    // the chamber axis
 
     wall:left (-) wall:right { side: bottom; }
-    // 80 across
-    wall:left (-) wall.drain { side: top; }
-    // → 11.5 — the drain's extension line breaks
-    // where it crosses the hatched wall [SPEC 15.7]
-    wall.drain (o)
-    // → 2× ⌀4 — the mirror's copies prefix the count; the leader breaks
+    // 52 deep
+    wall:left (-) wall.coolant { side: top; }
+    // → 18 — the extension line breaks where it crosses the hatched
+    // wall [SPEC 15.7]
+    wall.coolant (o)
+    // → 2× ⌀6 — the mirror's copies prefix the count; the leader breaks
     // over the wall's outer edge
   ]
 
-  |drawing#det| { of: c; scale: 3; }
-  // the ringed port, re-laid ×3
-
-  |drawing#bush| "TAPPED BUSH" { scale: 1; } [
-    |steel#body| {
-      draw: move(-15, -12) right(30) down(7.0825) left(30):m12 close();
-      // one wall of the revolved sleeve — the run is the drilled bore
-      revolve: x-axis; thread: m12 2;
-      // internal: the thin line marks the major, out by 0.5413 × pitch
-    }
-    body:m12 <- { side: top; }
-    // → M12×2 — composed from the drilled ⌀9.835 + 2 × 0.5413 × pitch
+  |drawing#det| { of: c; scale: 3; } [
+    body:c1 (o)
+    // → R12 — the detail dimensions the re-laid copy by the id it carries
   ]
 
+  |title-block| {
+    title: "Pump body"; drawing-number: "LN-PMP-24-001"; revision: "B"; sheet-number: "1/1"; date: "2026-08-30"; author: "AM";
+  }
 ]

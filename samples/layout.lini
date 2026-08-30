@@ -1,15 +1,18 @@
 // Positioning & spacing — pin (the 9 named anchor points), translate (a
-// post-placement nudge), and the 1/2/4-value padding & gap forms. Palette colours.
+// post-placement nudge, a tucked badge, exact coordinates), and the 1-, 2- and
+// 4-value padding forms. Palette colours.
 {
-  gap: 24; padding: 24; align: start;
+  direction: column; gap: 24; padding: 24; align: start;
   |dot::block| { font-size: 12; }
+  |chip::box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
+  |pad::box| { fill: --green-soft; stroke: --green-ink; color: --green-ink; }
 }
 
-// pin: lift a child out of flow and centre it on a named point of the parent
+// pin: lift a child out of flow and sit it flush on a named point of the parent
 |group#anchors| { gap: 8; } [
   |caption| "pin"
   |box#pins| {
-    width: 210; height: 150; fill: --sky-wash; stroke: --sky-ink; radius: 8;
+    width: 180; height: 120; fill: --sky-wash; stroke: --sky-ink; radius: 8;
   } [
     |dot| "center" { pin: center; color: --teal-ink; }
     |dot| "TL" { pin: top left; color: --rose-ink; }
@@ -23,15 +26,13 @@
   ]
 ]
 
-// translate: a flow nudge, a tucked-in badge, and exact centre placement
+// translate: a flow nudge that moves nobody, a badge tucked out over its corner,
+// and — with pin: center — exact parent-local coordinates, no size arithmetic
 |group#moves| { gap: 14; } [
   |caption| "translate"
   |row| { gap: 14; align: center; } [
-    |box#a| "A" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
-    |box#b| "nudged" {
-      fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 12;
-    }
-    |box#c| "C" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
+    |chip#a| "A"
+    |chip#b| "nudged" { translate: 0 12; }
   ]
   |box#card| {
     width: 140; height: 74; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink;
@@ -42,19 +43,10 @@
   ]
 ]
 
-// padding & gap take 1-, 2-, or 4-value forms
+// padding takes 1-, 2-, or 4-value forms, and places the content it insets
 |group#spacing| { gap: 10; } [
   |caption| "padding"
-  |box| "scalar" {
-    fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  }
-  |box| "v h" {
-    padding: 4 14; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  }
-  |box| "t r b l" {
-    padding: 2 8 16 24; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  }
-  |box| "radius 12" {
-    radius: 12; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  }
+  |pad| "scalar"
+  |pad| "v h" { padding: 4 14; }
+  |pad| "t r b l" { padding: 2 8 16 24; }
 ]

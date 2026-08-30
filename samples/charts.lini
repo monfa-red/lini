@@ -1,83 +1,70 @@
-// The chart family on one dashboard [SPEC 14]: grouped / stacked / horizontal
-// bars, line curves (linear, smooth, step) with markers and per-point labels,
-// stacked areas, a scatter, bubbles sized by a third value, and the pie pair.
+// Series kinds and per-datum paint [SPEC 14.2, 14.6] — the half of the chart
+// family the hero board doesn't carry: `bars: stacked` laid on its side by
+// `direction: row` and `bars: overlay` stacked front-to-back, `curve: step`
+// against a plain `linear` line with marker-only |dots| scattered over both,
+// an |area| floated on an explicit `baseline:` instead of zero, `fill:` and
+// `stroke:` comma lists pulling one bar and one point out of the walk,
+// `tooltip:` forced on and held back to hover, radial |bars|, the donut's
+// `hole:`.
 {
   layout: grid; columns: repeat(2); gap: 24;
 }
 
-|chart| "Signups" { categories: "Jan", "Feb", "Mar", "Apr", "May"; } [
-  |area| "free" { data: 30, 45, 60, 55, 80; }
-  |area| "paid" { data: 10, 18, 22, 30, 38; }
-]
-
 |chart| "Revenue by region ($k)" {
-  categories: "Q1", "Q2", "Q3", "Q4"; bars: stacked;
+  width: 350; height: 240; direction: row; bars: stacked; categories: "Q1", "Q2", "Q3", "Q4";
 } [
   |bars| "NA" { data: 40, 45, 50, 60; }
   |bars| "EU" { data: 30, 35, 33, 40; }
   |bars| "APAC" { data: 20, 25, 30, 38; }
 ]
 
-|chart| "Deploy time (s)" { categories: "build", "test", "ship"; } [
-  // Per-datum paint [SPEC 14.6]: the slow stage flagged red, the rest auto.
-  |bars| "v1" { data: 96, 154, 41; fill: auto, --red-soft, auto; }
-  |bars| "v2" { data: 63, 117, 38; }
-]
-
-|chart| "Quarterly hires by team" {
-  direction: row; categories: "Engineering", "Sales", "Support", "Ops";
+// Overlay puts v2 in front of v1, so the time saved is the exposed collar; the
+// per-datum `fill:` [SPEC 14.6] flags the stage that didn't get faster, and
+// the deltas ride `labels:` under `tooltip: hover` — read on the point, not
+// printed over the bars.
+|chart| "Deploy time (s)" {
+  width: 350; height: 240; bars: overlay; tooltip: hover; categories: "build", "test", "ship";
 } [
-  |axis#people| "people" { side: bottom; }
-  |bars| "Q1" { data: 12, 8, 5, 3; }
-  |bars| "Q2" { data: 15, 10, 6, 4; }
-  |band| "surge" { range: 10 15; axis: people; fill: --amber; }
-  |mark| "target 10" {
-    at: 10; axis: people; stroke: --rose-deep; stroke-style: dashed;
+  |bars| "v1" { data: 96, 154, 41; }
+  |bars| "v2" {
+    data: 63, 148, 38; fill: auto, --red, auto; labels: "-34%", "-4%", "-7%";
   }
 ]
 
-|chart| "Latency (ms)" { categories: "p50", "p90", "p99", "p999"; } [
-  |line| "v1" {
-    data: 15, 70, 150, 480; marker: circle; labels: "Low", "Medium", "High", "Max";
+// `tooltip: always` forces every account's overpay onto the plot rather than
+// letting the crowded ones fall to hover — the export setting [SPEC 14.8].
+|chart| "Plan price vs. usage ($)" { width: 350; height: 240; tooltip: always; } [
+  |axis| "GB transferred" { side: bottom; range: 0 40; }
+  |axis| "monthly bill" { side: left; }
+  |line| "list price" { data: 0 5, 10 12, 25 30, 40 30; curve: step; }
+  |line| "metered" { data: 0 0, 40 34; curve: linear; }
+  |dots| "accounts" {
+    data: 6 5, 13 12, 19 12, 29 30, 34 30; fill: auto, auto, auto, --red, auto; stroke: auto, auto, auto, --red-ink, auto; labels: "-$0", "+$1", "-$4", "+$5", "+$1";
   }
-  |line| "v2" { data: 12, 40, 100, 300; stroke-style: dashed; marker: circle; }
-  |line| "goal" { data: 10, 30, 60, 150; stroke-style: dotted; }
 ]
 
-|chart| "Active users (k)" {
-  categories: "6h", "9h", "12h", "15h", "18h", "21h";
+// `baseline: 40` floats the fill on the target instead of zero, so a wet month
+// reads as area above the line and a dry one as area below it.
+|chart| "Reservoir level (m)" {
+  width: 350; height: 240; categories: "Apr", "May", "Jun", "Jul", "Aug", "Sep";
 } [
-  |line| "web" { data: 8, 12, 19, 22, 17, 11; curve: smooth; marker: dot; }
+  |axis#m| { side: left; range: 20 60; }
+  |mark| "target" {
+    at: 40; axis: m; stroke: --gray-deep; stroke-style: dashed;
+  }
+  |area| "level" { data: 52, 48, 41, 34, 29, 36; baseline: 40; }
 ]
 
-|chart| "Tier price ($)" { categories: "0", "10", "20", "30"; } [
-  |line| { data: 5, 5, 12, 12; curve: step; }
+|chart| "Goal completion (%)" {
+  width: 350; height: 240; direction: radial; categories: "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun";
+} [
+  |axis| { range: 0 100; step: 50; }
+  |bars| "steps" { data: 80, 65, 90, 70, 95, 40, 55; }
 ]
 
-|chart| "Markets — scatter" [
-  |axis| "growth %" { side: bottom; }
-  |axis| "share %" { side: left; }
-  |dots| { data: 12 40, 25 55, 38 30, 8 22, 30 12; }
-]
-
-|chart| "Markets — bubbles" [
-  |axis| "growth %" { side: bottom; }
-  |axis| "share %" { side: left; }
-  |bubble| "EU" { at: 12 40; value: 8; fill: --teal; }
-  |bubble| "US" { at: 25 55; value: 20; fill: --rose; }
-  |bubble| "APAC" { at: 38 30; value: 14; fill: --sky; }
-  |bubble| "LatAm" { at: 30 15; value: 6; fill: --amber; }
-]
-
-|pie| "Traffic sources" [
-  |slice| "Search" { value: 45; }
-  |slice| "Direct" { value: 25; }
-  |slice| "Social" { value: 18; }
-  |slice| "Referral" { value: 12; }
-]
-
-|pie| "Spend" { hole: 0.5; } [
-  |slice| "Ads" { value: 40; }
-  |slice| "SEO" { value: 30; }
-  |slice| "Direct" { value: 30; }
+|pie| "Storage by class" { width: 350; height: 240; hole: 0.55; } [
+  |slice| "Hot" { value: 38; }
+  |slice| "Warm" { value: 27; }
+  |slice| "Cold" { value: 22; }
+  |slice| "Archive" { value: 13; }
 ]

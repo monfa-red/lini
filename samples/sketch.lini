@@ -1,35 +1,87 @@
-// The sketch pen [SPEC 15.3] in an ordinary flow — profiles, corner modifiers,
-// mirrors, and the drafting line styles, all usable outside a drawing.
+// The sketch pen [SPEC 15.3] drawing Lini's own wordmark: three glyph outlines
+// in one `draw:`, an eyebrow, a dot — every edge an orthogonal run or a
+// circular arc. The tangent `arc(r, deg)` continues the heading and sweeps, so
+// a round cap is 180° at the stroke's half-width and a hook 90° at its radius;
+// the two-point `arc(dx, dy, r)` takes the minor arc between endpoints already
+// known. What repeats states once — `pattern: grid(2, 1, 122, 0)` sets the
+// second eyebrow 122 to the right, `grid(1, 3, 0, 44.333)` stacks the dots.
+// The strip below carries what the wordmark has no use for: corner modifiers,
+// an even-odd bore, both readings of `mirror:`, a cubic, a phantom position.
 {
-  gap: 48; align: center;
+  direction: column; gap: 34; align: center; padding: 26;
+
+  |tile::column| { gap: 10; align: center; }
+  |cap::block| { font-size: 12; color: --muted; }
+  |arm::sketch| {
+    draw: move(-30, 8) right(16) curve(10, 0, 14, -14, 26, -16) right(18);
+    fill: none;
+  }
 }
 
-// Chamfer + fillet + a punched bore (even-odd subpaths).
-|sketch#plate| {
-  draw: move(0, 0) right(60) chamfer(8) down(30) left(60) fillet(8) close()
-        move(20, 15) circle(6);
-}
+|drawing#wordmark| { scale: 0.5; } [
+  // `l`, `n`, `i` — three closed subpaths, one fill.
+  |sketch#glyphs| {
+    draw: move(0, 9) down(97) arc(34, -180) up(25) arc(9, -180) down(25)
+          arc(16, 180) up(97) arc(9, -180) close()
+          move(154, 131) up(25) arc(34, -180) down(25) arc(9, -180) up(25)
+          arc(16, 180) down(25) arc(9, -180) close()
+          move(172, 81) down(25) arc(34, -90) arc(9, -180) arc(16, 90) up(25)
+          arc(9, -180) close();
+    fill: #e9536c; stroke: none;
+  }
 
-// Draw the half, get the whole: a fused mirror about the axis.
-|sketch#pin| {
-  draw: move(-40, 0) up(8) right(30):shank down(3) right(50) down(5);
-  mirror: x-axis;
-}
+  // The eyebrow: a notch, a cap, the 264° dome, a cap — four tangent arcs.
+  |sketch#brow| {
+    draw: move(52.292, 52.5) arc(13.416, 0, 9) arc(4.5, -96.379)
+          arc(18, -263.621) arc(4.5, -96.379) close();
+    pattern: grid(2, 1, 122, 0); fill: #9c8cee; stroke: none;
+  }
 
-// Draw one ear, get both: a closed subpath duplicates.
-|sketch#clip| {
-  draw: move(-20, -6) right(12) down(12) left(12) close();
-  mirror: y-axis;
-}
+  |sketch#dot| {
+    draw: move(222, 9) down(8.333) arc(9, -180) up(8.333) arc(9, -180) close();
+    pattern: grid(1, 3, 0, 44.333); fill: #e9536c; stroke: none; opacity: 0.75;
+  }
+]
 
-// A tangent arc continues the heading; a cubic finishes the hook.
-|sketch#hook| {
-  draw: move(0, 0) down(20) arc(10, -180) up(10) curve(0, -8, 10, -12, 18, -12);
-  stroke-width: 3; fill: none;
-}
+|row#strip| { gap: 34; align: end; } [
+  |tile| [
+    |drawing| { scale: 0.5; } [
+      |sketch#plate| {
+        draw: move(0, 0) right(52) chamfer(9) down(30) left(52) fillet(9)
+              close()
+              move(26, 15) circle(7);
+      }
+    ]
+    |cap| "chamfer · fillet · bore"
+  ]
 
-|column| { gap: 14; } [
-  |centerline#axis| { points: 0 0, 90 0; }
-  |line#ghost| { points: 0 0, 90 0; stroke-style: phantom; stroke-width: 1; }
-  |note#memo| "folded corner"
+  |tile| [
+    |drawing| { scale: 0.5; } [
+      // Draw the half, get the whole — and the axis centreline with it.
+      |sketch#pin| {
+        draw: move(-25, 0) up(9) right(20):collar down(4) right(30) down(5);
+        mirror: x-axis;
+      }
+    ]
+    |cap| "mirror — fused"
+  ]
+
+  |tile| [
+    |drawing| { scale: 0.5; } [
+      // A closed subpath reflects as a second copy.
+      |sketch#clip| {
+        draw: move(-24, -10) right(16) down(20) left(16) close();
+        mirror: y-axis;
+      }
+    ]
+    |cap| "mirror — twinned"
+  ]
+
+  |tile| [
+    |drawing| { scale: 0.5; } [
+      |arm|
+      |arm#raised| { translate: 0 -20; stroke-style: phantom; }
+    ]
+    |cap| "curve · alternate position"
+  ]
 ]

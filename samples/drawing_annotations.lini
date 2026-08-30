@@ -1,73 +1,135 @@
-// The annotation tour [SPEC 15.6, 15.7] on one fixture's two parts.
-// Dimensions: `(-)` spans and chains pack into rows outside the geometry
-// (source order, innermost free row), values are measured on the seated model
-// in pre-scale drawing units, `unit:` suffixes the linear ones, `tol:`
-// composes the tolerance, a patterned hole's `(o)` counts its copies, and
-// `side:` steers a row or a leader (a corner side aims it). Leaders: tips
-// ray-cast onto the drawn outline and land past a horizontal elbow — `<-`
-// arrow, `*-` dot (within a face), `>-` the filled datum triangle with its
-// letter in the framed datum box; a `&` fan shares one note across
-// independent legs; `(<)` arcs
-// the angle between two edges; `(o)` reads a fillet's radius; a `|balloon|`
-// wires with `-*` and a `|note|` with an ordinary arrow. The `(-)` selector —
-// the |-| subtype — dresses dimensions alone, so they part company from the
-// leaders' wires.
-
+// The annotation and assembly tour [SPEC 15.5–15.8]: one housing detailed,
+// then assembled. Dimensions: `(-)` spans and chains pack into rows outside
+// the geometry (source order, innermost free row), values are measured on the
+// seated model in pre-scale drawing units, `unit:` sets the view's physical
+// unit, `tol:` composes the tolerance (a deviation stack, a fit class),
+// `format:` shapes the number alone, `project:` overrides two point anchors'
+// aligned reading, a patterned hole's `(o)` counts its copies, and `side:`
+// steers a row. Leaders: tips ray-cast onto the drawn outline and land past a
+// horizontal elbow — `<-` arrow, `*-` dot (within a face), `>-` the filled
+// datum triangle with its letter in the framed box; a `&` fan shares one note
+// across independent legs; `(<)` arcs the angle between two edges; `(o)` reads
+// a fillet's radius and drives the diametral line through a round feature. The
+// `(-)` selector — the |-| subtype — dresses dimensions alone, so they part
+// company from the leaders' wires. The assembly: `||` seats parts along a
+// shared normal and draws nothing; the bush's `gap: -20` is the one place gap
+// goes below zero, and it presses into a counterbore that is *void* — no two
+// materials ever occupy one place. Adjacent parts hatch opposite ways and the
+// shaft, being solid, is not sectioned at all. The spindle is a child
+// |drawing|, one rigid body reached by dot-path from outside; the overall
+// length reads as seated, item balloons wire with `-*`, and the parts list is
+// an ordinary |table| beside the view — an assembly needs no |assembly| type.
 {
-  gap: 56;
+  direction: column; gap: 44;
+  |steel::sketch| { fill: hatch(45, 5); }
+  |bronze::sketch| { fill: hatch(-45, 4); }
   |-| { stroke: --gray-ink; }
-  // every wire — the leaders and balloon fly-outs
+  // every wire — the leaders and the balloon fly-outs
   (-) { stroke: --blue-ink; }
   // dimensions only — beats |-|, the more specific type
 }
 
-|drawing#plate-view| "COVER PLATE" { unit: mm; } [
-  |rect#plate| { width: 150; height: 70; } [
-    |hole#bolt| { width: 10; translate: -50 -15; pattern: grid(2, 2, 100, 30); }
-    |hole#dowel| { width: 6; translate: 0 15; }
+|drawing#face-view| "GUIDE HOUSING" { unit: mm; } [
+  |sketch#flange| {
+    draw: move(-55, 48) right(110):base fillet(8):r8 up(96):post left(92):crown
+          point():c1 line(-18, 24):flank point():c2 close();
+  } [
+    |oval#boss| { width: 64; height: 64; fill: none; }
+    |hole#seat| { width: 32; }
+    |oval#bore| { width: 24; height: 24; fill: none; }
+    |hole#bolt| { width: 10; translate: -36 -30; pattern: grid(2, 2, 72, 60); }
   ]
 
-  plate:left (-) plate.bolt (-) plate:right { side: bottom; }
-  // 25 · 125 — a chain, one row
-  plate:left (-) plate:right { side: bottom; }
-  // 150 — the outer row
-  plate.bolt.1 (-) plate.bolt.2 { side: top; }
-  // 100 — the bolt pitch, copy to copy (grid copies row-major)
-  plate:top (-) plate.dowel { side: left; }
-  // 50 — to the dowel's centre
-  plate:top (-) plate:bottom { side: left; tol: 0.2 -0.05; }
-  // 70, stacked deviations
-  plate.bolt (o) "H7"
-  // 4× ⌀10 H7 — the copies counted
-  plate.dowel (o) { side: top-right; }
-  // ⌀6 — the leader steered
-  plate.bolt.2 & plate.bolt.4 <- "2× CSK 90°"
+  flange:left (-) flange.bolt.1 (-) flange.bolt.2 (-) flange:right {
+    side: bottom;
+  }
+  // 19 · 72 · 19 — a chain, one row
+  flange:left (-) flange:right { side: bottom; }
+  // 110 — the outer row
+  flange.bolt.1 (-) flange.bolt.3 { side: right; }
+  // 60 — the bolt pitch, copy to copy (grid copies row-major)
+  flange:top (-) flange:bottom { side: right; tol: 0.2 -0.05; }
+  // 96, stacked deviations
+  flange.seat (-) flange.bolt.1 { project: horizontal; side: top; }
+  // 36 — two point anchors would read the aligned 46.86; `project:` says
+  // measure it across
+  flange:c1 (-) flange:c2
+  // 30 — two point anchors read the true aligned span down the chamfer
+  flange:flank (<) flange:crown { format: decimal 1; }
+  // 126.9° — the corner cut's included angle, to one decimal
+  flange:r8 (o)
+  // R8 — the fillet knows its radius
+  flange.seat:top-right (o) { tol: H7; }
+  // ⌀32 H7 — the diametral line through the bush seat
+  flange.bolt (o) "THRU" { side: left; }
+  // 4× ⌀10 THRU — the copies counted, the label following the value
+  flange.bolt.2 & flange.bolt.4 <- "2× CSK 90°" { side: right; }
   // a fan: one note, a ray-cast leg onto each copy
+  flange:base >- "A"
+  // datum A on the mounting face
+  flange:flank *- "Ra 1.6" { side: left; }
+  // a dot lands within the face
 ]
 
-|drawing#bracket-view| "CLAMP BRACKET" { scale: 0.75; } [
-  |sketch#bracket| {
-    draw: move(-40, 30) right(80):base fillet(6):heel up(60):wall
-          line(-80, 60):flank close();
-  }
-  |hole#eye| { width: 16; translate: 20 25; }
+|row| { gap: 40; align: center; } [
 
-  bracket:flank (<) bracket:base
-  // → 36.87° — the flank's rise off the base
-  bracket:heel (o)
-  // → R6 — the fillet knows its radius
-  bracket:bottom-left (-) bracket:top-right
-  // → 100 — two point anchors read the true aligned span up the flank
-  eye:top (o)
-  // → ⌀16 — the diametral line through the eye
-  bracket:base >- "A"
-  // datum A on the base face
-  bracket:wall *- "GRIND" { side: right; }
-  // a dot lands within the face
-  bracket:top-left <- "BREAK EDGES 0.5"
-  // an arrow leader onto the corner
-  |balloon#b1| "1" { translate: 55 -35; }
-  b1 -* bracket:wall
-  |note#hint| "DEBURR AFTER MILLING" { translate: -70 -20; }
-  hint -> bracket:bottom-left
+  |drawing#unit-view| "GUIDE UNIT — SECTION" { unit: mm; } [
+    |steel#housing| {
+      draw: move(-60, -48) right(16) down(16) right(44):boss down(16)
+            left(20):seat down(4) left(40):bore close():mount;
+      revolve: x-axis;
+      // one wall of the flanged housing — the bore reads between the pair
+    }
+    |bronze#bush| {
+      draw: move(-12, -16) right(24):od down(6):face left(24) close();
+      revolve: x-axis;
+      // adjacent parts hatch opposite ways
+    }
+
+    |drawing#spindle| [
+      // one rigid body: shaft + knob
+      |sketch#shaft| {
+        draw: move(-60, -10) right(64) right(26):stub down(20)
+              left(26):underside left(64) close();
+        fill: --bg;
+        // a shaft is solid — never sectioned, never hatched
+      }
+      |steel#knob| { draw: move(-7, -20) right(14) down(40) left(14) close(); }
+      knob:left || shaft:right
+    ]
+    |centerline| { points: -70 0, 62 0; }
+    // the bore axis — redrawn over the solid shaft
+
+    bush:left || housing:right { gap: -20; }
+    // pressed 20 into the counterbore — and the counterbore is void, so the
+    // two materials never overlap
+    spindle.shaft:left || housing:right { gap: -50; }
+    // the shaft runs the full bore; the outer mate reaches into the child
+    // |drawing| by dot-path, and moves it whole
+
+    housing:left (-) spindle.knob:right { side: bottom; }
+    // → 114 — the overall length, as seated
+
+    |balloon#b1| "1" { translate: -40 -70; }
+    |balloon#b2| "2" { translate: 2 -70; }
+    |balloon#b3| "3" { translate: 30 -70; }
+    |balloon#b4| "4" { translate: 64 -70; }
+    b1 -* housing:boss
+    b2 -* bush:face
+    b3 -* spindle.shaft:stub
+    b4 -* spindle.knob:top
+
+    spindle.knob:top-right <- "KNURLED" { side: right; }
+    // an arrow leader onto the knob's rim
+    |note#hint| "SHIM TO SUIT ON ASSEMBLY" { translate: -96 -30; }
+    hint -> housing:mount
+  ]
+
+  |table#bom| { columns: 22, auto, 30; } [
+    "#" "Part"    "Qty"
+    "1" "Housing" "1"
+    "2" "Bush"    "1"
+    "3" "Shaft"   "1"
+    "4" "Knob"    "1"
+  ]
 ]

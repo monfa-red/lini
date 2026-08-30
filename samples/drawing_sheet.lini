@@ -20,7 +20,7 @@
     } [
       |hidden#socket| {
         // the hex socket, dashed
-        draw: move(0, 3) right(4) line(3, -3);
+        draw: move(0, 3) right(3) line(1.5, -3);
         mirror: x-axis;
       }
     ]

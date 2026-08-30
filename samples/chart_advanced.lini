@@ -1,41 +1,68 @@
-// Advanced charting on one telemetry board [SPEC 14.4–14.7]: a log scale, a
-// reversed axis, dual axes binding series by id, `fn:` formulas (in x, and
-// parametric in u), shaded bands (indexed and on a named axis), a threshold
-// |mark|, per-point labels on x/y data, and the radial pair (radar, radial bars).
+// Scales, axes and formulas [SPEC 14.3–14.5] — the domain side of a chart,
+// none of it on the hero board: a `scale: log` axis's decade ticks, a time axis
+// reading ISO date literals on a calendar `step:`, a `range:` that both crops
+// and runs high→low, two value axes sharing one plot (each with its own
+// `unit:`, the second declining gridlines so the grid stays single), `format:`
+// setting a tick's presentation, a whole-domain `fn:` in `x` that two series
+// share through one stylesheet function at 60 `samples:`, and a per-band `fn:`
+// list clocked in local `u` across three |band|s.
 {
   layout: grid; columns: repeat(2); gap: 24;
+  cure(k) = (100 * (1 - exp(-x/k)));
 }
 
-|chart| "Requests by tier" { categories: "free", "pro", "team", "ent"; } [
-  |axis| "req/s" { side: left; scale: log; }
+|chart| "Requests by tier (req/s)" {
+  width: 350; height: 240; categories: "free", "pro", "team", "ent";
+} [
+  |axis| { side: left; scale: log; }
   |bars| { data: 5, 80, 1200, 45000; }
 ]
 
-|chart| "League rank" { categories: "Q1", "Q2", "Q3", "Q4"; } [
-  |axis| "rank" { side: left; range: 8 1; }
-  |line| "team" { data: 6, 4, 5, 2; marker: dot; }
-]
-
-|chart| "Throughput vs error" { categories: "mon", "tue", "wed", "thu"; } [
-  |axis#req| "requests" { side: left; }
-  |axis#err| "error" { side: right; range: 0 10; unit: "%"; }
-  |bars| "requests" { data: 820, 932, 901, 1090; axis: req; }
-  |line| "error %" { data: 2.1, 0.8, 1.5, 0.4; axis: err; marker: dot; }
-]
-
-|chart| "Injection profile" [
-  |axis#bar| "Pressure (bar)" { side: left; range: 0 1100; }
-  |axis#flow| "Flow" {
-    side: right; range: 0 50; gridlines: none; unit: "cm³/s";
+// Date literals make the x axis a time axis; `step: month` lands the ticks on
+// calendar boundaries rather than on even spacings of the epoch.
+|chart| "Weekly active users" { width: 350; height: 240; } [
+  |axis| { side: bottom; step: month; }
+  |axis| "users" { side: left; unit: "k"; }
+  |line| "wau" {
+    data: "2026-01-05" 12, "2026-02-02" 15, "2026-03-02" 21, "2026-04-06" 28, "2026-05-04" 34, "2026-06-01" 45; marker: dot;
   }
-  |axis#x| "Speed (mm/s)" { side: bottom; range: 0 133; }
-  |area| "Pressure" {
-    axis: bar; fn: (x <= 93 ? 1000 : 1000 - 319*((x-93)/40)); fill: --teal;
-  }
-  |line| "Flow" { axis: flow; fn: (x*42/133); stroke-style: dashed; }
 ]
 
-|chart| "Motor draw (A)" [
+// `range: 50 1` does both of its jobs at once: 1 is the top of the chart, so
+// the axis runs high→low, and the album's opening week at 62 falls outside the
+// window and is cropped to the plot.
+|chart| "Chart position" {
+  width: 350; height: 240; categories: "Jan", "Feb", "Mar", "Apr", "May", "Jun";
+} [
+  |axis| "position" { side: left; range: 50 1; }
+  |line| "single" { data: 44, 31, 18, 9, 12, 4; marker: circle; }
+  |line| "album" { data: 62, 48, 35, 22, 16, 11; marker: circle; }
+]
+
+|chart| "Throughput vs. error rate" {
+  width: 350; height: 240; categories: "Mon", "Tue", "Wed", "Thu", "Fri";
+} [
+  |axis#req| "requests" { side: left; unit: "/s"; }
+  |axis#err| "errors" {
+    side: right; range: 0 3; unit: "%"; format: decimal 1; gridlines: none;
+  }
+  |bars| "requests" { data: 820, 932, 901, 1090, 1204; axis: req; }
+  |line| "error rate" { data: 2.1, 0.8, 1.5, 0.4, 0.6; axis: err; marker: dot; }
+]
+
+// One `cure(k)` binding, two adhesives: the same closed form sampled twice at
+// its own time constant, so the pair can never drift apart.
+|chart| "Cure strength" { width: 350; height: 240; samples: 60; } [
+  |axis| "minutes" { side: bottom; range: 0 90; }
+  |axis| { side: left; range: 0 100; unit: "%"; }
+  |line| "epoxy" { fn: (cure(18)); }
+  |line| "acrylic" { fn: (cure(34)); stroke-style: dashed; }
+]
+
+// Bands cut the domain into three segments and the series answers with a
+// per-band `fn:` list — one expression each, clocked `0 → 1` in local `u`,
+// the risers between them drawn because the jump is real.
+|chart| "Motor draw (A)" { width: 350; height: 240; } [
   |axis| "phase" { side: bottom; }
   |axis| { side: left; }
   |band| "Close" { range: 0 1.4; fill: --sky; }
@@ -44,60 +71,4 @@
   |line| "draw" {
     stroke: --rose-deep; fn: (0.12 + 1.2*exp(-((u-0.8)/0.12)^2)), (1.5 + 3.0*u^1.1), 0.5;
   }
-]
-
-|chart| "Reactor warm-up" [
-  |axis#t| "min" { side: bottom; range: 0 6; }
-  |axis| "°C" { side: left; }
-  |band| "Warm" { range: 0 1.5; axis: t; fill: --sky; }
-  |band| "Hold" { range: 1.5 3.5; axis: t; fill: --amber; }
-  |band| "Cool" { range: 3.5 6; axis: t; fill: --teal; }
-  |line| "core" {
-    data: 0 20, 1 90, 2 300, 3 330, 4 160, 5 60; stroke: --rose-deep;
-  }
-]
-
-|chart| "API latency (ms)" { categories: "p50", "p90", "p99", "p999"; } [
-  |axis#ms| { side: left; }
-  |bars| "v2" { data: 12, 40, 80, 300; }
-  |mark| "SLO 250" { at: 250; axis: ms; stroke: --red; stroke-style: dashed; }
-]
-
-// A time axis [SPEC 14.4]: ISO dates in `data:`, calendar ticks on month
-// boundaries (the authored `step:`), hover shows each point's full instant.
-|chart| "Weekly active users (k)" [
-  |axis#when| { side: bottom; step: month; }
-  |axis| "users" { side: left; }
-  |line| "wau" {
-    data: "2026-01-05" 12, "2026-02-02" 15, "2026-03-02" 21, "2026-04-06" 28, "2026-05-04" 34, "2026-06-01" 45; marker: dot; stroke: --sky-deep;
-  }
-]
-
-|chart| "Agentic coding performance" { width: 480; height: 300; } [
-  |axis| "Avg output tokens (k)" { side: bottom; }
-  |axis| "Score (%)" { side: left; range: 45 80; }
-  |line| "GLM-5.2" {
-    data: 35 63, 42 72, 84 75; labels: "Non-Thinking", "High", "Max"; marker: circle; stroke: --sky-deep;
-  }
-  |line| "GLM-5.1" {
-    data: 32 52, 45 58; labels: "Non-Thinking", "Max"; marker: circle; stroke: --green-deep;
-  }
-  |line| "Opus 4.8" {
-    data: 22 71, 40 78; labels: "Low", "High"; marker: circle; stroke: --gray-deep;
-  }
-]
-
-|chart| "Ship profiles" {
-  direction: radial; categories: "Speed", "Range", "Armor", "Cost", "Stealth";
-} [
-  |axis| { range: 0 5; }
-  |line| "Scout" { data: 5, 4, 2, 3, 5; }
-  |area| "Cruiser" { data: 3, 3, 5, 4, 2; fill: --teal; }
-]
-
-|chart| "Goal completion %" {
-  direction: radial; categories: "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun";
-} [
-  |axis| { range: 0 100; }
-  |bars| "steps" { data: 80, 65, 90, 70, 95, 40, 55; }
 ]

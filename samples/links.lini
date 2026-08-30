@@ -1,93 +1,68 @@
-// Link markers — the arrow / dot / diamond / crow heads and the full ER cardinality
+// Link markers — the arrow / dot / diamond heads and the full ER cardinality
 // set (on any |line| via marker-*, or composed by the crow's-foot operators on
 // either end) — plus template-internal links: a |define| whose body links its own
 // children, so every instance routes itself.
 {
-  direction: column; gap: 36; padding: 24;
+  direction: column; gap: 30; padding: 24; align: start;
   |group| { direction: column; }
-  // the boards stack; each holds one specimen per line
+  // one specimen line per marker
+  |spec::line| { points: -70 0, 70 0; stroke-width: 2; }
+  |port::box| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
 
-  |room::group| { gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink; } [
-    |box#inlet| "in" {
-      fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
-    }
-    |box#outlet| "out" {
-      fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
-    }
+  // each |room| materialises its own inlet -> outlet link from the define body
+  |room::group| {
+    direction: row; gap: 60; padding: 12; fill: --teal-wash; stroke: --teal-ink;
+  } [
+    |port#inlet| "in"
+    |port#outlet| "out"
     inlet -> outlet "flows"
   ]
 }
 
 |block| "Markers & internal links" { font-size: 18; font-weight: bold; }
 
-|group#ends| { gap: 20; } [
-  |caption| "markers"
-  |line| {
-    points: -80 0, 80 0; marker-end: arrow; stroke: --sky-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-start: dot; marker-end: dot; stroke: --green-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: diamond; stroke: --purple-deep; stroke-width: 2;
-  }
+|row| { gap: 44; align: start; } [
+  |group#ends| "markers" { gap: 20; } [
+    |spec| { marker-end: arrow; stroke: --sky-deep; }
+    |spec| { marker-start: dot; marker-end: dot; stroke: --green-deep; }
+    |spec| { marker-end: diamond; stroke: --purple-deep; }
+  ]
+  // the ER cardinality set — the `[min][max]` glyphs, as marker values
+  |group#cardinality| "ER cardinality" { gap: 18; } [
+    |spec| { marker-end: one; stroke: --sky-deep; }
+    |spec| { marker-end: crow; stroke: --sky-deep; }
+    |spec| { marker-end: exactly-one; stroke: --blue-deep; }
+    |spec| { marker-end: zero-or-one; stroke: --blue-deep; }
+    |spec| { marker-end: one-or-many; stroke: --blue-deep; }
+    |spec| { marker-end: zero-or-many; stroke: --blue-deep; }
+  ]
 ]
 
-// The ER cardinality set — the `[min][max]` glyphs, on any |line| as a marker value.
-|group#cardinality| { gap: 20; } [
-  |caption| "ER cardinality"
-  |line| {
-    points: -80 0, 80 0; marker-end: one; stroke: --sky-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: crow; stroke: --sky-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: exactly-one; stroke: --blue-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: zero-or-one; stroke: --blue-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: one-or-many; stroke: --blue-deep; stroke-width: 2;
-  }
-  |line| {
-    points: -80 0, 80 0; marker-end: zero-or-many; stroke: --blue-deep; stroke-width: 2;
-  }
+|row| { gap: 52; align: center; } [
+  // The same set composes from the crow's-foot operators on **either** end
+  // [SPEC 9]: the ring `o` / bar `+` hugs the line, the max glyph (`+` one,
+  // `<`/`>` many) is outer.
+  |row#rel| { gap: 84; } [
+    |caption| "cardinality operators — either end"
+    |box#author| "Author"
+    |box#book| "Book"
+    author +-o< book "writes"
+    // one author → zero-or-many books
+  ]
+  // A chain marks every hop [SPEC 9]: `a -> b <-> c` is exactly `a -> b;
+  // b <-> c`, both drawn, each hop carrying its own operator.
+  |row#chains| { gap: 44; } [
+    |caption| "chains — every hop marked"
+    |box#relay| "relay"
+    |box#hub| "hub"
+    |box#sink| "sink"
+    relay -> hub <-> sink
+  ]
 ]
 
-// The same set composes from the crow's-foot operators on **either** end [SPEC 9]:
-// the ring `o` / bar `+` hugs the line, the max glyph (`+` one, `<`/`>` many) is outer.
-|row#rel| { gap: 96; padding: 2 0 0 0; } [
-  |caption| "cardinality operators — either end"
-  |box#author| "Author"
-  |box#book| "Book"
-  author +-o< book "writes"
-  // one author → zero-or-many books
-]
-
-// each |room| materialises its own inlet -> outlet link from the define body
-|row#rooms| { gap: 76; } [
+|group#rooms| "template-internal links" { direction: row; gap: 80; } [
   |room#garden| "Garden"
   |room#kitchen| "Kitchen"
 ]
 
 rooms.garden.outlet -> rooms.kitchen.inlet "carries"
-
-// A chain marks every hop [SPEC 9]: `a -> b -> c` is exactly `a -> b; b -> c`
-// (both arrows drawn), and each hop carries its own op — a bare first hop, a
-// bidirectional second (`tap <- probe <-> gauge`).
-|row#chains| { gap: 56; } [
-  |caption| "chains — every hop marked"
-  |box#relay| "relay"
-  |box#hub| "hub"
-  |box#sink| "sink"
-  relay -> hub -> sink
-]
-
-|row#hops| { gap: 56; } [
-  |box#tap| "tap"
-  |box#probe| "probe"
-  |box#gauge| "gauge"
-  tap <- probe <-> gauge
-]

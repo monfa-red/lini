@@ -16,8 +16,8 @@
 // carried `|datum|` states the measured feature's axis datum.
 
 |drawing#bracket-view| "MOUNTING BRACKET" { unit: mm; } [
-  |rect#plate| { width: 140; height: 60; } [
-    |hole#pin| { width: 12; translate: -45 0; }
+  |rect#plate| { width: 100; height: 72; } [
+    |hole#pin| { width: 12; translate: -26 0; }
   ]
 
   plate:left (-) plate:right { side: bottom; }
@@ -42,22 +42,22 @@
   // shows the plain placement: the tip is the node's datum, set down by hand.
   |surface-finish#milled| "Ra 1.6" { symbol: machined; }
   milled || plate:top
-  |surface-finish#cast| "Ra 6.3" { translate: 42 -30; }
+  |surface-finish#cast| "Ra 6.3" { translate: 30 -36; }
 
   // Leader-wired: the same placed node, reached from the bore's rim.
-  |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -30 -40; }
+  |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -20 -52; }
   plate.pin <- bore
 
   // The datum alphabet, both forms: the `>-` leader plants A on the mounting
   // face; the `|datum|` node names the bore axis B, wired to its feature.
   plate:bottom >- "A"
-  |datum#axis| "B" { translate: -45 16; }
+  |datum#axis| "B" { translate: -26 22; }
   plate.pin <- axis
 
   // A composite frame, leader-wired to the feature it controls: the pattern
   // located to the datums, then refined feature-to-feature — adjacent rows
   // share the position symbol cell.
-  |feature-control#refine| { translate: -60 -45; } [
+  |feature-control#refine| { translate: -46 -56; } [
     |control| "position" { tol: 0.4; zone: diameter; datums: A, B; }
     |control| "position" { tol: 0.1; zone: diameter; datums: A; }
   ]
