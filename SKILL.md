@@ -144,7 +144,7 @@ Templates (all overridable; extend with `|name::base| { … }`):
 | `\|footnote\|` | muted caption at the bottom centre |
 | `\|badge\|` | small accent pill pinned over the top-right corner |
 | `\|row\|` / `\|column\|` / `\|grid\|` | frameless layout wrappers |
-| `\|icon\|` / `\|sign\|` | Phosphor icon (label names the symbol: `\|icon\| "heart"`); `\|sign\|` is the 64px standalone preset. **Icons paint with `fill` (body) + `stroke` (line)** — `color:` does nothing on the glyph. Text beside an icon rides its `[ ]`: `\|icon\| "bell" [ "3" ]` |
+| `\|icon\|` / `\|sign\|` | Phosphor icon (label names the symbol: `\|icon\| "heart"`); `\|sign\|` is the 64px standalone preset. **Icons paint with `fill` (body) + `stroke` (line)** — `color:` does nothing on the glyph. An icon's `[ ]` text rides *on* the symbol as a badge and grows the square: `\|icon\| "bell" [ "3" ]` |
 | `\|table\|` | ruled grid; first row auto-becomes the header band; cells via bare strings |
 | `\|entity\|` | ER card: label = centred title, rows = `"field" "type"` (3 columns for a key gutter) |
 | `\|note\|` | folded-corner callout card (works in every layout) |
