@@ -1,11 +1,17 @@
-//! **One word source, three homes** [PLAN-PRE-V1 chunk 5]. The grammar is
+//! **One word source, four homes** [PLAN-PRE-V1 chunk 5]. The grammar is
 //! written down three times — the real lexer/parser, the editor grammars under
 //! `editors/`, and the playground tokenizer in `src/serve/playground.html` — so
 //! the two generated homes take every keyword list from `src/grammar/vocab.rs`,
 //! which derives each set from the table that already owns it. Here we
 //! regenerate all three in memory and assert byte-equality with the committed
 //! files, so a stale checkout fails CI and never ships — the same guarantee the
-//! schema has.
+//! schema has. The fourth home, `lini::highlight_html`, generates no file, so
+//! the two cross-home guards below ask it the same questions **by behaviour**:
+//! a word the editors colour must come back marked from the scanner too. (Its
+//! exhaustive per-set sweep — every ledger property, every built-in type, every
+//! value keyword — lives beside it in `src/grammar/highlight.rs`, and the
+//! playground's hand-written twin is held byte-identical to it by
+//! `tests/playground.rs`.)
 //!
 //! Two guards sit beside the drift check: SPEC 23's own list of contextual
 //! value keywords is the fixture for the value-keyword set (the doc is the
@@ -81,18 +87,34 @@ fn spec_23_value_keywords_all_highlight() {
                 "SPEC 23 keyword '{word}' is missing from the {home} grammar"
             );
         }
+        // The fourth home generates no file, so it is asked the same question
+        // by behaviour: put the word where a value goes and it must come back
+        // marked as a keyword.
+        assert!(
+            marks(&format!("|box| {{ p: {word}; }}"), &word, "keyword"),
+            "SPEC 23 keyword '{word}' is not a keyword to lini::highlight_html"
+        );
     }
 }
 
-/// A word that reaches one home reaches all three — the drift this chunk
+/// A word that reaches one home reaches all four — the drift this chunk
 /// closes, pinned on one representative per set: a template type, two ledger
-/// properties, a builder call, a marker glyph, a layout name.
+/// properties, a builder call, a marker glyph, a layout name. The three
+/// generated homes are asked of their text; `lini::highlight_html` is asked of
+/// its output, each word in the position that gives it its meaning.
 #[test]
 fn every_home_carries_the_same_vocabulary() {
     let vscode = lini::vscode_grammar();
     let zed = lini::zed_highlights();
     let playground = read("src/serve/playground.html");
-    for word in ["FB", "revolve", "thread", "oklch", "diamond", "schematic"] {
+    for (word, probe, class) in [
+        ("FB", "|FB|", "type"),
+        ("revolve", "|sketch| { revolve: x-axis; }", "prop"),
+        ("thread", "|sketch| { thread: m8 1.5; }", "prop"),
+        ("oklch", "|box| { fill: oklch(0.7, 0.1, 200); }", "type"),
+        ("diamond", "|-| { marker: diamond; }", "keyword"),
+        ("schematic", "{ layout: schematic; }", "keyword"),
+    ] {
         for (home, text) in [
             ("VS Code", &vscode),
             ("Zed", &zed),
@@ -103,7 +125,16 @@ fn every_home_carries_the_same_vocabulary() {
                 "'{word}' is missing from the {home} grammar"
             );
         }
+        assert!(
+            marks(probe, word, class),
+            "lini::highlight_html does not mark '{word}' as tok-{class} in {probe:?}"
+        );
     }
+}
+
+/// Whether highlighting `src` marks `word` with `tok-<class>`.
+fn marks(src: &str, word: &str, class: &str) -> bool {
+    lini::highlight_html(src).contains(&format!("<span class=\"tok-{class}\">{word}</span>"))
 }
 
 /// Whether `word` appears as a whole alternative of some regex alternation in

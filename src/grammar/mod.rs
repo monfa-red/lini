@@ -1,8 +1,8 @@
-//! Grammar generation — one word source, three homes [SPEC 22 / 23].
+//! Grammar generation — one word source, four homes [SPEC 22 / 23].
 //!
 //! The surface grammar is written down in three places that can drift: the real
 //! lexer/parser, the editor grammars under `editors/`, and the playground's
-//! tokenizer in `src/serve/playground.html`. Here the two generated homes take
+//! tokenizer in `src/serve/playground.html`. Here the generated homes take
 //! every keyword list from [`vocab`] — which in turn derives each set from the
 //! table that already owns it (the primitive/template type tables, the property
 //! ledger, `MarkerKind::NAMES`, `Side::name`). So a new type, property, builder,
@@ -13,15 +13,38 @@
 //! - [`zed_highlights`] — `editors/zed/languages/lini/highlights.scm`.
 //! - [`splice_playground`] — the marked word-list region of `playground.html`.
 //!
-//! `cargo xtask gen-grammars` writes all three; the drift tests regenerate them
-//! in memory and assert byte-equality with the committed files, exactly as the
-//! schema does.
+//! `cargo xtask gen-grammars` writes those three; the drift tests regenerate
+//! them in memory and assert byte-equality with the committed files, exactly as
+//! the schema does.
+//!
+//! [`highlight_html`] is the fourth home, and the one that is *read* rather
+//! than written: **the** syntax highlighter, taking the same [`vocab`] sets at
+//! run time. It is the only one of the four that is a whole scanner rather than
+//! a word list, so it is also the only one every host can share — and each of
+//! the three doors onto it is a thin wrapper, never a second copy:
+//!
+//! | Door | For |
+//! |---|---|
+//! | `lini::highlight_html` | a crate that links Lini (`mdbook-lini`) |
+//! | `lini highlight <file>` [SPEC 20] | a build step that cannot (a no-dependency site generator) |
+//! | `highlight()` in `crates/lini-wasm` | a page (a live editor) |
+//!
+//! `src/serve/playground.html` is the one host that can use none of them — no
+//! wasm on the page, and an overlay that re-colours on every keystroke — so it
+//! carries a hand-written copy, held byte-identical by `tests/playground.rs`.
+//!
+//! Nothing here regenerates a file, so the guards are behavioural:
+//! `highlight::tests` walks every ledger property, type, value keyword, builder
+//! and colour name through it, and `tests/grammar.rs` asks it the same
+//! cross-home questions it asks the three generated ones.
 
+mod highlight;
 mod playground;
 mod vocab;
 mod vscode;
 mod zed;
 
+pub use highlight::highlight_html;
 pub use playground::splice_playground;
 pub use vscode::vscode_grammar;
 pub use zed::zed_highlights;

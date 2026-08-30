@@ -40,12 +40,40 @@ pub use fmt::format as format_source;
 pub use ledger::examples::EXAMPLES as schema_examples;
 pub use schema::{reference_md, schema_json};
 
-/// The generated grammar homes [SPEC 22 / 23]: the VS Code TextMate bundle, the
-/// Zed tree-sitter highlight query, and the playground tokenizer's word-list
-/// region — all three fed from one word source over the ledger and the parse
-/// tables. `cargo xtask gen-grammars` writes them; `tests/grammar.rs` guards
-/// them byte-identical.
+/// The **generated** grammar homes [SPEC 22 / 23]: the VS Code TextMate bundle,
+/// the Zed tree-sitter highlight query, and the playground tokenizer's
+/// word-list region — all fed from one word source over the ledger and the
+/// parse tables. `cargo xtask gen-grammars` writes them; `tests/grammar.rs`
+/// guards them byte-identical.
 pub use grammar::{splice_playground, vscode_grammar, zed_highlights};
+
+/// Lini source as syntax-highlighted HTML — `<span class="tok-…">` runs over
+/// escaped text, and **the** highlighter [SPEC 20 / 22]. It reads the same word
+/// sets the editor grammars are generated from, so a new type, property,
+/// builder, or glyph colours the moment it has a ledger row.
+///
+/// **Every character survives.** Strip the tags, undo the four entity escapes
+/// (`&amp; &lt; &gt; &quot;`), and the source comes back byte for byte — which
+/// is what lets a caller drop the output into a `<pre>` and trust the listing
+/// to be the author's own text. Newlines pass through as newlines; a caller
+/// that cannot carry one (an HTML block inside Markdown) rewrites them itself.
+///
+/// It is **lexical** — it never parses — so a file mid-keystroke still colours,
+/// and it cannot fail.
+///
+/// The classes are the token kinds: `tok-comment` · `tok-string` · `tok-number`
+/// · `tok-const` · `tok-keyword` · `tok-type` · `tok-type-user` · `tok-prop` ·
+/// `tok-prop-user` · `tok-var` · `tok-op` · `tok-class` · `tok-punct`. Text
+/// that needs no colour goes out bare, with no span.
+///
+/// Two thin wrappers reach the same scanner from outside a Rust crate:
+/// `lini highlight <file>` at a shell, and `highlight()` in the wasm build.
+///
+/// ```
+/// let html = lini::highlight_html("|box#a| \"Hi\"\n");
+/// assert!(html.contains("<span class=\"tok-type\">box</span>"));
+/// ```
+pub use grammar::highlight_html;
 
 /// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
 /// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
