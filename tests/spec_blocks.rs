@@ -1,7 +1,7 @@
-//! **The documentation compiles** — every fenced block in `SPEC.md` (and
-//! `ROUTING.md`) is fed to the real compiler, so a doc example can never
-//! silently rot [PLAN-PRE-V1 chunk 3]. It has already caught four broken
-//! examples once, by hand; this is that sweep, automated.
+//! **The documentation compiles** — every fenced block in `SPEC.md`,
+//! `ROUTING.md`, `SKILL.md`, and `README.md` is fed to the real compiler, so a
+//! doc example can never silently rot [PLAN-PRE-V1 chunk 3]. It has already
+//! caught four broken examples once, by hand; this is that sweep, automated.
 //!
 //! **Compiled by default.** A fence is lini unless a ledger row below says
 //! otherwise — so a newly written example is guarded the moment it lands, and
@@ -27,6 +27,13 @@
 //!
 //! `ROUTING.md` carries a single fence (its `src/routing/` file tree), so its
 //! ledger is one `NotLini` row; a lini example added there is compiled.
+//!
+//! `SKILL.md` is the agent skill and `README.md` the front door — the two
+//! documents most read and least tested, so they take the same guard. Their
+//! only standing excuses are shell transcripts, a CSS snippet, the CLI
+//! synopsis, and the pipeline arrow; every Lini example in both compiles as
+//! written, bar the icons block, which is `Wrapped` in the colour classes its
+//! prose describes.
 
 use std::path::Path;
 
@@ -329,6 +336,65 @@ const SPEC_LEDGER: &[Row] = &[
 /// The `ROUTING.md` ledger — one fence, and it is a file tree.
 const ROUTING_LEDGER: &[Row] = &[(0, "src/routing/", Kind::NotLini("the router's module map"))];
 
+/// The `SKILL.md` ledger — one shell transcript; every other fence is a Lini
+/// example the agent is meant to copy, so every other fence compiles.
+const SKILL_LEDGER: &[Row] = &[(
+    0,
+    "lini d.lini -o d.svg                 # compile; errors are file:line:col with fixes",
+    Kind::NotLini("a shell transcript — the CLI's one-liners"),
+)];
+
+/// The `README.md` ledger — the shell transcripts, the page-side CSS, the CLI
+/// synopsis, the pipeline arrow, and one example wrapped in the classes its
+/// prose hands the reader.
+const README_LEDGER: &[Row] = &[
+    (
+        1,
+        "cargo install lini            # or, from a clone: cargo install --path .",
+        Kind::NotLini("a shell transcript — installing"),
+    ),
+    (
+        2,
+        "lini diagram.lini -o diagram.svg     # compile to SVG",
+        Kind::NotLini("a shell transcript — the CLI's one-liners"),
+    ),
+    (
+        6,
+        "|icon| .teal { symbol: user }                            // two-tone",
+        Kind::Wrapped(
+            "{\n  .teal { fill: --teal-wash; stroke: --teal-ink; }\n  \
+             .amber { fill: --amber-wash; stroke: --amber-ink; }\n  \
+             .purple { fill: --purple-wash; stroke: --purple-ink; }\n}\n",
+            "",
+        ),
+    ),
+    (
+        13,
+        ".lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */",
+        Kind::NotLini("page-side CSS — the host stylesheet, not the language"),
+    ),
+    (
+        14,
+        "lini [options] <input.lini>",
+        Kind::NotLini("the CLI synopsis [SPEC 20]"),
+    ),
+    (
+        15,
+        "lini serve samples/        # browse, edit, and render the bundled examples",
+        Kind::NotLini("a shell transcript — the preview server"),
+    ),
+    (
+        16,
+        "cargo test                          # full suite: unit, snapshot, routing laws",
+        Kind::NotLini("a shell transcript — the contributor's gates"),
+    ),
+    (
+        17,
+        "lex → parse → desugar → resolve → layout → route → render",
+        Kind::NotLini("the compile pipeline, as one arrow [SPEC 19]"),
+    ),
+];
+
 #[test]
 fn every_spec_fenced_block_compiles() {
     compile_every_block("SPEC.md", SPEC_LEDGER);
@@ -337,4 +403,14 @@ fn every_spec_fenced_block_compiles() {
 #[test]
 fn every_routing_fenced_block_compiles() {
     compile_every_block("ROUTING.md", ROUTING_LEDGER);
+}
+
+#[test]
+fn every_skill_fenced_block_compiles() {
+    compile_every_block("SKILL.md", SKILL_LEDGER);
+}
+
+#[test]
+fn every_readme_fenced_block_compiles() {
+    compile_every_block("README.md", README_LEDGER);
 }
