@@ -17,7 +17,7 @@
 
 ;; Built-in types (primitives + templates) vs user types.
 ((type) @type.builtin
-  (#match? @type.builtin "^(BT|C|D|F|FB|I|J|L|LED|Q|R|SW|V|Y|alt|appliance|area|axis|badge|balloon|band|bars|bath|bed|block|box|breakline|bubble|caption|cell|centerline|chart|column|component|control|cyl|datum|diamond|dining|door|door-leaf|door-swing|dots|drawing|else|entity|feature-control|field|floorplan|footer|footnote|frame|gnd|grid|group|halo|header|hex|hidden|hole|icon|image|junction|label|line|loop|magnifier|mark|mindmap|nc|note|opamp|opt|oval|page|partition|path|pie|pin|pitch-circle|plane|poly|projection|rect|row|schematic|sequence|shoulder|sign|sketch|slant|slice|sofa|stair-arrow|stair-tread|stairs|surface-finish|table|threadline|tick|title-block|topic|wall|window|window-sill|zone)$"))
+  (#match? @type.builtin "^(BT|C|D|F|FB|I|J|L|LED|Q|R|SW|V|Y|alt|appliance|area|axis|badge|balloon|band|bars|bath|bed|block|box|breakline|bubble|caption|cell|centerline|chart|column|component|control|cyl|datum|diamond|dining|door|door-leaf|door-swing|dots|drawing|else|entity|feature-control|field|floorplan|footer|footnote|frame|gnd|grid|group|halo|header|hex|hidden|hole|icon|image|junction|label|line|loop|magnifier|mark|mindmap|nc|note|opamp|opt|oval|page|partition|path|pie|pin|pitch-circle|plane|poly|projection|rect|row|schematic|sequence|shoulder|sign|sketch|slant|slice|sofa|stack|stair-arrow|stair-tread|stairs|surface-finish|table|threadline|tick|title-block|topic|wall|window|window-sill|zone)$"))
 (type) @type
 
 ;; Property names: ledger rows strongly, others weakly.
@@ -35,7 +35,7 @@
 
 ;; Enum value idents + layout names.
 ((value_ident) @constant.builtin
-  (#match? @constant.builtin "^(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|phantom|outlined|filled|rounded|sharp|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|grid|pie|schematic|sequence|tree)$"))
+  (#match? @constant.builtin "^(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|phantom|outlined|filled|rounded|sharp|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|grid|pie|schematic|sequence|stack|tree)$"))
 
 ;; Colour names.
 ((value_ident) @constant.builtin

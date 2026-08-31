@@ -179,7 +179,7 @@ The operator picks the message: `->` a call, `-->` a return, `~>` async, `a -> a
 ]
 ```
 
-`direction: bilateral` fans first-level topics around a centred root; `|mindmap|` presets the look — bilateral, `routing: natural` smooth curves, a palette walk tinting each branch (dark mode included), and a depth ramp. Branch wires are ordinary generated links, so `lini desugar` shows them and `#ship |-| { … }` restyles one arm. Plain `layout: tree` stays a neutral org chart. [`SPEC.md` §12](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid--tree)
+`direction: bilateral` fans first-level topics around a centred root; `|mindmap|` presets the look — bilateral, `routing: natural` smooth curves, a palette walk tinting each branch (dark mode included), and a depth ramp. Branch wires are ordinary generated links, so `lini desugar` shows them and `#ship |-| { … }` restyles one arm. Plain `layout: tree` stays a neutral org chart. [`SPEC.md` §12](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid-stack--tree)
 
 ---
 

@@ -57,6 +57,16 @@ pub(super) fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
         || layout_of(style).is_some_and(crate::resolve::is_drawing_layout)
 }
 
+/// Whether this container opens a **datum scope** [SPEC 12] — a `|stack|`, or
+/// any of the drawing family built on it. Desugar's twin of
+/// `resolve::is_stack_layout`: the scale fold keys off this, since a stack
+/// carries `unit:` / `density:` exactly as a drawing does.
+pub(super) fn is_stack_body(chain: &[String], style: &[Decl]) -> bool {
+    chain.iter().any(|t| t == "stack")
+        || layout_of(style).is_some_and(crate::resolve::is_stack_layout)
+        || is_drawing_body(chain, style)
+}
+
 /// Whether this container is **itself** a `|page|` [SPEC 15.8] — the sheet
 /// whose furniture and density fold key off it. One reading for both stages:
 /// an already-lowered node states its type as a `.lini-*` class, so the scale

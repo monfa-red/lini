@@ -11,7 +11,7 @@
 //! already-lowered file); a rule-borne `scale:` stays what it reaches the
 //! engine as — a raw multiplier.
 
-use super::nest::{in_drawing_scope, is_drawing_body, is_page_body};
+use super::nest::{in_drawing_scope, is_drawing_body, is_page_body, is_stack_body};
 use super::schematic::lowered_chain;
 use super::types;
 use crate::error::Error;
@@ -52,10 +52,40 @@ pub(crate) const WALL_THICKNESS: &str = "wall-thickness";
 pub(crate) const WALL_MM: f64 = 200.0;
 const PARTITION_MM: f64 = 100.0;
 
+/// What one drawing unit **is** [SPEC 15.1]. A drafting scope measures in
+/// physical millimetres and converts through `density:`; a plain `stack` draws
+/// in pixels, where the conversion is the identity and `density:` has no
+/// millimetres to act on.
+#[derive(Clone, Copy)]
+pub(crate) enum Unit {
+    Mm(f64),
+    Px,
+}
+
+impl Unit {
+    /// Pixels per drawing unit at ratio 1 — the number the fold stamps.
+    fn px_per_unit(self, density: f64) -> f64 {
+        match self {
+            Unit::Mm(mm) => mm * density,
+            Unit::Px => 1.0,
+        }
+    }
+
+    /// Millimetres per drawing unit, for the floorplan's true-size defaults.
+    /// Pixel space has no physical size, so it reads as the identity — those
+    /// defaults only arise in a floorplan, which always measures physically.
+    fn mm(self) -> f64 {
+        match self {
+            Unit::Mm(mm) => mm,
+            Unit::Px => 1.0,
+        }
+    }
+}
+
 /// The unit / density context carried down the lowered tree.
 struct ScaleCtx {
     density: f64,
-    unit_mm: f64,
+    unit: Unit,
     in_drawing: bool,
     /// The nearest authored floorplan-scope `thickness:` (drawing units) —
     /// the inherited slot a wall without its own value falls back to
@@ -63,22 +93,31 @@ struct ScaleCtx {
     thickness: Option<f64>,
 }
 
-/// Fold the whole lowered scene. `user_root` is the root's own decl list —
-/// a `layout: drawing` root is itself a drawing scope and gets the stamp.
+/// Fold the whole lowered scene. `root_layout` is the root's own `layout:`: a
+/// datum root [SPEC 12] — a `stack` or any of the drawing family — is itself a
+/// scope and gets the stamp. A plain stack measures in pixels, a drawing in
+/// millimetres; anything else keeps millimetres so a *nested* drawing inherits
+/// the usual default.
 pub(super) fn fold(
     instances: &mut [Child],
     user_root: &mut Vec<Decl>,
-    root_drawing: bool,
+    root_layout: Option<&str>,
 ) -> Result<(), Error> {
+    let opens = root_layout.is_some_and(crate::resolve::is_stack_layout);
+    let drafts = root_layout.is_some_and(crate::resolve::is_drawing_layout);
     let density = read_density(user_root)?;
-    let unit_mm = read_unit(user_root)?.unwrap_or(1.0);
+    let unit = read_unit(user_root)?.unwrap_or(if opens && !drafts {
+        Unit::Px
+    } else {
+        Unit::Mm(1.0)
+    });
     let ctx = ScaleCtx {
         density,
-        unit_mm,
-        in_drawing: root_drawing,
+        unit,
+        in_drawing: drafts,
         thickness: read_thickness(user_root),
     };
-    if root_drawing {
+    if opens {
         stamp(user_root, &ctx);
     }
     for c in instances.iter_mut() {
@@ -91,12 +130,13 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     let Child::Box(n) = child else { return Ok(()) };
     let mut ctx = ScaleCtx {
         density: ctx.density,
-        unit_mm: ctx.unit_mm,
+        unit: ctx.unit,
         in_drawing: ctx.in_drawing,
         thickness: ctx.thickness,
     };
     let chain = lowered_chain(n);
-    let opens = is_drawing_body(&chain, &n.style);
+    // Any datum scope carries a scale [SPEC 12]; only the drawing half drafts.
+    let opens = is_stack_body(&chain, &n.style);
     if is_page_body(&chain) {
         if let Some(d) = decl_of(&n.style, "scale") {
             return Err(Error::at(
@@ -105,14 +145,19 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
             ));
         }
         if let Some(u) = read_unit(&n.style)? {
-            ctx.unit_mm = u;
+            ctx.unit = u;
         }
         // Paper is millimetres: px-per-unit is the density alone.
         n.style.retain(|d| d.name != PX_PER_UNIT);
         n.style.push(number_decl(ctx.density, n.span));
     } else if opens {
+        // A plain `stack` measures in pixels unless it says otherwise [SPEC 12]
+        // — 1 : 1 is what a canvas wants, where a sheet wants millimetres.
+        if !is_drawing_body(&chain, &n.style) {
+            ctx.unit = Unit::Px;
+        }
         if let Some(u) = read_unit(&n.style)? {
-            ctx.unit_mm = u;
+            ctx.unit = u;
         }
         if let Some(t) = read_thickness(&n.style) {
             ctx.thickness = Some(t);
@@ -139,7 +184,10 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
 /// ([`crate::layout::effective_scale`]).
 fn stamp(style: &mut Vec<Decl>, ctx: &ScaleCtx) {
     style.retain(|d| d.name != PX_PER_UNIT);
-    style.push(number_decl(ctx.unit_mm * ctx.density, Span::empty()));
+    style.push(number_decl(
+        ctx.unit.px_per_unit(ctx.density),
+        Span::empty(),
+    ));
 }
 
 /// **The** physical-millimetre → drawing-unit conversion [SPEC 15.11]: a
@@ -174,10 +222,10 @@ fn stamp_wall_thickness(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String],
         return;
     }
     let units = if chain.iter().any(|t| t == "partition") {
-        mm_to_units(PARTITION_MM, ctx.unit_mm)
+        mm_to_units(PARTITION_MM, ctx.unit.mm())
     } else {
         ctx.thickness
-            .unwrap_or_else(|| mm_to_units(WALL_MM, ctx.unit_mm))
+            .unwrap_or_else(|| mm_to_units(WALL_MM, ctx.unit.mm()))
     };
     style.push(Decl {
         name: WALL_THICKNESS.into(),
@@ -203,7 +251,7 @@ fn stamp_unit_mm(style: &mut Vec<Decl>, ctx: &ScaleCtx, chain: &[String], span: 
     }
     style.push(Decl {
         name: UNIT_MM.into(),
-        groups: vec![vec![Value::Number(ctx.unit_mm)]],
+        groups: vec![vec![Value::Number(ctx.unit.mm())]],
         span,
     });
 }
@@ -220,22 +268,25 @@ fn read_thickness(style: &[Decl]) -> Option<f64> {
 /// The nearest authored `unit:` as millimetres per drawing unit [SPEC 15.1].
 /// Only the fold's own scopes (root, pages, drawings) are read, so an
 /// `|axis|`'s quoted tick suffix never meets this enum.
-fn read_unit(style: &[Decl]) -> Result<Option<f64>, Error> {
+fn read_unit(style: &[Decl]) -> Result<Option<Unit>, Error> {
     let Some(d) = decl_of(style, "unit") else {
         return Ok(None);
     };
-    let mm = match d.single() {
+    let unit = match d.single() {
         Some(Value::Ident(u)) => match u.as_str() {
-            "mm" => Some(1.0),
-            "cm" => Some(10.0),
-            "m" => Some(1000.0),
-            "in" => Some(25.4),
+            "mm" => Some(Unit::Mm(1.0)),
+            "cm" => Some(Unit::Mm(10.0)),
+            "m" => Some(Unit::Mm(1000.0)),
+            "in" => Some(Unit::Mm(25.4)),
+            // Not a physical size — one unit is one pixel, so `density:` has
+            // no millimetres to convert [SPEC 15.1].
+            "px" => Some(Unit::Px),
             _ => None,
         },
         _ => None,
     };
-    mm.map(Some)
-        .ok_or_else(|| Error::at(d.span, "'unit' is mm, cm, m, or in"))
+    unit.map(Some)
+        .ok_or_else(|| Error::at(d.span, "'unit' is px, mm, cm, m, or in"))
 }
 
 /// The root `density:` — px per mm, default 4, must be positive [SPEC 15.1].
@@ -275,6 +326,7 @@ mod tests {
             }])
             .expect("a known unit")
             .expect("a value")
+            .mm()
         };
         assert_eq!(mm_to_units(200.0, mm_per_unit("mm")), 200.0);
         assert_eq!(mm_to_units(200.0, mm_per_unit("cm")), 20.0);
@@ -291,7 +343,7 @@ mod tests {
     fn the_wall_thickness_stamp_resolves_nearest_wins() {
         let ctx = |unit_mm: f64, thickness: Option<f64>| ScaleCtx {
             density: 4.0,
-            unit_mm,
+            unit: Unit::Mm(unit_mm),
             in_drawing: true,
             thickness,
         };

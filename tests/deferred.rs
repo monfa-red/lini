@@ -420,7 +420,7 @@ fn buses() {
 fn automatic_graph_dag_layout() {
     insta::assert_snapshot!(
         refusal("{ layout: graph }\n|box#a|\na -> b\n"),
-        @"test.lini:1:1: error: unknown layout 'graph' — expected flow, grid, tree, sequence, drawing, floorplan or schematic"
+        @"test.lini:1:1: error: unknown layout 'graph' — expected flow, grid, stack, tree, sequence, drawing, floorplan or schematic"
     );
 }
 

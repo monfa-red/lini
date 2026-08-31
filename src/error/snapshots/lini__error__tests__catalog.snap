@@ -51,6 +51,7 @@ V008 activation-outside-sequence
 V009 wavy-outline
 V010 invalid-color
 V011 deferred-property
+V012 density-without-millimetres
 Y000 layout
 Y001 missing-required-property
 Y002 chart-data

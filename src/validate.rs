@@ -48,6 +48,39 @@ const INTERNAL: &[&str] = &[
     "font-scale",
 ];
 
+/// `density:` is **pixels per millimetre** [SPEC 15.1], so under `unit: px`
+/// there are no millimetres for it to convert. `1` is the identity and agrees
+/// with what pixel space already means; any other value is silently doing
+/// nothing, which is worth saying — a `density: 4` copied over from a drawing
+/// looks like it scales the artwork and does not.
+fn check_density_unit(file: &File, out: &mut Vec<Diagnostic>) {
+    let root_decl = |name: &str| {
+        file.stylesheet.iter().find_map(|i| match i {
+            StyleItem::RootDecl(d) if d.name == name => Some(d),
+            _ => None,
+        })
+    };
+    let Some(unit) = root_decl("unit") else {
+        return;
+    };
+    if !matches!(unit.single(), Some(Value::Ident(u)) if u == "px") {
+        return;
+    }
+    let Some(d) = root_decl("density") else {
+        return;
+    };
+    if matches!(d.single(), Some(Value::Number(n)) if *n == 1.0) {
+        return;
+    }
+    out.push(
+        Diagnostic::warn(
+            d.span,
+            "'density' is pixels per millimetre — 'unit: px' has none; drop it, or state 'unit: mm' to scale",
+        )
+        .code(Code::DENSITY_WITHOUT_MM),
+    );
+}
+
 pub fn validate(file: &File) -> Vec<Diagnostic> {
     // A broken type table (cycle, shadowing) is desugar's error to report.
     let Ok(types) = Types::build(file) else {
@@ -66,6 +99,7 @@ pub fn validate(file: &File) -> Vec<Diagnostic> {
         }
     }
     ctx.check_unworn_classes(file, &mut out);
+    check_density_unit(file, &mut out);
 
     // The canvas: every instance block, text style, and link block, with the
     // parent's statically-known layout as context.

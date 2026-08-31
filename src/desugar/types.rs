@@ -103,6 +103,10 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("frame", "rect"),
     ("zone", "block"),
     ("tick", "line"),
+    // The datum layout [SPEC 12]: a frameless container whose children put
+    // their origin on its datum instead of flowing — the placement core the
+    // drawing family is built from.
+    ("stack", "block"),
     // Floorplans [SPEC 15.11]: the architectural dialect of the drawing engine
     // — the scope (a `|drawing|`, so `|drawing|`-scoped rules dress it too),
     // the wall run and its thinner interior define, the two openings that ride

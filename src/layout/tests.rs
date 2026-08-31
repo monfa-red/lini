@@ -146,7 +146,7 @@ fn an_unarrangeable_layout_names_the_engines_that_exist() {
     let err = lay_out_err("{ layout: bogus }\n|box#a| \"A\"\n");
     assert_eq!(
         err.message,
-        "unknown layout 'bogus' — expected flow, grid, tree, sequence, drawing, floorplan or schematic"
+        "unknown layout 'bogus' — expected flow, grid, stack, tree, sequence, drawing, floorplan or schematic"
     );
     // A chart owns its subtree and is intercepted at a **node**; the scene root
     // is no node, so a root `{ layout: chart }` reaches here — a real engine in

@@ -264,7 +264,8 @@ pub fn desugar(file: &File) -> Result<File, Error> {
 
     // ── The scale fold [SPEC 15.1/18]: drawing scopes and pages gain their
     //    generated internal `px-per-unit:` from ratio × unit × density. ──
-    scale::fold(&mut instances, &mut user_root, root_nest.drawing)?;
+    let root_layout = layout_of(&user_root).map(str::to_owned);
+    scale::fold(&mut instances, &mut user_root, root_layout.as_deref())?;
 
     // ── Root links, lowered before the present walk: a carried `[ ]`
     //    annotation node [SPEC 15.9] wears its `.lini-*` chain like any child

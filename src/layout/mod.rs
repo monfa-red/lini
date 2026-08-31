@@ -1,6 +1,7 @@
 mod anchors;
 mod arrange;
 pub(crate) mod chart;
+pub(crate) mod datum;
 pub(crate) mod drawing;
 mod flex;
 pub(crate) mod floorplan;
@@ -57,6 +58,16 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // so the full route sees exactly those.
     if crate::resolve::is_drawing(&program.scene.attrs) {
         let (top_nodes, bbox) = drawing::layout_root(program)?;
+        let routed = routing::route(program, &top_nodes)?;
+        return finish(program, top_nodes, bbox, routed);
+    }
+
+    // A root `{ layout: stack }` scene ([SPEC 12]) puts every child's origin on
+    // the scene datum — the drawing's placement law without the drafting. Its
+    // links route like any diagram's, so the routing pass runs as usual;
+    // intercepted here because the generic per-child layout would flow them.
+    if crate::resolve::is_stack(&program.scene.attrs) {
+        let (top_nodes, bbox) = datum::layout_root(program)?;
         let routed = routing::route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
@@ -206,6 +217,14 @@ pub(crate) struct Ctx {
     pub base: f64,
     /// The drafting ratio in force, nearest ancestor wins [SPEC 15.1].
     pub ratio: f64,
+    /// **Placement**: this scope's children — and a shape's `[ ]` features —
+    /// put their origin on the scope's datum instead of flowing [SPEC 12].
+    /// True in a `stack`, and in the `drawing` family that builds on it.
+    pub datum: bool,
+    /// **Drafting**: the annotation machinery is live — generated chrome, the
+    /// drafting symbols, `unit:` [SPEC 15]. A drawing is a stack that also
+    /// drafts, so this always implies `datum`; a plain `stack` places without
+    /// it, which is what lets artwork use the pen without a sheet's apparatus.
     pub drawing: bool,
 }
 
@@ -215,6 +234,7 @@ impl Ctx {
             scale: 1.0,
             base: 1.0,
             ratio: 1.0,
+            datum: false,
             drawing: false,
         }
     }
@@ -501,6 +521,10 @@ fn layout_inst(
         Some(schematic::layout_node(inst, path, program)?)
     } else if crate::resolve::is_drawing(&inst.attrs) {
         Some(drawing::layout_node(inst, path, program, ctx)?)
+    // …and a plain `stack` after it: a drawing answers `is_stack` too, so the
+    // narrower engine claims its own scopes first [SPEC 12].
+    } else if crate::resolve::is_stack(&inst.attrs) {
+        Some(datum::layout_node(inst, path, program, ctx)?)
     } else {
         None
     };
@@ -538,14 +562,15 @@ fn layout_inst(
     // datum-place at the part's origin, rigid with it [SPEC 15.4]; a child that
     // owns a layout — or is sheet content (a note, the title) — arranges its
     // interior as usual and places as one box.
-    let part = ctx.drawing
+    let part = ctx.datum
         && !owns_layout(inst.kind, &inst.type_chain, &inst.attrs)
         && !drawing::is_sheet(inst.kind, &inst.type_chain);
     let child_ctx = Ctx {
         // A **bundle** — a layout-owning wrapper of sheet content — stays in
         // the drawing scope [SPEC 15.5]: its drafting children lower here,
         // and the seat moves it whole.
-        drawing: part || (ctx.drawing && drawing::is_bundle(inst)),
+        datum: part || (ctx.datum && drawing::is_bundle(inst)),
+        drawing: ctx.drawing && (part || drawing::is_bundle(inst)),
         ..scaled
     };
 

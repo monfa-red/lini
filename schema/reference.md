@@ -66,6 +66,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `frame` | `block` | `box` → `rect` → `frame` |
 | `zone` | `block` | `zone` |
 | `tick` | `line` | `tick` |
+| `stack` | `block` | `stack` |
 | `floorplan` | `block` | `drawing` → `floorplan` |
 | `wall` | `sketch` | `wall` |
 | `partition` | `sketch` | `wall` → `partition` |
@@ -107,7 +108,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 
 ## Layout engines
 
-`flow` `grid` `sequence` `chart` `tree` `pie` `schematic`
+`flow` `grid` `sequence` `chart` `tree` `pie` `schematic` `stack`
 
 ## Roles
 
@@ -197,7 +198,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `range` | \|axis\|, \|band\| | `one:number` | `none` | — | — |
 | `step` | \|axis\| | `one:number` | `none` | — | — |
 | `ticks` | \|axis\| | `list:number` | `none` | — | — |
-| `unit` | \|drawing\|, \|axis\| | `one:any` | `none` | — | — |
+| `unit` | stack (layout), \|stack\|, \|drawing\|, \|axis\| | `one:any` | `none` | — | — |
 | `gridlines` | \|axis\| | `one:any` | `engine` | — | — |
 | `format` | \|chart\|, \|pie\|, \|axis\|, series (role), \|drawing\|, dimension (role) | `one:any` | `engine` | scope-link | dual-channel |
 | `place` | \|note\| | `one:any` | `none` | — | hard-gate |

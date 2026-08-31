@@ -267,7 +267,7 @@ fn unit_is_an_ident_enum_and_density_positive() {
     let err = lini::check("{ layout: drawing; unit: \"mm\" }\n|rect#r| { width: 4; height: 2 }\n")
         .expect_err("quoted unit");
     assert!(
-        err.to_string().contains("'unit' is mm, cm, m, or in"),
+        err.to_string().contains("'unit' is px, mm, cm, m, or in"),
         "{err}"
     );
 

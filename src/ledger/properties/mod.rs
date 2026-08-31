@@ -652,7 +652,12 @@ pub static PROPERTIES: &[Property] = &[
     // its quoted tick suffix [SPEC 14.4] — each reader validates its own.
     row(
         "unit",
-        &[Type("drawing"), Type("axis")],
+        &[
+            Layout("stack"),
+            Type("stack"),
+            Type("drawing"),
+            Type("axis"),
+        ],
         One(Kind::Any),
         DefaultRef::None,
         No,

@@ -6,8 +6,8 @@
 //! router never runs here.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::super::{Ctx, anchors, child_path, effective_scale, layout_inst, prim, primitives};
-use super::{annotate, mates, place_features};
+use super::super::{Ctx, anchors, datum, effective_scale};
+use super::{annotate, mates};
 use crate::error::Error;
 use crate::resolve::{LinkKind, Program, ResolvedInst, ResolvedLink};
 use crate::span::Span;
@@ -27,7 +27,7 @@ pub(in crate::layout) fn layout_node(
     // the geometry it rings — a detail (a 2D re-render). A `|plane|` only names
     // the cut: the section face is authored here, and the marker composes the
     // `A-A` title. No `of:` — an ordinary drawing.
-    let mut children = match super::section::resolve_of(inst, program)? {
+    let children = match super::section::resolve_of(inst, program)? {
         Some(super::section::OfView::Detail {
             marker,
             host,
@@ -49,26 +49,10 @@ pub(in crate::layout) fn layout_node(
         }
     };
 
-    // Centre the drawn extent on the node's origin, so the container places in
-    // a flow like any box (and a styled drawing's own rect backs its content).
-    let extent = flow_extent(&children);
-    let (sx, sy) = extent.center();
-    for c in children
-        .iter_mut()
-        .filter(|c| !anchors::is_pinned(&c.attrs))
-    {
-        c.cx -= sx;
-        c.cy -= sy;
-    }
-    let bbox = primitives::closed_bbox(inst, extent, own)?;
-    let half = super::half_stroke(&inst.attrs);
-    anchors::place_pinned(&mut children, bbox.inflate(-half))?;
-    let mut placed = prim::container(inst, bbox, children);
-    // The recentre moved the datum off the node's local zero — record where
-    // it landed, so `align/justify: origin` can line views up datum-to-datum
-    // [SPEC 12/15.8].
-    placed.origin = (-sx, -sy);
-    Ok(placed)
+    // Sizing is the datum layout's [SPEC 12] — a drawing is a stack that also
+    // drafts, so the recentre, the bbox and the pinned pass are shared, not
+    // repeated here.
+    datum::contain(inst, children, own)
 }
 
 /// A **root** drawing (`{ layout: drawing; density: 1 }`): the file is the sheet. Children
@@ -89,7 +73,7 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
         Span::empty(),
         None,
     )?;
-    let extent = flow_extent(&children);
+    let extent = datum::extent(&children);
     anchors::place_pinned(&mut children, extent)?;
     Ok((children, extent))
 }
@@ -109,14 +93,18 @@ fn lay_out(
     owner: Option<Span>,
 ) -> Result<Vec<PlacedNode>, Error> {
     let own = scaled.scale;
-    let ctx = Ctx {
-        drawing: true,
-        ..scaled
-    };
-    let mut kids = Vec::with_capacity(insts.len());
-    for c in insts {
-        kids.push(layout_inst(c, &child_path(path, c), program, ctx)?);
-    }
+    // Place first, exactly as a plain `stack` does [SPEC 12]; everything below
+    // is the drafting a drawing adds on top.
+    let mut kids = datum::lay_out(
+        insts,
+        path,
+        program,
+        Ctx {
+            datum: true,
+            drawing: true,
+            ..scaled
+        },
+    )?;
 
     let geometry: Vec<usize> = kids
         .iter()
@@ -141,7 +129,6 @@ fn lay_out(
     let (mates, annotations): (Vec<&ResolvedLink>, Vec<&ResolvedLink>) =
         links.iter().partition(|w| w.kind == LinkKind::Mate);
 
-    place_features(&mut kids, own, None)?;
     // The `||` statements: the mate walk, then the seats — the returned
     // seated annotations register as packer obstacles [SPEC 15.5/15.6].
     let seated = mates::seat(&mut kids, geometry[0], &mates, path, own)?;
@@ -155,12 +142,6 @@ fn lay_out(
     let mut lowered = annotate::lower(&kids, &annotations, path, own, None, &seated, program)?;
     kids.append(&mut lowered);
     Ok(kids)
-}
-
-/// The drawn extent of the in-flow children (pinned overlays never grow their
-/// parent — the core law; the canvas still includes them via `finish`).
-fn flow_extent(kids: &[PlacedNode]) -> Bbox {
-    Bbox::extent_of(kids, |k| !anchors::is_pinned(&k.attrs))
 }
 
 #[cfg(test)]

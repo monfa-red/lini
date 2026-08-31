@@ -272,6 +272,20 @@ pub fn is_drawing_layout(name: &str) -> bool {
     matches!(name, "drawing" | "floorplan")
 }
 
+/// The **datum-placing `layout:` names** [SPEC 12] — `stack`, plus the drawing
+/// family built on it. One question, one answer: *do this scope's children put
+/// their origin on its datum instead of flowing?* A drawing is a stack that
+/// also drafts, so it answers yes here and adds its own apparatus on top.
+pub fn is_stack_layout(name: &str) -> bool {
+    name == "stack" || is_drawing_layout(name)
+}
+
+/// Whether resolved `attrs` open a **datum-placing scope** [SPEC 12] — the
+/// placement twin of [`is_drawing`], which asks the narrower drafting question.
+pub fn is_stack(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if is_stack_layout(l))
+}
+
 /// Whether a `layout:` name is the **floorplan dialect** [SPEC 15.11] — the
 /// vocabulary gate's own question and nothing else's. Everything mechanical
 /// asks [`is_drawing_layout`]: a floorplan *is* a drawing.

@@ -238,17 +238,17 @@ const SPEC_LEDGER: &[Row] = &[
         Kind::Wrapped("{ wave(a, f) = (u*300, a*sin(2*pi*f*u)); }\n", ""),
     ),
     (
-        30,
+        31,
         r#"api -> db "query""#,
         Kind::Wrapped("{ layout: sequence }\n", ""),
     ),
     (
-        31,
+        32,
         r#"|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; labels: "Non-Thinking", "High", "Max"; marker: circle }"#,
         Kind::Wrapped("|chart| [\n", "]\n"),
     ),
     (
-        33,
+        34,
         r#"|band| "Inject" { range: 1.4 3.1; axis: time; fill: --rose }"#,
         Kind::Wrapped(
             "|chart| [\n|axis#time| { range: 0 5 }\n|line| { data: 1, 2, 3 }\n",
@@ -256,27 +256,27 @@ const SPEC_LEDGER: &[Row] = &[
         ),
     ),
     (
-        34,
+        35,
         "--rose  --teal  --orange  --sky  --amber  --purple  --green  --blue  --lime  --gray",
         Kind::NotLini("the series palette walk, in order [SPEC 14.6]"),
     ),
     (
-        36,
+        37,
         r#"anchor = id { "." id } [ "." index ] [ ":" point ]"#,
         Kind::NotLini("the drawing anchor grammar [SPEC 15.2]"),
     ),
     (
-        37,
+        38,
         "|rect#plate| { width: 120; height: 70 } [",
         Kind::Wrapped("{ layout: drawing }\n", ""),
     ),
     (
-        39,
+        40,
         "nozzle:left || barrel:right              // abut those faces, flush",
         Kind::Fragment("four alternative mates on one pair — together they over-constrain"),
     ),
     (
-        41,
+        42,
         r#"bolt <- "THRU"                              // arrow lands on the hole's rim"#,
         Kind::Wrapped(
             "{ layout: drawing }\n\
@@ -287,47 +287,47 @@ const SPEC_LEDGER: &[Row] = &[
         ),
     ),
     (
-        42,
+        43,
         "|page| { sheet: a4 } [",
         Kind::Fragment("the two views' bodies are elided — '[ … ]'"),
     ),
     (
-        43,
+        44,
         "{ layout: drawing }",
         Kind::Fragment("the profile is elided — 'draw: …'"),
     ),
     (
-        44,
+        45,
         r#"|component#U7| "TMC2300-LA-T" ["#,
         Kind::Wrapped("{ layout: schematic }\n|C#c24|\n", ""),
     ),
     (
-        45,
+        46,
         r#"{ layout: schematic; |vm::label| { symbol: power } [ "VM" ] }"#,
         Kind::Wrapped("", "|C#c24|\n|component#U7| [ |pin#VS| ]\n"),
     ),
     (
-        46,
+        47,
         r#"<svg xmlns="http://www.w3.org/2000/svg""#,
         Kind::NotLini("the emitted SVG document [SPEC 18]"),
     ),
     (
-        47,
+        48,
         r#"<g class="lini-node lini-{type} lini-{base} lini-style-{class}""#,
         Kind::NotLini("the emitted SVG for a box [SPEC 18]"),
     ),
     (
-        48,
+        49,
         r#"<g class="lini-link lini-style-{class}" data-from="A" data-to="B">"#,
         Kind::NotLini("the emitted SVG for a link [SPEC 18]"),
     ),
     (
-        49,
+        50,
         "lini [options] <input.lini>",
         Kind::NotLini("the CLI synopsis [SPEC 20]"),
     ),
     (
-        50,
+        51,
         "file        = [ stylesheet ] { drawn }              # setup block, then drawn statements in source order",
         Kind::NotLini("the language grammar [SPEC 22]"),
     ),

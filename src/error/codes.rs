@@ -186,6 +186,7 @@ catalog! {
     Validate 9 WAVY_OUTLINE "wavy-outline";
     Validate 10 INVALID_COLOR "invalid-color";
     Validate 11 DEFERRED_PROPERTY "deferred-property";
+    Validate 12 DENSITY_WITHOUT_MM "density-without-millimetres";
 
     // ── Layout [SPEC 11–15] ──
     Layout 0 LAYOUT "layout";

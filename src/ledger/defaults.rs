@@ -329,6 +329,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             n("scale", 1.0),
         ],
+        // The datum layout [SPEC 12]: frameless, and padding-free like the
+        // drawing built on it — the placed geometry is the content.
+        "stack" => vec![id("layout", "stack"), n("padding", 0.0)],
         // Drawings [SPEC 15]: the container (frameless — the geometry and its
         // annotations are the content)…
         // A drawing's px-per-unit is stamped by the desugar scale fold

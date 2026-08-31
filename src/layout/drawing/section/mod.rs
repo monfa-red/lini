@@ -134,6 +134,7 @@ pub(in crate::layout) fn layout_detail(
     // re-entrant, a different scale the whole trick — then shift the region
     // centre onto the datum.
     let ctx = Ctx {
+        datum: true,
         drawing: true,
         ..scaled
     };

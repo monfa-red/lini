@@ -46,7 +46,8 @@
     "chart",
     "tree",
     "pie",
-    "schematic"
+    "schematic",
+    "stack"
   ],
   "roles": [
     "discrete",
@@ -930,6 +931,18 @@
         "stroke": "--stroke",
         "stroke-width": "1",
         "fill": "none"
+      }
+    },
+    {
+      "name": "stack",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "stack"
+      ],
+      "defaults": {
+        "layout": "stack",
+        "padding": "0"
       }
     },
     {
@@ -2971,6 +2984,14 @@
     {
       "name": "unit",
       "owners": [
+        {
+          "kind": "layout",
+          "name": "stack"
+        },
+        {
+          "kind": "type",
+          "name": "stack"
+        },
         {
           "kind": "type",
           "name": "drawing"
