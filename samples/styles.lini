@@ -46,7 +46,7 @@
   |caption| "modifiers"
   |box| "dashed" { stroke-style: dashed; }
   |box| "dotted" { stroke-style: dotted; }
-  |box| "stack" { stack: 4; }
+  |box| "multiple" { multiple: 4; }
   |box| "shadow" { shadow: 2 3 5; }
   |box| "rotate" { rotate: -8; }
 ]

@@ -2154,7 +2154,7 @@
       "example": "|slant| \"lean\" { skew: 20; }"
     },
     {
-      "name": "stack",
+      "name": "multiple",
       "owners": [
         {
           "kind": "role",
@@ -2170,7 +2170,7 @@
       "baked": false,
       "deferred": false,
       "dualChannel": false,
-      "example": "|box| \"deck\" { stack: 4; }"
+      "example": "|box| \"deck\" { multiple: 4; }"
     },
     {
       "name": "marker",

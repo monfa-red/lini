@@ -53,7 +53,6 @@ input_file: samples/styles.lini
     <path id="lini-g1500-233" d="…"/>
     <path id="lini-g1500-238" d="…"/>
     <path id="lini-g1500-241" d="…"/>
-    <path id="lini-g1500-256" d="…"/>
     <path id="lini-g1500-259" d="…"/>
     <path id="lini-g1500-264" d="…"/>
     <path id="lini-g1500-265" d="…"/>
@@ -212,8 +211,8 @@ input_file: samples/styles.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="modifiers" transform="translate(0,61.75)">
-      <rect x="-274.18" y="-48.5" width="548.36" height="97" rx="8" ry="8"/>
-      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 6,4.5" transform="translate(-207.5825,0)">
+      <rect x="-283.465" y="-48.5" width="566.93" height="97" rx="8" ry="8"/>
+      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 6,4.5" transform="translate(-216.8675,0)">
         <rect x="-45.5975" y="-27.5" width="91.195" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-209" transform="translate(-25.5975 5.37) scale(0.015 -0.015)"/>
@@ -224,7 +223,7 @@ input_file: samples/styles.lini
           <use href="#lini-g1500-209" transform="translate(16.3875 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 2,3" transform="translate(-100.1275,0)">
+      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 2,3" transform="translate(-109.4125,0)">
         <rect x="-43.8575" y="-27.5" width="87.715" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-209" transform="translate(-23.8575 5.37) scale(0.015 -0.015)"/>
@@ -237,18 +236,21 @@ input_file: samples/styles.lini
       </g>
       <g class="lini-node lini-box lini-block" transform="translate(0.51,0)">
         <g transform="translate(4,-4)">
-          <rect x="-38.78" y="-27.5" width="77.56" height="55" rx="6" ry="6"/>
+          <rect x="-48.065" y="-27.5" width="96.13" height="55" rx="6" ry="6"/>
         </g>
-        <rect x="-38.78" y="-27.5" width="77.56" height="55" rx="6" ry="6"/>
+        <rect x="-48.065" y="-27.5" width="96.13" height="55" rx="6" ry="6"/>
         <g class="lini-text">
-          <use href="#lini-g1500-303" transform="translate(-18.78 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-310" transform="translate(-11.475 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-177" transform="translate(-5.64 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-203" transform="translate(2.535 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-256" transform="translate(10.83 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-264" transform="translate(-28.065 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-315" transform="translate(-14.715 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-259" transform="translate(-6.045 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-310" transform="translate(-2.55 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-241" transform="translate(3.285 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-296" transform="translate(6.78 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-259" transform="translate(15.99 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-213" transform="translate(19.485 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" transform="translate(104.5375,0)">
+      <g class="lini-node lini-box lini-block" transform="translate(113.8225,0)">
         <g filter="url(#lini-shadow-7e2a304c)">
           <rect x="-47.2475" y="-27.5" width="94.495" height="55" rx="6" ry="6"/>
         </g>
@@ -261,7 +263,7 @@ input_file: samples/styles.lini
           <use href="#lini-g1500-335" transform="translate(15.2025 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" transform="translate(211.4825,0) rotate(-8)">
+      <g class="lini-node lini-box lini-block" transform="translate(220.7675,0) rotate(-8)">
         <rect x="-41.6975" y="-27.5" width="83.395" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lini-g1500-299" transform="translate(-21.6975 5.37) scale(0.015 -0.015)"/>
@@ -272,7 +274,7 @@ input_file: samples/styles.lini
           <use href="#lini-g1500-213" transform="translate(13.1175 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-248.686,-62.5)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-257.971,-62.5)">
         <rect x="-25.494" y="-6" width="50.988" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lini-g1400-264" transform="translate(-25.494 4.296) scale(0.012 -0.012)"/>

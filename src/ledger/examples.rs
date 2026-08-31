@@ -95,7 +95,7 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "|image| { src: \"assets/logo.svg\"; width: 60; height: 40; fit: contain; }",
     ),
     ("skew", "|slant| \"lean\" { skew: 20; }"),
-    ("stack", "|box| \"deck\" { stack: 4; }"),
+    ("multiple", "|box| \"deck\" { multiple: 4; }"),
     ("marker", "|line| { points: -60 0, 60 0; marker: dot; }"),
     (
         "marker-start",

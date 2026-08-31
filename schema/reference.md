@@ -162,7 +162,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `symbol` | \|icon\|, \|surface-finish\|, \|label\|, discrete (role), \|door\|, \|bed\|, \|sofa\|, \|dining\|, \|bath\|, \|appliance\| | `one:ident` | `none` | — | — |
 | `fit` | \|icon\|, \|image\| | `one:ident` | `bundles` | — | — |
 | `skew` | \|slant\| | `one:number` | `bundles` | — | — |
-| `stack` | closed (role) | `one:number` | `none` | — | — |
+| `multiple` | closed (role) | `one:number` | `none` | — | — |
 | `marker` | \|line\|, \|mark\|, series (role), link | `one:marker` | `engine` | — | — |
 | `marker-start` | \|line\|, \|mark\|, series (role), link | `one:marker` | `engine` | — | — |
 | `marker-end` | \|line\|, \|mark\|, series (role), link | `one:marker` | `engine` | — | — |

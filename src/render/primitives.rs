@@ -37,9 +37,9 @@ pub fn render_geometry(
         None => depth,
     };
 
-    // `stack:` draws an offset copy behind the shape [SPEC 7]; both copies
-    // sit inside the shadow group, so the stacked silhouette casts one shadow.
-    if let Some((dx, dy)) = stack_offset(n) {
+    // `multiple:` draws an offset copy behind the shape [SPEC 7]; both copies
+    // sit inside the shadow group, so the doubled silhouette casts one shadow.
+    if let Some((dx, dy)) = multiple_offset(n) {
         let indent = "  ".repeat(body_depth);
         writeln!(
             out,
@@ -89,9 +89,9 @@ pub fn render_geometry(
     }
 }
 
-/// The `(dx, dy)` of a `stack:` offset copy [SPEC 7]: scalar `N` ⇒ `(N, -N)`.
-fn stack_offset(n: &PlacedNode) -> Option<(f64, f64)> {
-    match n.attrs.get("stack")? {
+/// The `(dx, dy)` of a `multiple:` offset copy [SPEC 7]: scalar `N` ⇒ `(N, -N)`.
+fn multiple_offset(n: &PlacedNode) -> Option<(f64, f64)> {
+    match n.attrs.get("multiple")? {
         ResolvedValue::Number(v) => Some((*v, -*v)),
         ResolvedValue::Tuple(items) if items.len() == 2 => {
             Some((items[0].as_number()?, items[1].as_number()?))

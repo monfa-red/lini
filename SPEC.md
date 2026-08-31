@@ -669,7 +669,7 @@ live for a host page to re-theme, where a global property bakes its value into t
 ## 7. Nodes
 
 12 primitives. All accept position ([SPEC 5](#5-the-box-model)) and paint ([SPEC 6](#6-paint-stroke--text));
-closed primitives also accept `stack`, `rotate`, `shadow`. Text is **not** a primitive —
+closed primitives also accept `multiple`, `rotate`, `shadow`. Text is **not** a primitive —
 it is bare content ([SPEC 3](#3-statements--the-label)); the frameless `|block|` box
 ([SPEC 8](#8-templates)) is what you reach for when text needs an id, a class, a link, or box
 layout.
@@ -703,7 +703,7 @@ on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 24]
 | Property | Forms | Effect |
 |---|---|---|
 | `stroke-style` | `solid` / `dashed` / `dotted` / `center` / `phantom` | Stroke pattern. Default `solid`. `center` (dash-dot) and `phantom` (dash-dot-dot) are the drafting line conventions — axes and alternate positions — valid on shapes and `\|line\|`s everywhere ([SPEC 15.7](#157-leaders-notes--line-conventions)); a link's set stays `solid` / `dashed` / `dotted` / `wavy` ([SPEC 9](#9-links)). `wavy` is **link-only by design** — a wire waves, an outline never does. |
-| `stack` | `N` / `dx dy` | Draw an offset duplicate behind the node. Scalar `N` = `N -N`. |
+| `multiple` | `N` / `dx dy` | Draw one offset duplicate behind the node — the "several of these" reading. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox centre ([SPEC 5](#5-the-box-model)). |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
 
@@ -3839,7 +3839,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `symbol` | `\|icon\|` · `\|surface-finish\|` · `\|label\|` · the discretes · `\|door\|` and the floorplan fixtures (not `\|stairs\|`) | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)) · a schematic symbol / variant ([SPEC 16.3](#163-discretes), [SPEC 16.4](#164-labels)) · a floorplan variant ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
 | `fit` | `\|icon\|` `\|image\|` | `auto` · `contain` · `cover` · `stretch` | maps content into the box (size unchanged); `auto` default, `\|sign\|` `contain`. |
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
-| `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
+| `multiple` | closed primitives | `N` · `dx dy` | one offset duplicate behind. |
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([SPEC 15.3](#153-the-sketch-pen)). |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |

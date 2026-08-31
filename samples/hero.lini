@@ -55,7 +55,7 @@
   |store#pg| "Postgres"
   |store#redis| "Redis"
   |svc#queue| "Queue" {
-    fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; stack: 4;
+    fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; multiple: 4;
   }
 ]
 

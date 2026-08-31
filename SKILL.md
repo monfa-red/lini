@@ -153,7 +153,8 @@ Templates (all overridable; extend with `|name::base| { … }`):
 | `\|topic\|` / `\|mindmap\|` | tree structure node / the full mindmap preset |
 | `\|chart\|` / `\|pie\|` / `\|sequence\|` / `\|drawing\|` / `\|floorplan\|` / `\|schematic\|` | layout presets (below) |
 
-Shape extras: `stack: N` (offset duplicate behind — "a pile"), `shadow: dx dy blur`,
+Shape extras: `multiple: N` (one offset duplicate behind — "several of these";
+`N` is the offset, not a count), `shadow: dx dy blur`,
 `stroke-style: solid|dashed|dotted` (+ drafting `center`/`phantom` on shapes,
 `wavy` on links only). `href: "url"` makes anything clickable; `hint: "…"` adds
 a tooltip/accessible `<title>`.

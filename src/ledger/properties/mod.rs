@@ -399,7 +399,7 @@ pub static PROPERTIES: &[Property] = &[
     ),
     row("skew", &[Type("slant")], One(Kind::Number), Bundles, No),
     row(
-        "stack",
+        "multiple",
         &[Role("closed")],
         One(Kind::Number),
         DefaultRef::None,
