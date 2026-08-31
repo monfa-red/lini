@@ -25,7 +25,9 @@ lini --static d.lini -o s.svg && resvg s.svg d.png   # rasterize, then READ d.pn
 `--static` inlines CSS variables and outlines text — required before `resvg`
 (it can't resolve `var()`). In this repo the binary is `target/release/lini`
 (`cargo build --release` if missing). `lini desugar d.lini` prints the lowered
-form when sugar confuses; `lini serve` opens a live playground.
+form when sugar confuses; `lini serve` opens a live playground. `fmt` keeps
+comments where they point: one **opening its line** stays leading, one **following
+code** stays on that code's line — so an annotated table of constants survives.
 
 ## A complete file
 
@@ -69,9 +71,13 @@ a link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
   components of one item. `data: 9, 15, 24` (three values) · `data: 10 20, 30 40`
   (two x-y points) · `padding: 5 2 5 5` (one four-part value) · `translate: 10 -4`.
 - **Math needs parens** — operators appear only inside `(…)`: `padding: (8 * 2);`
-  `width: (w / 2)`. Calls are bare (`width: scale(3)`), signed numbers are bare
-  (`translate: -35 20`). Bindings in the stylesheet: `w = 120;` `scale(n) = (100 * 1.2^n);`
-  — read bare anywhere a value goes.
+  `width: (w / 2)`. **A call's own parens count**, so an operator inside a call's
+  arguments needs no inner group: `move(-tail - 1, -y)`, `right(w / 2)`. Calls are
+  bare (`width: scale(3)`), signed numbers are bare (`translate: -35 20`). Inside a
+  group: `+ - * / ^`, comparisons, `a ? b : c`, `pi`/`e`, locals (`r = 40; 2 * r`),
+  and the math library — `sqrt exp ln log abs sin cos tan min max clamp floor round
+  pow`. Bindings in the stylesheet: `w = 120;` `scale(n) = (100 * 1.2^n);` — read
+  bare anywhere a value goes.
 - **A class is worn, never glued into bars**: `|box| .hot` — not `|box.hot|`.
   The label comes before classes: `|box#a| "A" .hot`. First class spaced off the
   head, further ones glued: `.hot.loud`.
@@ -156,8 +162,8 @@ Templates (all overridable; extend with `|name::base| { … }`):
 Shape extras: `multiple: N` (one offset duplicate behind — "several of these";
 `N` is the offset, not a count), `shadow: dx dy blur`,
 `stroke-style: solid|dashed|dotted` (+ drafting `center`/`phantom` on shapes,
-`wavy` on links only). `href: "url"` makes anything clickable; `hint: "…"` adds
-a tooltip/accessible `<title>`.
+`wavy` on links only), `opacity: 0.75`. `href: "url"` makes anything clickable;
+`hint: "…"` adds a tooltip/accessible `<title>`.
 
 Common shapes need no template: circle = `|oval| { width: 40; }`, database =
 `|cyl|`, standalone arrow = `|line| { points: 0 0, 50 0; marker-end: arrow; }`.
@@ -244,7 +250,8 @@ or a `light/dark` pair. `lini serve --theme` paints every served compile;
 ## Layout engines
 
 `layout:` on any container (the root included): `flow` (default) · `grid` ·
-`tree` · `sequence` · `chart` · `pie` · `drawing` · `floorplan` · `schematic`.
+`stack` · `tree` · `sequence` · `chart` · `pie` · `drawing` · `floorplan` ·
+`schematic`.
 Everything core — cascade, paint, palette, links syntax — works identically
 inside each.
 
@@ -361,6 +368,31 @@ A chart fixes a shared scale from all children, then draws. Default size
   (lines close into polygons); `bars: grouped (default) | stacked | overlay`
   combines bar series. `|pie| { hole: 0.5 }` is a donut.
 
+### Stack (one datum)
+
+`layout: stack` arranges nothing: every child's **origin** lands on the container's
+datum and `translate:` is the only offset. A symmetric primitive's origin is its
+centre, so shapes stack concentric; a `|sketch|`'s is its **pen origin**, so several
+sketches keep the frame they were drawn in — which flow throws away. Reach for it for
+artwork, a hand-placed figure, or a diagram tuned past what an arranger will do.
+
+```
+{ layout: stack; }
+|sketch#body| { draw: move(0, 0) right(40) down(20) close(); }
+|sketch#slot| { draw: move(10, 5) right(20) down(10) close(); }
+```
+
+`|stack|` is the node form. Links go to the **router**, so arrows and labels behave as
+in a flow — absolute placement costs you nothing. `gap`/`direction`/`align`/`justify`
+are ignored (a root block refuses them). Nested boxes are unaffected: a `|box|` inside
+a stack still lays out its own content. **Units:** `unit: px` (the default) is 1 : 1;
+`unit: mm` plus a root `density:` (px per mm, default 4) draws in millimetres —
+`{ layout: stack; unit: mm; density: 10 }` renders a 24 mm mark 240 px wide.
+
+`layout: drawing` is this engine **plus** drafting — mates, dimensions, generated
+chrome. Same placement, so `|sketch|`, `mirror:` and `pattern:` work identically in
+both; only a drawing draws a fused mirror's centreline.
+
 ### Drawing (engineering)
 
 `layout: drawing` places every child's origin on a shared **datum** (no flow);
@@ -383,15 +415,41 @@ plate.pin.2 <- "THRU"                          // leader to the 2nd pattern copy
   leaders `<- "text"` (arrow) / `*- "text"` (dot on a face) / `>- "A"` (datum
   triangle) · `a:left || b:right { gap: 4 }` mates part faces (moves geometry,
   draws nothing; negative gap = inserted).
-- Custom profiles: `|sketch| { draw: move(-80, 0) up(14) right(50):neck
-  fillet(3):r1 …; }` — pen calls left-to-right; `:name` glued to a call names
-  that segment for dimensioning (`body:neck (o)` → ⌀). `mirror: x-axis` draws
-  half a profile and fuses the whole; `revolve: x-axis` makes a turned part
-  (centerline + shoulder lines auto); `|hole|` punches and centre-marks itself.
+- **The pen** (`|sketch| { draw: … }`, and it works in any layout): calls run
+  left-to-right — `move(x, y)` starts a subpath, `left/right/up/down(n)`,
+  `line(dx, dy)`, `angle(deg, n)`, `curve(…)`, `circle(r)`, `fillet(r)` /
+  `chamfer(c)` between two segments, `close()`. A second `move()` starts a
+  subpath; fill is even-odd, so an inner one reads as a hole. `:name` glued to a
+  call names that segment for dimensioning (`body:neck (o)` → ⌀).
+- **Coordinates bite**: the verbs are visual (`up` goes up), but `move`/`line`/
+  `curve` take raw **y-down** numbers — `move(0, -14)` is 14 *above* the origin.
+- **Two arcs, and they are not interchangeable.** `arc(dx, dy, r)` is the *minor*
+  arc to a relative point — `r > 0` sweeps clockwise, `|r|` ≥ half the chord.
+  `arc(r, deg)` is a **tangent** arc: it continues the current heading and sweeps
+  `deg` (positive = clockwise), so it **needs a heading to continue** and cannot
+  follow `move()` — open with a run or the two-point form. Bearings are `up = 0`,
+  clockwise (90 right, 180 down).
+- **`mirror:`** reflects the node's path *and its features*, then unions the copy —
+  `y-axis` (left↔right), `x-axis` (top↔bottom), a bearing, or a list for 4-fold.
+  The split that matters: an **open** subpath is **fused** (draw half, get the
+  whole — both ends must sit on the axis) and generates the axis `|centerline|`
+  in a drawing; a **closed** one is **duplicated** (draw one ear, get both) and
+  generates none. `mirror: none` opts a node and its subtree out.
+- **`pattern:`** (any layout) — `grid(cols, rows, dx, dy)` where **the seed is
+  copy one**, so `grid(1, 3, 0, 20)` gives three, not four; `radial(count, radius)`
+  puts `count` copies *on* the circle about the node's position and draws the
+  `|pitch-circle|`. Copies are addressed `plate.bolt.2`.
+- `revolve: x-axis` makes a turned part (centerline + shoulder lines auto);
+  `|hole|` punches and centre-marks itself. Generated chrome is styled — or
+  **removed** — by the cascade: `|sketch| |centerline| { stroke: none }` takes its
+  space back too.
 - Dims: `side:` picks the stacking edge, `tol: 0.1` / `tol: +0.2 -0.05` /
   `tol: h6` appends tolerance, labels follow (`pin (o) "H7"`) or replace
-  (two-ended) the value. `scale: 2` on a drawing = 2:1 view that still
-  measures true. Sheets: `|page| { sheet: a4 }` + `|title-block| { title: "…";
+  (two-ended) the value. **Scale is three settings**: `scale: 2` is the drafting
+  ratio (a 2:1 view that still measures true), `unit:` the physical size of one
+  drawing unit (`mm` default here, also `cm`/`m`/`in`/`px`), and root `density:`
+  the pixels per mm (default 4) — the engine's px-per-unit is their product, never
+  authored. Magnitude is `scale:`'s job: a 5 m beam on A4 is `scale: 0.02`. Sheets: `|page| { sheet: a4 }` + `|title-block| { title: "…";
   drawing-number: "…"; }`; multi-view rows share axes with `align: origin`.
 - Deep machinery, a line each: `thread: neck 1.25` dresses an ISO thread on a
   revolved profile — a bare leader on that segment composes `M8×1.25`;
