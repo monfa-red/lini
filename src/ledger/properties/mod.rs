@@ -942,6 +942,25 @@ pub static PROPERTIES: &[Property] = &[
     row("corner-radius", &[Link], One(Kind::Any), Engine, No),
 ];
 
+/// The `layout:` value set [SPEC 11/17] — every engine name, in the row's own
+/// order. The `Owner::Layout` column answers a different question (*which*
+/// engine honours a property), and answers it only for the engines that happen
+/// to own one, so it can never stand in for the set: `drawing` and `floorplan`
+/// own no row of their own. Stated here, once, for the arranger's correction
+/// and the grammar homes alike.
+pub const LAYOUTS: &[&str] = &[
+    "flow",
+    "grid",
+    "stack",
+    "tree",
+    "sequence",
+    "chart",
+    "pie",
+    "drawing",
+    "floorplan",
+    "schematic",
+];
+
 /// The value **builders** [SPEC 10.3, 12]: calls that stay a typed value (a
 /// colour, gradient, track repeat, or hatch) for render / layout; every other
 /// call is compute and folds to a number. Schema generation and editor

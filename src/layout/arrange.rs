@@ -205,6 +205,27 @@ enum LayoutMode {
     Grid,
 }
 
+/// The engines a **node** owns [SPEC 14] — intercepted in `layout_inst`, so one
+/// arriving here is the wrong wearer rather than an unknown name, and the
+/// correction below has already answered it.
+const NODE_ENGINES: &[&str] = &["chart", "pie"];
+
+/// The engine names the corrections offer, prose-joined — every `layout:` value
+/// off the ledger's [`LAYOUTS`] but the two [`NODE_ENGINES`] answers itself.
+/// This reader is the **last** to see a `layout:`, so what it offers has to be
+/// the whole set, not its own two modes.
+fn engine_list() -> String {
+    let names: Vec<&str> = crate::ledger::properties::LAYOUTS
+        .iter()
+        .copied()
+        .filter(|l| !NODE_ENGINES.contains(l))
+        .collect();
+    match names.split_last() {
+        Some((last, rest)) => format!("{} or {last}", rest.join(", ")),
+        None => String::new(),
+    }
+}
+
 fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<LayoutMode, Error> {
     match attrs.get("layout") {
         None => Ok(LayoutMode::Flow),
@@ -222,7 +243,7 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
             // `layout_inst` — but the **scene root** never passes through
             // there, and a root `{ layout: chart }` lands here instead. Say so
             // rather than pretending the name is unknown.
-            engine @ ("chart" | "pie") => Err(Error::at(
+            engine if NODE_ENGINES.contains(&engine) => Err(Error::at(
                 span,
                 format!(
                     "'layout: {engine}' belongs to a '|{engine}|' node — a scene root cannot be one"
@@ -230,14 +251,12 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
             )),
             other => Err(Error::at(
                 span,
-                format!(
-                    "unknown layout '{other}' — expected flow, grid, stack, tree, sequence, drawing, floorplan or schematic"
-                ),
+                format!("unknown layout '{other}' — expected {}", engine_list()),
             )),
         },
         Some(_) => Err(Error::at(
             span,
-            "'layout' expects an engine name — flow, grid, stack, tree, sequence, drawing, floorplan or schematic",
+            format!("'layout' expects an engine name — {}", engine_list()),
         )),
     }
 }

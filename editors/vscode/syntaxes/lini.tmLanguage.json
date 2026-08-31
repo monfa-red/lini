@@ -300,7 +300,7 @@
     },
     "value-keyword": {
       "comment": "Enum value idents + the marker glyphs, sides, and layout names.",
-      "match": "(?<![\\w-])(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|phantom|outlined|filled|rounded|sharp|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|grid|pie|schematic|sequence|stack|tree)(?![\\w-])",
+      "match": "(?<![\\w-])(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|origin|rows|columns|none|auto|solid|dashed|dotted|wavy|phantom|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|px|mm|cm|m|in|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|drawing|floorplan|grid|pie|schematic|sequence|stack|tree)(?![\\w-])",
       "name": "support.constant.lini"
     },
     "color-name": {

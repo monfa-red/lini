@@ -597,7 +597,7 @@
         const BUILDER =
           /(?:gradient|hatch|hsl|hsla|linear-gradient|oklch|radial-gradient|repeat|rgb|rgba)(?=\s*\()/y;
         const KEYWORD =
-          /(?:flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|phantom|outlined|filled|rounded|sharp|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|grid|pie|schematic|sequence|stack|tree)(?![\w-])/y;
+          /(?:flow|row|column|radial|bilateral|start|center|end|stretch|evenly|origin|rows|columns|none|auto|solid|dashed|dotted|wavy|phantom|log|linear|hover|always|orthogonal|natural|straight|contain|cover|x-axis|y-axis|px|mm|cm|m|in|over|arrow|dot|circle|diamond|datum|crow|many|one|exactly-one|zero-or-one|one-or-many|zero-or-many|bottom|left|right|top|chart|drawing|floorplan|grid|pie|schematic|sequence|stack|tree)(?![\w-])/y;
         const COLOR =
           /(?:white|black|red|green|blue|gray|grey|crimson|orange|yellow|gold|silver|navy|teal|purple|pink|brown|cyan|magenta|lime|maroon|olive|cornflowerblue|currentColor|transparent)(?![\w-])/y;
         const SIDE = /(?:bottom|left|right|top)(?![\w-])/y;

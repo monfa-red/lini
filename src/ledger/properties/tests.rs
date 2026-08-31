@@ -12,6 +12,22 @@ fn every_name_is_unique() {
     }
 }
 
+/// The owner column names engines, [`LAYOUTS`] names them all — so a typo in
+/// either shows up here rather than as a property nobody can write or an engine
+/// nobody highlights.
+#[test]
+fn every_layout_owner_is_a_known_engine() {
+    for p in PROPERTIES {
+        for l in p.layout_owners() {
+            assert!(
+                LAYOUTS.contains(&l),
+                "'{}' is owned by layout '{l}', which is not a `layout:` value",
+                p.name
+            );
+        }
+    }
+}
+
 /// Acceptance (Stage R2): every property name that appears in the
 /// bundles-moved defaults exists in the ledger.
 #[test]

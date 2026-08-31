@@ -4775,10 +4775,10 @@ The side names **`top`, `bottom`, `left`, `right`** are **not** reserved — the
 keywords only after an endpoint's `:` (`a:left`), so a node may be named `|box#left|`.
 Single quotes (`'`) are reserved and are not strings.
 
-Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `tree`,
-`sequence`, `chart`, `pie`, `stack`, `row`, `column`, `radial`, `bilateral`, `start`, `center`,
-`end`, `stretch`, `evenly`, `none`, `auto`, `orthogonal`, `natural`, `straight` mean
-their keyword only after the property that
+Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `stack`, `tree`,
+`sequence`, `chart`, `pie`, `drawing`, `floorplan`, `schematic`, `row`, `column`, `radial`,
+`bilateral`, `start`, `center`, `end`, `stretch`, `evenly`, `origin`, `none`, `auto`,
+`orthogonal`, `natural`, `straight`, `px` mean their keyword only after the property that
 expects them. **Every built-in type** — the primitives ([SPEC 7](#7-nodes)),
 the templates ([SPEC 8](#8-templates)), and each layout's own types
 ([SPEC 13](#13-sequence)–[SPEC 16](#16-schematic)) — is protected from a

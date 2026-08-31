@@ -1,15 +1,15 @@
 //! The grammar's word sets — the **single source** every generated home reads.
 //!
 //! Each set is derived from whatever table already owns it: the primitive and
-//! template type tables, `PROPERTIES` / `BUILDER_CALLS` off the ledger, the
-//! layout names off the owner column, the marker glyphs off
+//! template type tables, `PROPERTIES` / `BUILDER_CALLS` / `LAYOUTS` off the
+//! ledger, the marker glyphs off
 //! [`MarkerKind::NAMES`], the sides off [`Side::name`]. Only two sets have no
 //! owning table — the contextual value keywords and the CSS colour names — and
 //! they are stated **once**, here, for all three homes.
 
 use crate::ast::Side;
 use crate::desugar::types::TEMPLATES;
-use crate::ledger::properties::{BUILDER_CALLS, Owner, PROPERTIES};
+use crate::ledger::properties::{BUILDER_CALLS, LAYOUTS, PROPERTIES};
 use crate::resolve::{MarkerKind, NodeKind};
 
 /// The primitives that are written between the identity bars (`|box|`, `|sketch|`).
@@ -48,18 +48,10 @@ pub fn builder_calls() -> Vec<&'static str> {
     names
 }
 
-/// The layout-engine names off the owner column — the `layout:` values, sorted.
+/// The layout-engine names off [`LAYOUTS`] — the `layout:` values, sorted.
 pub fn layouts() -> Vec<&'static str> {
-    let mut names: Vec<&'static str> = PROPERTIES
-        .iter()
-        .flat_map(|p| p.owners.iter())
-        .filter_map(|o| match o {
-            Owner::Layout(l) => Some(*l),
-            _ => None,
-        })
-        .collect();
+    let mut names: Vec<&'static str> = LAYOUTS.to_vec();
     names.sort_unstable();
-    names.dedup();
     names
 }
 
@@ -80,9 +72,9 @@ pub fn side_names() -> Vec<&'static str> {
 
 /// The enum value idents highlighted as constants in value position that no
 /// table owns — they live in the readers' `parse` arms, so they are stated once
-/// here: flow/grid/tree direction and placement, the booleans and sentinels,
-/// stroke styles, corner and outline styles, scales, tooltip modes, routing
-/// strategies, `fit` modes, the revolve axes, and the sides. The glyph names
+/// here: flow/grid/tree direction and placement, the empty/auto sentinels,
+/// stroke styles, scales, tooltip modes, routing strategies, `fit` modes, the
+/// revolve axes, the measuring units, and the sides. The glyph names
 /// ([`marker_names`]) and the layout names ([`layouts`]) are appended by
 /// [`value_keywords`] from their own tables.
 const CONTEXTUAL_KEYWORDS: &[&str] = &[
@@ -97,14 +89,10 @@ const CONTEXTUAL_KEYWORDS: &[&str] = &[
     "end",
     "stretch",
     "evenly",
-    "between",
-    "around",
+    "origin",
     "rows",
     "columns",
-    "all",
-    // booleans and the empty/auto sentinels
-    "true",
-    "false",
+    // the empty/auto sentinels
     "none",
     "auto",
     // stroke styles — the four line styles plus the two drafting conventions
@@ -113,11 +101,6 @@ const CONTEXTUAL_KEYWORDS: &[&str] = &[
     "dotted",
     "wavy",
     "phantom",
-    // corner / outline styles
-    "outlined",
-    "filled",
-    "rounded",
-    "sharp",
     // scales and tooltip modes
     "log",
     "linear",
@@ -133,6 +116,13 @@ const CONTEXTUAL_KEYWORDS: &[&str] = &[
     // the `revolve:` axes [SPEC 15.3]
     "x-axis",
     "y-axis",
+    // the `unit:` enum [SPEC 15.1] — longest spelling first, so a scanner that
+    // tries alternatives in order never stops at the `m` of `mm`
+    "px",
+    "mm",
+    "cm",
+    "m",
+    "in",
     // `over` joins the sides in value position [SPEC 13]
     "over",
 ];
