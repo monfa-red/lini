@@ -240,6 +240,20 @@ pub(crate) fn terminal_facing<S: AsRef<str>>(
         None => 0,
     };
     let port = *glyph.ports.get(index)?;
+    // A two-port glyph's terminals face along the part's own axis — each away
+    // from the other port — whatever corner of the box the drawing parks them
+    // on: an `|L|`'s humps sit on its baseline, so a nearest-edge read ties on
+    // both bottom corners and a chain through an inductor garbled for it.
+    if let [a, b] = glyph.ports[..] {
+        let other = if index == 0 { b } else { a };
+        let (dx, dy) = (port.0 - other.0, port.1 - other.1);
+        if dx.abs() > dy.abs() {
+            return Some(if dx < 0.0 { Side::Left } else { Side::Right });
+        }
+        if dy.abs() > dx.abs() {
+            return Some(if dy < 0.0 { Side::Top } else { Side::Bottom });
+        }
+    }
     facing(port, glyph.width, glyph.height)
 }
 

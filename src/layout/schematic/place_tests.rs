@@ -341,3 +341,26 @@ fn a_second_part_on_a_taken_cell_errors() {
         "cell 1 1 already holds 'r1' — give 'r2' its own ordinal"
     );
 }
+
+#[test]
+fn facing_pins_align_across_tracks_and_their_wire_runs_straight() {
+    // [SPEC 16.1] anchors sharing a row seat so wired facing pins share
+    // their row exactly: cluster centring alone offsets neighbouring pin
+    // rows by whatever the satellite asymmetry is, and every part-to-part
+    // wire jogs — two neighbouring jogs then collide below the minimum
+    // pitch. A real sheet runs these wires dead straight.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#u1| [\n    |pin#vin| { side: left }; |pin#en| { side: left }; |pin#out| { side: right }\n  ]\n"
+            .to_owned()
+            // The asymmetric cluster: a ground hanging under u1's left pin
+            // shifts u1's cluster centre off u2's.
+            + "  |component#u2| [\n    |pin#in| { side: left }; |pin#nc| { side: left }; |pin#o2| { side: right }\n  ]\n"
+            + "  u1.vin - |gnd|\n  u1.out - u2.in\n"),
+    ));
+    let (ay, by) = (cell(&nodes, "out").1, cell(&nodes, "in").1);
+    assert!(
+        close(ay, by),
+        "the wired facing pins share a row: {ay} vs {by}"
+    );
+}

@@ -70,28 +70,40 @@ fn a_shared_pin_is_dotted_where_its_one_lead_splits() {
 
 #[test]
 fn a_three_way_fan_dots_every_split_and_never_its_terminus() {
-    // Three legs off u1.c: two turn away and one runs straight into r1's pin.
-    // Each turn is a meet (lead in, branch out, lead on); the straight leg's
-    // landing is not — one lead arrives and stops on a pin.
+    // Three legs off u1.c. The u2.a leg runs dead straight (the aligned
+    // facing pair [SPEC 16.1]) and is the fan's trunk; the r1 leg turns down
+    // at its own lane (a dangling part yields a shared pin's straight
+    // corridor) and the u2.b leg turns down to its row. Each turn off the
+    // trunk is a meet — lead in, branch out, lead on — and a landing is not:
+    // one lead arrives and stops on a pin.
     let src = sheet(
         &(anchor("u1", "") + &anchor("u2", "") + "|R#r1|\nu1.c - u2.a\nu1.c - u2.b\nu1.c - r1\n"),
     );
     let laid = routed(&src);
     let dots = dots(&laid);
     assert_eq!(dots.len(), 2, "two splits, two dots: {dots:?}");
-    for (from, to) in [("u1.c", "u2.a"), ("u1.c", "u2.b")] {
+    for (from, to) in [("u1.c", "r1.p1"), ("u1.c", "u2.b")] {
         let c = first_corner(&laid, from, to);
         assert!(has(&dots, c), "{from} -> {to} splits at {c:?}: {dots:?}");
     }
     let straight = laid
         .links
         .iter()
-        .find(|w| w.seg_to == "r1.p1")
-        .expect("the straight leg");
-    assert_eq!(straight.path.len(), 2, "it really is straight");
+        .find(|w| w.seg_to == "u2.a")
+        .expect("the trunk leg");
+    assert_eq!(straight.path.len(), 2, "the aligned pair runs straight");
     assert!(
         !has(&dots, *straight.path.last().expect("an end")),
         "a terminus is no meet: {dots:?}"
+    );
+    let dangling = laid
+        .links
+        .iter()
+        .find(|w| w.seg_to == "r1.p1")
+        .expect("the dangling leg");
+    assert!(
+        !has(&dots, *dangling.path.last().expect("an end")),
+        "r1's landing is a stop, not a meet: {dots:?}"
     );
 }
 

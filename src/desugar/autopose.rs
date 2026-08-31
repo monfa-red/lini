@@ -13,15 +13,17 @@
 //!
 //! **The rule.** A satellite chain runs along a **ray**, and every part on it
 //! must present the terminal it wires back through facing *up* that ray. The
-//! ray is the terminator's own drawing [SPEC 16.1] — a `|gnd|`'s point is at
-//! its top, so a chain ending in one grows down, and a power flag's is at its
-//! bottom, so up — and only a `|label|` carries that convention: a part's pins
-//! are just pins, so a part-terminated chain runs out along the pin's own
-//! normal. Then walk [`Pose::ALL`] — `0 → 90 → 180 → 270`, the unrotated pose
-//! then clockwise — and take the first pose that lands the terminal facing
-//! back. That order *is* the deterministic tie-break; it only ever bites when a
-//! terminal has no facing at all (a symbol-less `|label|`, a port at the box
-//! centre), and then no candidate matches and the part stays unrotated.
+//! ray is the one shared rule's ([`schematic::chain::growth_ray`] — the
+//! terminator's own drawing, yielding to the pin's normal and to a shared
+//! pin's corridor; [`schematic::chain::bridge_ray`] for a same-side pair);
+//! a **tap** answers to its own convention ([`schematic::chain::tap_ray`]),
+//! and a spanning chain's members face back against the sheet's reading
+//! direction. Then walk [`Pose::ALL`] — `0 → 90 → 180 → 270`, the unrotated
+//! pose then clockwise — and take the first pose that lands the terminal
+//! facing as wanted. That order *is* the deterministic tie-break; it only
+//! ever bites when a terminal has no facing at all (a symbol-less `|label|`,
+//! a port at the box centre), and then no candidate matches and the part
+//! stays unrotated.
 //!
 //! The seat pass reads the same two answers off the lowered tree
 //! ([`crate::layout::schematic`]), so a satellite is never posed one way and
@@ -34,8 +36,8 @@
 //! (`u1.gnd - |gnd|`), and the tags a label wire mints — each already a child,
 //! each wire already rewritten to the id the chooser matches against.
 //!
-//! What it still declines to turn is a matter of the rule, not of order: a part
-//! with an authored `rotate:`, a chain with no placed end or two, and a
+//! What it still declines to turn is a matter of the rule, not of order: a
+//! part with an authored `rotate:`, a chain with no placed end, and a
 //! terminal with no facing at all (a symbol-less `|label|`).
 
 use super::Lower;
@@ -172,7 +174,8 @@ pub(super) fn choose<'a>(
     };
 
     let mut decided: Vec<(usize, Pose)> = Vec::new();
-    for chain in schematic::chains(&satellite, &edges(links, index)) {
+    let wire_edges = edges(links, index);
+    for chain in schematic::chains(&satellite, &wire_edges) {
         // Only a chain held at a pin has something to face [SPEC 16.1]: with
         // no placed end it falls back to the flow, with two it distributes —
         // neither turns a part. **Placed** ends, through the one filter the
@@ -180,24 +183,49 @@ pub(super) fn choose<'a>(
         // chain is held (a `pin:` overlay end holds nothing, either side).
         let ends = placed_ends(&chain, &roles);
         let Some(anchor) = holder(&ends) else {
+            // Two anchors — a **spanning** chain [SPEC 16.1]: its members ride
+            // the wire's landing leg, marching the sheet's reading direction
+            // along the second end's facing axis — rightward into a side pin,
+            // downward into a top or bottom one — so every member presents
+            // its inbound terminal back against that march. The one static
+            // rule that reads the same for a facing pair and for ends whose
+            // pins point away (the loop around a connector's own body).
+            if let [_, b, ..] = ends.as_slice()
+                && let Some(side) = parts[b.child].terminal_side(cx, b.terminal.as_deref())
+            {
+                let want = if parts[b.child].pose.side(side).is_vertical() {
+                    Side::Left
+                } else {
+                    Side::Top
+                };
+                for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
+                    let part = &parts[member];
+                    if part.forced {
+                        continue;
+                    }
+                    let Some(base) = part.terminal_side(cx, inbound.as_deref()) else {
+                        continue;
+                    };
+                    if let Some(pose) = Pose::ALL.into_iter().find(|p| p.side(base) == want) {
+                        decided.push((member, pose));
+                    }
+                }
+            }
             continue;
         };
         let held = &parts[anchor.child];
         let Some(base) = held.terminal_side(cx, anchor.terminal.as_deref()) else {
             continue;
         };
-        // Which way the chain grows [SPEC 16.1]: away from its **terminator's**
-        // own drawing — a `|gnd|` is drawn with its point at the top, so a
-        // chain ending in one grows *down*; a power flag's sits at its bottom,
-        // so up. Only a `|label|` **that draws a symbol** carries that
-        // convention (a part's pins are just pins, and a text label states no
-        // direction of its own — SPEC 16.1 runs it along the pin's outward
-        // normal, which is exactly this fallback), and a forced terminator
-        // poses first; with neither the ray is the pin's own outward normal.
-        // Every member then presents its terminal back up that ray — the same
-        // ray the seat pass reads off the lowered tree
+        // Which way the chain grows [SPEC 16.1] — the one shared rule
+        // ([`schematic::chain::growth_ray`]): the **terminator's** own drawing
+        // (only a `|label|` that draws a symbol carries that convention, and a
+        // forced terminator poses first), yielding to the pin's outward normal
+        // when anti-parallel, and off a shared pin's straight corridor. Every
+        // member then presents its terminal back up that ray — the same ray
+        // the seat pass reads off the lowered tree
         // ([`crate::layout::schematic`]), so the two agree.
-        let ray = chain
+        let terminator = chain
             .members
             .last()
             .map(|&m| &parts[m])
@@ -205,24 +233,64 @@ pub(super) fn choose<'a>(
             .zip(chain.inbound.last())
             .and_then(|(term, inbound)| {
                 let side = term.terminal_side(cx, inbound.as_deref())?;
-                let side = if term.forced {
+                Some(if term.forced {
                     term.pose.side(side)
                 } else {
                     side
-                };
-                Some(side.opposite())
-            })
-            .unwrap_or_else(|| held.pose.side(base));
-        let want = ray.opposite();
-        for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
+                })
+            });
+        let mut ray = schematic::chain::growth_ray(
+            terminator,
+            Some(held.pose.side(base)),
+            schematic::chain::shared_pin(&wire_edges, anchor, |c| parts[c].role == Role::Satellite),
+        );
+        // A **bridge** — two ends on one side of one anchor — grows along
+        // that side, first-named pin toward the second
+        // ([`schematic::chain::bridge_ray`]); the seat pass reads the same
+        // direction off the placed rails.
+        if let [a, b, ..] = ends.as_slice()
+            && a.child == b.child
+            && a.terminal != b.terminal
+            && let (Some(sa), Some(sb)) = (
+                held.terminal_side(cx, a.terminal.as_deref()),
+                held.terminal_side(cx, b.terminal.as_deref()),
+            )
+            && sa == sb
+            && let Some((ka, kb)) =
+                bridge_order(cx, held, a.terminal.as_deref(), b.terminal.as_deref(), sa)
+        {
+            let (ka, kb) = if held.pose.flips(sa) {
+                (kb, ka)
+            } else {
+                (ka, kb)
+            };
+            ray = schematic::chain::bridge_ray(held.pose.side(sa), ka, kb);
+        }
+        // A **tap** — a symbol-label leaf that is not the terminator — hangs
+        // along its own drawn convention rather than the trunk's ray
+        // ([`schematic::chain::taps`]), so its want is its own
+        // ([`schematic::chain::tap_ray`]): a flag above its junction stands
+        // unturned, and one whose convention points back into the trunk
+        // steps aside and turns to face the junction.
+        let tap = schematic::chain::taps(&chain, |m| {
+            let p = &parts[m];
+            p.kind == Some(SchKind::Label) && p.symbol.is_some()
+        });
+        let normal = held.pose.side(base);
+        for (i, (&member, inbound)) in chain.members.iter().zip(&chain.inbound).enumerate() {
             let part = &parts[member];
             if part.forced {
                 continue;
             }
-            let Some(base) = part.terminal_side(cx, inbound.as_deref()) else {
+            let Some(side) = part.terminal_side(cx, inbound.as_deref()) else {
                 continue;
             };
-            if let Some(pose) = Pose::ALL.into_iter().find(|p| p.side(base) == want) {
+            let want = if tap[i] {
+                schematic::chain::tap_ray(Some(side), ray, Some(normal)).opposite()
+            } else {
+                ray.opposite()
+            };
+            if let Some(pose) = Pose::ALL.into_iter().find(|p| p.side(side) == want) {
                 decided.push((member, pose));
             }
         }
@@ -237,6 +305,54 @@ pub(super) fn choose<'a>(
         }
     }
     Cow::Owned(out)
+}
+
+/// The two bridge terminals' order along their shared **unposed** side
+/// [SPEC 16.1] — scalars whose comparison says which pin a walk along the
+/// side's reading direction meets first. A `|component|`'s rail lands its
+/// same-side pins in declaration order, so the rank among them is the
+/// coordinate; a symbol part's ports carry real registry coordinates.
+fn bridge_order(
+    cx: &Lower,
+    part: &Part,
+    a: Option<&str>,
+    b: Option<&str>,
+    side: Side,
+) -> Option<(f64, f64)> {
+    match part.kind? {
+        SchKind::Component => {
+            let node = part.node?;
+            let pins = pins_of(cx, node, &part.chain);
+            let authored: Vec<Option<Side>> = pins
+                .iter()
+                .map(|p| schematic::authored_side(cx, &cx.authored_chain(p), &p.style))
+                .collect();
+            let sides = schematic::pin_sides(&authored, Pose::NONE);
+            let rank = |want: Option<&str>| {
+                let want = want?;
+                sides
+                    .iter()
+                    .zip(&pins)
+                    .filter(|((_, s, _), _)| *s == side)
+                    .position(|(_, p)| p.id.as_deref() == Some(want))
+                    .map(|k| k as f64)
+            };
+            Some((rank(a)?, rank(b)?))
+        }
+        _ => {
+            let glyph = schematic::part_glyph(&part.chain, part.symbol.as_deref())?;
+            let ids = schematic::part_pin_ids(&part.chain, part.symbol.as_deref());
+            let coord = |want: Option<&str>| {
+                let idx = match want {
+                    Some(t) => ids.iter().position(|p| *p == t)?,
+                    None => 0,
+                };
+                let port = *glyph.ports.get(idx)?;
+                Some(if side.is_vertical() { port.1 } else { port.0 })
+            };
+            Some((coord(a)?, coord(b)?))
+        }
+    }
 }
 
 /// The scope's wires as chain edges, one per hop, in statement order — every

@@ -276,7 +276,7 @@ fn sch_sheet(extra: &str, tail: &str) -> String {
         "{{ layout: schematic; {extra} }}\n\
          |component#u1| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
          |component#u2| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
-         u1.c - u2.a{tail}\nu1.c - u2.b\n"
+         u1.c - u2.a\nu1.c - u2.b{tail}\n"
     )
 }
 
@@ -313,7 +313,9 @@ fn a_schematic_wire_bends_square_and_every_other_wire_still_rounds() {
 #[test]
 fn an_authored_corner_radius_beats_the_scopes_square_default() {
     // The scope default rides the link **base layer**, below every rule and
-    // block [SPEC 17], so both spellings of an authored radius win it back.
+    // block [SPEC 17], so both spellings of an authored radius win it back —
+    // measured on the fan's dogleg branch (the aligned pair runs straight
+    // and has no corner to round).
     for src in [
         sch_sheet("|-| { corner-radius: 6 }", ""),
         sch_sheet("", " { corner-radius: 6 }"),
@@ -403,7 +405,7 @@ fn an_authored_wire_paint_beats_the_scopes_dress() {
     );
     let wire = blocked
         .lines()
-        .find(|l| l.contains(r#"data-from="u1.c" data-to="u2.a""#))
+        .find(|l| l.contains(r#"data-from="u1.c" data-to="u2.b""#))
         .expect("the authored wire");
     assert!(
         wire.contains(r#"style="stroke: var(--lini-accent); stroke-width: 3""#),

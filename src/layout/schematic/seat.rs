@@ -3,18 +3,23 @@
 //!
 //! A satellite chain reads its wire:
 //!
-//! - **one placed end** — it grows outward from that pin, link by link, in
-//!   the direction its terminator's connection geometry faces away from
-//!   (a `|gnd|`'s point is at its top, so a chain ending in one grows *down*;
-//!   a power flag's is at its bottom, so up). Auto-pose has already turned
-//!   each satellite to face back at the pin ([`crate::desugar::autopose`]),
-//!   so for an unforced chain that direction *is* the pin's outward normal;
-//!   an authored `rotate:` forces the pose and the seat follows the turned
-//!   connection point instead.
-//! - **two placed ends, on two anchors** — its satellites distribute along the
-//!   straight line between the two pins, at even fractions. Two ends on **one**
-//!   anchor are a fan, not a span, and grow like a one-end chain — the rule is
+//! - **one placed end** — it grows outward from that pin, monotone, link by
+//!   link, along the ray the one shared rule states
+//!   ([`crate::desugar::schematic::chain::growth_ray`]); auto-pose has
+//!   already turned each satellite to face back up that ray
+//!   ([`crate::desugar::autopose`]), and an authored `rotate:` forces the
+//!   pose with the seat following the turned connection point. A **tap** —
+//!   a symbol-label leaf hanging mid-chain
+//!   ([`crate::desugar::schematic::chain::taps`]) — takes no slot in the
+//!   stack and hangs off its attachment member along its own posed drawing.
+//! - **two placed ends on one anchor's one side** — a **bridge**: it grows
+//!   along that side, first pin toward the second
+//!   ([`crate::desugar::schematic::chain::bridge_ray`]); other same-anchor
+//!   pairs grow like a one-end chain — the split is
 //!   [`crate::desugar::schematic::chain::holder`]'s, shared with the chooser.
+//! - **two placed ends, on two anchors** — a **span**: its satellites ride
+//!   the wire's landing leg (the second pin's row or column), at even
+//!   fractions of the stretch standing clear of both ends' clusters.
 //! - **no placed end** — nothing to seat against: the flow fallback, and a
 //!   warning [SPEC 21].
 //!
@@ -27,16 +32,12 @@
 //!
 //! A two-end chain joins no cluster — it sits *between* the anchors, so no
 //! single one owns it — but it is not free of the tracks either: it **sizes
-//! the space it lands in**, asking the two tracks it spans to part far enough
-//! for the even fractions to clear ([`Demand`], struck in [`super::place`]).
-//!
-//! **Known limit — a two-end chain is never packed.** Sizing the span is not
-//! stacking: a spanning chain never enters an anchor's [`Stack`], so a pin
-//! holding both a one-end chain and a two-end one can still draw them **on top
-//! of each other**. That is a different limit from the sizing one above, and
-//! closing it means seating the spanning chains in a second packing pass
-//! *after* the tracks place — a pass reordering, deliberately not built here;
-//! Phase 6 owns it.
+//! the space it lands in**, asking the two tracks it spans to part far
+//! enough for the even fractions, and for the stretch of leg each end's
+//! cluster swallows, to clear ([`Demand`], struck in [`super::place`]).
+//! Within its window it stands clear by construction; it still enters no
+//! anchor's [`Stack`], so a pathological weave of spans and seats can
+//! overlap — the router then reports what it cannot lawfully draw.
 
 use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
@@ -73,6 +74,11 @@ struct Growing {
     /// The outward sign along the lane axis, `0` when the ray *is* the pin's
     /// own normal and the chain never turns.
     lead: f64,
+    /// Whether this is the **first** chain (statement order) taking this ray
+    /// off this pin — the one the lane share may pair across rays
+    /// ([`ladder`]): a junction splits once, so one up-chain rides one
+    /// down-chain's lane and every later same-ray chain ladders out.
+    ray_first: bool,
     chain: Chain,
     held: End,
 }
@@ -155,7 +161,8 @@ impl Seats {
         // keep the order they were declared in and only the chains within one
         // are reordered.
         let mut rays: Vec<(usize, Side, i8)> = Vec::new();
-        for chain in chains(&satellite, &edges(children, links, scope)) {
+        let wire_edges = edges(children, links, scope);
+        for chain in chains(&satellite, &wire_edges) {
             let ends = placed_ends(&chain, roles);
             // One anchor holds it → grow off that pin; two → span between them;
             // none → the flow fallback. Which of the first two a chain is, is
@@ -163,7 +170,27 @@ impl Seats {
             match (holder(&ends), ends.as_slice()) {
                 (Some(one), _) => {
                     let one = one.clone();
-                    let (ray, pin) = growth(children, &chain, &one);
+                    let (mut ray, pin) = growth(children, &chain, &one, &wire_edges);
+                    // A **bridge** — two ends on one side of one anchor —
+                    // grows along that side instead
+                    // ([`crate::desugar::schematic::chain::bridge_ray`]).
+                    if let [a, b, ..] = ends.as_slice()
+                        && a.child == b.child
+                        && a.terminal != b.terminal
+                    {
+                        let ta = terminal(&children[a.child], a.terminal.as_deref());
+                        let tb = terminal(&children[b.child], b.terminal.as_deref());
+                        if let (Some(fa), Some(fb)) = (ta.facing, tb.facing)
+                            && fa == fb
+                        {
+                            let (pa, pb) = if fa.is_vertical() {
+                                (ta.at.1, tb.at.1)
+                            } else {
+                                (ta.at.0, tb.at.0)
+                            };
+                            ray = crate::desugar::schematic::chain::bridge_ray(fa, pa, pb);
+                        }
+                    }
                     let frame = Frame::outward(ray.normal());
                     let depth = frame.cross(pin.at);
                     let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
@@ -174,12 +201,16 @@ impl Seats {
                         rays.push(key);
                         rays.len() - 1
                     });
+                    let ray_first = !held
+                        .iter()
+                        .any(|g| g.held == one && g.pin == pin.at && g.ray == ray);
                     held.push(Growing {
                         group,
                         ray,
                         pin: pin.at,
                         depth,
                         lead,
+                        ray_first,
                         chain,
                         held: one,
                     });
@@ -194,34 +225,53 @@ impl Seats {
         // pass earlier of the parts those wires will join. Which end of the
         // order that is depends on the axis a chain competes for:
         //
-        // - a chain that **turns** onto its ray competes for a lane, and its
-        //   leg crosses every lane inside its own — so the one off the
-        //   *shallower* pin has to take the *outer* lane, or its turn cuts
-        //   through a deeper chain's leg. Deepest first.
+        // - a chain that **turns** onto its ray competes for a lane, and the
+        //   one off the *shallower* pin takes the *outer* lane, or its turn
+        //   cuts through a deeper chain's leg. Deepest first — with depth
+        //   measured along the **canonical** direction of the ray's axis
+        //   (down, right), not along the ray itself: a pin's up-chain and its
+        //   down-chain share one column (the lane share below), so the
+        //   columns of two pins must take *one* order, or the up and down
+        //   ladders demand opposite ones and the pair has no lawful lanes at
+        //   all (the 2×2 divider: two pins, each a rail up and a return
+        //   down). The bottom pin's column sits innermost, both ways.
         // - a chain that grows **straight** out along its pin takes no lane and
         //   stacks in depth instead, where the stack only ever pushes outward —
         //   so the shallowest keeps its own pin's depth and the rest pass it.
-        //   Shallowest first.
+        //   Shallowest first, along its own ray.
         //
         // A stable sort, so chains sharing a ray *and* a pin keep their
         // statement order, which is the only thing left to break the tie.
+        let canon = |g: &Growing| match g.ray {
+            Side::Bottom | Side::Right => g.depth,
+            Side::Top | Side::Left => -g.depth,
+        };
         held.sort_by(|a, b| {
             a.group.cmp(&b.group).then(if a.lead == 0.0 {
                 a.depth.total_cmp(&b.depth)
             } else {
-                b.depth.total_cmp(&a.depth)
+                canon(b).total_cmp(&canon(a))
             })
         });
         let lanes = ladder(children, &held, seat);
         for (g, along) in held.iter().zip(lanes) {
             let frame = Frame::outward(g.ray.normal());
-            out.grow(children, g, frame, along, &mut packers[g.held.child]);
+            out.grow(
+                children,
+                g,
+                frame,
+                along,
+                &mut packers[g.held.child],
+                &wire_edges,
+            );
         }
         out
     }
 
     /// A one-placed-end chain: each satellite seats farther out along the
-    /// growth ray, its connection point landing where the packer clears.
+    /// growth ray, its connection point landing where the packer clears —
+    /// except a **tap** ([`crate::desugar::schematic::chain::taps`]), which
+    /// hangs off its attachment member instead of taking a slot in the stack.
     fn grow(
         &mut self,
         children: &[PlacedNode],
@@ -229,8 +279,14 @@ impl Seats {
         frame: Frame,
         along: f64,
         stack: &mut Stack,
+        wire_edges: &[[End; 2]],
     ) {
         let (chain, held) = (&g.chain, &g.held);
+        let tap = crate::desugar::schematic::chain::taps(chain, |m| {
+            crate::desugar::schematic::sch_kind(&children[m].type_chain)
+                == Some(crate::desugar::schematic::SchKind::Label)
+                && super::terminal::ident(&children[m].attrs, "symbol").is_some()
+        });
         // The chain hangs off the wire's **first leg** — out along the pin to
         // its own lane ([`Self::lane`]) — and grows from there in its
         // terminator's direction [SPEC 16.1]: a cap under a side pin sits
@@ -241,7 +297,10 @@ impl Seats {
         // foreign band opened before an earlier one — "link by link" is an
         // order, not just a distance.
         let mut base = frame.cross(g.pin);
-        for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
+        for (i, (&member, inbound)) in chain.members.iter().zip(&chain.inbound).enumerate() {
+            if tap[i] {
+                continue;
+            }
             let sat = &children[member];
             let point = terminal(sat, inbound.as_deref()).at;
             let box_ = drawn(sat);
@@ -276,6 +335,66 @@ impl Seats {
                 anchor: held.child,
                 dx: target.0 - point.0,
                 dy: target.1 - point.1,
+            });
+        }
+        // Taps hang off their attachment member's terminal, one seat out
+        // along the ray their **posed** drawing states — the pose chooser
+        // decided it ([`crate::desugar::schematic::chain::tap_ray`]) and the
+        // turned connection point carries it, so this pass only reads
+        // geometry, exactly as it does for the trunk's ray.
+        for (i, &member) in chain.members.iter().enumerate() {
+            if !tap[i] {
+                continue;
+            }
+            let Some(parent) = chain.parents[i] else {
+                continue;
+            };
+            let parent_child = chain.members[parent];
+            let Some(pseat) = &self.seats[parent_child] else {
+                continue;
+            };
+            let (pdx, pdy) = (pseat.dx, pseat.dy);
+            // The wire's terminal on the attachment side — read off the edge
+            // that joins the pair, since a chain records only inbound ends.
+            let mine = End {
+                child: member,
+                terminal: chain.inbound[i].clone(),
+            };
+            let outbound = wire_edges.iter().find_map(|[a, b]| {
+                if *b == mine && a.child == parent_child {
+                    Some(a.terminal.clone())
+                } else if *a == mine && b.child == parent_child {
+                    Some(b.terminal.clone())
+                } else {
+                    None
+                }
+            });
+            let junction = terminal(&children[parent_child], outbound.flatten().as_deref()).at;
+            let attach = (junction.0 + pdx, junction.1 + pdy);
+            let t = terminal(&children[member], chain.inbound[i].as_deref());
+            let ray = t.facing.map_or(g.ray, Side::opposite);
+            let tf = Frame::outward(ray.normal());
+            let box_ = drawn(&children[member]);
+            let (lo, hi) = (tf.cross(corner(box_, false)), tf.cross(corner(box_, true)));
+            let c = tf.cross(t.at);
+            let band = Band {
+                neg: c - lo.min(hi),
+                pos: hi.max(lo) - c,
+            };
+            let (u0, u1) = (tf.u(corner(box_, false)), tf.u(corner(box_, true)));
+            let (au, u) = (tf.u(attach), tf.u(t.at));
+            let interval = (au + u0.min(u1) - u, au + u0.max(u1) - u);
+            let line = stack.seat(
+                SeatLine::new(tf, true, tf.cross(attach)),
+                interval,
+                self.seat,
+                &band,
+            );
+            let target = tf.pt(au, line);
+            self.seats[member] = Some(Seat {
+                anchor: held.child,
+                dx: target.0 - t.at.0,
+                dy: target.1 - t.at.1,
             });
         }
     }
@@ -349,9 +468,49 @@ impl Seats {
                 (n.cx + t.at.0, n.cy + t.at.1)
             };
             let (a, b) = (point(&span.ends[0]), point(&span.ends[1]));
+            // The members sit on the wire's **landing leg** — the straight
+            // run into the second end, on that pin's own row or column
+            // [SPEC 16.1] — never on the raw pin-to-pin diagonal, which cuts
+            // across the sheet (and, off an away-facing pin, across its own
+            // part). And only on the stretch of that leg standing **clear**
+            // of both ends' clusters by a seat gap; a leg swallowed whole
+            // (degenerate ends) falls back to the raw endpoints — the router
+            // will say what it thinks of that.
+            let (a, b) = match span.ends[1].1.facing {
+                // A pin on a vertical side faces horizontally: its landing
+                // leg runs on its row, and the members ride that row.
+                Some(f) if f.is_vertical() => ((a.0, b.1), b),
+                Some(_) => ((b.0, a.1), b),
+                None => (a, b),
+            };
+            let clear = |end: &(usize, Terminal), from: (f64, f64), to: (f64, f64)| {
+                let n = &children[end.0];
+                let r = self
+                    .cluster(children, end.0)
+                    .shifted(n.cx, n.cy)
+                    .inflate(self.seat);
+                exit_t(from, (to.0 - from.0, to.1 - from.1), r)
+            };
+            let t0 = clear(&span.ends[0], a, b);
+            let t1 = 1.0 - clear(&span.ends[1], b, a);
+            // A member's **body** must clear too, not just its centre: inset
+            // the window by the end members' half extents along the leg.
+            let len = ((b.0 - a.0).abs() + (b.1 - a.1).abs()).max(1e-9);
+            let horiz = (b.1 - a.1).abs() < (b.0 - a.0).abs();
+            let half = |m: Option<&usize>| {
+                m.map_or(0.0, |&m| {
+                    let bb = drawn(&children[m]);
+                    (if horiz { bb.w() } else { bb.h() }) / 2.0 / len
+                })
+            };
+            let (t0, t1) = (
+                t0 + half(span.members.first()),
+                t1 - half(span.members.last()),
+            );
+            let (t0, t1) = if t0 + 1e-9 < t1 { (t0, t1) } else { (0.0, 1.0) };
             let steps = span.members.len() + 1;
             for (i, &member) in span.members.iter().enumerate() {
-                let f = (i + 1) as f64 / steps as f64;
+                let f = t0 + (t1 - t0) * (i + 1) as f64 / steps as f64;
                 let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
                 let (bx, by) = children[member].bbox.center();
                 children[member].cx = x - bx;
@@ -378,16 +537,37 @@ impl Seats {
     }
 
     /// What the spanning chains ask of the tracks [SPEC 16.1], one [`Demand`]
-    /// each, in chain order.
+    /// each, in chain order. Beyond the members' own extents, each end's
+    /// **cluster** swallows a stretch of the landing leg before the clear
+    /// window opens ([`Seats::absolutize`]) — the pin-to-pin distance must
+    /// carry that too, or the window between two busy clusters closes to
+    /// nothing and the members land on their seats. The march direction is
+    /// not known until the anchors place, so the swallow is the worst case.
     pub(super) fn demands(&self, children: &[PlacedNode]) -> Vec<Demand> {
         self.spanning
             .iter()
-            .map(|s| Demand {
-                ends: [(s.ends[0].0, s.ends[0].1.at), (s.ends[1].0, s.ends[1].1.at)],
-                need: (
-                    step(&s.members, children, Bbox::w, self.seat),
-                    step(&s.members, children, Bbox::h, self.seat),
-                ),
+            .map(|s| {
+                let swallow = |end: &(usize, Terminal), horiz: bool| {
+                    let c = self.cluster(children, end.0);
+                    let p = end.1.at;
+                    self.seat
+                        + if horiz {
+                            (p.0 - c.min_x).max(c.max_x - p.0)
+                        } else {
+                            (p.1 - c.min_y).max(c.max_y - p.1)
+                        }
+                };
+                Demand {
+                    ends: [(s.ends[0].0, s.ends[0].1.at), (s.ends[1].0, s.ends[1].1.at)],
+                    need: (
+                        step(&s.members, children, Bbox::w, self.seat)
+                            + swallow(&s.ends[0], true)
+                            + swallow(&s.ends[1], true),
+                        step(&s.members, children, Bbox::h, self.seat)
+                            + swallow(&s.ends[0], false)
+                            + swallow(&s.ends[1], false),
+                    ),
+                }
             })
             .collect()
     }
@@ -453,15 +633,21 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
     let mut along: Vec<f64> = Vec::with_capacity(held.len());
     let mut out: Vec<f64> = Vec::with_capacity(held.len());
     let mut back: Vec<f64> = Vec::with_capacity(held.len());
+    let mut fwd: Vec<f64> = Vec::with_capacity(held.len());
     for (g, &lead) in held.iter().zip(&lead) {
         let (lane, reach) = clearing(children, g, lead, seat);
         along.push(lane);
         out.push(lead * lane);
-        back.push(reach);
+        back.push(reach.0);
+        fwd.push(reach.1);
     }
     for _ in 0..=held.len() {
         let mut moved = false;
-        // Ladder: within one ray, each chain steps past its predecessor's reach.
+        // Ladder: within one ray, each chain steps past its predecessor's
+        // **whole** ink — a chain's readout text runs outward past its own
+        // lane, so the next column must clear that side too, or its bodies
+        // land on the text and the packer stacks the columns end to end
+        // instead of side by side.
         let mut prev: Option<(usize, f64)> = None;
         for (i, g) in held.iter().enumerate() {
             if lead[i] == 0.0 {
@@ -469,29 +655,32 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
             }
             if let Some((group, edge)) = prev
                 && group == g.group
-                && out[i] < edge
+                && out[i] - back[i] < edge
             {
-                out[i] = edge;
+                out[i] = edge + back[i];
                 moved = true;
             }
-            prev = Some((g.group, out[i] + back[i] + seat));
+            prev = Some((g.group, out[i] + fwd[i] + seat));
         }
         // Share: a pin whose net branches **both** ways — a rail up to its
         // flag, down to its decoupling cap — leaves on one lead and splits
         // **once**, at one point, rather than peeling twice off its stub. So
-        // chains parting onto **different rays** from one pin take the
-        // outermost lane any of them asked for; the wires run co-linearly out
+        // the **first** chain of each ray off one pin takes the outermost
+        // lane its opposite number asked for; the wires run co-linearly out
         // to that point, which the router draws as one lead (an implicit fan
         // on one fixed port — [ROUTING.md](../../../ROUTING.md) Special nodes
-        // / Fixed ports). Chains taking the **same** ray never share: they
-        // ladder side by side like any two chains — equalizing them while the
-        // ladder steps one past the other is a feedback loop that walks the
-        // pair out a step per round until the iteration bound.
+        // / Fixed ports). Everything else ladders side by side like any two
+        // chains: same-ray chains never share (equalizing them while the
+        // ladder steps one past the other is a feedback loop), and a later
+        // chain never rides the split of the pair before it — one up-chain
+        // shares one down-chain's lane, never two.
         for i in 0..held.len() {
             for j in 0..held.len() {
                 if i != j
                     && lead[i] != 0.0
                     && lead[j] != 0.0
+                    && held[i].ray_first
+                    && held[j].ray_first
                     && held[i].held.child == held[j].held.child
                     && held[i].pin == held[j].pin
                     && held[i].ray != held[j].ray
@@ -515,9 +704,10 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
 }
 
 /// What one chain asks of its lane before any other is consulted [SPEC 16.1]:
-/// the innermost lane clearing the part it hangs from, and how far back toward
-/// that part its widest member reaches from the lane — the ink the next lane
-/// out has to clear. Both in outward coordinates.
+/// the innermost lane clearing the part it hangs from, and how far its widest
+/// member's ink reaches from that lane — back toward the part, and outward
+/// past it (a readout runs on the outward side) — the ink the neighbouring
+/// lanes have to clear. All in outward coordinates.
 ///
 /// **The seat gap answers to the connection geometry, the ink only to overlap.**
 /// A part stands one seat gap off the wall measured on what a wire actually
@@ -529,54 +719,71 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
 /// visibly different amounts, lopsided for no reason a reader can see. A name
 /// long enough to actually reach the part still pushes its own lane out, which
 /// is the case the clearance exists for.
-fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64, f64) {
+fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64, (f64, f64)) {
     let frame = Frame::outward(g.ray.normal());
     let straight = frame.u(g.pin) + lead * seat;
     if lead == 0.0 {
-        return (straight, 0.0);
+        return (straight, (0.0, 0.0));
     }
     let wall = {
         let (lo, hi) = project(drawn(&children[g.held.child]), frame.u);
         lead * if lead > 0.0 { hi } else { lo }
     };
-    // How far a box reaches back toward the part from the member's landing.
+    // How far a box reaches from the member's landing — back toward the part
+    // (`.0`) and outward past it (`.1`).
     let reach = |box_: Bbox, at: (f64, f64)| {
         let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
-        lead * (frame.u(at) - if lead > 0.0 { u0.min(u1) } else { u0.max(u1) })
+        let (lo, hi) = (u0.min(u1), u0.max(u1));
+        let (back, fwd) = if lead > 0.0 {
+            (frame.u(at) - lo, hi - frame.u(at))
+        } else {
+            (hi - frame.u(at), frame.u(at) - lo)
+        };
+        (back, fwd)
     };
-    let (mut ink, mut connection) = (0.0f64, 0.0f64);
+    let (mut ink, mut fwd_ink, mut connection) = (0.0f64, 0.0f64, 0.0f64);
     for (&member, inbound) in g.chain.members.iter().zip(&g.chain.inbound) {
         let node = &children[member];
         let at = terminal(node, inbound.as_deref()).at;
-        ink = ink.max(reach(drawn(node), at));
-        connection = connection.max(reach(connection_box(node), at));
+        let (b, f) = reach(drawn(node), at);
+        ink = ink.max(b);
+        fwd_ink = fwd_ink.max(f);
+        connection = connection.max(reach(connection_box(node), at).0);
     }
     let out = (lead * straight)
         .max(wall + seat + connection)
         .max(wall + ink);
-    (lead * out, ink)
+    (lead * out, (ink, fwd_ink))
 }
 
 /// Where a one-held chain grows **from** and **toward** [SPEC 16.1]: the pin
-/// that holds it, and the ray it runs along — away from the terminator's own
-/// connection geometry, else straight out along the pin.
+/// that holds it, and the ray it runs along — the one shared rule
+/// ([`crate::desugar::schematic::chain::growth_ray`]): the terminator's own
+/// convention, yielding to the pin's normal when anti-parallel, and off the
+/// straight corridor of a shared pin.
 ///
 /// One home for the ray, because two passes need it before anything is seated:
 /// [`Seats::grow`] lays the chain along it, and [`Seats::build`] sorts the
 /// chains sharing it into arrival order first.
-fn growth(children: &[PlacedNode], chain: &Chain, held: &End) -> (Side, Terminal) {
+fn growth(
+    children: &[PlacedNode],
+    chain: &Chain,
+    held: &End,
+    edges: &[[End; 2]],
+) -> (Side, Terminal) {
     let pin = terminal(&children[held.child], held.terminal.as_deref());
     let last = *chain.members.last().expect("a chain has a member");
-    let out = tag_facing(
-        &children[last],
-        chain.inbound.last().and_then(|t| t.as_deref()),
-    )
-    // A part terminator has no drawn convention to read — its pins are just
-    // pins — so its chain runs along the pin's own outward normal; a text
-    // label carries no connection geometry either. With neither (a wire to a
-    // plain box) the chain hangs below, the one direction a sheet always has
-    // room in.
-    .map_or_else(|| pin.facing.unwrap_or(Side::Bottom), Side::opposite);
+    let out = crate::desugar::schematic::chain::growth_ray(
+        tag_facing(
+            &children[last],
+            chain.inbound.last().and_then(|t| t.as_deref()),
+        ),
+        pin.facing,
+        crate::desugar::schematic::chain::shared_pin(edges, held, |c| {
+            crate::desugar::schematic::sch_kind(&children[c].type_chain).is_some()
+                && super::place::role(&children[c]) == crate::desugar::schematic::Role::Satellite
+        }),
+    );
     (out, pin)
 }
 
@@ -604,6 +811,28 @@ fn tag_facing(node: &PlacedNode, inbound: Option<&str>) -> Option<Side> {
 /// and lands on its readout.
 pub(super) fn drawn(node: &PlacedNode) -> Bbox {
     Bbox::drawn_of(node)
+}
+
+/// The smallest `t ∈ [0, 1]` at which `from + t·d` stands outside `r` — `0`
+/// when it already does. The spanning clip's one primitive: how much of the
+/// chord an end's inflated cluster swallows.
+fn exit_t(from: (f64, f64), d: (f64, f64), r: Bbox) -> f64 {
+    let inside =
+        |p: (f64, f64)| p.0 >= r.min_x && p.0 <= r.max_x && p.1 >= r.min_y && p.1 <= r.max_y;
+    if !inside(from) {
+        return 0.0;
+    }
+    let axis = |p: f64, d: f64, lo: f64, hi: f64| {
+        if d > 1e-9 {
+            (hi - p) / d
+        } else if d < -1e-9 {
+            (lo - p) / d
+        } else {
+            f64::INFINITY
+        }
+    };
+    let t = axis(from.0, d.0, r.min_x, r.max_x).min(axis(from.1, d.1, r.min_y, r.max_y));
+    t.clamp(0.0, 1.0)
 }
 
 /// A box corner, `min` or `max` — the two the frame projections need.

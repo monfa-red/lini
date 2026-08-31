@@ -244,8 +244,8 @@ fn chains_on_different_pins_seat_in_the_order_their_pins_do() {
 #[test]
 fn two_placed_ends_distribute_at_even_fractions() {
     // [SPEC 16.1] the satellites of a chain held at both ends space evenly
-    // along the straight line between the two pins — the wire lands on the
-    // **stub tips**, so those are the ends the fractions divide.
+    // along the landing leg, on the stretch standing clear of both ends'
+    // clusters — centred between the parts, in wire order.
     let ends = "  |component#u1| { cell: 1 1 } [ |pin#l| { side: right } ]\n                \x20 |component#u2| { cell: 2 1 } [ |pin#r| { side: left } ]\n";
     let one = laid(&scope(
         "",
@@ -267,10 +267,18 @@ fn two_placed_ends_distribute_at_even_fractions() {
     let (a, b) = (tip(&two, "l", true), tip(&two, "r", false));
     let (x1, ..) = body(&two, "r1");
     let (x2, ..) = body(&two, "r2");
-    let third = (b - a) / 3.0;
     assert!(
-        close(x1, a + third) && close(x2, a + 2.0 * third),
-        "two satellites take the thirds: {x1} {x2} in [{a}, {b}]"
+        a < x1 && x1 < x2 && x2 < b,
+        "wire order along the leg: {a} {x1} {x2} {b}"
+    );
+    assert!(
+        close(x1 + x2, a + b),
+        "the pair centres between symmetric parts: {x1} {x2} in [{a}, {b}]"
+    );
+    assert!(
+        x2 - x1 >= LABEL_SEAT,
+        "even fractions keep the members a seat apart: {}",
+        x2 - x1
     );
 }
 
@@ -616,5 +624,119 @@ fn same_pin_chains_on_one_ray_ladder_side_by_side() {
         sx - wall < 4.0 * LABEL_SEAT,
         "the outer lane stays within a few seats of the part: {} out",
         sx - wall
+    );
+}
+
+#[test]
+fn a_same_side_bridge_stands_beside_the_part_along_its_side() {
+    // [SPEC 16.1] two placed ends on one side of one anchor: the member grows
+    // along that side, first-named pin toward the second, posed so its two
+    // terminals meet the two wires end-on. Straight-out growth posed it
+    // facing its first pin with the second facing away — a four-turn loop
+    // around the member's own body.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#u2| { cell: 1 1 } [\n    |pin#vin| { side: left }; |pin#en| { side: left }; |pin#out| { side: right }\n  ]\n"
+            .to_owned()
+            + "  |R#r5| \"100k\"\n  u2.en - r5 - u2.vin\n"),
+    ));
+    assert_eq!(pose_of(&nodes, "r5"), 270, "vertical, p1 facing down at EN");
+    let ((ux, _), (rx, ry)) = (at(&nodes, "u2"), at(&nodes, "r5"));
+    assert!(rx < ux, "in a lane off the shared left side: {rx} vs {ux}");
+    let en_y = cell(&nodes, "en").1;
+    assert!(
+        ry < en_y,
+        "grown from EN toward VIN — upward: {ry} vs {en_y}"
+    );
+}
+
+#[test]
+fn a_spanning_member_rides_the_landing_leg_between_the_clusters() {
+    // [SPEC 16.1] a span's member sits on the second end's row — the wire's
+    // landing leg — on the stretch clear of both ends' clusters, never on
+    // the raw pin-to-pin diagonal.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#u1| { cell: 1 1 } [\n    |pin#hi| { side: right }; |pin#lo| { side: right }; |pin#x| { side: left }\n  ]\n"
+            .to_owned()
+            + "  |component#u2| { cell: 2 1 } [\n    |pin#in| { side: left }; |pin#nc| { side: right }; |pin#n2| { side: right }\n  ]\n"
+            // The gnd under u1.lo skews u1's cluster, so u2's aligned row
+            // sits off u1's centre and the raw chord would run diagonal.
+            + "  u1.lo - |gnd|\n  |F#f1| \"2A\"\n  u1.hi - f1 - u2.in\n"),
+    ));
+    let (fx, fy) = at(&nodes, "f1");
+    let in_y = cell(&nodes, "in").1;
+    assert!(
+        close(fy, in_y),
+        "the member rides the landing row: {fy} vs {in_y}"
+    );
+    let (u1r, u2l) = (ink(&nodes, "u1").max_x, ink(&nodes, "u2").min_x);
+    assert!(
+        u1r < fx && fx < u2l,
+        "…between the two clusters: {u1r} {fx} {u2l}"
+    );
+}
+
+#[test]
+fn a_rail_flag_taps_the_trunk_instead_of_standing_in_it() {
+    // [SPEC 16.1] a symbol-label leaf hanging mid-chain is a tap: it hangs
+    // off its attachment member along its own convention — and steps aside
+    // when that points back into the trunk, as the buck's 5 V flag does at
+    // the inductor's far pin. Stacked in trunk order it stood upside-down
+    // between the inductor and the divider.
+    let sheet = "{\n  |v5::label| { symbol: power } [ \"5V\" ]\n  |sch::group| { layout: schematic; gap: 100 }\n}\n";
+    let nodes = laid(
+        &(sheet.to_owned()
+            + "|sch#s| [\n"
+            + &sided("u1")
+            + "  |L#l1| \"100u\"\n  |v5#f|\n  |R#r4| \"4k7\"\n"
+            + "  u1.b - l1 - f\n  l1.p2 - r4 - |gnd|\n]\n"),
+    );
+    let (ly, ry) = (at(&nodes, "l1").1, at(&nodes, "r4").1);
+    assert!(ly < ry, "the trunk keeps growing: l1 above r4: {ly} {ry}");
+    let (fx, fy) = at(&nodes, "f");
+    let lx = at(&nodes, "l1").0;
+    assert!(
+        fx > lx,
+        "the flag steps aside, outward of the trunk: {fx} vs {lx}"
+    );
+    assert!(
+        fy > ly && fy < ry + 1.0,
+        "…beside its junction, not stacked past the divider: {ly} {fy} {ry}"
+    );
+}
+
+#[test]
+fn a_two_by_two_divider_takes_two_columns() {
+    // [SPEC 16.1] each pin's up-and-down pair shares one column (one lead,
+    // splitting once); two pins make two columns, ordered canonically. The
+    // per-ray depth orders point opposite ways, so ordering columns along
+    // each ray was a contradiction the ladder could never satisfy — every
+    // chain ended in one smeared column.
+    let sheet = "{\n  |vp::label| { symbol: power } [ \"V+\" ]\n  |sch::group| { layout: schematic; gap: 100 }\n}\n";
+    let nodes = laid(
+        &(sheet.to_owned()
+            + "|sch#s| [\n  |component#u4| { cell: 1 1 } [\n    |pin#inp| { side: left }; |pin#inn| { side: left }; |pin#out| { side: right }\n  ]\n"
+            + "  |R#r9| \"100k\"\n  |R#r10| \"10k\"\n  |R#r11| \"2k2\"\n  |R#r12| \"1k\"\n"
+            + "  u4.inp - r9 - |vp|\n  u4.inp - r10 - |gnd|\n  u4.inn - r11 - |vp|\n  u4.inn - r12 - |gnd|\n]\n"),
+    );
+    let x = |id: &str| at(&nodes, id).0;
+    assert!(
+        close(x("r9"), x("r10")),
+        "inp's pair shares a column: {} vs {}",
+        x("r9"),
+        x("r10")
+    );
+    assert!(
+        close(x("r11"), x("r12")),
+        "inn's pair shares a column: {} vs {}",
+        x("r11"),
+        x("r12")
+    );
+    assert!(
+        (x("r9") - x("r11")).abs() > 20.0,
+        "two pins, two columns: {} vs {}",
+        x("r9"),
+        x("r11")
     );
 }

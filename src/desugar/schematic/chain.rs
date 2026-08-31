@@ -9,8 +9,77 @@
 //! child indices, terminal names, and whether each child is a satellite — so
 //! the two passes cannot disagree about what a chain is.
 
+use super::super::pose::Side;
 use super::Role;
 use std::collections::VecDeque;
+
+/// The ray a one-held chain grows along [SPEC 16.1] — **the** rule, shared by
+/// the pose chooser (authored tree) and the seat pass (placed tree), so a
+/// part is never posed for one ray and seated along another:
+///
+/// - the **terminator's** own drawing decides (a `|gnd|`'s point is at its
+///   top, so its chain grows down; a power flag's at its bottom, so up) —
+///   *unless* honouring it would grow the chain back **through** the part it
+///   hangs from (a gnd off a `side: top` pin): an anti-parallel ray yields
+///   to the pin's outward normal, and the terminator poses upside-down
+///   instead, as a sheet flips a ground above a part;
+/// - with no terminator convention the chain runs straight out along the
+///   pin's normal — *unless* the pin is **shared**: the straight corridor of
+///   a shared pin is the trunk line of every sibling wire, so a seat there
+///   stands on all of them. The chain yields it exactly as chains yield each
+///   other's lanes, turning onto the sheet's roomy axis — down off a side
+///   pin, rightward off a top or bottom one.
+pub(crate) fn growth_ray(
+    terminator_facing: Option<Side>,
+    pin_facing: Option<Side>,
+    shared_pin: bool,
+) -> Side {
+    // A terminal with no facing at all still hangs below — the one
+    // direction a sheet always has room in [SPEC 16.1].
+    let normal = pin_facing.unwrap_or(Side::Bottom);
+    if let Some(f) = terminator_facing
+        && f.opposite() != normal.opposite()
+    {
+        return f.opposite();
+    }
+    if !shared_pin {
+        return normal;
+    }
+    match normal {
+        Side::Left | Side::Right => Side::Bottom,
+        Side::Top | Side::Bottom => Side::Right,
+    }
+}
+
+/// The ray a **bridge** grows along [SPEC 16.1] — a chain held at two pins
+/// on **one side** of one anchor (`U2.EN - R5 - U2.VIN`): along that side,
+/// from the first-named pin toward the second, so the member stands beside
+/// the part with its two terminals meeting the two wires end-on. Straight
+/// out along the first pin — the one-end fallback — posed the member facing
+/// its first pin and left its second facing away, a four-turn loop around
+/// the member's own body. `side` is the shared **landed** side; `a` and `b`
+/// are the two pins' coordinates along that side's reading direction (top
+/// to bottom, left to right) — the seat pass reads geometry, the pose
+/// chooser the rail order, and this one map keeps them agreeing.
+pub(crate) fn bridge_ray(side: Side, a: f64, b: f64) -> Side {
+    let reading = if side.is_vertical() {
+        Side::Bottom
+    } else {
+        Side::Right
+    };
+    if b >= a { reading } else { reading.opposite() }
+}
+
+/// Whether `end`'s pin carries **through traffic** — a wire to another
+/// placed part, which runs down the pin's straight corridor. That is the
+/// sharing [`growth_ray`] yields to; a sibling satellite chain turns off
+/// into a lane of its own and claims no corridor. Counted over the same
+/// `edges` both callers walk, with each caller's own satellite reading.
+pub(crate) fn shared_pin(edges: &[[End; 2]], end: &End, satellite: impl Fn(usize) -> bool) -> bool {
+    edges
+        .iter()
+        .any(|[a, b]| (a == end && !satellite(b.child)) || (b == end && !satellite(a.child)))
+}
 
 /// One end of a wire: the direct child it lands on, and the terminal within
 /// it the endpoint named (`None` — a bare `- gnd1` — is the part itself).
@@ -29,10 +98,57 @@ pub(crate) struct Chain {
     /// The terminal each member faces back through, toward the placed end
     /// (`members[i]`'s inbound terminal is `inbound[i]`).
     pub inbound: Vec<Option<String>>,
+    /// The member each was discovered **from** — its attachment up the walk
+    /// (`None` for the first). What lets a branching chain tell its trunk
+    /// from a tap hanging off it ([`taps`]).
+    pub parents: Vec<Option<usize>>,
     /// The chain's non-satellite ends, in statement order. **Not** the placed
     /// ends: a `pin:` overlay is no satellite and lands here too, so every
     /// reader asks [`placed_ends`] rather than counting these.
     pub anchors: Vec<End>,
+}
+
+/// Which members are **taps** [SPEC 16.1]: a single symbol-label leaf hanging
+/// off a mid-chain member — the rail flag or ground a sheet stands beside a
+/// junction — everything that is *not* the trunk's own terminator (the last
+/// member). A tap seats off its attachment member along its own drawn
+/// convention rather than taking a slot in the trunk's stack, where a BFS
+/// linearization stood the buck's 5 V flag upside-down between the inductor
+/// and the feedback divider. Multi-member side branches stay in the stack —
+/// the documented limit.
+///
+/// One classifier for the pose chooser and the seat pass; each supplies its
+/// own reading of "this member is a symbol label".
+pub(crate) fn taps(chain: &Chain, symbol_label: impl Fn(usize) -> bool) -> Vec<bool> {
+    let n = chain.members.len();
+    let mut leaf = vec![true; n];
+    for p in chain.parents.iter().flatten() {
+        leaf[*p] = false;
+    }
+    (0..n)
+        .map(|i| i + 1 != n && leaf[i] && symbol_label(chain.members[i]))
+        .collect()
+}
+
+/// The ray a **tap** hangs along [SPEC 16.1]: its own drawn convention — a
+/// power flag stands above its junction, a ground below — unless that points
+/// back into the trunk it hangs off, in which case it steps aside: out along
+/// the pin's own normal where the trunk turned off it, else onto the fixed
+/// side rank's first free direction. Shared by the pose chooser and the seat
+/// pass like [`growth_ray`].
+pub(crate) fn tap_ray(natural: Option<Side>, trunk: Side, pin_facing: Option<Side>) -> Side {
+    let natural = match natural {
+        Some(f) => f.opposite(),
+        None => return trunk,
+    };
+    if natural != trunk.opposite() {
+        return natural;
+    }
+    match pin_facing {
+        Some(p) if p != trunk && p != trunk.opposite() => p,
+        _ if matches!(trunk, Side::Top | Side::Bottom) => Side::Right,
+        _ => Side::Bottom,
+    }
 }
 
 /// A chain's **placed ends** [SPEC 16.1]: the ends that actually ride a track.
@@ -145,23 +261,25 @@ pub(crate) fn chains(satellite: &[bool], edges: &[[End; 2]]) -> Vec<Chain> {
                 terminal: None,
             });
         let mut walked = vec![false; count];
-        let mut order: Vec<End> = Vec::new();
-        let mut queue: VecDeque<End> = VecDeque::from([seed]);
-        while let Some(end) = queue.pop_front() {
+        let mut order: Vec<(End, Option<usize>)> = Vec::new();
+        let mut queue: VecDeque<(End, Option<usize>)> = VecDeque::from([(seed, None)]);
+        while let Some((end, from)) = queue.pop_front() {
             if std::mem::replace(&mut walked[end.child], true) {
                 continue;
             }
+            let me = order.len();
             for &(e, k) in &incident[end.child] {
                 let next = &edges[e][1 - k];
                 if satellite[next.child] && !walked[next.child] {
-                    queue.push_back(next.clone());
+                    queue.push_back((next.clone(), Some(me)));
                 }
             }
-            order.push(end);
+            order.push((end, from));
         }
         out.push(Chain {
-            members: order.iter().map(|e| e.child).collect(),
-            inbound: order.into_iter().map(|e| e.terminal).collect(),
+            members: order.iter().map(|(e, _)| e.child).collect(),
+            inbound: order.iter().map(|(e, _)| e.terminal.clone()).collect(),
+            parents: order.into_iter().map(|(_, from)| from).collect(),
             anchors,
         });
     }

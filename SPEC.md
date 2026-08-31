@@ -3355,27 +3355,66 @@ grid layout's laws ([SPEC 12](#12-flow-grid--tree)). Track sizing reads each
 anchor's **cluster** — the anchor plus its seated satellites — so satellites
 consume space, never cells.
 
+**Facing pins align across tracks.** An anchor seats where its cluster
+centres — except that a wire pairing one of its pins with a **facing** pin
+of an already-seated anchor in the same row (its left pins against an
+earlier column's right pins; columns mirror it with top against bottom)
+shifts it so the two landings share their row exactly, and the track sizes
+to the union of the shifted clusters. That wire draws dead straight, the
+way a sheet runs part-to-part nets — and two parts on one pin pitch align
+whole rails at once. Deterministic: anchors take alignment in track order,
+each through the first statement-order wire reaching a seated neighbour;
+everything else keeps the centring.
+
 **Satellites seat at pins.** A satellite chain reads its wire:
 
 - **one placed end** — the chain hangs off the wire's first leg (one seat out
   along the pin, and as much farther as it needs to stand clear of the part it
   hangs from — the seat measured on the **connection geometry** a wire arrives
   at, a flag's symbol rather than the name beside it, which need only not reach
-  back over the part) and grows from there, link by link, in the direction of its
-  **terminator's** connection geometry. Only a `|label|` carries that
-  convention — a `|gnd|` is drawn with its connection point at its top, so the
-  chain grows down; a power flag's sits at its bottom, so up; a text label, and
-  any chain a *part* terminates, runs along the pin's outward normal;
-- **two placed ends** — the chain's satellites distribute along the straight
-  line between the two pins at even fractions;
+  back over the part) and grows from there, **link by link and in that
+  order** — a later member never tucks into a hole before an earlier one —
+  in the direction of its **terminator's** connection geometry. Only a
+  `|label|` carries that convention — a `|gnd|` is drawn with its connection
+  point at its top, so the chain grows down; a power flag's sits at its
+  bottom, so up; a text label, and any chain a *part* terminates, runs along
+  the pin's outward normal. Two amendments keep the ray drawable: a
+  terminator ray **anti-parallel** to the pin's normal yields to the normal
+  (a gnd off a `side: top` pin stands inverted above the part, as a sheet
+  flips it), and a part-terminated chain on a pin that also carries a wire
+  to another placed part yields the **straight corridor** — that line
+  belongs to the through wire — turning down off a side pin, rightward off
+  a top or bottom one. A **tap** — a single symbol-label leaf hanging off a
+  mid-chain member, the rail flag beside a junction — takes no slot in the
+  stack: it hangs off its attachment member along its own drawn convention,
+  stepping aside (out along the pin's normal) when that points back into the
+  trunk. Multi-member side branches stay in the stack, in walk order;
+- **two placed ends on one anchor, one side** — a **bridge** (`U2.EN - R5 -
+  U2.VIN`): the chain grows along that side, first-named pin toward the
+  second, standing off in a lane like any turning chain, so each member's
+  two terminals meet the two wires end-on;
+- **two placed ends on two anchors** — a **span**: the members ride the
+  wire's **landing leg** — the straight run into the second end, on that
+  pin's row or column — marching the sheet's reading direction (rightward,
+  downward), at even fractions of the stretch standing clear of both ends'
+  **clusters** by a seat gap (a leg swallowed whole falls back to the raw
+  pin-to-pin line). The tracks part far enough for the members *and* for
+  what each cluster swallows;
 - **no placed end** — the parts fall back to the flow with a warning.
 
 A chain that leaves its pin **sideways** takes a **lane** of its own — its own
 distance out along the pin before it turns onto the ray — so its lead is one
 square turn; one that grows straight out along its pin takes no lane and
-**stacks** outward instead. Either way chains order by **the pins they hang
-on**, so no two leads overtake each other and cross; chains sharing one pin
-keep statement order. A seated satellite
+**stacks** outward instead. Lanes ladder: each column steps past the whole
+**ink** of the one before it — readout text included, both sides of its
+lane — so no two leads overtake each other and cross, and no column lands on
+another's text. Column order is the pins' own, measured **canonically**
+(downward, rightward) whichever way the chains grow, because a pin's up-chain
+and its down-chain share one column: the **first** chain of each ray off one
+pin takes the outermost lane its opposite number asked for — one lead,
+splitting once at the turn — and every later same-ray chain ladders out into
+its own column (two rails up, or two returns down, never stack one lane).
+Chains sharing one pin and ray keep statement order. A seated satellite
 registers as a router obstacle like any node. **`cell:` promotes a satellite
 to an anchor**; `translate:` nudges it from its seat (pin-relative — move
 the component and the nudge travels along, [SPEC 5](#5-the-box-model)).

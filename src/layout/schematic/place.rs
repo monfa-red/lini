@@ -13,7 +13,9 @@
 use super::super::flex::Axis;
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{anchors, flex, grid, primitives};
-use super::seat::{Seats, seat_gap};
+use super::seat::{Seats, edges, seat_gap};
+use super::terminal::terminal;
+use crate::desugar::pose::Side;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
@@ -196,12 +198,27 @@ pub(super) fn arrange(
         .iter()
         .map(|&i| seats.cluster(children, i))
         .collect();
+    // Each anchor's origin offset from its cell **centre**: cluster centring
+    // by default, overridden per axis where a wired facing pin pair aligns
+    // it to a neighbour ([`align`]) — the straight part-to-part wire.
+    let offsets = align(children, links, scope, &anchored, &slots, &clusters);
+    // A track sizes to the union of its (aligned) clusters, and remembers
+    // where that union starts so placement can seat every anchor off one
+    // edge — with pure centring this degenerates to the widest cluster,
+    // centred, exactly the unaligned behaviour.
     let mut widths = vec![0.0f64; cols.len()];
     let mut heights = vec![0.0f64; rows.len()];
-    for (extent, slot) in clusters.iter().zip(&slots) {
+    let mut col_lo = vec![f64::INFINITY; cols.len()];
+    let mut row_lo = vec![f64::INFINITY; rows.len()];
+    for ((extent, slot), &(ox, oy)) in clusters.iter().zip(&slots).zip(&offsets) {
         let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
-        widths[c] = widths[c].max(extent.w());
-        heights[r] = heights[r].max(extent.h());
+        col_lo[c] = col_lo[c].min(ox + extent.min_x);
+        row_lo[r] = row_lo[r].min(oy + extent.min_y);
+    }
+    for ((extent, slot), &(ox, oy)) in clusters.iter().zip(&slots).zip(&offsets) {
+        let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
+        widths[c] = widths[c].max(ox + extent.max_x - col_lo[c]);
+        heights[r] = heights[r].max(oy + extent.max_y - row_lo[r]);
     }
     // A chain held at both ends seats **between** its anchors [SPEC 16.1], in
     // no cluster and no track: so it sizes the space between the two tracks it
@@ -213,8 +230,14 @@ pub(super) fn arrange(
         let anchor = |end: usize| {
             let (child, at) = demand.ends[end];
             let k = anchored.iter().position(|&i| i == child)?;
-            let (ex, ey) = clusters[k].center();
-            Some((slots[k], (at.0 - ex, at.1 - ey)))
+            let (c, r) = (index(&cols, slots[k].col), index(&rows, slots[k].row));
+            // The landing's offset from its **cell centre** — the origin's
+            // aligned offset, re-based off the track union's own extent.
+            let off = (
+                offsets[k].0 - col_lo[c] - widths[c] / 2.0,
+                offsets[k].1 - row_lo[r] - heights[r] / 2.0,
+            );
+            Some((slots[k], (off.0 + at.0, off.1 + at.1)))
         };
         let (Some((sa, oa)), Some((sb, ob))) = (anchor(0), anchor(1)) else {
             continue;
@@ -243,15 +266,14 @@ pub(super) fn arrange(
     let total_w = (col_off[cols.len()] - gap_x).max(0.0);
     let total_h = (row_off[rows.len()] - gap_y).max(0.0);
 
-    // The anchor lands where its **cluster** centres, so a part with a ground
-    // hanging under it sits high in its cell rather than straddling the row.
-    for ((&i, slot), extent) in anchored.iter().zip(&slots).zip(&clusters) {
+    // The anchor lands where its **cluster** centres — shifted where a wired
+    // facing pin pair aligned it ([`align`]) — so a part with a ground
+    // hanging under it sits high in its cell rather than straddling the row,
+    // and a part wired straight across stands level with its neighbour.
+    for ((&i, slot), &(ox, oy)) in anchored.iter().zip(&slots).zip(&offsets) {
         let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
-        let cell_cx = col_off[c] + widths[c] / 2.0 - total_w / 2.0;
-        let cell_cy = row_off[r] + heights[r] / 2.0 - total_h / 2.0;
-        let (ex, ey) = extent.center();
-        children[i].cx = cell_cx - ex;
-        children[i].cy = cell_cy - ey;
+        children[i].cx = col_off[c] - total_w / 2.0 + ox - col_lo[c];
+        children[i].cy = row_off[r] - total_h / 2.0 + oy - row_lo[r];
     }
     // An anchor's `translate:` lands **before** its seats absolutize, so the
     // satellites ride along — move the component and the nudge travels with it
@@ -303,6 +325,103 @@ pub(super) fn arrange(
         }
     }
     Ok(body)
+}
+
+/// Each anchor's origin offset from its cell centre [SPEC 16.1]. The default
+/// is cluster centring (`−cluster.center()`). Where a wire pairs an anchor's
+/// pin with a **facing** pin of an already-seated anchor in the same row —
+/// its right pins against a later column's left pins — the later anchor's
+/// vertical offset instead puts the two landings on one row, the straight
+/// wire a sheet draws; columns mirror it with bottom-against-top pins and the
+/// horizontal offset. Deterministic throughout: anchors take alignment in
+/// track order (rows, then columns within one), each aligning through the
+/// first statement-order wire that reaches a seated neighbour; everything
+/// else keeps the centring.
+fn align(
+    children: &[PlacedNode],
+    links: &[&ResolvedLink],
+    scope: &str,
+    anchored: &[usize],
+    slots: &[Slot],
+    clusters: &[Bbox],
+) -> Vec<(f64, f64)> {
+    let mut out: Vec<(f64, f64)> = clusters
+        .iter()
+        .map(|c| {
+            let (ex, ey) = c.center();
+            (-ex, -ey)
+        })
+        .collect();
+    let hops = edges(children, links, scope);
+    let anchor_of = |child: usize| anchored.iter().position(|&i| i == child);
+    // One pass per axis: `set` marks anchors whose offset on that axis is
+    // final (the first anchor of every track seeds it), and each later anchor
+    // takes the first wire to a set neighbour whose pins face each other.
+    let pass = |vertical: bool, out: &mut Vec<(f64, f64)>| {
+        let mut order: Vec<usize> = (0..anchored.len()).collect();
+        order.sort_by_key(|&k| {
+            if vertical {
+                (slots[k].row, slots[k].col)
+            } else {
+                (slots[k].col, slots[k].row)
+            }
+        });
+        let mut set = vec![false; anchored.len()];
+        for &k in &order {
+            let hit = hops.iter().find_map(|[a, b]| {
+                let (mine, theirs) = if anchor_of(a.child) == Some(k) {
+                    (a, b)
+                } else if anchor_of(b.child) == Some(k) {
+                    (b, a)
+                } else {
+                    return None;
+                };
+                let j = anchor_of(theirs.child)?;
+                let same_track = if vertical {
+                    slots[j].row == slots[k].row && slots[j].col != slots[k].col
+                } else {
+                    slots[j].col == slots[k].col && slots[j].row != slots[k].row
+                };
+                if !set[j] || !same_track {
+                    return None;
+                }
+                let mine_t = terminal(&children[anchored[k]], mine.terminal.as_deref());
+                let their_t = terminal(&children[anchored[j]], theirs.terminal.as_deref());
+                // Only pins pointing **at** each other align — the pair a
+                // straight wire can actually join.
+                let facing = if vertical {
+                    if slots[k].col > slots[j].col {
+                        (Some(Side::Left), Some(Side::Right))
+                    } else {
+                        (Some(Side::Right), Some(Side::Left))
+                    }
+                } else if slots[k].row > slots[j].row {
+                    (Some(Side::Top), Some(Side::Bottom))
+                } else {
+                    (Some(Side::Bottom), Some(Side::Top))
+                };
+                if (mine_t.facing, their_t.facing) != facing {
+                    return None;
+                }
+                Some(if vertical {
+                    out[j].1 + their_t.at.1 - mine_t.at.1
+                } else {
+                    out[j].0 + their_t.at.0 - mine_t.at.0
+                })
+            });
+            if let Some(o) = hit {
+                if vertical {
+                    out[k].1 = o;
+                } else {
+                    out[k].0 = o;
+                }
+            }
+            set[k] = true;
+        }
+    };
+    pass(true, &mut out);
+    pass(false, &mut out);
+    out
 }
 
 /// Charge one axis's gaps with what a spanning chain still lacks [SPEC 16.1]:
