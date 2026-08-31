@@ -565,3 +565,56 @@ fn a_chain_clears_the_anchors_readouts() {
         "the chain stands clear of the readouts: r=({rx},{ry},{rw},{rh}) g=({gx},{gy},{gw},{gh})"
     );
 }
+
+#[test]
+fn a_chain_grows_monotone_past_its_own_earlier_members() {
+    // [SPEC 16.1] "grows from there, link by link" is an order, not just a
+    // distance: a later member may never tuck into a hole before an earlier
+    // one. The trigger is a neighbouring chain on the next pin of the same
+    // side, whose band pushes the first member deep and opens exactly such a
+    // hole — the chain's own terminator then seated *inside* its chain,
+    // and 380 px of wire looped back up for a 30 px drop.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#j1| [\n    |pin#p1| { side: left }; |pin#p2| { side: left }; |pin#p3| { side: right }\n  ]\n"
+            .to_owned()
+            + "  |R#r2| \"4k7\"\n  |LED#d2| \"red\"\n  j1.p1 - r2 - d2 - |gnd|\n  j1.p2 - |gnd|\n"),
+    ));
+    let (ry, dy) = (at(&nodes, "r2").1, at(&nodes, "d2").1);
+    let gy = at(&nodes, "lini-cap-1").1;
+    assert!(
+        ry < dy && dy < gy,
+        "r2 → d2 → gnd stay in growth order: {ry} {dy} {gy}"
+    );
+}
+
+#[test]
+fn same_pin_chains_on_one_ray_ladder_side_by_side() {
+    // [SPEC 16.1] two chains off one pin heading the same way take adjacent
+    // lanes — the reset cap and the reset button both drop off NRST. Sharing
+    // one lane while the ladder steps one past the other's reach is a
+    // feedback loop that walked the pair hundreds of px out (775 px on the
+    // hero's MCU block); adjacent lanes are also how a real sheet draws it.
+    let nodes = laid(&scope(
+        "",
+        &("  |component#u3| [\n    |pin#nrst| { side: right }; |pin#gnd| { side: bottom }\n  ]\n"
+            .to_owned()
+            + "  |C#c7| \"100n\"\n  |SW#sw1| \"RST\"\n  u3.nrst - c7 - |gnd|\n  u3.nrst - sw1 - |gnd|\n"),
+    ));
+    let ((cx, _), (sx, _)) = (at(&nodes, "c7"), at(&nodes, "sw1"));
+    let wall = {
+        let (u, ux, _) = placed(&nodes, "u3");
+        ux - u.cx + super::seat::drawn(u).max_x
+    };
+    assert!(
+        cx < sx,
+        "statement order takes the inner lane first: {cx} vs {sx}"
+    );
+    // Both lanes stay near the part — a bound loose enough for any lane
+    // arithmetic, tight enough that the runaway (hundreds of px) fails it.
+    assert!(
+        sx - wall < 4.0 * LABEL_SEAT,
+        "the outer lane stays within a few seats of the part: {} out",
+        sx - wall
+    );
+}

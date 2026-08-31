@@ -235,7 +235,12 @@ impl Seats {
         // its own lane ([`Self::lane`]) — and grows from there in its
         // terminator's direction [SPEC 16.1]: a cap under a side pin sits
         // below the wire leaving it, not inside the component's own column.
-        let base = frame.cross(g.pin);
+        //
+        // Growth is **monotone**: each member's base is the previous member's
+        // outer paint edge, so a later member can never tuck into a hole a
+        // foreign band opened before an earlier one — "link by link" is an
+        // order, not just a distance.
+        let mut base = frame.cross(g.pin);
         for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
             let sat = &children[member];
             let point = terminal(sat, inbound.as_deref()).at;
@@ -265,6 +270,7 @@ impl Seats {
             let u = frame.u(point);
             let interval = (along + u0.min(u1) - u, along + u0.max(u1) - u);
             let line = stack.seat(SeatLine::new(frame, true, base), interval, self.seat, &band);
+            base = line + band.pos;
             let target = frame.pt(along, line);
             self.seats[member] = Some(Seat {
                 anchor: held.child,
@@ -473,11 +479,14 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
         // Share: a pin whose net branches **both** ways — a rail up to its
         // flag, down to its decoupling cap — leaves on one lead and splits
         // **once**, at one point, rather than peeling twice off its stub. So
-        // every chain on one pin takes the outermost lane any of them asked
-        // for. The two wires then run co-linearly out to that point, which the
-        // router draws as one lead: they land on one fixed port, so they are
-        // an implicit fan and the fan's trunk is one drawn line
-        // ([ROUTING.md](../../../ROUTING.md) Special nodes / Fixed ports).
+        // chains parting onto **different rays** from one pin take the
+        // outermost lane any of them asked for; the wires run co-linearly out
+        // to that point, which the router draws as one lead (an implicit fan
+        // on one fixed port — [ROUTING.md](../../../ROUTING.md) Special nodes
+        // / Fixed ports). Chains taking the **same** ray never share: they
+        // ladder side by side like any two chains — equalizing them while the
+        // ladder steps one past the other is a feedback loop that walks the
+        // pair out a step per round until the iteration bound.
         for i in 0..held.len() {
             for j in 0..held.len() {
                 if i != j
@@ -485,6 +494,7 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
                     && lead[j] != 0.0
                     && held[i].held.child == held[j].held.child
                     && held[i].pin == held[j].pin
+                    && held[i].ray != held[j].ray
                     && out[i] < out[j]
                 {
                     out[i] = out[j];
