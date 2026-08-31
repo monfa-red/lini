@@ -509,11 +509,10 @@ Every child is **in flow** by default — laid out by its container's `layout`
 | `top` · `bottom` · `left` · `right` | flush against that parent edge |
 | `top left` · `top right` · `bottom left` · `bottom right` | with its corner on that parent corner |
 
-The anchor is the parent's **drawn box** — border and padding included, and
-the box it *ends up* with: a container grown after its interior was laid out —
-a grid cell stretched to fill its track, a flex child filling the cross axis —
-re-seats its overlays on the grown box, so a caption keeps the corner it names
-however wide the track.
+The anchor is the parent's **drawn box** — border and padding included, and the
+box it *ends up* with: a container grown after its interior was laid out (a
+stretched grid cell, a flex child filling the cross axis) re-seats its overlays
+on the grown box.
 
 A pinned child is an **overlay**. It **does not grow the parent** — a parent of only
 pinned children collapses to `2 × padding` — and it **paints above** the in-flow
@@ -3409,22 +3408,16 @@ everything else keeps the centring.
   wire's **landing leg** — the straight run into the second end, on that
   pin's row or column — and they stand **off that landing**, marching the
   sheet's reading direction (rightward, downward) into it. The leg runs
-  along the very axis that anchor's own satellites ladder their **lanes**
-  on, so a span's members **are** the next columns of that ladder and take
-  its own **pitch**: the last-named one pitch past the ladder's outermost
-  column — the fuse on a bus stands in the column after the last part
-  hanging off the bus — and each earlier member a pitch before it, save
-  where a member's own ink asks for more, when it stands a seat gap clear
-  of what it must clear, exactly as a column does. A landing whose side
-  holds no lane has no rhythm to join, and the seat gap off the second
-  end's **cluster** is the whole of it. Whatever the leg is longer than
-  they need is left where the wire comes **in**, a run of bare bus, which
-  is what a sheet draws: split evenly instead, the surplus lands *between*
-  the members and the part they feed, where a reader takes it for a column
-  of nothing — and its width is nobody's, being only whatever the tracks
-  happened to part by. A stretch too short to hold them centres them on
-  the raw pin-to-pin line. The tracks part far enough for the members
-  *and* for what each cluster swallows;
+  along the axis that anchor's own satellites ladder their **lanes** on, so
+  a span's members **are** the next columns of that ladder and take its
+  **pitch**: the last-named one pitch past the ladder's outermost column,
+  each earlier a pitch before it, save where a member's own ink asks more —
+  then a seat gap clear of what it must clear, exactly as a column does. A
+  landing whose side holds no lane has no rhythm to join, and that seat gap
+  off the second end's **cluster** is the whole of it. The leg's surplus
+  lies where the wire comes **in**, a run of bare bus; a stretch too short
+  to hold the members centres them on the raw pin-to-pin line. The tracks
+  part far enough for the members *and* for what each cluster swallows;
 - **no placed end** — the parts fall back to the flow with a warning.
 
 A chain that leaves its pin **sideways** takes a **lane** of its own — its own
@@ -3435,15 +3428,12 @@ square turn; one that grows straight out along its pin takes no lane and
 lane — so no two leads overtake each other and cross, and no column lands on
 another's text. That step is the **ladder's**, not the pair's: the greediest
 one any neighbouring pair asks is the **pitch** every column takes, so a
-side's lanes stand on one rhythm. Stepped pair by pair the *gaps* come out
-even and the columns do not, and the pitch then wobbles with nothing more
-meaningful than how many characters each part's value happens to read —
-which a reader, who sees a row of columns and reads a grid, takes for
-columns dropped at random. The pitch is a side's own, never the sheet's or
-even the part's: one block holding a long readout has no business parting
-the next block's columns to its width. A column whose own lane already
-stands farther out keeps it — the wall it clears, or a stack floor below —
-and the rhythm carries on from where it really landed. A column also stands
+side's lanes stand on one rhythm rather than wobbling with each part's value
+width. The pitch is a side's own, never the sheet's or even the part's: one
+block holding a long readout has no business parting the next block's columns
+to its width. A column whose own lane already stands farther out keeps it —
+the wall it clears, or a stack floor below — and the rhythm carries on from
+there. A column also stands
 past the reach of every **stack** it crosses — a chain growing straight out
 of a deeper pin on the same side — by a full seat gap, so the wire off the
 stack's far terminal (a bridge's return) has a corridor to climb; the
@@ -3452,21 +3442,16 @@ geography. And every **wired** pin's row is a corridor of its own: a member
 seats clear of every wired row but its own pin's, so a column's body never
 lands where a through wire or a neighbouring trunk runs, and the wires cross
 its lead square instead — the decoupling cap stands below the bus pair,
-never woven into it. **The ladder
-is a side's, not a ray's**: every chain turning off one side of a part leaves
-along the one lane axis, so an up-chain and a down-chain off two *different*
-pins ladder against each other like any pair — laddered per ray they would
-both take the innermost lane and turn on one column a pin pitch apart, a rail
-flag standing over the return below it, one broken line where a reader sees a
-short. Column order is the pins' own, read **along the ray**: a chain's leg
-crosses every lane inside its own, so the chain whose pin sits *earlier*
-along the ray steps out and the deeper one keeps the inner lane. A side
-holding **both** rays cannot read it that way — one pin's up-chain and its
-down-chain share a column, so the two ladders would demand opposite orders
-and the pair would have no lawful lane at all (the 2×2 divider: two pins,
-each a rail up and a return down) — and falls back to the **canonical**
-direction (downward, rightward), the bottom pin's column innermost both
-ways. Only a **pin's own** pair shares: the **first** chain of each ray off
+never woven into it. **The ladder is a side's, not a ray's**: every chain
+turning off one side of a part leaves along the one lane axis, so an up-chain
+and a down-chain off two *different* pins ladder against each other like any
+pair. Column order is the pins' own, read **along the ray**: a chain's leg
+crosses every lane inside its own, so the chain whose pin sits *earlier* along
+the ray steps out and the deeper one keeps the inner lane. A side holding
+**both** rays cannot read it that way — one pin's up-chain and its down-chain
+share a column, so the two ladders would demand opposite orders — and falls
+back to the **canonical** direction (downward, rightward), the bottom pin's
+column innermost both ways. Only a **pin's own** pair shares: the **first** chain of each ray off
 one pin takes the outermost lane its opposite number asked for — one lead,
 splitting once at the turn — and every later same-ray chain ladders out into
 its own column (two rails up, or two returns down, never stack one lane).

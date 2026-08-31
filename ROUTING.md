@@ -287,13 +287,9 @@ Six steps. Each decides once; none revisits an earlier step's answer.
    - the one **canonical U** amends the first: on a three-run route whose two
      ends leave the *same* way — both ports on one side name, so both end
      runs travel outward along that side's normal — the interior run prefers
-     the **outermost of the two side lines**, clamped into its corridor,
-     not the anchor. The turn has no business past the body it is already
-     clear of, the search never priced the U's depth (its L1 estimate sees
-     no length there), and on the anchor the drawn bight would move with the
-     empty space around the pair. One body or two reads the same: with one
-     rect the two side lines coincide, which is the same-side pin pair's U
-     (§Fixed ports).
+     the **outermost of the two side lines**, clamped into its corridor, not
+     the anchor. One body or two reads the same: with one rect the two side
+     lines coincide, which is the same-side pin pair's U (§Fixed ports).
    Ports *are* the end-run ordinates — one mechanism places tracks and ports,
    so a port can never disagree with the wire it serves.
 
