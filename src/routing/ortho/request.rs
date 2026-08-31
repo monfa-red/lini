@@ -158,6 +158,31 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             };
             let (side_a, port_a) = fixed(index, a)?;
             let (side_b, port_b) = fixed(index, b)?;
+            // A net run is a **through** point (SPEC 16.4 — a run, not a
+            // stop): its port rides the run's axis, so each wire lands on
+            // the axis side facing its own far end. The pin's wire runs the
+            // length of the trace and a continuation extends it straight
+            // on, end to end — never a fan orbiting around one shared side.
+            let toward = |e: &crate::resolve::ResolvedEndpoint,
+                          side: Option<Side>,
+                          far: Rect|
+             -> Option<Side> {
+                let (s, at) = (side?, index.through_port(&e.path)?);
+                let (fc, pc) = if matches!(s, Side::Top | Side::Bottom) {
+                    ((far.y0 + far.y1) / 2.0, at.1)
+                } else {
+                    ((far.x0 + far.x1) / 2.0, at.0)
+                };
+                let want = match (s, fc < pc) {
+                    (Side::Top | Side::Bottom, true) => Side::Top,
+                    (Side::Top | Side::Bottom, false) => Side::Bottom,
+                    (_, true) => Side::Left,
+                    (_, false) => Side::Right,
+                };
+                Some(want)
+            };
+            let side_a = toward(a, side_a, rect_of(b)?).or(side_a);
+            let side_b = toward(b, side_b, rect_of(a)?).or(side_b);
             debug_assert!(
                 (port_a.is_none() || side_a.is_some()) && (port_b.is_none() || side_b.is_some()),
                 "a fixed port rides a forced side (ROUTING.md Fixed ports)"

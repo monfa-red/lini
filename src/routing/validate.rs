@@ -304,6 +304,27 @@ fn fan_pair(a: &RoutedLink, b: &RoutedLink) -> bool {
         .any(|g| [b.fan_from, b.fan_to].contains(&Some(*g)))
 }
 
+/// End-to-end contact at a shared **through** port — a net run's landing
+/// (SPEC 16.4; ROUTING.md Fixed ports): two wires of one net meeting tip to
+/// tip there draw one straight trace, sanctioned like a fan's trunk.
+fn through_contact(
+    index: &SceneIndex,
+    sa: &[(f64, f64)],
+    sb: &[(f64, f64)],
+    a: &RoutedLink,
+    b: &RoutedLink,
+) -> bool {
+    let close = |p: (f64, f64), q: (f64, f64)| (p.0 - q.0).abs() < 1e-3 && (p.1 - q.1).abs() < 1e-3;
+    [&a.seg_from, &a.seg_to]
+        .into_iter()
+        .filter(|p| [&b.seg_from, &b.seg_to].contains(p))
+        .any(|p| {
+            index.through_port(p).is_some_and(|at| {
+                sa.iter().any(|&q| close(q, at)) && sb.iter().any(|&q| close(q, at))
+            })
+        })
+}
+
 /// Law 1 (link–link) and Law 3's promise, pairwise: every segment pair of
 /// two links keeps clearance, except the sanctioned contacts — transversal
 /// crossings (returned for [`reconcile`]) and fan-sibling trunks (one
@@ -329,7 +350,10 @@ fn separation(
                         continue;
                     }
                     let d = box_dist(seg_box(sa), seg_box(sb));
-                    if d >= c - EPS || (fan_pair && trunk_contact(sa, sb, a, b, d)) {
+                    if d >= c - EPS
+                        || (fan_pair && trunk_contact(sa, sb, a, b, d))
+                        || through_contact(index, sa, sb, a, b)
+                    {
                         continue;
                     }
                     if d < min_pitch(c) - EPS {

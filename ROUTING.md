@@ -408,6 +408,12 @@ wire **carries its fixed ports**, so the checker still judges output alone.
   port slot, one drawn lead until the split; duplicates ride one line the
   whole way. A fan whose shared end carries two **different** fixed ports
   is impossible by construction — every member strays, named.
+- **Through ports.** A net run's landing ([SPEC 16.4](SPEC.md#164-labels))
+  is a point on a wire, not a stop: its port rides the run's axis, and each
+  wire lands on the axis side facing its own far end — so a run wired on
+  both sides draws one straight trace, the two wires meeting tip to tip at
+  the port. That end-to-end contact is sanctioned exactly as a fan's trunk
+  is; landings choosing the same side still merge as a fan.
 - **Infeasibility is loud, never a clamp.** A wire is never drawn *near*
   its fixed port. A port whose landing a keep-out covers strays with
   "fixed port blocked"; the later of two fixed ports closer than the

@@ -628,26 +628,25 @@ fn same_pin_chains_on_one_ray_ladder_side_by_side() {
 }
 
 #[test]
-fn a_same_side_bridge_stands_beside_the_part_along_its_side() {
-    // [SPEC 16.1] two placed ends on one side of one anchor: the member grows
-    // along that side, first-named pin toward the second, posed so its two
-    // terminals meet the two wires end-on. Straight-out growth posed it
-    // facing its first pin with the second facing away — a four-turn loop
-    // around the member's own body.
+fn a_same_side_bridge_stands_in_its_first_pins_corridor() {
+    // [SPEC 16.1] two placed ends on one anchor: the member grows like a
+    // one-end chain off the first-named pin — in that pin's own corridor,
+    // entry terminal end-on — and the far wire is the router's, which merges
+    // it into the second pin's net at a junction, the way a sheet taps a
+    // pull-up into the line it feeds. Grown along the side instead, the
+    // member (always taller than one pin pitch) straddled the second pin's
+    // row and its return orbited the part.
     let nodes = laid(&scope(
         "",
         &("  |component#u2| { cell: 1 1 } [\n    |pin#vin| { side: left }; |pin#en| { side: left }; |pin#out| { side: right }\n  ]\n"
             .to_owned()
             + "  |R#r5| \"100k\"\n  u2.en - r5 - u2.vin\n"),
     ));
-    assert_eq!(pose_of(&nodes, "r5"), 270, "vertical, p1 facing down at EN");
+    assert_eq!(pose_of(&nodes, "r5"), 180, "horizontal, p1 end-on at EN");
     let ((ux, _), (rx, ry)) = (at(&nodes, "u2"), at(&nodes, "r5"));
-    assert!(rx < ux, "in a lane off the shared left side: {rx} vs {ux}");
+    assert!(rx < ux, "out along the shared left side: {rx} vs {ux}");
     let en_y = cell(&nodes, "en").1;
-    assert!(
-        ry < en_y,
-        "grown from EN toward VIN — upward: {ry} vs {en_y}"
-    );
+    assert!(close(ry, en_y), "riding EN's own row: {ry} vs {en_y}");
 }
 
 #[test]
@@ -682,8 +681,10 @@ fn a_rail_flag_taps_the_trunk_instead_of_standing_in_it() {
     // [SPEC 16.1] a symbol-label leaf hanging mid-chain is a tap: it hangs
     // off its attachment member along its own convention — and steps aside
     // when that points back into the trunk, as the buck's 5 V flag does at
-    // the inductor's far pin. Stacked in trunk order it stood upside-down
-    // between the inductor and the divider.
+    // the inductor's far pin, **upright**, risen a gap so its lead turns one
+    // square corner. Stacked in trunk order it stood upside-down between
+    // the inductor and the divider; turned to face its aside ray it lay
+    // sideways, a flag no sheet draws.
     let sheet = "{\n  |v5::label| { symbol: power } [ \"5V\" ]\n  |sch::group| { layout: schematic; gap: 100 }\n}\n";
     let nodes = laid(
         &(sheet.to_owned()
@@ -700,9 +701,10 @@ fn a_rail_flag_taps_the_trunk_instead_of_standing_in_it() {
         fx > lx,
         "the flag steps aside, outward of the trunk: {fx} vs {lx}"
     );
+    assert_eq!(pose_of(&nodes, "f"), 0, "the flag stays upright");
     assert!(
-        fy > ly && fy < ry + 1.0,
-        "…beside its junction, not stacked past the divider: {ly} {fy} {ry}"
+        fy < ry && fy > ly - 60.0,
+        "…risen beside its junction, not stacked past the divider: {ly} {fy} {ry}"
     );
 }
 

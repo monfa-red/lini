@@ -12,11 +12,14 @@
 //!   a symbol-label leaf hanging mid-chain
 //!   ([`crate::desugar::schematic::chain::taps`]) — takes no slot in the
 //!   stack and hangs off its attachment member along its own posed drawing.
-//! - **two placed ends on one anchor's one side** — a **bridge**: it grows
-//!   along that side, first pin toward the second
-//!   ([`crate::desugar::schematic::chain::bridge_ray`]); other same-anchor
-//!   pairs grow like a one-end chain — the split is
-//!   [`crate::desugar::schematic::chain::holder`]'s, shared with the chooser.
+//! - **two placed ends on one anchor** — a **bridge** (`U2.EN - R5 -
+//!   U2.VIN`): it grows like a one-end chain off the first-named pin — the
+//!   member stands in that pin's own corridor, entry terminal end-on — and
+//!   the far wire is the router's, which merges it into the second pin's
+//!   net at a junction ([ROUTING.md](../../../ROUTING.md) Fixed ports), the
+//!   way a sheet taps a pull-up into the line it feeds. The split from a
+//!   spanning chain is [`crate::desugar::schematic::chain::holder`]'s,
+//!   shared with the chooser.
 //! - **two placed ends, on two anchors** — a **span**: its satellites ride
 //!   the wire's landing leg (the second pin's row or column), at even
 //!   fractions of the stretch standing clear of both ends' clusters.
@@ -122,8 +125,12 @@ pub(super) fn seat_gap(attrs: &crate::resolve::AttrMap) -> f64 {
 
 impl Seats {
     /// Seat the scope's satellites against the pins their wires reach.
+    /// `children` is mutable for one adjustment only: a turned member's
+    /// readouts mirror onto its lane's outward side before any extent is
+    /// read (see the flip below); every seat is still returned, never
+    /// applied here.
     pub(super) fn build(
-        children: &[PlacedNode],
+        children: &mut [PlacedNode],
         roles: &[Role],
         links: &[&ResolvedLink],
         scope: &str,
@@ -151,6 +158,8 @@ impl Seats {
             packers[i].obstruct(drawn(c));
         }
         let mut held: Vec<Growing> = Vec::new();
+        let mut mirrored: Vec<usize> = Vec::new();
+        let mut restacked: Vec<(usize, f64)> = Vec::new();
         // The rays seen so far — an (anchor, growth direction, turn side)
         // triple. A ray splits into one ladder per side it is entered from:
         // a chain turning left off a left pin and one turning right off a
@@ -170,27 +179,7 @@ impl Seats {
             match (holder(&ends), ends.as_slice()) {
                 (Some(one), _) => {
                     let one = one.clone();
-                    let (mut ray, pin) = growth(children, &chain, &one, &wire_edges);
-                    // A **bridge** — two ends on one side of one anchor —
-                    // grows along that side instead
-                    // ([`crate::desugar::schematic::chain::bridge_ray`]).
-                    if let [a, b, ..] = ends.as_slice()
-                        && a.child == b.child
-                        && a.terminal != b.terminal
-                    {
-                        let ta = terminal(&children[a.child], a.terminal.as_deref());
-                        let tb = terminal(&children[b.child], b.terminal.as_deref());
-                        if let (Some(fa), Some(fb)) = (ta.facing, tb.facing)
-                            && fa == fb
-                        {
-                            let (pa, pb) = if fa.is_vertical() {
-                                (ta.at.1, tb.at.1)
-                            } else {
-                                (ta.at.0, tb.at.0)
-                            };
-                            ray = crate::desugar::schematic::chain::bridge_ray(fa, pa, pb);
-                        }
-                    }
+                    let (ray, pin) = growth(children, &chain, &one, &wire_edges);
                     let frame = Frame::outward(ray.normal());
                     let depth = frame.cross(pin.at);
                     let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
@@ -204,6 +193,27 @@ impl Seats {
                     let ray_first = !held
                         .iter()
                         .any(|g| g.held == one && g.pin == pin.at && g.ray == ray);
+                    if lead != 0.0
+                        && matches!(ray, Side::Top | Side::Bottom)
+                        && pin.facing == Some(Side::Left)
+                    {
+                        mirrored.extend(&chain.members);
+                    }
+                    // A corridor member's readouts straddle its wire; with a
+                    // live pin row one pitch away, the near line closes that
+                    // row's corridor (clearance outreaches the row gap) and
+                    // the wire off the member's far terminal orbits. When
+                    // the rows crowd one side only, both lines step to the
+                    // free side.
+                    if lead == 0.0 && ray.is_vertical() {
+                        let rows = pin_rows(&children[one.child], ray);
+                        let above = rows.iter().any(|&r| r < pin.at.1 - 1e-6);
+                        let below = rows.iter().any(|&r| r > pin.at.1 + 1e-6);
+                        if above != below {
+                            let sgn = if above { 1.0 } else { -1.0 };
+                            restacked.extend(chain.members.iter().map(|&m| (m, sgn)));
+                        }
+                    }
                     held.push(Growing {
                         group,
                         ray,
@@ -217,6 +227,31 @@ impl Seats {
                 }
                 (None, [a, b, ..]) => out.distribute(children, chain, a, b),
                 (None, _) => out.floating.extend(chain.members),
+            }
+        }
+        // A turned member's readouts are minted on the sheet's reading side
+        // (+x, [SPEC 16.2]); on a chain turning off a **left**-facing pin
+        // that side reaches back over the lane toward the part, where every
+        // deeper pin threads its wires. Mirror them onto the lane's outward
+        // side — decided here because only the seat pass knows the lane,
+        // exactly as a net run's name takes the freer side [SPEC 16.4] —
+        // and before any extent below is read, so the ladder, the cluster
+        // and the router all see the mirrored ink.
+        for &m in &mirrored {
+            for c in children[m].children.iter_mut() {
+                if c.type_chain.iter().any(|t| t == "ref" || t == "part-value") {
+                    c.cx = -c.cx - (c.bbox.min_x + c.bbox.max_x);
+                }
+            }
+        }
+        for &(m, sgn) in &restacked {
+            for c in children[m].children.iter_mut() {
+                let s = c.cy.abs();
+                if c.type_chain.iter().any(|t| t == "ref") {
+                    c.cy = sgn * if sgn > 0.0 { s } else { 3.0 * s };
+                } else if c.type_chain.iter().any(|t| t == "part-value") {
+                    c.cy = sgn * if sgn > 0.0 { 3.0 * s } else { s };
+                }
             }
         }
         // **No chain overtakes another** [SPEC 16.1] — the routing contract's
@@ -246,12 +281,21 @@ impl Seats {
             Side::Bottom | Side::Right => g.depth,
             Side::Top | Side::Left => -g.depth,
         };
+        // Straight chains seat **first**, whatever their declaration: they
+        // are the inner geography — members lying in their own pins'
+        // corridors — and the turning chains' columns ladder out past them
+        // ([`ladder`]'s stack floor). Seated the other way round, a column
+        // paints first and the stack's probe, grazing it, leaps the whole
+        // column instead of keeping its natural seat.
         held.sort_by(|a, b| {
-            a.group.cmp(&b.group).then(if a.lead == 0.0 {
-                a.depth.total_cmp(&b.depth)
-            } else {
-                canon(b).total_cmp(&canon(a))
-            })
+            (a.lead != 0.0)
+                .cmp(&(b.lead != 0.0))
+                .then(a.group.cmp(&b.group))
+                .then(if a.lead == 0.0 {
+                    a.depth.total_cmp(&b.depth)
+                } else {
+                    canon(b).total_cmp(&canon(a))
+                })
         });
         let lanes = ladder(children, &held, seat);
         for (g, along) in held.iter().zip(lanes) {
@@ -282,11 +326,7 @@ impl Seats {
         wire_edges: &[[End; 2]],
     ) {
         let (chain, held) = (&g.chain, &g.held);
-        let tap = crate::desugar::schematic::chain::taps(chain, |m| {
-            crate::desugar::schematic::sch_kind(&children[m].type_chain)
-                == Some(crate::desugar::schematic::SchKind::Label)
-                && super::terminal::ident(&children[m].attrs, "symbol").is_some()
-        });
+        let tap = tap_flags(children, chain);
         // The chain hangs off the wire's **first leg** — out along the pin to
         // its own lane ([`Self::lane`]) — and grows from there in its
         // terminator's direction [SPEC 16.1]: a cap under a side pin sits
@@ -373,6 +413,46 @@ impl Seats {
             let attach = (junction.0 + pdx, junction.1 + pdy);
             let t = terminal(&children[member], chain.inbound[i].as_deref());
             let ray = t.facing.map_or(g.ray, Side::opposite);
+            // A tap whose own convention points back into the trunk **steps
+            // aside** [SPEC 16.1] — and stays upright: it seats one gap out
+            // along the aside ray *and* one along its own, so its lead is
+            // the router's one square corner, the way a sheet stands a flag
+            // beside the junction it taps.
+            let pin_facing = terminal(&children[held.child], held.terminal.as_deref()).facing;
+            let aside = crate::desugar::schematic::chain::tap_ray(t.facing, g.ray, pin_facing);
+            if aside != ray {
+                let tf = Frame::outward(aside.normal());
+                let box_ = drawn(&children[member]);
+                let (lo, hi) = (tf.cross(corner(box_, false)), tf.cross(corner(box_, true)));
+                let c = tf.cross(t.at);
+                let band = Band {
+                    neg: c - lo.min(hi),
+                    pos: hi.max(lo) - c,
+                };
+                // Risen one gap along its own ray, packed out along the
+                // aside — the interval is read at the risen height.
+                let rn = ray.normal();
+                let risen = (attach.0 + rn.0 * self.seat, attach.1 + rn.1 * self.seat);
+                let (u0, u1) = (tf.u(corner(box_, false)), tf.u(corner(box_, true)));
+                let (au, u) = (tf.u(risen), tf.u(t.at));
+                let interval = (au + u0.min(u1) - u, au + u0.max(u1) - u);
+                let line = stack.seat(
+                    SeatLine::new(tf, true, tf.cross(attach)),
+                    interval,
+                    self.seat,
+                    &band,
+                );
+                let target = {
+                    let p = tf.pt(au, line);
+                    (p.0, p.1)
+                };
+                self.seats[member] = Some(Seat {
+                    anchor: held.child,
+                    dx: target.0 - t.at.0,
+                    dy: target.1 - t.at.1,
+                });
+                continue;
+            }
             let tf = Frame::outward(ray.normal());
             let box_ = drawn(&children[member]);
             let (lo, hi) = (tf.cross(corner(box_, false)), tf.cross(corner(box_, true)));
@@ -641,6 +721,30 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
         back.push(reach.0);
         fwd.push(reach.1);
     }
+    // A lane must also clear the **stacks** it crosses [SPEC 16.1]: a chain
+    // growing straight out of a deeper pin on the same side lays its members
+    // across the lane axis, and a column stepped only past the part descends
+    // onto them — or leaves no corridor for the wire off the stack's far
+    // terminal (a bridge's return climbing to its second pin). Floor each
+    // turning lane at every such stack's reach plus the seat gap. A stack on
+    // the lane's own pin is the fan's — the shared lead splits at the lane —
+    // and is never floored against.
+    for i in 0..held.len() {
+        if lead[i] == 0.0 {
+            continue;
+        }
+        let g = &held[i];
+        let gf = Frame::outward(g.ray.normal());
+        for (s, &slead) in held.iter().zip(&lead) {
+            if slead != 0.0 || s.held.child != g.held.child || s.pin == g.pin {
+                continue;
+            }
+            if gf.u(s.ray.normal()) * lead[i] <= 0.0 || gf.cross(s.pin) <= g.depth {
+                continue;
+            }
+            out[i] = out[i].max(stack_reach(children, s, seat) + seat + back[i]);
+        }
+    }
     for _ in 0..=held.len() {
         let mut moved = false;
         // Ladder: within one ray, each chain steps past its predecessor's
@@ -754,6 +858,71 @@ fn clearing(children: &[PlacedNode], g: &Growing, lead: f64, seat: f64) -> (f64,
         .max(wall + seat + connection)
         .max(wall + ink);
     (lead * out, (ink, fwd_ink))
+}
+
+/// The rows a part's pins take on `side`, in the part's own frame — the
+/// corridors a member's readouts must not close ([`Seats::build`]'s
+/// restack). A glyph part carries ports, not pin nodes, and reports none.
+fn pin_rows(part: &PlacedNode, side: Side) -> Vec<f64> {
+    fn walk(n: &PlacedNode, ox: f64, oy: f64, side: Side, out: &mut Vec<f64>) {
+        for c in &n.children {
+            let (cx, cy) = (ox + c.cx, oy + c.cy);
+            if c.type_chain.iter().any(|t| t == "pin") {
+                let landed = c.children.iter().find_map(|s| {
+                    s.type_chain
+                        .iter()
+                        .any(|t| t == "pin-stub")
+                        .then(|| super::terminal::ident(&s.attrs, "pin"))
+                        .flatten()
+                        .as_deref()
+                        .and_then(Side::parse)
+                });
+                if landed == Some(side) {
+                    out.push(if side.is_vertical() { cy } else { cx });
+                }
+                continue;
+            }
+            walk(c, cx, cy, side, out);
+        }
+    }
+    let mut out = Vec::new();
+    walk(part, 0.0, 0.0, side, &mut out);
+    out
+}
+
+/// Which of a chain's members are **taps** [SPEC 16.1], by this pass's own
+/// reading of "symbol label" — one classifier for the packer ([`Seats::grow`])
+/// and the stack forecast ([`stack_reach`]), so they cannot disagree.
+fn tap_flags(children: &[PlacedNode], chain: &Chain) -> Vec<bool> {
+    crate::desugar::schematic::chain::taps(chain, |m| {
+        crate::desugar::schematic::sch_kind(&children[m].type_chain)
+            == Some(crate::desugar::schematic::SchKind::Label)
+            && super::terminal::ident(&children[m].attrs, "symbol").is_some()
+    })
+}
+
+/// How far a straight-stacking chain's ink will reach out along its ray —
+/// [`Seats::grow`]'s arithmetic run dry (each member one seat gap past the
+/// last, taps aside, no packer): the reach a crossing lane must clear
+/// ([`ladder`]), forecast before anything has seated.
+fn stack_reach(children: &[PlacedNode], g: &Growing, seat: f64) -> f64 {
+    let frame = Frame::outward(g.ray.normal());
+    let tap = tap_flags(children, &g.chain);
+    let mut base = frame.cross(g.pin);
+    for (i, (&member, inbound)) in g.chain.members.iter().zip(&g.chain.inbound).enumerate() {
+        if tap[i] {
+            continue;
+        }
+        let sat = &children[member];
+        let c = frame.cross(terminal(sat, inbound.as_deref()).at);
+        let box_ = drawn(sat);
+        let (lo, hi) = (
+            frame.cross(corner(box_, false)),
+            frame.cross(corner(box_, true)),
+        );
+        base = base + seat + (c - lo.min(hi)) + (hi.max(lo) - c);
+    }
+    base
 }
 
 /// Where a one-held chain grows **from** and **toward** [SPEC 16.1]: the pin

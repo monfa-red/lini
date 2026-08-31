@@ -37,10 +37,11 @@ use crate::layout::ir::PlacedNode;
 use crate::layout::schematic::PartPorts;
 use std::collections::{BTreeMap, BTreeSet};
 
-/// The sheet's answers, by endpoint path.
+/// The sheet's answers, by endpoint path. A port's `bool` marks a net
+/// **run**'s — a through point ([`SceneIndex::through_port`]).
 #[derive(Default)]
 pub(super) struct Parts {
-    ports: BTreeMap<String, (Side, (f64, f64))>,
+    ports: BTreeMap<String, (Side, (f64, f64), bool)>,
     terminals: BTreeSet<String>,
 }
 
@@ -59,10 +60,11 @@ impl SceneIndex {
             Some(id) => format!("{path}.{id}"),
             None => path.to_owned(),
         };
+        let through = crate::layout::schematic::is_net_run(n);
         for (id, side, at) in part.ports {
             self.parts
                 .ports
-                .insert(key(id), (side, (at.0 + cx, at.1 + cy)));
+                .insert(key(id), (side, (at.0 + cx, at.1 + cy), through));
         }
         for id in part.terminals {
             self.parts.terminals.insert(key(id));
@@ -115,7 +117,7 @@ impl SceneIndex {
     /// the exact **ordinate** on it — `y` on a vertical side, `x` on a
     /// horizontal one. A selection of the stored point, never a recomputation.
     pub(crate) fn fixed_port(&self, path: &str) -> Option<(Side, f64)> {
-        self.parts.ports.get(path).map(|&(side, at)| {
+        self.parts.ports.get(path).map(|&(side, at, _)| {
             (
                 side,
                 match side {
@@ -124,6 +126,16 @@ impl SceneIndex {
                 },
             )
         })
+    }
+
+    /// A net **run**'s landing is a through point [SPEC 16.4] — the run is a
+    /// stretch of wire, not a stop — so its port rides the run's axis and
+    /// either axis side is an honest landing. `Some(point)` for a run's port.
+    pub(crate) fn through_port(&self, path: &str) -> Option<(f64, f64)> {
+        self.parts
+            .ports
+            .get(path)
+            .and_then(|&(_, at, through)| through.then_some(at))
     }
 
     /// Whether this endpoint is a schematic **terminal** — a part's pin, or a

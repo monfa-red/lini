@@ -51,25 +51,6 @@ pub(crate) fn growth_ray(
     }
 }
 
-/// The ray a **bridge** grows along [SPEC 16.1] — a chain held at two pins
-/// on **one side** of one anchor (`U2.EN - R5 - U2.VIN`): along that side,
-/// from the first-named pin toward the second, so the member stands beside
-/// the part with its two terminals meeting the two wires end-on. Straight
-/// out along the first pin — the one-end fallback — posed the member facing
-/// its first pin and left its second facing away, a four-turn loop around
-/// the member's own body. `side` is the shared **landed** side; `a` and `b`
-/// are the two pins' coordinates along that side's reading direction (top
-/// to bottom, left to right) — the seat pass reads geometry, the pose
-/// chooser the rail order, and this one map keeps them agreeing.
-pub(crate) fn bridge_ray(side: Side, a: f64, b: f64) -> Side {
-    let reading = if side.is_vertical() {
-        Side::Bottom
-    } else {
-        Side::Right
-    };
-    if b >= a { reading } else { reading.opposite() }
-}
-
 /// Whether `end`'s pin carries **through traffic** — a wire to another
 /// placed part, which runs down the pin's straight corridor. That is the
 /// sharing [`growth_ray`] yields to; a sibling satellite chain turns off

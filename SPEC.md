@@ -3388,11 +3388,15 @@ everything else keeps the centring.
   mid-chain member, the rail flag beside a junction — takes no slot in the
   stack: it hangs off its attachment member along its own drawn convention,
   stepping aside (out along the pin's normal) when that points back into the
-  trunk. Multi-member side branches stay in the stack, in walk order;
-- **two placed ends on one anchor, one side** — a **bridge** (`U2.EN - R5 -
-  U2.VIN`): the chain grows along that side, first-named pin toward the
-  second, standing off in a lane like any turning chain, so each member's
-  two terminals meet the two wires end-on;
+  trunk — **upright**, one gap out along both rays, so a flag is never laid
+  sideways and its lead is the router's one square corner. Multi-member
+  side branches stay in the stack, in walk order;
+- **two placed ends on one anchor** — a **bridge** (`U2.EN - R5 -
+  U2.VIN`): the chain grows like a one-end chain off the **first-named**
+  pin — the member stands in that pin's own corridor, entry terminal
+  end-on — and the far wire is the router's, which merges it into the
+  second pin's net at a junction dot, the way a sheet taps a pull-up into
+  the line it feeds;
 - **two placed ends on two anchors** — a **span**: the members ride the
   wire's **landing leg** — the straight run into the second end, on that
   pin's row or column — marching the sheet's reading direction (rightward,
@@ -3408,7 +3412,11 @@ square turn; one that grows straight out along its pin takes no lane and
 **stacks** outward instead. Lanes ladder: each column steps past the whole
 **ink** of the one before it — readout text included, both sides of its
 lane — so no two leads overtake each other and cross, and no column lands on
-another's text. Column order is the pins' own, measured **canonically**
+another's text. A column also stands past the reach of every **stack** it
+crosses — a chain growing straight out of a deeper pin on the same side —
+by a full seat gap, so the wire off the stack's far terminal (a bridge's
+return) has a corridor to climb; the stacks seat first, whatever the
+declaration order, being the inner geography. Column order is the pins' own, measured **canonically**
 (downward, rightward) whichever way the chains grow, because a pin's up-chain
 and its down-chain share one column: the **first** chain of each ray off one
 pin takes the outermost lane its opposite number asked for — one lead,
@@ -3478,7 +3486,10 @@ Ref/value text places deterministically — above a component (the ref over the
 value, the pair clearing the **top rail** — stubs and numbers — where pins
 landed there), across a discrete's symbol: above and below an upright one,
 **beside** a turned one, whose own wire runs down the column those seats would
-take. `translate:` on the styled-label form nudges either.
+take. A seated satellite's pair keeps out of the corridors: a column member's
+steps to its lane's **outward** side when the sheet's reading side faces back
+over the lane, and a corridor member's steps whole to the free side of its
+row when a live pin row crowds the other. `translate:` on the styled-label form nudges either.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins

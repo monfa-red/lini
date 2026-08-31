@@ -239,33 +239,11 @@ pub(super) fn choose<'a>(
                     side
                 })
             });
-        let mut ray = schematic::chain::growth_ray(
+        let ray = schematic::chain::growth_ray(
             terminator,
             Some(held.pose.side(base)),
             schematic::chain::shared_pin(&wire_edges, anchor, |c| parts[c].role == Role::Satellite),
         );
-        // A **bridge** — two ends on one side of one anchor — grows along
-        // that side, first-named pin toward the second
-        // ([`schematic::chain::bridge_ray`]); the seat pass reads the same
-        // direction off the placed rails.
-        if let [a, b, ..] = ends.as_slice()
-            && a.child == b.child
-            && a.terminal != b.terminal
-            && let (Some(sa), Some(sb)) = (
-                held.terminal_side(cx, a.terminal.as_deref()),
-                held.terminal_side(cx, b.terminal.as_deref()),
-            )
-            && sa == sb
-            && let Some((ka, kb)) =
-                bridge_order(cx, held, a.terminal.as_deref(), b.terminal.as_deref(), sa)
-        {
-            let (ka, kb) = if held.pose.flips(sa) {
-                (kb, ka)
-            } else {
-                (ka, kb)
-            };
-            ray = schematic::chain::bridge_ray(held.pose.side(sa), ka, kb);
-        }
         // A **tap** — a symbol-label leaf that is not the terminator — hangs
         // along its own drawn convention rather than the trunk's ray
         // ([`schematic::chain::taps`]), so its want is its own
@@ -286,7 +264,14 @@ pub(super) fn choose<'a>(
                 continue;
             };
             let want = if tap[i] {
-                schematic::chain::tap_ray(Some(side), ray, Some(normal)).opposite()
+                let tr = schematic::chain::tap_ray(Some(side), ray, Some(normal));
+                if tr != side.opposite() {
+                    // Stepped aside [SPEC 16.1]: the tap keeps its upright
+                    // pose — a flag is never laid sideways — and its lead
+                    // bends the corner instead (the seat pass raises it).
+                    continue;
+                }
+                tr.opposite()
             } else {
                 ray.opposite()
             };
@@ -305,54 +290,6 @@ pub(super) fn choose<'a>(
         }
     }
     Cow::Owned(out)
-}
-
-/// The two bridge terminals' order along their shared **unposed** side
-/// [SPEC 16.1] — scalars whose comparison says which pin a walk along the
-/// side's reading direction meets first. A `|component|`'s rail lands its
-/// same-side pins in declaration order, so the rank among them is the
-/// coordinate; a symbol part's ports carry real registry coordinates.
-fn bridge_order(
-    cx: &Lower,
-    part: &Part,
-    a: Option<&str>,
-    b: Option<&str>,
-    side: Side,
-) -> Option<(f64, f64)> {
-    match part.kind? {
-        SchKind::Component => {
-            let node = part.node?;
-            let pins = pins_of(cx, node, &part.chain);
-            let authored: Vec<Option<Side>> = pins
-                .iter()
-                .map(|p| schematic::authored_side(cx, &cx.authored_chain(p), &p.style))
-                .collect();
-            let sides = schematic::pin_sides(&authored, Pose::NONE);
-            let rank = |want: Option<&str>| {
-                let want = want?;
-                sides
-                    .iter()
-                    .zip(&pins)
-                    .filter(|((_, s, _), _)| *s == side)
-                    .position(|(_, p)| p.id.as_deref() == Some(want))
-                    .map(|k| k as f64)
-            };
-            Some((rank(a)?, rank(b)?))
-        }
-        _ => {
-            let glyph = schematic::part_glyph(&part.chain, part.symbol.as_deref())?;
-            let ids = schematic::part_pin_ids(&part.chain, part.symbol.as_deref());
-            let coord = |want: Option<&str>| {
-                let idx = match want {
-                    Some(t) => ids.iter().position(|p| *p == t)?,
-                    None => 0,
-                };
-                let port = *glyph.ports.get(idx)?;
-                Some(if side.is_vertical() { port.1 } else { port.0 })
-            };
-            Some((coord(a)?, coord(b)?))
-        }
-    }
 }
 
 /// The scope's wires as chain edges, one per hop, in statement order — every
