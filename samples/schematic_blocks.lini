@@ -1,0 +1,143 @@
+// Two blocks rebuilt from a real KiCad project, wire for wire — a boost
+// converter and a stepper driver — the forms a working sheet is actually
+// made of: a bridge standing in its first pin's corridor with its return
+// tapped into the line it feeds, a feedback divider tapped by naming the
+// shared pin, net-name runs the traffic continues straight through, three
+// pins tied into one net beside their part, sense shunts sharing a pin with
+// the name that leaves the block, and the no-connect cross [SPEC 16].
+{
+  density: 9;
+
+  // The rails both blocks ride: power flags are one-line defines with
+  // intrinsic text [SPEC 8/16.4], so a chain ending in one grows up out of
+  // the pin it feeds.
+  |vsys::label| { symbol: power; } [
+    "VSYS"
+  ]
+  |vm::label| { symbol: power; } [
+    "VM"
+  ]
+
+  |region::group| { layout: schematic; padding: 20; gap: 100; }
+}
+
+|page| {
+  sheet: a5 landscape; layout: grid; columns: repeat(2, 820); rows: repeat(2, 540); gap: 24; align: stretch; justify: stretch;
+} [
+
+  |region#boost| "5.5v Boost" { cell: 1 1; } [
+    |component#U6| "TPS61023DRLR" [
+      |pin#VIN| { side: left; number: 3; }
+      |pin#EN| { side: left; number: 4; }
+      |pin#SW| { side: left; number: 5; }
+      |pin#GND| { side: bottom; number: 1; }
+      |pin#VOUT| { side: right; number: 6; }
+      |pin#FB| { side: right; number: 2; }
+    ]
+    |C#C11| "10u"
+    |L#L2| "1uH"
+    |C#C12| "10u"
+    |C#C13| "10u"
+    |C#C14| "10u"
+    |R#R15| "240k"
+    |R#R16| "30k"
+
+    // The input node: the flag and the bulk cap split off one trunk at a
+    // T-junction — a pin's up-chain and down-chain share one column
+    // [SPEC 16.1].
+    U6.VIN - |vsys|
+    U6.VIN - C11 - |gnd|
+    // The boost inductor is a **bridge** — two placed ends on one part
+    // [SPEC 16.1]: it stands in SW's own corridor, and the router merges
+    // its far wire into the VIN net at a junction, the way a sheet taps
+    // the line it feeds.
+    U6.SW - L2 - U6.VIN
+    U6.EN - "EN_BSTD"
+    U6.GND - |gnd|
+    // The output bank marches the VOUT rail, each cap forking down at a
+    // junction dot [SPEC 16.5].
+    U6.VOUT - |vm|
+    U6.VOUT - C12 - |gnd|
+    U6.VOUT - C13 - |gnd|
+    U6.VOUT - C14 - |gnd|
+    // The feedback divider: naming `R16.p1` in **both** statements makes
+    // the midpoint a junction — explicit pins reserve first, whatever the
+    // statement order [SPEC 16.5] — so FB taps between the resistors, not
+    // at the rail.
+    U6.VOUT - R15 - R16.p1 - |gnd|
+    U6.FB - R16.p1
+  ]
+
+  |region#stepper| "Stepper Driver" { cell: 2 1; } [
+    |component#U8| "TMC2300-LA-T" [
+      |pin#VS| { side: left; number: 18; }
+      |pin#VCP| { side: left; number: 2; }
+      |pin#STEP| { side: left; number: 4; }
+      |pin#DIR| { side: left; number: 3; }
+      |pin#AD0| "MS1_AD0" { side: left; number: 5; }
+      |pin#AD1| "MS2_AD1" { side: left; number: 6; }
+      |pin#OA1| { side: left; number: 19; }
+      |pin#OA2| { side: left; number: 1; }
+      |pin#OB1| { side: left; number: 17; }
+      |pin#OB2| { side: left; number: 15; }
+      |pin#MODE| { side: left; number: 9; }
+      |pin#GND| { side: bottom; number: 21; }
+      |pin#NSTDBY| "VIO/NSTDBY" { side: right; number: 11; }
+      |pin#EN| { side: right; number: 7; }
+      |pin#STEPPER| { side: right; number: 8; }
+      |pin#PDN| "PDN_UART" { side: right; number: 10; }
+      |pin#DIAG| { side: right; number: 12; }
+      |pin#V18| "1.8VOUT" { side: right; number: 13; }
+      |pin#BRA| { side: right; number: 20; }
+      |pin#BRB| { side: right; number: 16; }
+    ]
+    |C#C23| "10u"
+    |C#C24| "100n"
+    |C#C25| "100n"
+    |C#C26| "100n"
+    |R#R20| "470m"
+    |R#R21| "470m"
+
+    U8.VS - |vm|
+    U8.VS - C23 - |gnd|
+    U8.VS - C24 - |gnd|
+    // `|nc|` ships as a built-in define [SPEC 16.4]: the cross that says a
+    // pin is open on purpose.
+    U8.VCP - |nc|
+    U8.STEP - "STEPD"
+    U8.DIR - "DIRD"
+    U8.AD0 - "AD0"
+    U8.AD1 - "AD1"
+    U8.OA1 - "COIL_A1"
+    U8.OA2 - "COIL_A2"
+    U8.OB1 - "COIL_B1"
+    U8.OB2 - "COIL_B2"
+    U8.MODE - |gnd|
+    U8.GND - |gnd|
+    // The enable trio is one net: pin-to-pin ties on one side draw the
+    // canonical U hugging the part (ROUTING.md Fixed ports), dotted where
+    // they meet.
+    U8.NSTDBY - U8.EN
+    U8.EN - U8.STEPPER
+    // A plain name is a **run**, not a stop [SPEC 16.4]: it lies flat on
+    // the shared rail — bodiless, it never yields the corridor — and the
+    // tie's traffic merges along the very trace it names.
+    U8.NSTDBY - "NSTDBY"
+    U8.STEPPER - C25 - |gnd|
+    U8.PDN - "COMM"
+    U8.DIAG - |nc|
+    U8.V18 - "1V8"
+    U8.V18 - C26 - |gnd|
+    // Each sense pin carries the name that leaves the block and its shunt:
+    // the wire runs the length of the run and continues straight through
+    // to the resistor — a through point, not a second lead [SPEC 16.4].
+    U8.BRA - "RS_A"
+    U8.BRA - R20 - |gnd|
+    U8.BRB - "RS_B"
+    U8.BRB - R21 - |gnd|
+  ]
+
+  |title-block| {
+    title: "Boost and stepper blocks"; drawing-number: "LN-0058"; revision: "A"; sheet-number: "1/1"; date: "2026-08-31"; author: "AM";
+  }
+]
