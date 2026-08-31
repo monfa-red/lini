@@ -21,8 +21,8 @@
 //! and share one port — so a port can never disagree with the wire it
 //! serves. Their branch runs meet *on* that trunk rather than run alongside
 //! it, so they owe each other nothing where their travel merely abuts
-//! ([`cluster::branch_of`]) and the anchor they both prefer is the one
-//! point the fan forks at.
+//! ([`cluster::branch_of`]) and they fork at one point — the anchor they
+//! both prefer, or the split a sibling's own port pins ([`share_forks`]).
 
 use crate::ast::Side;
 
@@ -228,10 +228,11 @@ pub(super) fn collect(
     worlds: &[World],
     chains: &[Option<Chain>],
 ) -> (Vec<Vec<f64>>, BTreeMap<u8, Vec<Item>>) {
-    let prefs: Vec<Vec<Pref>> = chains
+    let mut prefs: Vec<Vec<Pref>> = chains
         .iter()
         .map(|c| c.as_ref().map_or(Vec::new(), |ch| chain_prefs(ch, worlds)))
         .collect();
+    share_forks(chains, &mut prefs);
     let ests: Vec<Vec<f64>> = prefs
         .iter()
         .map(|v| v.iter().map(|p| p.0).collect())
@@ -328,6 +329,62 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
             }
         })
         .collect()
+}
+
+/// A fan forks at as few points as it can (ROUTING.md Special nodes): a
+/// **branch** run whose ordinate is free — an interior run, otherwise
+/// preferring its corridor's anchor — takes the nearest split a sibling's
+/// own port already fixes, so the trunk's last fork is one T rather than a
+/// split and a turn beside it. Law 3 is indifferent to where a monotone
+/// route bends, which is why the preference gets to decide; only a split
+/// inside the run's own travel is a candidate, since a farther one would
+/// fold the route back on itself and cost real length.
+fn share_forks(chains: &[Option<Chain>], prefs: &mut [Vec<Pref>]) {
+    let mut splits: Vec<(usize, Axis, f64, usize)> = Vec::new();
+    for (ci, chain) in chains.iter().enumerate() {
+        let Some(chain) = chain else { continue };
+        for (ri, run) in chain.runs.iter().enumerate() {
+            if prefs[ci][ri].1.is_none() {
+                continue;
+            }
+            if let Some(fan) = cluster::branch_of(chain, ri) {
+                splits.push((fan, run.axis, prefs[ci][ri].0, chain.link));
+            }
+        }
+    }
+    for (ci, chain) in chains.iter().enumerate() {
+        let Some(chain) = chain else { continue };
+        for (ri, run) in chain.runs.iter().enumerate() {
+            if ri == 0 || ri + 1 == chain.runs.len() || prefs[ci][ri].1.is_some() {
+                continue;
+            }
+            let Some(fan) = cluster::branch_of(chain, ri) else {
+                continue;
+            };
+            // The run's own travel: what its two neighbours span between the
+            // corners they share with it.
+            let (a, b) = (chain.runs[ri - 1].span, chain.runs[ri + 1].span);
+            let travel = (
+                a.0.min(a.1).min(b.0).min(b.1),
+                a.0.max(a.1).max(b.0).max(b.1),
+            );
+            let at = prefs[ci][ri].0;
+            let near = splits
+                .iter()
+                .filter(|(f, ax, ord, _)| {
+                    *f == fan && *ax == run.axis && *ord >= travel.0 && *ord <= travel.1
+                })
+                .min_by(|x, y| {
+                    (x.2 - at)
+                        .abs()
+                        .total_cmp(&(y.2 - at).abs())
+                        .then(x.3.cmp(&y.3))
+                });
+            if let Some(&(_, _, ord, _)) = near {
+                prefs[ci][ri].0 = ord;
+            }
+        }
+    }
 }
 
 /// A run's lawful bounds: law range ∩ corner clamp. The corner clamp binds

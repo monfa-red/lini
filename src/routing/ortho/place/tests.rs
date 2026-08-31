@@ -285,6 +285,68 @@ fn disjoint_clusters_both_take_the_midline() {
 }
 
 #[test]
+fn a_free_branch_forks_where_its_sibling_already_does() {
+    // ROUTING.md Special nodes: a fan forks at as few points as it can.
+    // One sibling's branch is a jog free to sit anywhere — its corridor's
+    // anchor, x = 100 — and the other's is an end run its port pins at
+    // x = 130. Law 3 is indifferent (a monotone route costs the same
+    // length and turns wherever it bends), so the free branch joins the
+    // fixed split: one T, not a split and a turn beside it.
+    let a = Rect::new(20.0, 20.0, 40.0, 80.0);
+    let b = Rect::new(160.0, 20.0, 180.0, 80.0);
+    let c = Rect::new(120.0, 130.0, 140.0, 150.0);
+    let w = world(
+        Rect::new(0.0, 0.0, 200.0, 160.0),
+        &[a.inflate(C), b.inflate(C), c.inflate(C)],
+    );
+    let hchan = h_chan(&w, 100.0, 50.0);
+    // Both branches descend the corridor between a and b — one corridor,
+    // sliced into channels by c's keep-out; the run reads the reassembled
+    // walls (48, 152), whose midline is x = 100.
+    let vchan = w
+        .graph
+        .v
+        .iter()
+        .position(|v| v.rect.x0 <= 130.0 && v.rect.x1 >= 130.0 && v.rect.y1 >= 100.0)
+        .expect("the V channel over c");
+    let h = |span| Run {
+        axis: Axis::H,
+        chan: hchan,
+        span,
+        ord: None,
+    };
+    let v = |span| Run {
+        axis: Axis::V,
+        chan: vchan,
+        span,
+        ord: None,
+    };
+    let mut zig = Chain {
+        link: 0,
+        world: 0,
+        runs: vec![h((40.0, 100.0)), v((48.0, 52.0)), h((100.0, 160.0))],
+        ends: [end(Side::Right, a), end(Side::Left, b)],
+    };
+    let mut drop = Chain {
+        link: 1,
+        world: 0,
+        runs: vec![h((40.0, 130.0)), v((50.0, 130.0))],
+        ends: [end(Side::Right, a), end(Side::Top, c)],
+    };
+    zig.ends[0].fan = Some(0);
+    drop.ends[0].fan = Some(0);
+    let mut chains = vec![Some(zig), Some(drop)];
+    place(&[w], &mut chains, C);
+    let fork = chains[1].as_ref().unwrap().runs[1].ord.unwrap();
+    assert_eq!(fork, 130.0, "the pinned branch leaves at its own port");
+    assert_eq!(
+        chains[0].as_ref().unwrap().runs[1].ord,
+        Some(fork),
+        "and the free branch leaves with it, not on the anchor at x = 100"
+    );
+}
+
+#[test]
 fn a_same_side_u_turns_at_the_outer_side_line_not_the_void() {
     // Both ends leave the same way, so the turn has no reason to travel
     // past the outermost of the two side lines — the anchor would centre

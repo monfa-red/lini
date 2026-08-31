@@ -2059,8 +2059,8 @@
       <path d="M 342.563 -385.5 L 342.563 -359"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.L1.p2" data-to="buck.U1.FB">
-      <path d="M 342.563 -625 L 342.563 -638.25 L 227.206 -638.25 L 227.206 -475.25 L 122.599 -475.25"/>
-      <text class="lini-link-label" x="237.762" y="-568.75" dy="0.358em" style="fill: var(--lini-label-ink); font-weight: var(--lini-font-weight)">5V</text>
+      <path d="M 342.563 -625 L 342.563 -638.25 L 251.831 -638.25 L 251.831 -475.25 L 122.599 -475.25"/>
+      <text class="lini-link-label" x="262.387" y="-544.125" dy="0.358em" style="fill: var(--lini-label-ink); font-weight: var(--lini-font-weight)">5V</text>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.U1.FB" data-to="buck.C3.p1">
       <path d="M 122.599 -475.25 L 161.099 -475.25 L 161.099 -449.5"/>
@@ -2308,7 +2308,7 @@
     <g class="lini-node lini-junction lini-oval" transform="translate(342.563,-638.25)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(227.206,-475.25)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(251.831,-475.25)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-junction lini-oval" transform="translate(161.099,-475.25)">
