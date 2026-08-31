@@ -4190,7 +4190,9 @@ cell (`"Apple" { color: --red-ink }`) keeps its block and its **row steps out of
 aligned grid**; unstyled rows stay aligned — a `draw:`
 value broken before each `move()` and wrapped between calls at the column limit
 (continuations indented, so a profile reads as its subpaths), comments and
-blank lines preserved. `--check` exits 1 if it would change anything; `--stdout` writes
+blank lines preserved — a comment **opening its line** stays leading, one
+**following code** stays on that code's line, since it annotates the statement it
+trails. `--check` exits 1 if it would change anything; `--stdout` writes
 instead of rewriting.
 
 **`lini desugar`** prints the file fully **lowered to primitives** — the Desugar pass

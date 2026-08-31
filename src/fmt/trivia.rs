@@ -2,10 +2,21 @@
 //! (the lexer drops them). The formatter replays them between AST items so a
 //! `// note` and a blank-line grouping survive a round-trip. A run of two or
 //! more blank lines collapses to one.
+//!
+//! A comment carries **where on its line it began**. One that follows code —
+//! `|box#a| "A"  // the hero` — annotates the statement it trails, and a
+//! formatter that replayed it on a fresh line would silently re-point it at
+//! whatever came next. So the scanner records the one bit the emitter needs
+//! ([SPEC 20]); every comment starting its own line stays leading, as before.
 
 #[derive(Debug, Clone)]
 pub enum Trivia {
-    Comment(String),
+    /// `trailing` — code preceded it on its own line, so it belongs to the
+    /// item before it, not the one after.
+    Comment {
+        text: String,
+        trailing: bool,
+    },
     BlankLine,
 }
 
@@ -50,7 +61,12 @@ pub fn scan_trivia(src: &str) -> Vec<TriviaToken> {
                 let text = src[start..i].trim_end().to_string();
                 out.push(TriviaToken {
                     pos: start,
-                    kind: Trivia::Comment(text),
+                    kind: Trivia::Comment {
+                        text,
+                        // `at_line_start` still describes this comment's line:
+                        // only code clears it, and whitespace never does.
+                        trailing: !at_line_start,
+                    },
                 });
                 at_line_start = false;
                 blank_run = 0;

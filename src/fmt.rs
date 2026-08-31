@@ -800,7 +800,7 @@ impl Emitter<'_> {
     fn has_comment_in(&self, start: usize, end: usize) -> bool {
         self.trivia
             .iter()
-            .any(|t| matches!(t.kind, Trivia::Comment(_)) && t.pos >= start && t.pos < end)
+            .any(|t| matches!(t.kind, Trivia::Comment { .. }) && t.pos >= start && t.pos < end)
     }
 
     fn emit_trivia_before(&mut self, until: usize, depth: usize) {
@@ -813,7 +813,17 @@ impl Emitter<'_> {
                 break;
             }
             match &t.kind {
-                Trivia::Comment(text) => {
+                // A trailing comment annotates the item it follows, so it
+                // rejoins that item's line — emitting it on a fresh one would
+                // re-point it at whatever comes next [SPEC 20].
+                Trivia::Comment { text, trailing } if *trailing && self.out.ends_with('\n') => {
+                    self.out.pop();
+                    self.out.push_str("  ");
+                    self.out.push_str(text);
+                    self.out.push('\n');
+                    last_was_blank = false;
+                }
+                Trivia::Comment { text, .. } => {
                     self.indent(depth);
                     self.out.push_str(text);
                     self.out.push('\n');

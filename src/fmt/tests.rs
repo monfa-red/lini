@@ -173,6 +173,29 @@ fn comments_are_preserved() {
 }
 
 #[test]
+fn a_trailing_comment_stays_on_its_own_statement() {
+    // It annotates the item it follows; replaying it on a fresh line would
+    // silently re-point it at the next one [SPEC 20].
+    assert_eq!(
+        fmt("|box#a| \"A\"   // the hero\n|box#b| \"B\"\n"),
+        "|box#a| \"A\"  // the hero\n|box#b| \"B\"\n"
+    );
+    // A declaration keeps its own annotation, so a constants table survives.
+    assert_eq!(
+        fmt("{\n  w = 10;   // the width\n}\n|box#a|\n"),
+        "{\n  w = 10;  // the width\n}\n\n|box#a|\n"
+    );
+}
+
+#[test]
+fn a_comment_opening_its_line_stays_leading() {
+    assert_eq!(
+        fmt("|box#a| \"A\"\n// about b\n|box#b| \"B\"\n"),
+        "|box#a| \"A\"\n// about b\n|box#b| \"B\"\n"
+    );
+}
+
+#[test]
 fn a_blank_line_grouping_survives() {
     assert_eq!(fmt("|box#a|\n\n|box#b|\n"), "|box#a|\n\n|box#b|\n");
 }
