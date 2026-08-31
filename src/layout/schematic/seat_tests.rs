@@ -149,13 +149,17 @@ fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
     assert!(close(tax, tbx), "both stubs tip on one rail: {tax} {tbx}");
     let ((gax, gay), (gbx, gby)) = (at(&nodes, "ga"), at(&nodes, "gb"));
     assert!(!close(gax, gbx), "a lane each: {gax} {gbx}");
-    // Neither was pushed along the ray, so each turns once and lands square.
+    // The lower pin's chain keeps its own depth; the upper one's descends
+    // past the lower **wired row** — that row is a corridor [SPEC 16.1] —
+    // which lands the two grounds level, the way a sheet drops both to one
+    // rail height.
     assert!(
-        close(gay - pay, gby - pby),
-        "each keeps its own pin's depth: {} vs {}",
+        gay - pay > gby - pby,
+        "the upper chain clears the lower corridor: {} vs {}",
         gay - pay,
         gby - pby
     );
+    assert!(close(gay, gby), "…landing level: {gay} {gby}");
 }
 
 #[test]
@@ -235,8 +239,8 @@ fn chains_on_different_pins_seat_in_the_order_their_pins_do() {
         assert!(ay < by, "pin 'a' is the upper one: {ay} {by}");
         let (ga, gb) = (at(&nodes, "ga").1, at(&nodes, "gb").1);
         assert!(
-            ga < gb,
-            "the upper pin's ground stays above the lower pin's, declared {order:?}: {ga} {gb}"
+            ga < gb + 1e-6,
+            "the upper pin's ground never sinks below the lower pin's, declared {order:?}: {ga} {gb}"
         );
     }
 }

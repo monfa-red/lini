@@ -44,7 +44,7 @@
 
 use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
-use super::super::stack::{Band, SeatLine, Stack};
+use super::super::stack::{Band, Painted, SeatLine, Stack};
 use super::net;
 use super::terminal::{Terminal, connection_box, terminal};
 use crate::desugar::pose::Side;
@@ -84,6 +84,14 @@ struct Growing {
     ray_first: bool,
     chain: Chain,
     held: End,
+}
+
+/// What [`Seats::grow`] reads beside the chain itself: the scope's wire
+/// edges (tap attachment lookups) and the held anchor's wired-row
+/// corridors.
+struct GrowCx<'a> {
+    edges: &'a [[End; 2]],
+    rows: &'a [((f64, f64), Painted)],
 }
 
 /// A chain held at both ends: its satellites distribute between the two
@@ -171,6 +179,55 @@ impl Seats {
         // are reordered.
         let mut rays: Vec<(usize, Side, i8)> = Vec::new();
         let wire_edges = edges(children, links, scope);
+        // Every **wired** pin's row is a corridor [SPEC 16.1] — the wire off
+        // it runs there, to another part or out to its chain's own column.
+        // Each is a zero-height band reaching out over the pin's own side; a
+        // chain seats clear of every one but its own pin's ([`corridors`]),
+        // so no member's body lands on a foreign corridor and the wires
+        // cross a column's lead square instead — the decoupling cap seats
+        // below the A/B pair it once forced into a weave, and a divider's
+        // ascent clears the VCC trunk above it.
+        let mut rows: Vec<Vec<((f64, f64), Painted)>> =
+            (0..children.len()).map(|_| Vec::new()).collect();
+        for end in wire_edges.iter().flatten() {
+            if roles[end.child] != Role::Anchor {
+                continue;
+            }
+            let t = terminal(&children[end.child], end.terminal.as_deref());
+            let Some(f) = t.facing else { continue };
+            if rows[end.child].iter().any(|(at, _)| *at == t.at) {
+                continue;
+            }
+            let big = 1e4;
+            let (x, y) = t.at;
+            let band = match f {
+                Side::Left => Bbox {
+                    min_x: -big,
+                    max_x: x,
+                    min_y: y,
+                    max_y: y,
+                },
+                Side::Right => Bbox {
+                    min_x: x,
+                    max_x: big,
+                    min_y: y,
+                    max_y: y,
+                },
+                Side::Top => Bbox {
+                    min_x: x,
+                    max_x: x,
+                    min_y: -big,
+                    max_y: y,
+                },
+                Side::Bottom => Bbox {
+                    min_x: x,
+                    max_x: x,
+                    min_y: y,
+                    max_y: big,
+                },
+            };
+            rows[end.child].push((t.at, Painted::of_box(band)));
+        }
         for chain in chains(&satellite, &wire_edges) {
             let ends = placed_ends(&chain, roles);
             // One anchor holds it → grow off that pin; two → span between them;
@@ -306,7 +363,10 @@ impl Seats {
                 frame,
                 along,
                 &mut packers[g.held.child],
-                &wire_edges,
+                GrowCx {
+                    edges: &wire_edges,
+                    rows: &rows[g.held.child],
+                },
             );
         }
         out
@@ -323,10 +383,20 @@ impl Seats {
         frame: Frame,
         along: f64,
         stack: &mut Stack,
-        wire_edges: &[[End; 2]],
+        cx: GrowCx,
     ) {
         let (chain, held) = (&g.chain, &g.held);
         let tap = tap_flags(children, chain);
+        let wire_edges = cx.edges;
+        // The anchor's wired corridors, its own pin's aside: what this
+        // chain's members seat clear of, without walling in the chains that
+        // *live* on their own pin's row.
+        let corridors: Vec<Painted> = cx
+            .rows
+            .iter()
+            .filter(|(at, _)| *at != g.pin)
+            .map(|(_, p)| *p)
+            .collect();
         // The chain hangs off the wire's **first leg** — out along the pin to
         // its own lane ([`Self::lane`]) — and grows from there in its
         // terminator's direction [SPEC 16.1]: a cap under a side pin sits
@@ -368,7 +438,13 @@ impl Seats {
             let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
             let u = frame.u(point);
             let interval = (along + u0.min(u1) - u, along + u0.max(u1) - u);
-            let line = stack.seat(SeatLine::new(frame, true, base), interval, self.seat, &band);
+            let line = stack.seat(
+                SeatLine::new(frame, true, base),
+                interval,
+                self.seat,
+                &band,
+                &corridors,
+            );
             base = line + band.pos;
             let target = frame.pt(along, line);
             self.seats[member] = Some(Seat {
@@ -441,6 +517,7 @@ impl Seats {
                     interval,
                     self.seat,
                     &band,
+                    &corridors,
                 );
                 let target = {
                     let p = tf.pt(au, line);
@@ -469,6 +546,7 @@ impl Seats {
                 interval,
                 self.seat,
                 &band,
+                &corridors,
             );
             let target = tf.pt(au, line);
             self.seats[member] = Some(Seat {

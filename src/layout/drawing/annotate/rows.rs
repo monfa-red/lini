@@ -173,7 +173,7 @@ impl Rows {
             band.pos = band.pos.max(cross.1);
             interval = (interval.0.min(along.0), interval.1.max(along.1));
         }
-        self.stack.seat(at, interval, clearance, &band)
+        self.stack.seat(at, interval, clearance, &band, &[])
     }
 }
 

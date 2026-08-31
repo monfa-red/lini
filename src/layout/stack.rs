@@ -240,20 +240,30 @@ impl Stack {
     }
 
     /// Seat `band` occupying `interval` along `at`, standing at least
-    /// `clearance` off everything already painted; returns the seated line's
-    /// world coordinate along the stack (cross) axis, and registers the band
-    /// so later ones clear it in turn.
-    pub fn seat(&mut self, at: SeatLine, interval: (f64, f64), clearance: f64, band: &Band) -> f64 {
+    /// `clearance` off everything already painted — and off `extra`, a
+    /// caller's own additional regions for this one seat (a schematic
+    /// chain's foreign corridors), which are never registered; returns the
+    /// seated line's world coordinate along the stack (cross) axis, and
+    /// registers the band so later ones clear it in turn.
+    pub fn seat(
+        &mut self,
+        at: SeatLine,
+        interval: (f64, f64),
+        clearance: f64,
+        band: &Band,
+        extra: &[Painted],
+    ) -> f64 {
         // Innermost candidate: the band's nearest ink `clearance` off the base.
         let mut off = clearance + band.inner(at.sgn);
         // Push outward past whatever the band (grown by the clearance along
         // the stack axis) still lands on — each pass clears at least one
         // painted box for good, so the loop is bounded.
-        for _ in 0..=self.painted.len() {
+        for _ in 0..=self.painted.len() + extra.len() {
             let probe = at.band_rect(off, interval, band).grown_cross(clearance);
             let push = self
                 .painted
                 .iter()
+                .chain(extra)
                 .filter(|p| probe.overlaps(p))
                 .map(|p| at.past(p, clearance) + band.inner(at.sgn))
                 .fold(f64::NEG_INFINITY, f64::max);
@@ -320,6 +330,7 @@ mod tests {
             (-100.0, 100.0),
             0.0,
             &Band { neg: 2.0, pos: 2.0 },
+            &[],
         );
         stack
     }

@@ -3416,7 +3416,11 @@ another's text. A column also stands past the reach of every **stack** it
 crosses — a chain growing straight out of a deeper pin on the same side —
 by a full seat gap, so the wire off the stack's far terminal (a bridge's
 return) has a corridor to climb; the stacks seat first, whatever the
-declaration order, being the inner geography. Column order is the pins' own, measured **canonically**
+declaration order, being the inner geography. And every **wired** pin's row
+is a corridor of its own: a member seats clear of every wired row but its
+own pin's, so a column's body never lands where a through wire or a
+neighbouring trunk runs, and the wires cross its lead square instead — the
+decoupling cap stands below the bus pair, never woven into it. Column order is the pins' own, measured **canonically**
 (downward, rightward) whichever way the chains grow, because a pin's up-chain
 and its down-chain share one column: the **first** chain of each ray off one
 pin takes the outermost lane its opposite number asked for — one lead,
