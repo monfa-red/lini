@@ -271,8 +271,15 @@ fn clearance(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Vi
             let Some(rect) = index.rect(body) else {
                 continue;
             };
+            // Two endpoints sharing one body rect — two pins of one part
+            // (ROUTING.md Fixed ports) — leave both end segments excused
+            // against that shared body: each is *an* end segment of the rect
+            // it enters, whichever pin's path names it.
+            let shared = index.rect(partner) == index.rect(body);
             for (k, s) in w.path.windows(2).enumerate() {
-                if (k == 0 && body == w.seg_from) || (k == segs - 1 && body == w.seg_to) {
+                if (k == 0 && (body == w.seg_from || shared))
+                    || (k == segs - 1 && (body == w.seg_to || shared))
+                {
                     continue;
                 }
                 let d = box_dist(seg_box(s), rect_box(rect));

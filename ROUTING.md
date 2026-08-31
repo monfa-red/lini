@@ -395,6 +395,14 @@ wire **carries its fixed ports**, so the checker still judges output alone.
   side excuses its compressed ports — and the half-clearance floor still
   binds. The caller keeps its ports ≥ minimum pitch apart, or loses the
   later wire (below).
+- **Two fixed ports on one body are a pair, not a loop.** A wire between two
+  *distinct* fixed ports of one body — two pins of one part, on one side or
+  two — is an ordinary two-ended link: the endpoints' paths differ, so the
+  self-loop machinery (and its one-side error) never applies, and the shared
+  body is each end's **own** endpoint — never a partner obstacle walling the
+  punch in. Same-side pairs draw the canonical U — out perpendicular, along,
+  back in — and Law 1's end-segment surrender reads on the shared **rect**:
+  both end segments are excused against it, whichever pin's path names it.
 - **Fans.** Landings on one shared fixed port — same endpoint, same side,
   same ordinate — merge into one implicit fan, **across statements**: one
   port slot, one drawn lead until the split; duplicates ride one line the

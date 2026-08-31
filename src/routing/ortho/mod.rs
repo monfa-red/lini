@@ -190,7 +190,11 @@ fn solve(
                            forced: Option<Side>,
                            fixed: Option<f64>| {
             let mut blockers = base.clone();
-            if !partner.1 && !self_loop {
+            // The partner's body walls this end in — unless it IS this end's
+            // own body: two distinct fixed ports on one rect (two pins of one
+            // part) are a lawful pair, and an end is never blocked by itself
+            // (ROUTING.md Fixed ports).
+            if !partner.1 && !self_loop && partner.0 != rect {
                 blockers.push(partner.0.inflate(c));
             }
             let forced = fan.and_then(|g| fan_pick[g]).map_or(forced, Some);

@@ -650,3 +650,40 @@ fn a_shaped_tag_still_terminates_its_wire() {
         tx + tag.bbox.min_x
     );
 }
+
+/// Two distinct fixed ports on one side of one body are a lawful pair
+/// (ROUTING.md Fixed ports): the wire runs out one clearance, along the
+/// side, and back in — never a "fixed port blocked" stray. Tying two
+/// adjacent pins (`u5.nre - u5.de`) is bread-and-butter on a sheet.
+#[test]
+fn two_pins_on_one_side_of_one_part_tie_with_a_u_route() {
+    let src = sheet(
+        "|component#u5| [\n  |pin#ro| { side: left }; |pin#nre| { side: left }; |pin#de| { side: left }; |pin#vcc| { side: right }\n]\nu5.nre - u5.de\n",
+    );
+    let laid = routed(&src);
+    let path = wire(&laid, "u5.nre", "u5.de");
+    let (from, to) = (
+        stub_tip(&laid.nodes, "u5", "nre"),
+        stub_tip(&laid.nodes, "u5", "de"),
+    );
+    assert!(
+        near(path[0], from),
+        "the wire leaves nre's stub tip {from:?}, drew {:?}",
+        path[0]
+    );
+    assert!(
+        near(path[path.len() - 1], to),
+        "the wire lands on de's stub tip {to:?}, drew {:?}",
+        path[path.len() - 1]
+    );
+    // Both ends leave the left side perpendicular (ROUTING.md Law 2).
+    assert!(
+        close(path[0].1, path[1].1),
+        "the lead leaves along nre's pin"
+    );
+    assert!(
+        close(path[path.len() - 1].1, path[path.len() - 2].1),
+        "the lead arrives along de's pin"
+    );
+    assert!(laid.strays.is_empty(), "a same-side pin pair routes whole");
+}
