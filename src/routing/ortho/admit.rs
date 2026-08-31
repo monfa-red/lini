@@ -37,7 +37,14 @@ pub(crate) fn admits(
     clearance: f64,
 ) -> Option<Deny> {
     let base = committed.len();
-    let mut all: Vec<Option<Chain>> = committed.to_vec();
+    // Only the candidate's **world** simulates: worlds are separate graphs,
+    // so chains elsewhere share no channel with the candidate and their
+    // placement cannot move for it — re-placing them per probe was most of a
+    // busy sheet's routing time, spent proving nothing.
+    let mut all: Vec<Option<Chain>> = committed
+        .iter()
+        .map(|c| c.as_ref().filter(|ch| ch.world == candidate.world).cloned())
+        .collect();
     all.extend(std::iter::repeat_with(|| Some(candidate.clone())).take(k.max(1)));
     place::place(worlds, &mut all, clearance);
     place::refresh_spans(&mut all);

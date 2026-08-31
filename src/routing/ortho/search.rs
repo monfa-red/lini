@@ -162,8 +162,23 @@ pub(crate) fn cheapest(
     type Best = (f64, u32, usize, Option<usize>);
     let mut best: Vec<Option<Best>> = vec![None; graph.cells.len() * 4];
 
+    // The A* bound: the L1 distance to the nearest goal tip. Every remaining
+    // move costs at least its length, so the bound is admissible and
+    // consistent — settled costs equal plain Dijkstra's, the heap just
+    // reaches the goals sooner. It orders the heap only; `best` stores the
+    // true cost, and every comparison against it stays on true costs, so the
+    // cost function and its tie-breaks are untouched.
+    let h = |cell: usize| {
+        goals
+            .iter()
+            .map(|g| l1(centre(cell), g.tip))
+            .fold(f64::INFINITY, f64::min)
+    };
+    let goal_cell = |cell: usize| goals.iter().any(|g| g.cell == cell);
+
     #[derive(PartialEq)]
     struct Item {
+        bound: f64,
         cost: f64,
         state: usize,
         origin: usize,
@@ -171,8 +186,8 @@ pub(crate) fn cheapest(
     impl Eq for Item {}
     impl Ord for Item {
         fn cmp(&self, other: &Self) -> Ordering {
-            self.cost
-                .total_cmp(&other.cost)
+            self.bound
+                .total_cmp(&other.bound)
                 .then(self.state.cmp(&other.state))
                 .then(self.origin.cmp(&other.origin))
         }
@@ -194,6 +209,7 @@ pub(crate) fn cheapest(
         if best[st].is_none_or(|(c, ..)| cost.total_cmp(&c) == Ordering::Less) {
             best[st] = Some((cost, turns, origin, prev));
             heap.push(Reverse(Item {
+                bound: cost + h(st / 4),
                 cost,
                 state: st,
                 origin,
@@ -214,12 +230,112 @@ pub(crate) fn cheapest(
         );
     }
 
+    // Windows meet on k tracks ⇒ a single-run route draws straight; else it
+    // jogs once (ROUTING.md model step 4) — two turns, and the jog is a run
+    // in a crossing channel with capacity and crossings like any other.
+    let fits = |a: (f64, f64), b: (f64, f64)| {
+        let shared = (a.0.max(b.0), a.1.min(b.1));
+        shared.0 <= shared.1
+            && ((shared.1 - shared.0) / min_pitch(clearance)).floor() as usize + 1 >= k
+    };
+    let jog_span = |a: (f64, f64), b: (f64, f64)| {
+        let (lo, hi) = (a.1.min(b.1), a.0.max(b.0));
+        (lo.min(hi), hi.max(lo))
+    };
+    let path_cells = |best: &[Option<Best>], mut st: usize| {
+        let mut cells = vec![st / 4];
+        while let Some((_, _, _, Some(prev))) = best[st] {
+            st = prev;
+            cells.push(st / 4);
+        }
+        cells.reverse();
+        cells.dedup();
+        cells
+    };
+    // The first traversed cell whose crossing channel holds the jog — the
+    // deterministic estimate; placement picks the drawn spot.
+    let jog = |cells: &[usize], axis: Axis, span: (f64, f64)| {
+        cells.iter().find_map(|&c| {
+            let (jog_axis, chan) = match axis {
+                Axis::H => (Axis::V, graph.cells[c].v),
+                Axis::V => (Axis::H, graph.cells[c].h),
+            };
+            open(jog_axis, chan, span).then(|| edge_xings(jog_axis, chan, span))
+        })
+    };
+    // One goal state's complete Law-3 total — the winner loop's arithmetic,
+    // written once so the early-exit bound below prices exactly what the
+    // winner will.
+    let eval = |best: &[Option<Best>], gi: usize, st: usize| -> Option<f64> {
+        let g = &goals[gi];
+        let dir = st % 4;
+        let goal_dir = opposite(g.dir);
+        let (c, turns, si, _) = best[st]?;
+        let goal_turn = turn_count(dir, goal_dir);
+        let mut total = c
+            + l1(centre(g.cell), g.tip)
+            + f64::from(goal_turn) * tc
+            + f64::from(stub_xings(g)) * xc;
+        if goal_turn == 2 {
+            if !u_open(g.cell, axis_of(dir), Some(entry_pin(g))) {
+                return None;
+            }
+            total += f64::from(u_xings(g.cell, axis_of(dir))) * xc;
+        }
+        // A single straight run claimed by both ends: its own channel
+        // must hold the bundle over the whole travel (no edge relaxation
+        // ever checked it), then charge the certain rails over the shared
+        // window — or the jog when the windows can't hold k together.
+        if turns == 0 && goal_turn == 0 && starts[si].axis == g.axis {
+            let (wa, wg) = (starts[si].window, g.window);
+            let (ta, tg) = match g.axis {
+                Axis::H => (starts[si].tip.0, g.tip.0),
+                Axis::V => (starts[si].tip.1, g.tip.1),
+            };
+            let travel = (ta.min(tg), ta.max(tg));
+            let chan = match g.axis {
+                Axis::H => graph.cells[g.cell].h,
+                Axis::V => graph.cells[g.cell].v,
+            };
+            if !open(g.axis, chan, travel) {
+                return None;
+            }
+            if fits(wa, wg) {
+                let shared = (wa.0.max(wg.0), wa.1.min(wg.1));
+                total += f64::from(ledger.crossings_covering(world, g.axis, travel, shared)) * xc;
+            } else {
+                let span = jog_span(wa, wg);
+                let jog_xings = jog(&path_cells(best, st), g.axis, span)?;
+                total += 2.0 * tc + f64::from(jog_xings) * xc;
+            }
+        }
+        Some(total)
+    };
+
+    // Any total still in the heap prices at least its own bound (the extras
+    // above only add), so once the cheapest bound cannot beat a total already
+    // in hand the drain proves nothing — the exactness argument the early
+    // exit stands on. Every settled cost equals plain Dijkstra's.
+    let mut best_total = f64::INFINITY;
+    let mut settled = vec![false; graph.cells.len() * 4];
     while let Some(Reverse(item)) = heap.pop() {
+        if item.bound >= best_total {
+            break;
+        }
         let Some((cost, turns, origin, _)) = best[item.state] else {
             continue;
         };
         if cost.total_cmp(&item.cost) != Ordering::Equal || origin != item.origin {
             continue; // stale
+        }
+        if !std::mem::replace(&mut settled[item.state], true) && goal_cell(item.state / 4) {
+            for (gi, g) in goals.iter().enumerate() {
+                if g.cell == item.state / 4
+                    && let Some(t) = eval(&best, gi, item.state)
+                {
+                    best_total = best_total.min(t);
+                }
+            }
         }
         let (cell, dir) = (item.state / 4, item.state % 4);
         for &(next, ax, chan) in &graph.adj[cell] {
@@ -273,90 +389,17 @@ pub(crate) fn cheapest(
         }
     }
 
-    // Windows meet on k tracks ⇒ a single-run route draws straight; else it
-    // jogs once (ROUTING.md model step 4) — two turns, and the jog is a run
-    // in a crossing channel with capacity and crossings like any other.
-    let fits = |a: (f64, f64), b: (f64, f64)| {
-        let shared = (a.0.max(b.0), a.1.min(b.1));
-        shared.0 <= shared.1
-            && ((shared.1 - shared.0) / min_pitch(clearance)).floor() as usize + 1 >= k
-    };
-    let jog_span = |a: (f64, f64), b: (f64, f64)| {
-        let (lo, hi) = (a.1.min(b.1), a.0.max(b.0));
-        (lo.min(hi), hi.max(lo))
-    };
-    let path_cells = |mut st: usize| {
-        let mut cells = vec![st / 4];
-        while let Some((_, _, _, Some(prev))) = best[st] {
-            st = prev;
-            cells.push(st / 4);
-        }
-        cells.reverse();
-        cells.dedup();
-        cells
-    };
-    // The first traversed cell whose crossing channel holds the jog — the
-    // deterministic estimate; placement picks the drawn spot.
-    let jog = |cells: &[usize], axis: Axis, span: (f64, f64)| {
-        cells.iter().find_map(|&c| {
-            let (jog_axis, chan) = match axis {
-                Axis::H => (Axis::V, graph.cells[c].v),
-                Axis::V => (Axis::H, graph.cells[c].h),
-            };
-            open(jog_axis, chan, span).then(|| edge_xings(jog_axis, chan, span))
-        })
-    };
-
     // Best goal over (cost, goal rank, start rank).
     let mut winner: Option<(f64, usize, usize, usize)> = None; // (cost, gi, si, state)
     for (gi, g) in goals.iter().enumerate() {
-        let goal_dir = opposite(g.dir);
         for dir in 0..4 {
             let st = state(g.cell, dir);
-            let Some((c, turns, si, _)) = best[st] else {
+            let Some((_, _, si, _)) = best[st] else {
                 continue;
             };
-            let goal_turn = turn_count(dir, goal_dir);
-            let mut total = c
-                + l1(centre(g.cell), g.tip)
-                + f64::from(goal_turn) * tc
-                + f64::from(stub_xings(g)) * xc;
-            if goal_turn == 2 {
-                if !u_open(g.cell, axis_of(dir), Some(entry_pin(g))) {
-                    continue;
-                }
-                total += f64::from(u_xings(g.cell, axis_of(dir))) * xc;
-            }
-            // A single straight run claimed by both ends: its own channel
-            // must hold the bundle over the whole travel (no edge relaxation
-            // ever checked it), then charge the certain rails over the shared
-            // window — or the jog when the windows can't hold k together.
-            if turns == 0 && goal_turn == 0 && starts[si].axis == g.axis {
-                let (wa, wg) = (starts[si].window, g.window);
-                let (ta, tg) = match g.axis {
-                    Axis::H => (starts[si].tip.0, g.tip.0),
-                    Axis::V => (starts[si].tip.1, g.tip.1),
-                };
-                let travel = (ta.min(tg), ta.max(tg));
-                let chan = match g.axis {
-                    Axis::H => graph.cells[g.cell].h,
-                    Axis::V => graph.cells[g.cell].v,
-                };
-                if !open(g.axis, chan, travel) {
-                    continue;
-                }
-                if fits(wa, wg) {
-                    let shared = (wa.0.max(wg.0), wa.1.min(wg.1));
-                    total +=
-                        f64::from(ledger.crossings_covering(world, g.axis, travel, shared)) * xc;
-                } else {
-                    let span = jog_span(wa, wg);
-                    let Some(jog_xings) = jog(&path_cells(st), g.axis, span) else {
-                        continue; // no crossing channel holds the jog
-                    };
-                    total += 2.0 * tc + f64::from(jog_xings) * xc;
-                }
-            }
+            let Some(total) = eval(&best, gi, st) else {
+                continue;
+            };
             let better = match &winner {
                 None => true,
                 Some((wc, wgi, wsi, wst)) => match total.total_cmp(wc) {
@@ -372,7 +415,7 @@ pub(crate) fn cheapest(
     }
     let (cost, gi, si, st) = winner?;
     Some(Route {
-        cells: path_cells(st),
+        cells: path_cells(&best, st),
         start: si,
         goal: gi,
         cost,

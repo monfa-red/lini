@@ -453,8 +453,14 @@ src/routing/
                 oracle over orthogonal and natural wires, never a repair
 ```
 
-One Dijkstra per bundle over a graph of tens of cells, one linear placement
-sweep per channel: routing a busy diagram is microseconds, not seconds. A
+One weighted search per bundle over a graph of tens of cells — Dijkstra
+under an L1 lower bound toward the goal tips, stopping the moment no
+unsettled state can beat a total already in hand, so every settled cost
+(and every drawn route) is exactly the plain drain's — and one linear
+placement sweep per channel: routing a busy diagram is microseconds, not
+seconds. The admission probe simulates placement in the candidate's own
+**world** alone — worlds are separate graphs, so chains elsewhere share no
+channel with it and cannot move for it. A
 natural scope skips even that — no graph, no search; each wire is one fit
 plus a few sampled dodge rounds, so a mindmap routes in the time it takes
 to fit its splines. The validator re-judges every sample's orthogonal wires
