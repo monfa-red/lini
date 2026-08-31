@@ -5,8 +5,34 @@ layout of its own, so co-registered geometry stops requiring an engineering
 drawing. Two follow-on fixes ride along: a generated-chrome removal bug and a
 `fmt` comment bug, both found while rebuilding `samples/logo.lini` from CAD.
 
-**Nothing here is implemented.** Another agent is fixing schematic bugs; this
-file is the only thing this round has added to the repo.
+**Status: steps 1–5 landed** (`c14acdc`, `7d0acfd`, `2789928`, `da8d4a0`,
+`4dcb9d8`), committed but **not pushed** — the push is the user's to trigger.
+23 test suites green, `cargo fmt` clean, zero clippy warnings. Audits (§10) are
+running. §11's SKILL.md pass is still outstanding and wants its own session.
+
+### What the implementation changed about this plan
+
+- **The module is `datum.rs`, not `stack.rs`.** `src/layout/stack.rs` already
+  exists — the outward band packer shared by drawing dimensions, schematic
+  seating and routing labels (6 import sites, one of them the file the other
+  agent was in). The keyword is still `layout: stack`; only the module name
+  differs, and its doc comment says why. Worth a later tidy if the two
+  "stacks" ever read badly together.
+- **`align:` / `justify:` error, they do not warn.** No new code was needed:
+  the ledger's owner mechanism already refuses them for every engine that
+  arranges nothing, so a stack answers exactly as a drawing does. Stricter
+  than §8's decision, and consistent — flagged for the user.
+- **`Ctx.drawing` had to be split first.** It was answering two questions at
+  once ("do children datum-place" and "is drafting live"). `Ctx.datum` +
+  `Ctx.drawing` was landed as a standalone behaviour-neutral refactor before
+  the layout went in.
+- **A wrinkle §4 missed**: `tests/spec_blocks.rs` ledgers SPEC's fenced code
+  blocks *by index*, so the new SPEC 12 example shifted 17 entries. Any future
+  SPEC edit that adds a fenced block must bump that ledger.
+- **Generated artifacts must be regenerated** — `cargo xtask gen-schema`,
+  `gen-grammars`, and `wasm`. All three are drift-tested, and the property
+  tables feed all of them, so a ledger edit fails three suites until they are
+  rebuilt.
 
 ---
 
@@ -127,7 +153,7 @@ Value shape is unchanged: `multiple: N` (scalar `N` ⇒ `N -N`) or `multiple: dx
 ### The renumbering hazard does not apply
 
 SPEC 12's subsections are **unnumbered** — every reference in the repo is a bare
-`[SPEC 12](#12-flow-grid--tree)`, never `[SPEC 12.2]`. So `stack` lands as a new
+`[SPEC 12](#12-flow-grid-stack--tree)`, never `[SPEC 12.2]`. So `stack` lands as a new
 `### Stack` subsection between `### Grid` and `### Tree`, and:
 
 > **No section number changes anywhere. No cross-repo renumber pass.**
@@ -146,7 +172,7 @@ number downward** so no two sections ever share a number mid-pass, and treat
 | SPEC | Change |
 |---|---|
 | **11** — The Layout Model | new table row `stack` **between `grid` and `tree`**: *"datum / geometry · children's origins on one datum · orthogonal router · no — arranges in place"*. Extend the "Universal container properties" prose that currently reads "a `sequence`, `chart`/`pie`, or `drawing` container places its own children and ignores them" to include `stack`. |
-| **12** — retitle **Flow, Grid, Stack & Tree** | new `### Stack — one datum, no flow` subsection after `### Grid`. States the datum law, `translate:` as the only offset, `unit: px` default, that links route normally, and that it is the placement core `drawing` builds on. Update the TOC line and the anchor `#12-flow-grid-stack--tree` — **and every `[SPEC 12](#12-flow-grid--tree)` link in the repo**, which is an anchor edit, not a renumber. |
+| **12** — retitle **Flow, Grid, Stack & Tree** | new `### Stack — one datum, no flow` subsection after `### Grid`. States the datum law, `translate:` as the only offset, `unit: px` default, that links route normally, and that it is the placement core `drawing` builds on. Update the TOC line and the anchor `#12-flow-grid-stack--tree` — **and every `[SPEC 12](#12-flow-grid-stack--tree)` link in the repo**, which is an anchor edit, not a renumber. |
 | **8** — Templates | `\|stack\|` row: `\|block\|` + `layout: stack`. |
 | **15** — Drawing | reframe the opening: a drawing **is** `stack` + measuring ops + leaders + mates + chrome. 15.1's datum/scale prose moves to SPEC 12 and 15.1 cites it. Add `px` to 15.1's `unit:` list and state the per-layout default. The global/drawing-scope-only table gains a note that the placement model itself is now global. |
 | **15.11** — Floorplan | one line: it inherits the same core through `drawing`. |
@@ -306,7 +332,7 @@ point. Brief covers:
   implementation and report the divergence. The chrome-removal wording in 15.7
   is a known live example (§6a): SPEC promised behaviour the code never had.
 - **Numbering and links** — every `[SPEC N]` and `[SPEC N.M]` resolves, every
-  anchor matches its heading, the TOC matches the body. The `#12-flow-grid--tree`
+  anchor matches its heading, the TOC matches the body. The `#12-flow-grid-stack--tree`
   → `#12-flow-grid-stack--tree` change makes this pass mandatory this round.
 - **Reserved words (SPEC 23) and the grammar (SPEC 22)** actually list what the
   language accepts.
@@ -320,7 +346,7 @@ the schema; the new warnings fire where §2 says and nowhere else; `no unsafe`;
 modules under ~500 LOC.
 
 A third, smaller agent job if wanted: the repo-wide
-`#12-flow-grid--tree` → `#12-flow-grid-stack--tree` anchor sweep — mechanical,
+`#12-flow-grid-stack--tree` → `#12-flow-grid-stack--tree` anchor sweep — mechanical,
 verifiable by grep, and easy to get 90% right and 10% wrong by hand.
 
 ## 11. SKILL.md gaps this round exposed
