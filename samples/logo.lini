@@ -1,49 +1,105 @@
-// Lini's wordmark, drawn call by call with the sketch pen [SPEC 15.3] — three
-// closed subpaths for the letters, a `pattern:`ed eyebrow, a `pattern:`ed dot,
-// and nothing else. Every edge is an orthogonal run or a circular arc: the
-// tangent `arc(r, deg)` continues the heading and sweeps, so a round end is
-// 180° at the stroke's half-width and a hook 180° at the swept radius, while
-// the two-point `arc(dx, dy, r)` takes the minor arc between endpoints already
-// known. Root `layout: drawing` [SPEC 15.1] gives the three pens one shared
-// datum, and `density: 1` renders the artwork 1 : 1 — the output is
-// assets/logo/lini.svg.
+// Lini's wordmark, built the way a CAD model of it is: one datum — the
+// baseline, on the centreline through the `n` — and every station measured out
+// from it, so each x in the file reads ± one named distance. Two dimensions
+// drive the whole letterform and the other eighteen derive from them
+// [SPEC 10.7]; the parts that are true reflections are drawn once and folded
+// with `mirror: y-axis` [SPEC 15.3]; the dotted stem is one dash under a linear
+// `pattern:` [SPEC 15.4]. Root `layout: stack` [SPEC 12] puts every pen on that
+// one datum — the placement a drawing uses, without a drawing's drafting — and
+// `unit: mm` + `density: 10` render the model's millimetres at 10 px each. The
+// output is assets/logo/lini.svg.
 {
-  layout: drawing; density: 1; padding: 25;
+  layout: stack; unit: mm; density: 10; padding: 25;
 
-  // The letterform's numbers, each stated once [SPEC 10.7]: a stroke of
-  // half-width `cap` swept along a centreline of radius `bowl` runs `outer`
-  // around a hook's outside and `inner` around its inside.
-  cap = 9;
-  bowl = 25;
-  outer = (bowl + cap);
+  --coral: #e9536c;
+  --lilac: #9c8cee;
+
+  |sketch| { fill: --coral; stroke: none; }
+
+  // The two driving dimensions: half the stroke — which is every round end's
+  // radius — and the centreline radius every hook and arch is swept on. From
+  // them, the stroke itself (1.8, which is also the gap between letters) and
+  // the inside (1.6) and outside (3.4) radius of a hook.
+  cap = 0.9;
+  bowl = 2.5;
+  weight = (2 * cap);
   inner = (bowl - cap);
-  // the tall run — cap centre to bowl centre — which the dots also span
-  stem = 97;
-  dot = (bowl / 3);
-  // the bite out of the eyebrow; the dome sweeps the rest of the turn
-  notch = 96.379;
+  outer = (bowl + cap);
 
-  |sketch| { fill: #e9536c; stroke: none; }
+  // x, measured out from the centreline and so worn ± by both sides: the `n`'s
+  // legs stand at the bowl radius, the `l`'s tail and the `i`'s stem at 6.1,
+  // both hooks' centres at 8.6, the `l`'s stem and the `i`'s dotted one at
+  // 11.1, and the silhouette at 12 — half the wordmark wide.
+  tail = (outer + weight + cap);
+  hook = (tail + bowl);
+  stem = (hook + bowl);
+  edge = (stem + cap);
+
+  // y, measured up from the baseline: the feet and the `i`'s tail end sit a cap
+  // above it, the springing line every arch and hook rises from at 3.4, the
+  // short caps at 5.9, the `n`'s crown at 6.8, the tall stem's 9.7 run to its
+  // cap centre at 13.1, and the cap height at 14. A tittle's centre splits the
+  // last two — 4.05 above, 4.05 below, the pair of equals the sketch carries.
+  shoulder = outer;
+  tail_y = (shoulder + bowl);
+  arch = (shoulder + outer);
+  run = (bowl + 8 * cap);
+  crown = (shoulder + run);
+  capline = (crown + cap);
+  brow = ((capline + tail_y) / 2);
+
+  // The dotted stem: a dash a third of the bowl long, at the pitch that makes
+  // three of them span the tall stem's run exactly.
+  dash = (bowl / 3);
+  pitch = ((run - dash) / 2);
+
+  // A tittle is a 2·cap dome, a cap-radius bite lifting it off the stem below,
+  // and a cap/2 fillet blending the two on each side. All four tangent points
+  // land on one line, `notch_y`, spaced a quarter chord apart — so those two
+  // numbers place every one of them.
+  quarter = (cap * sqrt(5) / 3);
+  notch_y = (brow - 4 * cap / 3);
 }
 
-// `l`, `n`, the `i`'s hooked tail — three closed subpaths, one even-odd fill.
-|sketch#glyphs| {
-  draw: move(0, cap) down(stem) arc(outer, -180) up(bowl) arc(cap, -180)
-        down(bowl) arc(inner, 180) up(stem) arc(cap, -180) close()
-        move(154, 131) up(bowl) arc(outer, -180) down(bowl) arc(cap, -180)
-        up(bowl) arc(inner, 180) down(bowl) arc(cap, -180) close()
-        move(172, 81) down(bowl) arc(outer, -90) arc(cap, -180) arc(inner, 90)
-        up(bowl) arc(cap, -180) close();
+// The `n` — half a letter, crown of its arch round to crown of its bowl, both
+// ends on the axis: an open subpath under `mirror:` is fused, so the half comes
+// back whole. A drawing would mark that axis with a centreline; a stack draws
+// only what is asked for. The pen opens on a two-point arc because a tangent
+// one has no heading yet to continue.
+|sketch#n| {
+  draw: move(0, -arch) arc(outer, outer, outer) down(bowl) arc(cap, 180)
+        up(bowl) arc(inner, -90);
+  mirror: y-axis;
 }
 
-// The eyebrow — the bite, a cap, the dome, a cap — every radius a `cap` scale.
+// The `l` — a stem the full height of the mark, a hook, a tail that stops short.
+|sketch#l| {
+  draw: move(-edge, -crown) down(run) arc(outer, -180) up(bowl) arc(cap, -180)
+        down(bowl) arc(inner, 180) up(run) arc(cap, -180) close();
+}
+
+// The `i`'s tail — the `l`'s hook across the centreline, cut a quarter turn
+// short so it ends in a round cap standing on the baseline.
+|sketch#i| {
+  draw: move(tail - cap, -tail_y) down(bowl) arc(outer, -90) arc(cap, -180)
+        arc(inner, 90) up(bowl) arc(cap, -180) close();
+}
+
+// The two tittles — one drawn, both had: a closed subpath under `mirror:` is
+// duplicated across the axis rather than fused. Bite, fillet, dome over the
+// top, fillet back.
 |sketch#brow| {
-  draw: move(52.292, 52.5) arc(13.416, 0, cap) arc(cap / 2, -notch)
-        arc(cap * 2, notch - 360) arc(cap / 2, -notch) close();
-  pattern: grid(2, 1, 122, 0); fill: #9c8cee;
+  draw: move(-tail - quarter, -notch_y) arc(2 * quarter, 0, cap)
+        arc(quarter, 0, -cap / 2) arc(-2 * quarter, -10 * cap / 3, -2 * cap)
+        arc(-2 * quarter, 10 * cap / 3, -2 * cap) arc(quarter, 0, -cap / 2)
+        close();
+  mirror: y-axis; fill: --lilac;
 }
 
-|sketch#dot| {
-  draw: move(222, cap) down(dot) arc(cap, -180) up(dot) arc(cap, -180) close();
-  pattern: grid(1, 3, 0, (stem - dot) / 2); opacity: 0.75;
+// The `i`'s stem, dotted — one dash, then three of it. It stands on the `l`'s
+// stem station mirrored, and fills the same run.
+|sketch#dots| {
+  draw: move(stem - cap, -crown) down(dash) arc(cap, -180) up(dash)
+        arc(cap, -180) close();
+  pattern: grid(1, 3, 0, pitch); opacity: 0.75;
 }
