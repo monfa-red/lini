@@ -91,7 +91,8 @@ pub(super) fn lower_smart(
         } else if let Some(kind) = what.sch.filter(|k| *k != schematic::SchKind::Label) {
             // A part's smart label is its name / value [SPEC 16.2/16.3], drawn
             // as readout chrome at the seat its family and pose give it.
-            children.push(schematic::value_readout(cx, &label.text, kind, what.pose)?);
+            let readout = schematic::value_readout(cx, &label.text, kind, what.pose, children)?;
+            children.push(readout);
         } else if what.is_container {
             // A container's label is a `|caption|` child [SPEC 3/8], lowered
             // through the normal node path so it gains its `.lini-caption`

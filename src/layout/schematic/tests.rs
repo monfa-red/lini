@@ -6,6 +6,7 @@
 //! [`super::route_tests`].
 
 use crate::layout::PlacedNode;
+use crate::ledger::consts;
 use crate::ledger::defaults::SCH_GAP;
 
 pub(super) use crate::testutil::{layout_err, program};
@@ -118,6 +119,77 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .filter(|d| d.code == crate::error::Code::SCHEMATIC_SEAT)
         .map(|d| d.message.clone())
         .collect()
+}
+
+// ───────────────────────── the readout seats ─────────────────────────
+
+/// The chrome box a placed part hangs off itself: the union of every
+/// descendant of `id` wearing the generated class `class`, in scene
+/// coordinates — a readout (`ref` / `part-value`) or a pin's lead
+/// (`pin-stub` / `pin-number`).
+pub(super) fn chrome(nodes: &[PlacedNode], id: &str, class: &str) -> crate::layout::ir::Bbox {
+    let (part, px, py) = placed(nodes, id);
+    let hits =
+        crate::testutil::all_placed(&part.children, &|n| n.type_chain.iter().any(|t| t == class));
+    assert!(!hits.is_empty(), "no '{class}' chrome under '{id}'");
+    hits.iter()
+        .map(|(n, x, y)| n.bbox.shifted(px + x, py + y))
+        .reduce(|a, b| a.union(b))
+        .expect("a box")
+}
+
+#[test]
+fn a_top_pinned_components_readouts_clear_its_rail() {
+    // [SPEC 16.2] the ref / value pair and a pin number both place
+    // deterministically, with nothing to arbitrate between them — so they may
+    // never want one band: a pin landing on **top** hangs its stub and its
+    // number off the very edge the readouts are pinned to, and the pair
+    // clears the whole band, keeping the same gap it keeps off a bare edge.
+    // The pose is structural [SPEC 16.1], so a pin the turn *lands* on top is
+    // the same case, not a second rule.
+    for (what, part) in [
+        (
+            "an authored 'side: top'",
+            "  |component#u1| \"LM2596S\" [\n    |pin#a| { side: top; number: 7 }\n    |pin#b| { side: left; number: 1 }\n  ]\n",
+        ),
+        (
+            "a pose that lands one there",
+            "  |component#u1| \"LM2596S\" { rotate: 90 } [\n    |pin#a| { number: 7 }\n    |pin#b| { side: bottom; number: 1 }\n  ]\n",
+        ),
+    ] {
+        let nodes = laid(&scope("", part));
+        let band = chrome(&nodes, "a", "pin-stub").union(chrome(&nodes, "a", "pin-number"));
+        let value = chrome(&nodes, "u1", "part-value");
+        let name = chrome(&nodes, "u1", "ref");
+        assert!(
+            value.max_y <= band.min_y && name.max_y <= band.min_y,
+            "the readouts print over the top rail ({what}): {value:?} / {name:?} vs {band:?}"
+        );
+        assert!(
+            close(band.min_y - value.max_y, consts::READOUT_GAP),
+            "…one gap clear of it ({what}): {}",
+            band.min_y - value.max_y
+        );
+        assert!(
+            close(value.min_y - name.max_y, consts::READOUT_STACK),
+            "…and the pair moved as one ({what}): {}",
+            value.min_y - name.max_y
+        );
+    }
+    // No top rail, nothing raised: the value keeps its gap off the body's own
+    // edge, exactly as before.
+    let nodes = laid(&scope(
+        "",
+        "  |component#u1| \"LM2596S\" [\n    |pin#a| { side: left; number: 7 }\n    |pin#b| { side: right; number: 1 }\n  ]\n",
+    ));
+    let (part, _, py) = placed(&nodes, "u1");
+    let edge = py + part.bbox.min_y + part.attrs.half_stroke();
+    let value = chrome(&nodes, "u1", "part-value");
+    assert!(
+        close(edge - value.max_y, consts::READOUT_GAP),
+        "a side-pinned part's seat is untouched: {}",
+        edge - value.max_y
+    );
 }
 
 // ───────────────────────── the shaped tag ─────────────────────────

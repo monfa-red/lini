@@ -3475,9 +3475,10 @@ order, skipping authored names. A minted ref is **display-only, never an
 endpoint** — wiring `R1.p1` to a minted ref is an unknown endpoint
 ([SPEC 21](#21-errors)): don't care → free numbering; wire it → name it.
 Ref/value text places deterministically — above a component (the ref over the
-value), across a discrete's symbol: above and below an upright one, **beside**
-a turned one, whose own wire runs down the column those seats would take.
-`translate:` on the styled-label form nudges either.
+value, the pair clearing the **top rail** — stubs and numbers — where pins
+landed there), across a discrete's symbol: above and below an upright one,
+**beside** a turned one, whose own wire runs down the column those seats would
+take. `translate:` on the styled-label form nudges either.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins

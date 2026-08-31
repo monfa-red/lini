@@ -24,7 +24,7 @@ pub(super) use pins::{
 };
 
 use super::Lower;
-use super::pose::Pose;
+use super::pose::{Pose, Side};
 use crate::error::Error;
 use crate::ledger::consts;
 use crate::span::Span;
@@ -110,14 +110,16 @@ fn lowered(cx: &Lower, node: &Node) -> Result<Child, Error> {
 }
 
 /// A part's value readout [SPEC 16.2/16.3] — the smart label as chrome, at the
-/// seat [`readout_at`] gives its family.
+/// seat [`readout_at`] gives its family. `siblings` are the part's lowered
+/// children, which is where the top band it must clear is read from.
 pub(super) fn value_readout(
     cx: &Lower,
     s: &str,
     kind: SchKind,
     pose: Pose,
+    siblings: &[Child],
 ) -> Result<Child, Error> {
-    let (pin, dx, dy) = readout_at(kind, pose, true);
+    let (pin, dx, dy) = readout_at(kind, pose, top_band(cx, kind, pose, siblings), true);
     lowered_chrome(cx, &readout(s, pin, dx, dy), "lini-part-value")
 }
 
@@ -137,20 +139,25 @@ pub(super) fn value_readout(
 /// clear of it: the seats below add the line back, and the gap that remains is
 /// [`consts::READOUT_GAP`] off the part and [`consts::READOUT_STACK`] between
 /// the two readouts — the numbers the eye actually reads.
-fn readout_at(kind: SchKind, pose: Pose, value: bool) -> (&'static str, f64, f64) {
+///
+/// `band` is the chrome the part's own top edge hides ([`top_band`]): the pair
+/// clears it as one, so the stack never moves apart.
+fn readout_at(kind: SchKind, pose: Pose, band: f64, value: bool) -> (&'static str, f64, f64) {
     let line = consts::REF_FONT;
     let out = line + consts::READOUT_GAP;
     match kind {
         // A component is a box whichever way its pins landed: its readouts
-        // stack above it, the ref one line clear of the value.
+        // stack above it, the ref one line clear of the value — above the top
+        // rail's chrome where it has one, since that hangs off the same edge.
         SchKind::Component => (
             "top",
             0.0,
-            if value {
-                -out
-            } else {
-                -(out + line + consts::READOUT_STACK)
-            },
+            -(band
+                + if value {
+                    out
+                } else {
+                    out + line + consts::READOUT_STACK
+                }),
         ),
         _ if pose.is_turned() => (
             "center",
@@ -160,6 +167,80 @@ fn readout_at(kind: SchKind, pose: Pose, value: bool) -> (&'static str, f64, f64
         _ if value => ("bottom", 0.0, out),
         _ => ("top", 0.0, -out),
     }
+}
+
+/// The chrome a component's **top rail** hangs above its box [SPEC 16.2]: one
+/// [`consts::PIN_STUB`] deep — the stub spans body edge → tip and the number
+/// is sized to the lead, so both stand in that one band — which the readouts
+/// pinned to the very same edge must clear. `0` for every part with no pin on
+/// top, so every other seat stands exactly where it did.
+fn top_band(cx: &Lower, kind: SchKind, pose: Pose, children: &[Child]) -> f64 {
+    if kind != SchKind::Component || !landed_sides(cx, children, pose).contains(&Side::Top) {
+        return 0.0;
+    }
+    consts::PIN_STUB
+}
+
+/// Where a part's lowered pins **landed** [SPEC 16.1/16.2] — the one reading
+/// for both readout mints, which straddle the rails: the value is minted
+/// before [`assemble_component`] dresses the pins and the ref after.
+///
+/// A **dressed** pin says its landed side in its stub's `pin:` — the lowered
+/// tree's own answer [SPEC 16.7], the same decl the engine reads a landing
+/// back off ([`crate::layout::schematic::terminal`]). An **undressed** one is
+/// the bilateral split under the part's pose ([`pin_sides`], the one answer
+/// `autopose` reads).
+fn landed_sides(cx: &Lower, children: &[Child], pose: Pose) -> Vec<Side> {
+    let mut found: Vec<&Child> = Vec::new();
+    walk_pins(
+        children,
+        &|c: &Child| matches!(c, Child::Box(b) if b.classes.iter().any(|k| k == "lini-pin")),
+        &|c: &Child| match c {
+            Child::Box(b) => b.children.as_slice(),
+            Child::Text(_) => &[],
+        },
+        &mut found,
+    );
+    let pins: Vec<&Node> = found
+        .into_iter()
+        .filter_map(|c| match c {
+            Child::Box(b) => Some(b),
+            Child::Text(_) => None,
+        })
+        .collect();
+    let dressed: Vec<Side> = pins.iter().filter_map(|p| stub_side(p)).collect();
+    if dressed.len() == pins.len() {
+        return dressed;
+    }
+    let authored: Vec<Option<Side>> = pins
+        .iter()
+        .map(|p| authored_side(cx, &lowered_chain(p), &p.style))
+        .collect();
+    pin_sides(&authored, pose)
+        .into_iter()
+        .map(|(_, _, landed)| landed)
+        .collect()
+}
+
+/// The side a dressed pin's stub points — the one `dress_pin` gave it.
+fn stub_side(pin: &Node) -> Option<Side> {
+    pin.children.iter().find_map(|c| match c {
+        Child::Box(b) if b.classes.iter().any(|k| k == "lini-pin-stub") => {
+            match b
+                .style
+                .iter()
+                .rev()
+                .find(|d| d.name == "pin")?
+                .groups
+                .first()?
+                .first()?
+            {
+                Value::Ident(s) => Side::parse(s),
+                _ => None,
+            }
+        }
+        _ => None,
+    })
 }
 
 /// One fragment of a schematic glyph as a `|path|` node. The pose **re-lays**
@@ -435,7 +516,9 @@ pub(super) fn mint_refs(
         if has_ref(part) {
             continue;
         }
-        let (anchor, dx, dy) = readout_at(kind, Pose::of_chain(&chain), false);
+        let pose = Pose::of_chain(&chain);
+        let band = top_band(cx, kind, pose, &part.children);
+        let (anchor, dx, dy) = readout_at(kind, pose, band, false);
         let text = match &part.id {
             Some(pid) => pid.clone(),
             None => {
