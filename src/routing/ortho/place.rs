@@ -301,7 +301,20 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                 // one lane over, reading the narrow corridor — never
                 // sees, ordering the pair into an unplaceable chain.
                 let clamp = corner_clamp(worlds, chain, ri);
-                (corridor.clipped(clamp.0, clamp.1).anchor(), None)
+                let clipped = corridor.clipped(clamp.0, clamp.1);
+                // A three-run route between two ports on one side of one
+                // body — the same-side pair's canonical U (ROUTING.md
+                // Fixed ports) — turns as close in as the corridor allows:
+                // the anchor would centre the turn in whatever void lies
+                // beyond, which the search never priced (its L1 estimate
+                // sees no length in the U's depth), and a tie between two
+                // pins would orbit half the sheet.
+                if chain.runs.len() == 3 && a.side == b.side && a.rect == b.rect {
+                    let t = a.side_coord();
+                    (t.max(clipped.walls.0).min(clipped.walls.1), None)
+                } else {
+                    (clipped.anchor(), None)
+                }
             }
         })
         .collect()

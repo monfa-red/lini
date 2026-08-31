@@ -28,11 +28,15 @@ use std::collections::VecDeque;
 ///   a shared pin is the trunk line of every sibling wire, so a seat there
 ///   stands on all of them. The chain yields it exactly as chains yield each
 ///   other's lanes, turning onto the sheet's roomy axis — down off a side
-///   pin, rightward off a top or bottom one.
+///   pin, rightward off a top or bottom one. A **bodiless** chain — every
+///   member a net run — never yields: a run is a stretch of the corridor's
+///   own wire with a name over it, so it rides the trunk it would otherwise
+///   dodge, and the sibling wires merge along it.
 pub(crate) fn growth_ray(
     terminator_facing: Option<Side>,
     pin_facing: Option<Side>,
     shared_pin: bool,
+    bodiless: bool,
 ) -> Side {
     // A terminal with no facing at all still hangs below — the one
     // direction a sheet always has room in [SPEC 16.1].
@@ -42,7 +46,7 @@ pub(crate) fn growth_ray(
     {
         return f.opposite();
     }
-    if !shared_pin {
+    if !shared_pin || bodiless {
         return normal;
     }
     match normal {

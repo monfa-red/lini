@@ -1030,6 +1030,7 @@ fn growth(
             crate::desugar::schematic::sch_kind(&children[c].type_chain).is_some()
                 && super::place::role(&children[c]) == crate::desugar::schematic::Role::Satellite
         }),
+        chain.members.iter().all(|&m| net::is_run(&children[m])),
     );
     (out, pin)
 }

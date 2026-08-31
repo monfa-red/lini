@@ -243,6 +243,10 @@ pub(super) fn choose<'a>(
             terminator,
             Some(held.pose.side(base)),
             schematic::chain::shared_pin(&wire_edges, anchor, |c| parts[c].role == Role::Satellite),
+            chain.members.iter().all(|&m| {
+                let p = &parts[m];
+                schematic::is_net_run(&p.chain, p.symbol.as_deref(), p.shape.as_deref())
+            }),
         );
         // A **tap** — a symbol-label leaf that is not the terminator — hangs
         // along its own drawn convention rather than the trunk's ray
