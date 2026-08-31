@@ -803,6 +803,13 @@ impl Emitter<'_> {
             .any(|t| matches!(t.kind, Trivia::Comment { .. }) && t.pos >= start && t.pos < end)
     }
 
+    /// The offset just past the last non-blank line's content — where a
+    /// trailing comment belongs, however many blank separators follow it.
+    fn content_end(&self) -> Option<usize> {
+        let end = self.out.trim_end_matches('\n').len();
+        (end > 0).then_some(end)
+    }
+
     fn emit_trivia_before(&mut self, until: usize, depth: usize) {
         let mut last_was_blank = false;
         for t in self.trivia {
@@ -814,14 +821,14 @@ impl Emitter<'_> {
             }
             match &t.kind {
                 // A trailing comment annotates the item it follows, so it
-                // rejoins that item's line — emitting it on a fresh one would
-                // re-point it at whatever comes next [SPEC 20].
-                Trivia::Comment { text, trailing } if *trailing && self.out.ends_with('\n') => {
-                    self.out.pop();
-                    self.out.push_str("  ");
-                    self.out.push_str(text);
-                    self.out.push('\n');
-                    last_was_blank = false;
+                // rejoins that item's line — emitted on a fresh one it would
+                // re-point at whatever comes next [SPEC 20]. It goes back at
+                // that line's end rather than by trimming what has been
+                // written since: a phase break may already stand between the
+                // two, and it has to survive.
+                Trivia::Comment { text, trailing } if *trailing && self.content_end().is_some() => {
+                    let at = self.content_end().expect("guarded above");
+                    self.out.insert_str(at, &format!("  {text}"));
                 }
                 Trivia::Comment { text, .. } => {
                     self.indent(depth);

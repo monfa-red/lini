@@ -80,13 +80,6 @@ pub(in crate::layout) fn placeholder(inst: &ResolvedInst) -> PlacedNode {
 /// the part's own px per drawing unit.
 pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale: f64) {
     for c in children.iter_mut() {
-        // Chrome the cascade painted away takes no geometry at all [SPEC 15.7]:
-        // it keeps its empty placeholder bbox, so it reserves no space, and with
-        // no `points:` / `path:` the renderer draws nothing. "Styled **or
-        // removed** by the cascade" — removal is this line.
-        if c.attrs.paints_nothing() {
-            continue;
-        }
         if let Some(ResolvedValue::Tuple(items)) = c.attrs.get("chrome")
             && let [
                 ResolvedValue::Ident(k),
@@ -149,4 +142,28 @@ fn thread_arc(c: &mut PlacedNode, geometry: Bbox, internal: bool, pitch: f64, sc
     c.kind = crate::resolve::NodeKind::Path;
     let half = super::half_stroke(&c.attrs);
     c.bbox = Bbox::centered(2.0 * r, 2.0 * r).inflate(half);
+}
+
+/// **Removal, for every producer at once** [SPEC 15.7]: chrome the cascade
+/// painted away — stroke *and* fill both `none` — surrenders the geometry its
+/// producer gave it, so it draws nothing (`emit_line` needs two points, and
+/// the shaped kinds need their `path`) and reserves no space, overhang
+/// included. One sweep over the finished tree rather than a test inside each
+/// of the twelve producers — some of which (a radial `pattern:`'s pitch
+/// circle, a `revolve:`'s shoulders) generate after their parent is laid out,
+/// so there is no earlier point that sees them all. A producer that forgot the
+/// test would be the failure mode, and here there is nothing to forget.
+pub(in crate::layout) fn drop_unpainted(nodes: &mut [PlacedNode]) {
+    for n in nodes.iter_mut() {
+        // Only chrome that draws *itself* — the linework conventions. A piece
+        // that carries content (a `|zone|`'s border letter, a fixture's label)
+        // paints nothing by nature rather than by the cascade's instruction,
+        // and its box is what positions what it holds.
+        if is_chrome(&n.attrs) && n.children.is_empty() && n.attrs.paints_nothing() {
+            n.attrs.remove("points");
+            n.attrs.remove("path");
+            n.bbox = Bbox::empty();
+        }
+        drop_unpainted(&mut n.children);
+    }
 }

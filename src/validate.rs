@@ -60,10 +60,21 @@ fn check_density_unit(file: &File, out: &mut Vec<Diagnostic>) {
             _ => None,
         })
     };
-    let Some(unit) = root_decl("unit") else {
-        return;
+    // Pixel space is reached two ways: stated, or taken as a plain `stack`'s
+    // default [SPEC 12]. The warning has to cover both — the copied-over
+    // `density:` this exists to catch is likeliest where nothing was stated.
+    let pixels = match root_decl("unit") {
+        Some(u) => matches!(u.single(), Some(Value::Ident(u)) if u == "px"),
+        None => file.stylesheet.iter().any(|i| match i {
+            StyleItem::RootDecl(d) if d.name == "layout" => {
+                matches!(d.single(), Some(Value::Ident(l))
+                    if crate::resolve::is_stack_layout(l)
+                        && !crate::resolve::is_drawing_layout(l))
+            }
+            _ => false,
+        }),
     };
-    if !matches!(unit.single(), Some(Value::Ident(u)) if u == "px") {
+    if !pixels {
         return;
     }
     let Some(d) = root_decl("density") else {

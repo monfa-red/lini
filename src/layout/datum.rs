@@ -153,6 +153,31 @@ mod tests {
         assert_eq!((mm.viewbox.w, mm.viewbox.h), (40.0, 20.0), "10 px per mm");
     }
 
+    /// An authored `unit:` inherits nearest-wins [SPEC 15.1]; a *default* does
+    /// not [SPEC 12] — so a drawing measures in millimetres even inside a
+    /// pixel-space stack, and a stated unit reaches both kinds of scope.
+    #[test]
+    fn an_authored_unit_inherits_but_a_default_does_not() {
+        // A drawing nested in a pixel-space stack keeps millimetres: its 10
+        // units render at the default 4 px each, not 1 : 1.
+        let nested = laid(
+            "{ layout: stack; padding: 0 }\n\
+             |drawing#d| [ |rect#r| { width: 10; height: 10; stroke: none } ]\n",
+        );
+        assert_eq!(
+            nested.viewbox.w, 40.0,
+            "the mm default is not inherited away"
+        );
+
+        // …while a unit stated above does reach the stack inside it: 1 cm at
+        // density 4 is 40 px, in the drawing and in the nested stack alike.
+        let inherited = laid(
+            "{ layout: drawing; unit: cm; density: 4; padding: 0 }\n\
+             |stack#s| [ |rect#q| { width: 1; height: 1; stroke: none } ]\n",
+        );
+        assert_eq!(inherited.viewbox.w, 40.0, "an authored unit inherits in");
+    }
+
     /// A stack is not a drawing: it places, and generates none of the chrome
     /// drafting always draws [SPEC 12/15.7]. A fused `mirror:` still folds —
     /// the pen is core — but no axis line comes with it.
@@ -171,6 +196,40 @@ mod tests {
         );
         // …and the fold itself still happened: 40 wide, plus the 2-wide stroke.
         assert_eq!(l.viewbox.w, 42.0);
+    }
+
+    /// SPEC 11's law holds inside a stack too: an ordinary box nested in one
+    /// still lays out its own content by the box model. Datum placement is the
+    /// scope's own children; it is not a drawing's recursive *feature* law,
+    /// which would make the box a part and pile its children on its origin.
+    #[test]
+    fn a_nested_box_lays_out_its_own_content() {
+        let src = "|box#card| \"Title\" [ |box#inner| \"Inner\" ]\n";
+        let stacked = laid(&format!("{{ layout: stack; padding: 0 }}\n{src}"));
+        let flowed = laid(&format!("{{ padding: 0 }}\n{src}"));
+        assert_eq!(
+            (stacked.viewbox.w, stacked.viewbox.h),
+            (flowed.viewbox.w, flowed.viewbox.h),
+            "a box in a stack sizes as it does anywhere"
+        );
+    }
+
+    /// A `|stack|` seals an enclosing drawing scope like every other
+    /// layout-owning type [SPEC 15.1] — its children are its own, not the
+    /// drawing's features, so the drawing generates no chrome inside it.
+    #[test]
+    fn a_stack_seals_an_enclosing_drawing() {
+        let l = laid(
+            "{ layout: drawing; density: 1; padding: 0 }\n\
+             |sketch#base| { draw: move(-30,-10) right(60) down(20) left(60) close() }\n\
+             |stack#art| [ |hole#h| { width: 6 } ]\n",
+        );
+        assert!(
+            by_id(&l.nodes, "art")
+                .children
+                .iter()
+                .any(|c| c.id.as_deref() == Some("h"))
+        );
     }
 
     /// The container is still a box [SPEC 11]: a `|stack|` sizes to its

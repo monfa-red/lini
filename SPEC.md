@@ -1607,9 +1607,10 @@ makes `|table|` plain `grid + gap: 1 + gap-fill: --stroke`, not a magic type ([S
 
 ## 12. Flow, Grid, Stack & Tree
 
-The **router-routed** layouts: they arrange boxes and text in place, then hand
-their links to the router ([SPEC 9](#9-links)). `flow` is 1D flex, `grid` is 2D,
-`tree` a rooted hierarchy.
+The **router-routed** layouts: they arrange boxes and text in place — or, for
+`stack`, seat them on a shared datum — then hand their links to the router
+([SPEC 9](#9-links)). `flow` is 1D flex, `grid` is 2D, `stack` one datum, `tree` a
+rooted hierarchy.
 
 ### Flex — `align` / `justify`
 
@@ -1717,8 +1718,9 @@ diagram and vice versa. Its links go to the **router**, so arrows, labels and
 you the diagram.
 
 `gap`, `direction`, `align`, `justify`, and `gap-fill` have no meaning where nothing
-is arranged, and reading one is an error naming the layouts that do ([SPEC 21](#21-errors))
-— the same answer a `drawing` gives.
+is arranged and are ignored ([SPEC 11](#11-the-layout-model)) — the same answer a
+`drawing` gives. (A **root** block refuses them outright, as it does for every engine
+that arranges nothing.)
 
 **A stack measures in pixels.** `unit:` and `density:` read here as they do on a
 drawing ([SPEC 15.1](#151-the-container-the-datum--the-scale)), but the default is
@@ -3823,7 +3825,10 @@ boxes), but *not* by the sequence engine's placement of them on the time axis
 case does not arise — hence `—`.
 
 A **`floorplan`** reads the `drawing` column — the same engine
-([SPEC 15.11](#1511-floorplan--the-architectural-dialect)).
+([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). A **`stack`** reads it too,
+minus the drafting rows: the placement is the one a drawing is built on
+([SPEC 12](#12-flow-grid-stack--tree)), so the arranger knobs are `—` and `padding`,
+the sizing pair and the container's own paint are honoured.
 
 ### Universal properties
 
@@ -3907,7 +3912,7 @@ out of scope.
 
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
-| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
+| `layout` | any container | `flow`·`grid`·`stack`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 12 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid-stack--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
@@ -3928,7 +3933,7 @@ out of scope.
 | `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`·`time`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
-| `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | drawing scopes · `\|axis\|` | `mm`·`cm`·`m`·`in` — inherits | `mm` | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
+| `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | datum scopes · `\|axis\|` | `px`·`mm`·`cm`·`m`·`in` — an authored one inherits | `mm` (a drawing) · `px` (a stack) | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
 | `density` | the root | number > 0 | 4 | px per mm, screen/raster only ([SPEC 15.1](#151-the-container-the-datum--the-scale)) |
 | `tol` | a dimension · a control row | `t` / `+u -l` / fit ident · number > 0 (a frame's zone width) | — | [SPEC 15.6](#156-dimensions), [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
 | `characteristic` | a control row (`\|control\|`, or a one-row `\|feature-control\|`) | the ISO 1101 ident set | — (the smart label) | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
@@ -4565,7 +4570,7 @@ error.
 | `scale:` on a `\|page\|` | `a '\|page\|' carries no 'scale:' — 'density:' sets its pixels per millimetre (root), a drawing's 'scale:' its drafting ratio` |
 | `density:` ≤ 0 | `'density' must be > 0` |
 | Absurd rendered extent | `the drawing renders 48000 px wide — 'scale:' is a ratio; a 5 m beam at 1:50 is 'scale: 0.02'` (hint) |
-| Bad `unit:` / `density:` off the root | `'unit' is mm, cm, m, or in` / `'density' is scene config — set it in the root block` |
+| Bad `unit:` / `density:` off the root | `'unit' is px, mm, cm, m, or in` / `'density' is scene config — set it in the root block` |
 | Chain past a label | `a text callout ends its statement — chain before it` |
 | Mate in a flow scope | `a '\|row\|' places its own children — mates seat a drawing's` |
 | Empty drawing | `a drawing needs at least one geometry child` |

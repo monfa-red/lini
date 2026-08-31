@@ -562,7 +562,13 @@ fn layout_inst(
     // datum-place at the part's origin, rigid with it [SPEC 15.4]; a child that
     // owns a layout — or is sheet content (a note, the title) — arranges its
     // interior as usual and places as one box.
-    let part = ctx.datum
+    // A **part** is a drawing's recursive law [SPEC 15.4]: a shape's `[ ]` are
+    // its features, placed at its own datum, and its children never grow it.
+    // That is drafting, not placement — a plain `stack` puts *its own*
+    // children on its datum [SPEC 12] and leaves them ordinary boxes, so an
+    // `\|box\|` nested in one still lays out its content by the box model, as
+    // it does inside every other layout [SPEC 11].
+    let part = ctx.drawing
         && !owns_layout(inst.kind, &inst.type_chain, &inst.attrs)
         && !drawing::is_sheet(inst.kind, &inst.type_chain);
     let child_ctx = Ctx {
@@ -707,6 +713,14 @@ fn layout_inst(
     {
         schematic::fill_tag(&mut children, bbox);
     }
+    // The fillers above have given their chrome geometry, and this node is
+    // about to be measured with it — so take it back from the pieces the
+    // cascade painted away [SPEC 15.7]. The same sweep runs once more over the
+    // finished tree (`frame::finish`), for the producers that generate after
+    // their parent is laid out: a radial `pattern:`'s pitch circle, a
+    // `revolve:`'s shoulders. Two call sites, one rule — the alternative is
+    // the test repeated inside twelve producers, where one will forget it.
+    drawing::chrome::drop_unpainted(&mut children);
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
 

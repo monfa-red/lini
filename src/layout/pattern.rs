@@ -105,6 +105,10 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
         }
     }
     placed.children = rest;
+    // The ring is generated here, after this node was measured, so it misses
+    // the sweep in `layout_inst`; clear it now if the cascade painted it away
+    // [SPEC 15.7] — same rule, applied where this producer creates its chrome.
+    super::drawing::chrome::drop_unpainted(&mut ring);
     carry(placed, &places, ring);
     Ok(())
 }

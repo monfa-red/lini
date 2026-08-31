@@ -85,6 +85,14 @@ impl Unit {
 /// The unit / density context carried down the lowered tree.
 struct ScaleCtx {
     density: f64,
+    /// The nearest **authored** `unit:`, which inherits nearest-wins
+    /// [SPEC 15.1]. Distinct from the effective one below, because a default
+    /// must not inherit: a `|drawing|` that states no unit measures in
+    /// millimetres even inside a pixel-space `stack`, while a `unit: cm`
+    /// written above reaches both.
+    authored: Option<Unit>,
+    /// What one drawing unit is **in this scope** — the authored value, or
+    /// the scope kind's own default.
     unit: Unit,
     in_drawing: bool,
     /// The nearest authored floorplan-scope `thickness:` (drawing units) —
@@ -106,13 +114,13 @@ pub(super) fn fold(
     let opens = root_layout.is_some_and(crate::resolve::is_stack_layout);
     let drafts = root_layout.is_some_and(crate::resolve::is_drawing_layout);
     let density = read_density(user_root)?;
-    let unit = read_unit(user_root)?.unwrap_or(if opens && !drafts {
-        Unit::Px
-    } else {
-        Unit::Mm(1.0)
-    });
+    let authored = read_unit(user_root)?;
+    // A root that opens no datum scope of its own holds millimetres, so a
+    // *nested* drawing inherits the usual default.
+    let unit = authored.unwrap_or(default_unit(drafts || !opens));
     let ctx = ScaleCtx {
         density,
+        authored,
         unit,
         in_drawing: drafts,
         thickness: read_thickness(user_root),
@@ -130,6 +138,7 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
     let Child::Box(n) = child else { return Ok(()) };
     let mut ctx = ScaleCtx {
         density: ctx.density,
+        authored: ctx.authored,
         unit: ctx.unit,
         in_drawing: ctx.in_drawing,
         thickness: ctx.thickness,
@@ -145,20 +154,22 @@ fn walk(child: &mut Child, ctx: &ScaleCtx) -> Result<(), Error> {
             ));
         }
         if let Some(u) = read_unit(&n.style)? {
+            ctx.authored = Some(u);
             ctx.unit = u;
         }
         // Paper is millimetres: px-per-unit is the density alone.
         n.style.retain(|d| d.name != PX_PER_UNIT);
         n.style.push(number_decl(ctx.density, n.span));
     } else if opens {
-        // A plain `stack` measures in pixels unless it says otherwise [SPEC 12]
-        // — 1 : 1 is what a canvas wants, where a sheet wants millimetres.
-        if !is_drawing_body(&chain, &n.style) {
-            ctx.unit = Unit::Px;
-        }
         if let Some(u) = read_unit(&n.style)? {
-            ctx.unit = u;
+            ctx.authored = Some(u);
         }
+        // An authored unit inherits; a default does not [SPEC 15.1] — so a
+        // plain `stack` measures in pixels and a drawing in millimetres,
+        // each regardless of what kind of scope encloses it.
+        ctx.unit = ctx
+            .authored
+            .unwrap_or(default_unit(is_drawing_body(&chain, &n.style)));
         if let Some(t) = read_thickness(&n.style) {
             ctx.thickness = Some(t);
         }
@@ -289,6 +300,12 @@ fn read_unit(style: &[Decl]) -> Result<Option<Unit>, Error> {
         .ok_or_else(|| Error::at(d.span, "'unit' is px, mm, cm, m, or in"))
 }
 
+/// A scope kind's own unit when none was authored above it [SPEC 12/15.1]:
+/// a drafting scope measures in millimetres, a plain `stack` in pixels.
+fn default_unit(drafts: bool) -> Unit {
+    if drafts { Unit::Mm(1.0) } else { Unit::Px }
+}
+
 /// The root `density:` — px per mm, default 4, must be positive [SPEC 15.1].
 fn read_density(user_root: &[Decl]) -> Result<f64, Error> {
     let Some(d) = decl_of(user_root, "density") else {
@@ -343,6 +360,7 @@ mod tests {
     fn the_wall_thickness_stamp_resolves_nearest_wins() {
         let ctx = |unit_mm: f64, thickness: Option<f64>| ScaleCtx {
             density: 4.0,
+            authored: Some(Unit::Mm(unit_mm)),
             unit: Unit::Mm(unit_mm),
             in_drawing: true,
             thickness,

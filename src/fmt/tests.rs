@@ -188,6 +188,24 @@ fn a_trailing_comment_stays_on_its_own_statement() {
 }
 
 #[test]
+fn a_trailing_comment_survives_a_phase_break() {
+    // The blank line between the instances and the links is pushed *after* the
+    // statement, so reattaching by trimming what came since would eat the break
+    // and re-point the comment at the next phase — the bug it was fixing.
+    let once = fmt("|box#a| \"A\"\n|box#b| \"B\"  // hero\na -> b\n");
+    assert_eq!(once, "|box#a| \"A\"\n|box#b| \"B\"  // hero\n\na -> b\n");
+    assert_eq!(fmt(&once), once, "and formatting is idempotent");
+
+    // Same across the stylesheet/canvas break.
+    let sheet = fmt("{\n  direction: column;  // config\n}\n|box#a| \"A\"\n");
+    assert_eq!(
+        sheet,
+        "{\n  direction: column;  // config\n}\n\n|box#a| \"A\"\n"
+    );
+    assert_eq!(fmt(&sheet), sheet);
+}
+
+#[test]
 fn a_comment_opening_its_line_stays_leading() {
     assert_eq!(
         fmt("|box#a| \"A\"\n// about b\n|box#b| \"B\"\n"),

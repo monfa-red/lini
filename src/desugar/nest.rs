@@ -128,6 +128,12 @@ pub(super) fn seals_drawing_scope(chain: &[String], style: &[Decl]) -> bool {
                 | "pie"
                 | "sequence"
                 | "schematic"
+                // A `|stack|` arranges its interior on its own datum
+                // [SPEC 12], so it seals like any other layout-owning type —
+                // its children are not the enclosing drawing's features. The
+                // type has to be named here because a template bundle's
+                // `layout:` is not an authored decl for the test below.
+                | "stack"
         )
     }) || style
         .iter()
