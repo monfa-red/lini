@@ -235,6 +235,18 @@ impl AttrMap {
         }
         self.number("stroke-width").unwrap_or(0.0) / 2.0
     }
+
+    /// Whether this node would put **no ink on the page** — both its stroke and
+    /// its fill resolved to `none`. The cascade's way of deleting generated
+    /// chrome [SPEC 15.7]: `stroke: none` on a `|centerline|` zeroes the stroke
+    /// and the line ceases to exist, exactly as it does in CSS, so the chrome
+    /// takes no geometry and reserves no space. Conservative on purpose — an
+    /// unset channel may still paint its type's default, so only two explicit
+    /// `none`s count.
+    pub fn paints_nothing(&self) -> bool {
+        let none = |k: &str| matches!(self.get(k), Some(ResolvedValue::Ident(v)) if v == "none");
+        none("stroke") && none("fill")
+    }
 }
 
 /// Whether a resolved `pin:` value takes its wearer **out of the flow**

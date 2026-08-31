@@ -2924,7 +2924,11 @@ chrome rule restyles or removes them scope-wide (`|halo| { … }`), like all chr
 
 **Auto chrome — one mechanism, twelve producers.** The lines drafting always draws are
 **generated children**, so the cascade styles or removes them with no dedicated knobs
-(`|sketch| |centerline| { stroke: none }`):
+(`|sketch| |centerline| { stroke: none }`). **Removal is literal**: chrome whose
+stroke *and* fill both resolve to `none` puts no ink on the page, so it takes no
+geometry — it draws nothing and reserves no space, its overhang included. The
+same `stroke: none` that deletes an SVG line deletes the chrome that would have
+drawn it; there is no separate opt-out:
 
 | Producer | Generates |
 |---|---|

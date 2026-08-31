@@ -80,6 +80,13 @@ pub(in crate::layout) fn placeholder(inst: &ResolvedInst) -> PlacedNode {
 /// the part's own px per drawing unit.
 pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale: f64) {
     for c in children.iter_mut() {
+        // Chrome the cascade painted away takes no geometry at all [SPEC 15.7]:
+        // it keeps its empty placeholder bbox, so it reserves no space, and with
+        // no `points:` / `path:` the renderer draws nothing. "Styled **or
+        // removed** by the cascade" — removal is this line.
+        if c.attrs.paints_nothing() {
+            continue;
+        }
         if let Some(ResolvedValue::Tuple(items)) = c.attrs.get("chrome")
             && let [
                 ResolvedValue::Ident(k),

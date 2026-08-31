@@ -69,7 +69,6 @@ input_file: samples/drawing_turned.lini
         <g class="lini-node lini-hidden lini-sketch" data-id="centre" transform="translate(-78,0)">
           <path d="M 0 12 L -30 12 L -42 0 L -30 -12 L 0 -12 Z" fill-rule="evenodd"/>
           <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
-            <line x1="-46" y1="0" x2="4" y2="0"/>
           </g>
         </g>
         <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">

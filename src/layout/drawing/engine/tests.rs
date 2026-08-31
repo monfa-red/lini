@@ -145,6 +145,42 @@ fn a_fused_mirror_generates_its_axis_centerline() {
 }
 
 #[test]
+fn chrome_styled_away_reserves_no_space() {
+    // "Styled **or removed** by the cascade" [SPEC 15.7]: `stroke: none` zeroes
+    // the stroke and the line ceases to exist, so it takes no geometry and the
+    // sheet sizes to the profile alone — not to the axis line's overhang.
+    let src = |rule: &str| {
+        format!(
+            "{{ layout: drawing; density: 1; padding: 0; {rule} }}\n             |sketch#body| {{ draw: move(-20, 0) up(8) right(40) down(8); mirror: x-axis }}\n"
+        )
+    };
+    let shown = laid(&src(""));
+    let hidden = laid(&src("|sketch| |centerline| { stroke: none; }"));
+    // An `x-axis` fuse draws its axis line *along* x, so the overhang it adds
+    // is in width. The profile is 40 wide and carries the drawing's 2-wide
+    // geometry stroke, so its own painted width is 42.
+    assert!(
+        shown.viewbox.w > 42.5,
+        "a drawn axis overhangs the profile: w={}",
+        shown.viewbox.w
+    );
+    assert!(
+        (hidden.viewbox.w - 42.0).abs() < 0.01,
+        "a removed axis leaves the profile's own painted width: w={}",
+        hidden.viewbox.w
+    );
+    let cl = by_id(&hidden.nodes, "body")
+        .children
+        .iter()
+        .find(|c| c.type_chain.iter().any(|t| t == "centerline"))
+        .expect("the chrome child still exists, it just took no geometry");
+    assert!(
+        cl.bbox.w() < 0.01 && cl.bbox.h() < 0.01,
+        "no geometry taken"
+    );
+}
+
+#[test]
 fn a_closed_profile_mirror_generates_no_centerline() {
     let l = laid(
         "{ layout: drawing; density: 1 }\n|sketch#ears| { draw: move(0, -10) circle(3); mirror: x-axis }\n",
