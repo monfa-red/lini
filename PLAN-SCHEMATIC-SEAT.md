@@ -110,8 +110,8 @@ Repros in /tmp/lini-schematic-diag/ (disposable; each is ~12 lines).
 cargo test, insta accept for moved conformance snapshots, fmt, clippy)
 
 - [x] A. routing: same-rect fixed-port pair routes (fix #3 + ROUTING.md + tests) [32c7fb3]
-- [ ] B. seat: monotone chain growth (#1) + share-vs-ladder de-feedback (#2) + seat tests
-- [ ] B2. **facing-pin row/column alignment across anchors** (NEW — found after B):
+- [x] B. [0dfacba] seat: monotone chain growth (#1) + share-vs-ladder de-feedback (#2) + seat tests
+- [x] B2. [04ea703, with C/D/E] **facing-pin row/column alignment across anchors** (NEW — found after B):
       cluster centering offsets neighbouring anchors' pin rows by sub-pitch
       amounts, so every part-to-part wire jogs; two adjacent jogs then collide
       (< min-pitch) and the deny loop over-blocks (denying a failed end run's
@@ -126,19 +126,24 @@ cargo test, insta accept for moved conformance snapshots, fmt, clippy)
       NOTE: hero carries 2 transient strays between B and E (bus one dies at
       B2, entry one — F1 span overlapping the chassis seat, the documented
       "two-end chain is never packed" limit — dies at E).
-- [ ] C. shared growth-ray rule (#4) + 2-port glyph axis facing (#5)
-- [ ] D. taps (#6)
-- [ ] E. spans: bridge + clipped, posed spans (#7) — the largest; may split
+- [x] C. [04ea703] shared growth-ray rule (#4) + 2-port glyph axis facing (#5)
+- [x] D. [04ea703] taps (#6)
+- [x] E. [04ea703] spans: bridge + clipped, posed spans (#7) — the largest; may split
 - [ ] F. readouts clear the top rail (#9) — opus-xhigh agent task
 - [ ] G. |J| single column + sample touch-up (#8) — opus-xhigh agent task
-- [ ] H. perf (#10) — re-measure AFTER A–G; may need less than it looks
+- [x] H. [0138370] perf — profile showed ADMIT 77% (not search): world-scoped admission sims (0.74→0.06s) + A* bound with sound eval-priced early exit (0.19→0.004s); 0.95→0.09s, snapshots byte-identical
 - [ ] SPEC 16.1/16.2 + ROUTING.md amendments land WITH their commits.
 
 Delegation: F, G go to opus-xhigh agents (isolated, snapshot churn — run
 them between my commits, not in parallel); the rest inline in the main
 (Fable) session per the user's instruction.
 
-## Status — PAUSED mid-flight (2026-08-30, user request)
+## Status (2026-08-30, resumed)
+A/B/B2/C/D/E/H committed; hero routes whole (0 warnings) in 0.09s and
+reads like the reference sheets. Remaining: F (readouts vs top rail,
+agent), G (|J| single column + hero J1 rotate, agent), final visual pass.
+
+## Old pause notes (resolved)
 Committed: A [32c7fb3], B [0dfacba]. IN THE WORKING TREE, green except ONE
 test: B2 (facing-pin alignment, place.rs), C (growth_ray/shared-pin/2-port
 facing/bridge_ray in chain.rs+autopose+family), D (taps + Chain.parents),
