@@ -16,6 +16,13 @@ use crate::syntax::ast::{Child, Decl, Node, Value};
 
 /// `|J| { pins: N }` [SPEC 16.2]: N numbered, nameless pins, generated ahead
 /// of any authored children.
+///
+/// A connector is **one column**, not a bilateral part — a header or a terminal
+/// block sits at the sheet's edge with its pins facing the circuit — so each
+/// generated pin is minted with an explicit `side: left`. Being an *authored*
+/// side it rides every path the split already excludes: `pin_sides` leaves it
+/// alone, the pose re-sides it (`rotate: 180` turns the column to face the
+/// other way), and `autopose` reads the same one answer.
 pub(in crate::desugar) fn expand_connector_pins(
     cx: &Lower,
     chain: &[String],
@@ -29,7 +36,12 @@ pub(in crate::desugar) fn expand_connector_pins(
     };
     (1..=count as usize)
         .map(|i| {
-            let mut pin = bare_node("pin", Vec::new(), vec![n("number", i as f64)], Vec::new());
+            let mut pin = bare_node(
+                "pin",
+                Vec::new(),
+                vec![n("number", i as f64), id("side", "left")],
+                Vec::new(),
+            );
             pin.id = Some(format!("p{i}"));
             pin
         })

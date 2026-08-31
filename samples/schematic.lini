@@ -21,10 +21,11 @@
   |pin#gnd| { side: bottom; number: 1; }
   |pin#vout| { side: right; number: 2; }
 ]
-// `pins: 3` generates p1–p3, split bilaterally; `rotate:` is read at lowering
-// — the pins re-side (and their rail reverses) while every text stays upright,
-// so the header's own pins face back at the regulator.
-|J#j1| "3V3 OUT" { pins: 4; rotate: 180; }
+// `pins: 4` generates p1–p4 as **one column** facing left [SPEC 16.2] — a
+// connector is a header, not a bilateral part — so the header already faces
+// back at the regulator; `rotate: 180` would turn the whole column the other
+// way, and is read at lowering (the rail reverses, every text stays upright).
+|J#j1| "3V3 OUT" { pins: 4; }
 
 // ── satellites ──
 |C#c1| "22u"

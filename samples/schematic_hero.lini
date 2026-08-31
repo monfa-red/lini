@@ -44,7 +44,10 @@
 
   |region#entry| "24 V entry" { cell: 1 1; } [
     |Q#Q1| "AOD4185" { symbol: pfet; cell: 2 1; }
-    |J#J1| "Phoenix 1725656" { pins: 3; cell: 1 1; }
+    // `pins: N` gives a connector one column of pins, facing left; the terminal
+    // block sits at the sheet's edge, so it is turned to face its circuit —
+    // `rotate: 180` re-sides the whole column [SPEC 16.1/16.2].
+    |J#J1| "Phoenix 1725656" { pins: 3; cell: 1 1; rotate: 180; }
     |F#F1| "2A"
     |D#D1| "SMAJ24A" { symbol: tvs; }
     |R#R1| "100k"
@@ -145,8 +148,9 @@
       |pin#PA5| "PA5/LED" { side: right; number: 11; }
     ]
     // A second anchor: the debug header, so SWD is routed part-to-part instead
-    // of being written out as four more net labels. `pins: N` generates them
-    // numbered and nameless [SPEC 16.2].
+    // of being written out as four more net labels. `pins: N` generates one
+    // column of numbered, nameless pins, facing left — at the block's right
+    // edge that is already facing the MCU [SPEC 16.2].
     |J#J2| "SWD 4×1" { pins: 4; }
     |C#C6| "100n"
     |R#R7| "10k"
@@ -162,9 +166,12 @@
     U3.NRST - C7 - |gnd|
     U3.NRST - SW1 - |gnd|
     U3.PA5 - R8 - D6 - |gnd|
-    U3.PA13 - J2.p1
-    U3.PA14 - J2.p2
-    J2.p3 - |v3|
+    // The header's own pinout, as ARM numbers it: the rail on pin 1 and the
+    // return on pin 4, so the two signals sit between them and the flags stand
+    // clear of the wires crossing to the MCU.
+    J2.p1 - |v3|
+    U3.PA13 - J2.p2
+    U3.PA14 - J2.p3
     J2.p4 - |gnd|
 
     // What actually leaves the block, and only that, is written as a name: the
@@ -246,8 +253,12 @@
     Q2.d - J4.p2
     Q2.d - D8.a - |v24|
     J4.p1 - |v24|
-    J4.p3 - R16 - |v3|
+    // The tach net is named first, and the pull-up taps the name: two wires to
+    // one label merge at its connection point [SPEC 16.5], so the resistor
+    // stands off the tach trace instead of queueing in a second lane beside the
+    // connector.
     J4.p3 - tach
+    tach - R16 - |v3|
   ]
 
   |title-block| {

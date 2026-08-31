@@ -837,7 +837,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|pin\|` | `\|block\|` | name inside, `number:` outside, stub outward — no `side:` default (the bilateral split, [SPEC 16.2](#162-components--pins)) | A component **terminal** — the wire lands on its stub tip. |
 | `\|label\|` | `\|block\|` | `shape: plain; font-size: 11; color: --label-ink` | The **net tag** — text, a symbol (`gnd`, `power`, …), or both; its own terminal ([SPEC 16.4](#164-labels)). |
 | `\|junction\|` | `\|oval\|` | `fill: --wire; stroke: none` — generated chrome | The connection **dot** where ≥ 3 wire ends meet ([SPEC 16.5](#165-wires)). |
-| `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them | The **connector** ([SPEC 16.2](#162-components--pins)). |
+| `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them `side: left` (one column) | The **connector** ([SPEC 16.2](#162-components--pins)). |
 | `\|opamp\|` | `\|component\|` | `prefix: "U"` — pins `out` `inp` `inn`; power pins hidden | The amplifier triangle ([SPEC 16.2](#162-components--pins)). |
 | the **discretes** — `\|R\|` `\|C\|` `\|L\|` `\|D\|` `\|LED\|` `\|Q\|` `\|Y\|` `\|F\|` `\|FB\|` `\|SW\|` `\|BT\|` `\|V\|` `\|I\|` | `\|block\|` | symbol-bodied, generated pins, `symbol:` variants | The two/three-terminal parts; the type is the ref family ([SPEC 16.3](#163-discretes)). |
 | `\|gnd\|` / `\|nc\|` | `\|label\|` | `symbol: gnd` / `symbol: nc` | Built-in ground / no-connect defines ([SPEC 16.4](#164-labels)). |
@@ -3482,7 +3482,12 @@ take. `translate:` on the styled-label form nudges either.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins
-(`|J#J3| "JST S4B-ZR" { pins: 4 }`). `|opamp|` is the amplifier triangle —
+(`|J#J3| "JST S4B-ZR" { pins: 4 }`). A connector is **one column**, never the
+bilateral split: the generated pins are minted `side: left`, the header or
+terminal block standing at the sheet's edge with its pins facing the circuit.
+`rotate: 180` turns the column the other way ([16.1](#161-placement--anchors--satellites)),
+which is what a part on the *left* edge wants; authored `|pin|` children keep
+whatever side they state. `|opamp|` is the amplifier triangle —
 prefix U, pins `out`, `inp`, `inn`, its power pins present but hidden by
 default.
 
@@ -3849,7 +3854,7 @@ out of scope.
 | `prefix` | `\|component\|` lineage, the discretes | quoted string | the type name (`\|component\|`: `"U"`) | [SPEC 16.2](#162-components--pins) |
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
-| `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split | [SPEC 16.2](#162-components--pins) |
+| `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split (`left` on a `\|J\|`'s generated pins) | [SPEC 16.2](#162-components--pins) |
 | `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, the freer side of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
 
 ### Link properties

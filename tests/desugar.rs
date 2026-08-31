@@ -709,6 +709,24 @@ fn a_connector_generates_numbered_nameless_pins() {
 }
 
 #[test]
+fn a_connector_is_one_column_of_pins_that_rotate_flips() {
+    // A connector is a header, not a bilateral part [SPEC 16.2]: the generated
+    // pins are minted `side: left`, so they land on one rail — and the pose
+    // re-sides the lot, `rotate: 180` turning the column to face the other way.
+    let out = desugar_source("|J#J4| { pins: 4 }\n").unwrap();
+    assert_eq!(out.matches("side: left").count(), 4, "{out}");
+    assert!(!out.contains("side: right"), "{out}");
+    assert!(out.contains("align: start"), "one left rail: {out}");
+    assert!(!out.contains("align: end"), "no right rail: {out}");
+
+    let out = desugar_source("|J#J4| { pins: 4; rotate: 180 }\n").unwrap();
+    assert_eq!(out.matches("side: right").count(), 4, "{out}");
+    assert!(!out.contains("side: left"), "{out}");
+    assert!(out.contains("align: end"), "one right rail: {out}");
+    assert!(!out.contains("align: start"), "no left rail: {out}");
+}
+
+#[test]
 fn a_discrete_lowers_its_symbol_ports_and_readouts() {
     let out = desugar_source("|R#R5| \"470\"\n").unwrap();
     assert!(out.contains(".lini-sch-line {"), "one symbol rule: {out}");
