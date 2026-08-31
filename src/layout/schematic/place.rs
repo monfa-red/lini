@@ -244,13 +244,18 @@ pub(super) fn arrange(
         };
         let (ca, cb) = (index(&cols, sa.col), index(&cols, sb.col));
         let (ra, rb) = (index(&rows, sa.row), index(&rows, sb.row));
+        // The leg's own line — what its ends' clusters really swallow — is
+        // settled on an axis only when the anchors share the track **across**
+        // it: the offset between the two landings is then one this pass has
+        // already placed. Hand it over; without it the demand falls back to
+        // the worst case over every line the leg could take.
         charge(
             &mut extra_x,
             &widths,
             gap_x,
             (ca, oa.0),
             (cb, ob.0),
-            demand.need.0,
+            demand.need(true, ca.cmp(&cb), (ra == rb).then_some(ob.1 - oa.1)),
         );
         charge(
             &mut extra_y,
@@ -258,7 +263,7 @@ pub(super) fn arrange(
             gap_y,
             (ra, oa.1),
             (rb, ob.1),
-            demand.need.1,
+            demand.need(false, ra.cmp(&rb), (ca == cb).then_some(ob.0 - oa.0)),
         );
     }
     let col_off = grid::cumulative_gaps(&widths, |i| gap_x + extra_x[i]);

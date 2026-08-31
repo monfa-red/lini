@@ -118,6 +118,22 @@ pub fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Err
     Ok(())
 }
 
+/// Re-seat a node's own pinned overlays after **its own box changed size** —
+/// a grid cell stretched to fill its track, a flex child grown to fill the
+/// cross axis. `pin` answers to the parent's drawn box [SPEC 5], and a box
+/// grown after its interior was laid out leaves that answer stale: a group's
+/// caption stays glued to the content it was measured around instead of
+/// riding to the corner it names, and the wider the track the further adrift
+/// it reads. Seating recomputes `cx`/`cy` from the pin and re-applies the one
+/// nudge, so the second answer simply replaces the first.
+pub fn reseat_overlays(node: &mut PlacedNode) -> Result<(), Error> {
+    // The **drawn** box, which a painted outline straddles: the bbox holds
+    // the stroke, and a pin answers to the shape inside it — the same box an
+    // explicit `width`/`height` names [SPEC 5].
+    let drawn = node.bbox.inflate(-node.attrs.half_stroke());
+    place_pinned(&mut node.children, drawn)
+}
+
 /// Land one child flush on its `pin` anchor of `anchor_box` [SPEC 5], reporting
 /// whether it was pinned — `false` leaves it untouched for the caller's own
 /// flow to place. The one seat: a box arranger's overlay, a tree's content, an

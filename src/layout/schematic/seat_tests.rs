@@ -223,6 +223,76 @@ fn two_pins_of_one_side_never_share_a_lane_however_their_chains_grow() {
 }
 
 #[test]
+fn a_side_growing_one_way_ladders_along_that_ray_not_the_canonical_one() {
+    // [SPEC 16.1] a chain's leg crosses every lane inside its own, so the
+    // chain whose pin sits **earlier along the ray** has to step out. Read
+    // canonically (down, right) that is right for a side whose chains grow
+    // down and backwards for one whose chains grow up — the fan header's
+    // rail flag laddering outside the tach column, which then crossed its
+    // lead. The canonical reading is owed only to a side holding **both**
+    // rays, where one pin's up- and down-chain share a column and the two
+    // ladders have to agree.
+    let sheet = "{ |flag::label| { symbol: power } }\n";
+    let part = "  |component#u1| [\n    |pin#hi| { side: right }; |pin#lo| { side: right }; |pin#l| { side: left }\n  ]\n";
+    let lanes = |chains: &str| {
+        let nodes = laid(&(sheet.to_owned() + &scope("", &(part.to_owned() + chains))));
+        let wall = {
+            let (u, ux, _) = placed(&nodes, "u1");
+            ux - u.cx + super::seat::drawn(u).max_x
+        };
+        (at(&nodes, "a").0 - wall, at(&nodes, "b").0 - wall)
+    };
+    // Both chains grow **up**: the upper pin is the deeper one along that
+    // ray, so it keeps the inner lane and the lower pin's column steps out
+    // past it — nothing crosses.
+    let (hi, lo) = lanes("  |flag#a|\n  |flag#b|\n  u1.hi - a\n  u1.lo - b\n");
+    assert!(
+        hi < lo,
+        "the upper pin's rail keeps the inner lane: {hi} vs {lo}"
+    );
+    // Both grow **down**, and the order mirrors: the lower pin is now the
+    // deeper one and keeps the inner lane.
+    let (hi, lo) = lanes("  |gnd#a|\n  |gnd#b|\n  u1.hi - a\n  u1.lo - b\n");
+    assert!(
+        lo < hi,
+        "the lower pin's return keeps the inner lane: {lo} vs {hi}"
+    );
+}
+
+#[test]
+fn a_span_reserves_only_what_its_leg_will_really_swallow() {
+    // [SPEC 16.1] the track demand and the seat itself read one `swallow`.
+    // Measured two ways they disagree: the demand parted the tracks for a
+    // cluster the leg then passed clear of, and the member — struck at even
+    // fractions of what was left — split the slack and stood a lane of
+    // nothing beside itself (105 px of it in the hero's 24 V entry).
+    //
+    // The scene stages exactly that. The deep stack under `u2` rides its
+    // `s` pin far above `j1`, so the landing leg runs clear over `j1`'s
+    // whole cluster, ground flag and all; the member's long value makes the
+    // span — not the two clusters and the gap — what parts the tracks, so
+    // there *is* a reserve to be wrong about.
+    let sep = |ground: &str| {
+        let nodes = laid(&scope(
+            "",
+            &("  |J#j1| \"PH\" { pins: 2; cell: 1 1; rotate: 180 }\n".to_owned()
+                + "  |component#u2| { cell: 2 1 } [\n    |pin#s| { side: left }; |pin#gp| { side: bottom }\n  ]\n"
+                + "  |R#r1| \"1000000000kkkk\"\n  |gnd#gb|\n"
+                + "  |R#ra| \"1k\"\n  |R#rb| \"1k\"\n  |R#rc| \"1k\"\n"
+                + "  j1.p2 - r1 - u2.s\n"
+                + ground
+                + "  u2.gp - ra - rb - rc - |gnd|\n"),
+        ));
+        at(&nodes, "u2").0 - at(&nodes, "j1").0
+    };
+    let (with, without) = (sep("  j1.p1 - gb\n"), sep(""));
+    assert!(
+        close(with, without),
+        "a ground the leg passes clear of costs the span nothing: {with} vs {without}"
+    );
+}
+
+#[test]
 fn a_lane_answers_to_the_symbol_not_to_the_name_beside_it() {
     // [SPEC 16.1] the seat gap is measured on what a wire arrives at — a
     // flag's symbol — and the name beside it only may not reach back over the

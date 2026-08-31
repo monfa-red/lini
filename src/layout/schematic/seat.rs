@@ -42,6 +42,8 @@
 //! anchor's [`Stack`], so a pathological weave of spans and seats can
 //! overlap — the router then reports what it cannot lawfully draw.
 
+use std::cmp::Ordering;
+
 use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::stack::{Band, Painted, SeatLine, Stack};
@@ -363,6 +365,26 @@ impl Seats {
             Side::Bottom | Side::Right => g.depth,
             Side::Top | Side::Left => -g.depth,
         };
+        // One ray, or two? A pin's up-chain and its down-chain share a
+        // column, so a side holding **both** rays must order its columns one
+        // way for both — and only the canonical direction (down, right) is
+        // one the two ladders can each read, the bottom pin's column
+        // innermost whichever way its chains grow. A side growing **one**
+        // way has no such tie and takes the order its own leg-crossing law
+        // asks for: a chain's leg crosses every lane inside its own, so the
+        // one whose pin sits *earlier* along the ray steps out, and the
+        // deeper one keeps the inner lane. Read canonically that is right
+        // for a downward side and backwards for an upward one — the fan
+        // header's rail flag laddering outside the tach column it then had
+        // to cross.
+        let mut mixed: Vec<bool> = vec![false; rays.len()];
+        let mut seen: Vec<Option<Side>> = vec![None; rays.len()];
+        for g in held.iter().filter(|g| g.lead != 0.0) {
+            match seen[g.group] {
+                None => seen[g.group] = Some(g.ray),
+                Some(r) => mixed[g.group] |= r != g.ray,
+            }
+        }
         // Straight chains seat **first**, whatever their declaration: they
         // are the inner geography — members lying in their own pins'
         // corridors — and the turning chains' columns ladder out past them
@@ -375,8 +397,10 @@ impl Seats {
                 .then(a.group.cmp(&b.group))
                 .then(if a.lead == 0.0 {
                     a.depth.total_cmp(&b.depth)
-                } else {
+                } else if mixed[a.group] {
                     canon(b).total_cmp(&canon(a))
+                } else {
+                    b.depth.total_cmp(&a.depth)
                 })
         });
         let lanes = ladder(children, &held, seat);
@@ -799,32 +823,25 @@ impl Seats {
     /// **cluster** swallows a stretch of the landing leg before the clear
     /// window opens ([`Seats::absolutize`]) — the pin-to-pin distance must
     /// carry that too, or the window between two busy clusters closes to
-    /// nothing and the members land on their seats. The march direction is
-    /// not known until the anchors place, so the swallow is the worst case.
+    /// nothing and the members land on their seats. A cluster reaches two
+    /// ways from its landing and the leg leaves by exactly one of them, so
+    /// both are stated here and the **caller** picks: which way the leg
+    /// marches is the anchors' own track order, which this pass cannot see
+    /// and [`super::place`] already knows.
     pub(super) fn demands(&self, children: &[PlacedNode]) -> Vec<Demand> {
         self.spanning
             .iter()
             .map(|s| {
-                let swallow = |end: &(usize, Terminal), horiz: bool| {
-                    let c = self.cluster(children, end.0);
-                    let p = end.1.at;
-                    self.seat
-                        + if horiz {
-                            (p.0 - c.min_x).max(c.max_x - p.0)
-                        } else {
-                            (p.1 - c.min_y).max(c.max_y - p.1)
-                        }
-                };
+                let cluster =
+                    |end: &(usize, Terminal)| self.cluster(children, end.0).inflate(self.seat);
                 Demand {
                     ends: [(s.ends[0].0, s.ends[0].1.at), (s.ends[1].0, s.ends[1].1.at)],
-                    need: (
-                        step(&s.members, children, Bbox::w, self.seat)
-                            + swallow(&s.ends[0], true)
-                            + swallow(&s.ends[1], true),
-                        step(&s.members, children, Bbox::h, self.seat)
-                            + swallow(&s.ends[0], false)
-                            + swallow(&s.ends[1], false),
+                    step: (
+                        step(&s.members, children, Bbox::w, self.seat),
+                        step(&s.members, children, Bbox::h, self.seat),
                     ),
+                    cluster: [cluster(&s.ends[0]), cluster(&s.ends[1])],
+                    horiz_leg: s.ends[1].1.facing.map(Side::is_vertical),
                 }
             })
             .collect()
@@ -839,8 +856,71 @@ impl Seats {
 pub(super) struct Demand {
     /// Each end's anchor, and the landing's offset in that anchor's own frame.
     pub ends: [(usize, (f64, f64)); 2],
-    /// The least pin-to-pin distance along x, along y.
-    pub need: (f64, f64),
+    /// The members' own least step along x, along y.
+    step: (f64, f64),
+    /// Each end's cluster, seat gap included, in its anchor's own frame —
+    /// the very box [`Seats::absolutize`] measures the leg against.
+    cluster: [Bbox; 2],
+    /// Which way the landing leg runs — `Some(true)` on end 1's row,
+    /// `Some(false)` on its column, `None` for a facing-less end.
+    horiz_leg: Option<bool>,
+}
+
+impl Demand {
+    /// The least pin-to-pin distance along one axis: the members' own step,
+    /// plus the stretch each end's cluster **swallows** of the leg before
+    /// the clear window opens.
+    ///
+    /// `order` is how end 0's track compares with end 1's, and `perp` the
+    /// settled offset between the two landings across this axis, when the
+    /// caller has one. Given both, the leg's line is known and the swallow
+    /// is [`swallow`] — exactly what the seat pass will consume, so the
+    /// reserve is neither short nor slack. Without them the line is not
+    /// known here and the cluster's own projection stands: the worst case
+    /// over every line the leg could take, still read on the side the leg
+    /// leaves by whenever the order alone settles that much.
+    pub(super) fn need(&self, horiz: bool, order: Ordering, perp: Option<f64>) -> f64 {
+        let sign = match order {
+            Ordering::Less => 1.0,
+            Ordering::Greater => -1.0,
+            Ordering::Equal => 0.0,
+        };
+        let exact = |end: usize| -> Option<f64> {
+            let perp = perp?;
+            if self.horiz_leg? != horiz || sign == 0.0 {
+                return None;
+            }
+            let at = self.ends[end].1;
+            // End 0 probes on end 1's own line; end 1 already sits on it.
+            let off = if end == 0 { perp } else { 0.0 };
+            let out = if end == 0 { sign } else { -sign };
+            let (probe, d) = if horiz {
+                ((at.0, at.1 + off), (out, 0.0))
+            } else {
+                ((at.0 + off, at.1), (0.0, out))
+            };
+            Some(swallow(self.cluster[end], probe, d))
+        };
+        let projected = |end: usize| {
+            let (c, p) = (self.cluster[end], self.ends[end].1);
+            let (lo, hi) = if horiz {
+                (p.0 - c.min_x, c.max_x - p.0)
+            } else {
+                (p.1 - c.min_y, c.max_y - p.1)
+            };
+            match order {
+                Ordering::Less if end == 0 => hi,
+                Ordering::Less => lo,
+                Ordering::Greater if end == 0 => lo,
+                Ordering::Greater => hi,
+                Ordering::Equal => lo.max(hi),
+            }
+        };
+        let step = if horiz { self.step.0 } else { self.step.1 };
+        step + (0..2)
+            .map(|e| exact(e).unwrap_or_else(|| projected(e)))
+            .sum::<f64>()
+    }
 }
 
 /// The least pin-to-pin distance one axis needs: `n` members seat a `1/(n+1)`
@@ -1173,10 +1253,32 @@ pub(super) fn drawn(node: &PlacedNode) -> Bbox {
 /// when it already does. The spanning clip's one primitive: how much of the
 /// chord an end's inflated cluster swallows.
 fn exit_t(from: (f64, f64), d: (f64, f64), r: Bbox) -> f64 {
-    let inside =
-        |p: (f64, f64)| p.0 >= r.min_x && p.0 <= r.max_x && p.1 >= r.min_y && p.1 <= r.max_y;
-    if !inside(from) {
+    let len = (d.0 * d.0 + d.1 * d.1).sqrt();
+    if len < 1e-9 {
+        return 1.0;
+    }
+    (swallow(r, from, d) / len).clamp(0.0, 1.0)
+}
+
+/// The stretch of a leg leaving `at` along `d` that the box `r` **swallows**:
+/// the distance to where the ray leaves it, and **zero** when `at` is not
+/// inside — a leg that misses a cluster owes it nothing.
+///
+/// One reading, two passes. The track demand ([`Seats::demands`]) reserves
+/// room between two anchors for what each end's cluster will eat of the leg,
+/// and the seat itself ([`Seats::absolutize`]) then eats it. Measured two
+/// ways they disagree, and a cluster the leg passes clear of — a connector's
+/// ground flags hanging a row below the bus its fuse rides — is reserved for
+/// and never used: the members, struck at even fractions of what is left,
+/// split the slack and stand a lane of nothing beside themselves.
+fn swallow(r: Bbox, at: (f64, f64), d: (f64, f64)) -> f64 {
+    let inside = at.0 >= r.min_x && at.0 <= r.max_x && at.1 >= r.min_y && at.1 <= r.max_y;
+    if !inside {
         return 0.0;
+    }
+    let len = (d.0 * d.0 + d.1 * d.1).sqrt();
+    if len < 1e-9 {
+        return f64::INFINITY;
     }
     let axis = |p: f64, d: f64, lo: f64, hi: f64| {
         if d > 1e-9 {
@@ -1187,8 +1289,7 @@ fn exit_t(from: (f64, f64), d: (f64, f64), r: Bbox) -> f64 {
             f64::INFINITY
         }
     };
-    let t = axis(from.0, d.0, r.min_x, r.max_x).min(axis(from.1, d.1, r.min_y, r.max_y));
-    t.clamp(0.0, 1.0)
+    axis(at.0, d.0, r.min_x, r.max_x).min(axis(at.1, d.1, r.min_y, r.max_y)) * len
 }
 
 /// A box corner, `min` or `max` — the two the frame projections need.

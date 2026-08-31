@@ -173,6 +173,9 @@ pub fn lay_out_grid(
             let w = if fill_w { x1 - x0 } else { child.bbox.w() };
             let h = if fill_h { y1 - y0 } else { child.bbox.h() };
             child.bbox = Bbox::centered(w, h);
+            // The cell's own overlays answer to the box it *ends up* with
+            // [SPEC 5] — a filled cell's caption rides to the track's corner.
+            super::anchors::reseat_overlays(child)?;
         }
 
         // Pack the box in its track per the column alignment (a filled box centres —

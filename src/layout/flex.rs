@@ -98,7 +98,7 @@ pub fn lay_out_flex(
     if cross == Cross::Stretch {
         for c in children.iter_mut() {
             if !dim_set(c, cross_dim) {
-                set_dim(c, cross_dim, cross_extent);
+                set_dim(c, cross_dim, cross_extent)?;
             }
         }
     }
@@ -113,7 +113,7 @@ pub fn lay_out_flex(
             let add = slack / grow.len() as f64;
             for &i in &grow {
                 let m = len(&children[i], main_dim) + add;
-                set_dim(&mut children[i], main_dim, m);
+                set_dim(&mut children[i], main_dim, m)?;
             }
         }
     }
@@ -163,12 +163,14 @@ fn len(c: &PlacedNode, dim: Dim) -> f64 {
 
 /// Resize a child's box along one dimension, centred — the stretch fill. An
 /// explicit size fixes the axis (checked by the caller via [`dim_set`]), so the
-/// recentre never discards an author's dimension.
-fn set_dim(c: &mut PlacedNode, dim: Dim, v: f64) {
+/// recentre never discards an author's dimension. The child's own overlays
+/// answer to the box it ends up with [SPEC 5], so they re-seat on it.
+fn set_dim(c: &mut PlacedNode, dim: Dim, v: f64) -> Result<(), Error> {
     c.bbox = match dim {
         Dim::W => Bbox::centered(v, c.bbox.h()),
         Dim::H => Bbox::centered(c.bbox.w(), v),
     };
+    super::anchors::reseat_overlays(c)
 }
 
 fn dim_set(c: &PlacedNode, dim: Dim) -> bool {

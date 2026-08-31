@@ -225,6 +225,40 @@ fn caption_sits_above_the_content() {
     assert!(cap.cy < a.cy, "cap.cy={} a.cy={}", cap.cy, a.cy);
 }
 
+#[test]
+fn a_stretched_cells_caption_rides_to_the_box_it_ends_up_with() {
+    // [SPEC 5] `pin` answers to the parent's **drawn box**. A stretched grid
+    // cell is grown *after* its interior laid out, so an overlay seated on
+    // the pre-stretch box stays glued to the content it was measured around
+    // — the wider the track, the further adrift the caption reads (every
+    // captioned region on the schematic hero's sheet). The same holds for a
+    // flex child grown to fill its cross axis.
+    let corner = |src: &str| {
+        let l = lay_out(src);
+        let g = l
+            .nodes
+            .iter()
+            .find(|n| n.id.as_deref() == Some("g"))
+            .expect("the group");
+        let cap = g
+            .children
+            .iter()
+            .find(|c| c.type_chain.iter().any(|t| t == "caption"))
+            .expect("caption child");
+        // How far the caption's left edge sits inside the group's own left.
+        (cap.cx + cap.bbox.min_x) - g.bbox.min_x
+    };
+    let body = " [\n  |caption| \"Cap\"\n  |box#a| { width: 40; height: 20; }\n]\n";
+    let snug = corner(&format!("|group#g|{body}"));
+    let filled = corner(&format!(
+        "{{ layout: grid; columns: repeat(1, 400); rows: repeat(1, 300); align: stretch; justify: stretch }}\n|group#g|{body}"
+    ));
+    assert!(
+        (filled - snug).abs() < 0.01,
+        "the caption keeps its corner whatever the track: snug={snug} filled={filled}"
+    );
+}
+
 // ── Flex distribution with slack [SPEC 12] ──
 
 #[test]

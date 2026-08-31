@@ -509,7 +509,11 @@ Every child is **in flow** by default — laid out by its container's `layout`
 | `top` · `bottom` · `left` · `right` | flush against that parent edge |
 | `top left` · `top right` · `bottom left` · `bottom right` | with its corner on that parent corner |
 
-The anchor is the parent's **drawn box** — border and padding included.
+The anchor is the parent's **drawn box** — border and padding included, and
+the box it *ends up* with: a container grown after its interior was laid out —
+a grid cell stretched to fill its track, a flex child filling the cross axis —
+re-seats its overlays on the grown box, so a caption keeps the corner it names
+however wide the track.
 
 A pinned child is an **overlay**. It **does not grow the parent** — a parent of only
 pinned children collapses to `2 × padding` — and it **paints above** the in-flow
@@ -3430,13 +3434,19 @@ along the one lane axis, so an up-chain and a down-chain off two *different*
 pins ladder against each other like any pair — laddered per ray they would
 both take the innermost lane and turn on one column a pin pitch apart, a rail
 flag standing over the return below it, one broken line where a reader sees a
-short. Column order is therefore the pins' own, measured **canonically**
-(downward, rightward) whichever way the chains grow. Only a **pin's own**
-pair shares: the **first** chain of each ray off one pin takes the outermost
-lane its opposite number asked for — one lead, splitting once at the turn —
-and every later same-ray chain ladders out into its own column (two rails up,
-or two returns down, never stack one lane). Chains sharing one pin and ray
-keep statement order. A seated satellite
+short. Column order is the pins' own, read **along the ray**: a chain's leg
+crosses every lane inside its own, so the chain whose pin sits *earlier*
+along the ray steps out and the deeper one keeps the inner lane. A side
+holding **both** rays cannot read it that way — one pin's up-chain and its
+down-chain share a column, so the two ladders would demand opposite orders
+and the pair would have no lawful lane at all (the 2×2 divider: two pins,
+each a rail up and a return down) — and falls back to the **canonical**
+direction (downward, rightward), the bottom pin's column innermost both
+ways. Only a **pin's own** pair shares: the **first** chain of each ray off
+one pin takes the outermost lane its opposite number asked for — one lead,
+splitting once at the turn — and every later same-ray chain ladders out into
+its own column (two rails up, or two returns down, never stack one lane).
+Chains sharing one pin and ray keep statement order. A seated satellite
 registers as a router obstacle like any node. **`cell:` promotes a satellite
 to an anchor**; `translate:` nudges it from its seat (pin-relative — move
 the component and the nudge travels along, [SPEC 5](#5-the-box-model)).

@@ -544,7 +544,7 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-309.844,-165.75)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-381.198,-453.5)">
           <rect x="-28.302" y="-6" width="56.604" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lini-g1400-1657" transform="translate(-28.302 4.296) scale(0.012 -0.012)"/>
@@ -1352,7 +1352,7 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-368.051,-205.5)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-370.128,-453.5)">
           <rect x="-39.372" y="-6" width="78.744" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lini-g1400-126" transform="translate(-39.372 4.296) scale(0.012 -0.012)"/>
