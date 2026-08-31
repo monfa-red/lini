@@ -9,7 +9,7 @@
 {
   // The sheet is A4 at 11 px per millimetre — `density:` is screen resolution
   // alone, so the paper stays true-scale in print [SPEC 15.1].
-  density: 5.5;
+  density: 5.2;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -39,7 +39,7 @@
 // sheet edge to edge and leave the bottom-right cell to the title block, which
 // is seated by type.
 |page| {
-  sheet: a3 landscape; layout: grid; columns: 820, 720, 550; rows: 480, 445, 490; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; layout: grid; columns: 725, 710, 545; rows: 460, 420, 460; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [

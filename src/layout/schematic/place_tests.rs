@@ -364,3 +364,30 @@ fn facing_pins_align_across_tracks_and_their_wire_runs_straight() {
         "the wired facing pins share a row: {ay} vs {by}"
     );
 }
+
+#[test]
+fn a_defines_own_gap_and_clearance_reach_the_scope_it_opens() {
+    // [SPEC 16.6] opting into the engine is one decision, so a container the
+    // cascade makes a schematic scope is *given* the sheet's track spacing
+    // and clearance — but only where nothing states them. The config lands on
+    // the instance's own block, tier 5, so asking that block alone let it
+    // outrank the very define that opened the scope: `|region::group| {
+    // layout: schematic; gap: 100 }` drew at 60 and looked inert.
+    let sep = |gap: f64| {
+        let src = format!(
+            "{{ |region::group| {{ layout: schematic; gap: {gap} }} }}\n\
+             |region#r| [\n\
+             {}{}  u1.b - u2.a\n]\n",
+            anchor("u1", " { cell: 1 1 }"),
+            anchor("u2", " { cell: 2 1 }"),
+        );
+        let nodes = laid(&src);
+        at(&nodes, "u2").0 - at(&nodes, "u1").0
+    };
+    assert!(
+        (sep(300.0) - sep(100.0) - 200.0).abs() < 0.01,
+        "the define's own gap parts the tracks: {} vs {}",
+        sep(100.0),
+        sep(300.0)
+    );
+}

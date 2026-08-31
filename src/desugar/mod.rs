@@ -603,11 +603,20 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
     // clearance, whether it wrote `layout: schematic` itself or wears
     // `|schematic|` (whose bundle already states them). The engine's baked
     // constants — pin pitch, stub, seat gap — are tuned to that clearance, so a
-    // scope routing at the diagram's 16 would stray every lead it seats. Its
-    // own decls lead, so anything authored still wins; already-lowered sources
-    // carry the decls and skip.
-    if is_schematic && !scope_chain.iter().any(|t| t == "schematic") {
-        let owned = |name: &str| style.iter().any(|d| d.name == name);
+    // scope routing at the diagram's 16 would stray every lead it seats. An
+    // already-lowered node carries the first pass's answer — in its own block,
+    // or in the `.lini-*` rule its define became — and skips, so desugar stays
+    // a fixed point.
+    //
+    // The config lands on the instance's own block — tier 5, which outranks
+    // everything — so it may only be added where nothing states it *anywhere
+    // the type chain reaches*: the block itself, an element rule, or a
+    // define's defaults ([`Cx::chain_decl`], the same reader every other
+    // chain-aware property uses). Asking the block alone made a scope's own
+    // `|region::group| { gap: 100 }` inert — the injected 60 sat a tier above
+    // the define that asked for it.
+    if is_schematic && !already && !scope_chain.iter().any(|t| t == "schematic") {
+        let owned = |name: &str| cx.chain_decl(&info.chain, &style, name).is_some();
         let add: Vec<Decl> = crate::ledger::defaults::schematic_scope_config()
             .into_iter()
             .filter(|d| !owned(&d.name))
