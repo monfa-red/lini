@@ -192,16 +192,19 @@ impl Seats {
         let mut held: Vec<Growing> = Vec::new();
         let mut mirrored: Vec<usize> = Vec::new();
         let mut restacked: Vec<(usize, f64)> = Vec::new();
-        // The rays seen so far — an (anchor, growth direction, turn side)
-        // triple. A ray splits into one ladder per side it is entered from:
-        // a chain turning left off a left pin and one turning right off a
-        // right pin grow down the same ray on opposite sides of the part,
-        // where their leads can never cross — laddering them together would
-        // step one past the other's reach for nothing. Straight-growing
-        // chains (`lead == 0`) take no lane, so their side is moot. The rays
-        // keep the order they were declared in and only the chains within one
-        // are reordered.
-        let mut rays: Vec<(usize, Side, i8)> = Vec::new();
+        // The lanes seen so far — an (anchor, **pin side**) pair. One ladder
+        // per side of a part, not per growth ray: every chain turning off
+        // that side leaves along the one lane axis, so an up-chain and a
+        // down-chain off two different pins land in the same column unless
+        // they ladder together — the drain's flag standing over the source's
+        // return, one broken line where a reader sees a short. Two sides are
+        // still two ladders (a chain turning left off a left pin and one
+        // turning right off a right pin grow on opposite sides of the part,
+        // where their leads can never cross), and a straight-growing chain
+        // (`lead == 0`) grows along its own pin, so its side *is* its ray.
+        // The lanes keep the order they were declared in and only the chains
+        // within one are reordered.
+        let mut rays: Vec<(usize, Side)> = Vec::new();
         let wire_edges = edges(children, links, scope);
         // Every **wired** pin's row is a corridor [SPEC 16.1] — the wire off
         // it runs there, to another part or out to its chain's own column.
@@ -264,9 +267,7 @@ impl Seats {
                     let frame = Frame::outward(ray.normal());
                     let depth = frame.cross(pin.at);
                     let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
-                    // f64::signum maps 0.0 to 1.0, so the no-turn side is spelled out.
-                    let side = if lead == 0.0 { 0 } else { lead.signum() as i8 };
-                    let key = (one.child, ray, side);
+                    let key = (one.child, pin.facing.unwrap_or(ray));
                     let group = rays.iter().position(|r| *r == key).unwrap_or_else(|| {
                         rays.push(key);
                         rays.len() - 1
@@ -922,63 +923,76 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
             out[i] = out[i].max(stack_reach(children, s, seat) + seat + back[i]);
         }
     }
-    for _ in 0..=held.len() {
-        let mut moved = false;
-        // Ladder: within one ray, each chain steps past its predecessor's
-        // **whole** ink — a chain's readout text runs outward past its own
-        // lane, so the next column must clear that side too, or its bodies
-        // land on the text and the packer stacks the columns end to end
-        // instead of side by side.
-        let mut prev: Option<(usize, f64)> = None;
-        for (i, g) in held.iter().enumerate() {
-            if lead[i] == 0.0 {
-                continue;
-            }
-            if let Some((group, edge)) = prev
-                && group == g.group
-                && out[i] - back[i] < edge
-            {
-                out[i] = edge + back[i];
-                moved = true;
-            }
-            prev = Some((g.group, out[i] + fwd[i] + seat));
+    // The **columns** the side's lanes really hold. A pin whose net branches
+    // *both* ways — a rail up to its flag, down to its decoupling cap —
+    // leaves on one lead and splits **once**, at one point, rather than
+    // peeling twice off its stub, so the first chain of each ray off one pin
+    // pairs with its opposite number into one column: the wires run
+    // co-linearly out to it, which the router draws as one lead (an implicit
+    // fan on one fixed port — [ROUTING.md](../../../ROUTING.md) Special nodes
+    // / Fixed ports). Everything else is a column of its own — a later
+    // same-ray chain never rides the split of the pair before it, so one
+    // up-chain shares one down-chain's lane, never two. Sharing is
+    // structural, decided here and once: nothing downstream may re-equalize
+    // two lanes the ladder has just stepped apart.
+    let mut col: Vec<Option<usize>> = vec![None; held.len()];
+    let mut cols: Vec<Vec<usize>> = Vec::new();
+    for i in 0..held.len() {
+        if lead[i] == 0.0 || col[i].is_some() {
+            continue;
         }
-        // Share: a pin whose net branches **both** ways — a rail up to its
-        // flag, down to its decoupling cap — leaves on one lead and splits
-        // **once**, at one point, rather than peeling twice off its stub. So
-        // the **first** chain of each ray off one pin takes the outermost
-        // lane its opposite number asked for; the wires run co-linearly out
-        // to that point, which the router draws as one lead (an implicit fan
-        // on one fixed port — [ROUTING.md](../../../ROUTING.md) Special nodes
-        // / Fixed ports). Everything else ladders side by side like any two
-        // chains: same-ray chains never share (equalizing them while the
-        // ladder steps one past the other is a feedback loop), and a later
-        // chain never rides the split of the pair before it — one up-chain
-        // shares one down-chain's lane, never two.
-        for i in 0..held.len() {
-            for j in 0..held.len() {
-                if i != j
-                    && lead[i] != 0.0
+        let k = cols.len();
+        col[i] = Some(k);
+        let mut members = vec![i];
+        let twin = held[i].ray_first.then(|| {
+            (0..held.len()).find(|&j| {
+                j != i
                     && lead[j] != 0.0
-                    && held[i].ray_first
+                    && col[j].is_none()
                     && held[j].ray_first
-                    && held[i].held.child == held[j].held.child
-                    && held[i].pin == held[j].pin
-                    && held[i].ray != held[j].ray
-                    && out[i] < out[j]
-                {
-                    out[i] = out[j];
-                    moved = true;
-                }
-            }
+                    && held[j].held.child == held[i].held.child
+                    && held[j].pin == held[i].pin
+                    && held[j].ray != held[i].ray
+            })
+        });
+        if let Some(Some(j)) = twin {
+            col[j] = Some(k);
+            members.push(j);
         }
-        if !moved {
-            break;
+        cols.push(members);
+    }
+    // A column asks for the outermost lane any of its chains asked for, and
+    // reaches as far as the widest ink among them, each way.
+    let ask = |members: &[usize], v: &[f64]| {
+        members
+            .iter()
+            .map(|&i| v[i])
+            .fold(f64::NEG_INFINITY, f64::max)
+    };
+    let mut cout: Vec<f64> = cols.iter().map(|m| ask(m, &out)).collect();
+    let cback: Vec<f64> = cols.iter().map(|m| ask(m, &back)).collect();
+    let cfwd: Vec<f64> = cols.iter().map(|m| ask(m, &fwd)).collect();
+    // Ladder: within one side, each column steps past its predecessor's
+    // **whole** ink — a chain's readout text runs outward past its own lane,
+    // so the next column must clear that side too, or its bodies land on the
+    // text and the packer stacks the columns end to end instead of side by
+    // side. `held` is sorted canonically and one side's chains are
+    // contiguous, so the columns arrive in that order and one pass settles
+    // them: the step only ever pushes outward.
+    let mut prev: Option<(usize, f64)> = None;
+    for (k, members) in cols.iter().enumerate() {
+        let group = held[members[0]].group;
+        if let Some((before, edge)) = prev
+            && before == group
+            && cout[k] - cback[k] < edge
+        {
+            cout[k] = edge + cback[k];
         }
+        prev = Some((group, cout[k] + cfwd[k] + seat));
     }
     for (i, &lead) in lead.iter().enumerate() {
-        if lead != 0.0 {
-            along[i] = lead * out[i];
+        if let Some(k) = col[i] {
+            along[i] = lead * cout[k];
         }
     }
     along

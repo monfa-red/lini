@@ -238,48 +238,103 @@ fn fan_siblings_share_one_port_ordinate() {
     assert_eq!(o1, o2, "one fan, one port");
 }
 
-#[test]
-fn disjoint_clusters_both_take_the_midline() {
-    // Two runs far apart along one channel never cluster: each sits on
-    // the channel anchor independently.
-    let w = world(Rect::new(0.0, 0.0, 400.0, 100.0), &[]);
-    let interior = |link: usize, span: (f64, f64)| Chain {
+/// A three-run dogleg whose ends leave **opposite** ways: `span` is the
+/// interior run's reach, the source at the world's top edge and the target
+/// at its bottom, so the interior run wants the channel anchor.
+fn dogleg(link: usize, span: (f64, f64)) -> Chain {
+    let v = |span| Run {
+        axis: Axis::V,
+        chan: 0,
+        span,
+        ord: None,
+    };
+    Chain {
         link,
         world: 0,
         runs: vec![
-            Run {
-                axis: Axis::V,
-                chan: 0,
-                span: (10.0, 20.0),
-                ord: None,
-            },
+            v((10.0, 20.0)),
             Run {
                 axis: Axis::H,
                 chan: 0,
                 span,
                 ord: None,
             },
-            Run {
-                axis: Axis::V,
-                chan: 0,
-                span: (80.0, 90.0),
-                ord: None,
-            },
+            v((80.0, 90.0)),
         ],
         ends: [
             end(Side::Bottom, Rect::new(span.0 - 20.0, 0.0, span.0, 10.0)),
-            end(Side::Bottom, Rect::new(span.1, 0.0, span.1 + 20.0, 10.0)),
+            end(Side::Top, Rect::new(span.1, 90.0, span.1 + 20.0, 100.0)),
         ],
-    };
+    }
+}
+
+#[test]
+fn disjoint_clusters_both_take_the_midline() {
+    // Two runs far apart along one channel never cluster: each sits on
+    // the channel anchor independently.
+    let w = world(Rect::new(0.0, 0.0, 400.0, 100.0), &[]);
     let mut chains = vec![
-        Some(interior(0, (40.0, 120.0))),
-        Some(interior(1, (240.0, 320.0))),
+        Some(dogleg(0, (40.0, 120.0))),
+        Some(dogleg(1, (240.0, 320.0))),
     ];
     place(&[w], &mut chains, C);
     let m1 = chains[0].as_ref().unwrap().runs[1].ord.unwrap();
     let m2 = chains[1].as_ref().unwrap().runs[1].ord.unwrap();
     assert_eq!(m1, 50.0, "the empty world's H anchor is its midline");
     assert_eq!(m1, m2, "disjoint spans share the midline in peace");
+}
+
+#[test]
+fn a_same_side_u_turns_at_the_outer_side_line_not_the_void() {
+    // Both ends leave the same way, so the turn has no reason to travel
+    // past the outermost of the two side lines — the anchor would centre
+    // it in whatever void the world happens to have, and the drawn bight
+    // would then move with the empty space around the pair. One body or
+    // two reads the same (ROUTING.md step 5).
+    let w = world(Rect::new(0.0, 0.0, 400.0, 100.0), &[]);
+    // Two bodies whose bottoms sit at different depths, wired bottom to
+    // bottom: the U clears the deeper one and stops.
+    let u = |shallow: f64, deep: f64| Chain {
+        link: 0,
+        world: 0,
+        runs: vec![
+            Run {
+                axis: Axis::V,
+                chan: 0,
+                span: (shallow, 50.0),
+                ord: None,
+            },
+            Run {
+                axis: Axis::H,
+                chan: 0,
+                span: (40.0, 120.0),
+                ord: None,
+            },
+            Run {
+                axis: Axis::V,
+                chan: 0,
+                span: (deep, 50.0),
+                ord: None,
+            },
+        ],
+        ends: [
+            end(Side::Bottom, Rect::new(20.0, 0.0, 40.0, shallow)),
+            end(Side::Bottom, Rect::new(120.0, 0.0, 140.0, deep)),
+        ],
+    };
+    let mut chains = vec![Some(u(10.0, 30.0))];
+    place(&[w], &mut chains, C);
+    let ord = chains[0].as_ref().unwrap().runs[1].ord.unwrap();
+    assert_eq!(ord, 30.0, "the U turns at the deeper body's own side line");
+    // The world's void is not the U's business: widen it and nothing moves.
+    let wide = world(Rect::new(0.0, 0.0, 400.0, 4000.0), &[]);
+    let mut chains = vec![Some(u(10.0, 30.0))];
+    place(&[wide], &mut chains, C);
+    assert_eq!(
+        chains[0].as_ref().unwrap().runs[1].ord.unwrap(),
+        ord,
+        "the bight never moves with the empty space around it"
+    );
 }
 
 #[test]

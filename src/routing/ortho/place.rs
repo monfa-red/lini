@@ -24,6 +24,8 @@
 //! ([`cluster::branch_of`]) and the anchor they both prefer is the one
 //! point the fan forks at.
 
+use crate::ast::Side;
+
 use std::collections::BTreeMap;
 
 use super::cluster::{self, Item, clusters_of, merge_fans, owed};
@@ -302,15 +304,23 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                 // sees, ordering the pair into an unplaceable chain.
                 let clamp = corner_clamp(worlds, chain, ri);
                 let clipped = corridor.clipped(clamp.0, clamp.1);
-                // A three-run route between two ports on one side of one
-                // body — the same-side pair's canonical U (ROUTING.md
-                // Fixed ports) — turns as close in as the corridor allows:
-                // the anchor would centre the turn in whatever void lies
-                // beyond, which the search never priced (its L1 estimate
-                // sees no length in the U's depth), and a tie between two
-                // pins would orbit half the sheet.
-                if chain.runs.len() == 3 && a.side == b.side && a.rect == b.rect {
-                    let t = a.side_coord();
+                // A three-run route whose two ends leave the **same way** —
+                // the canonical U (ROUTING.md step 5): both end runs travel
+                // outward along one side's normal, so the turn has no reason
+                // to go past the outermost of the two side lines. The anchor
+                // would centre it in whatever void lies beyond, which the
+                // search never priced (its L1 estimate sees no length in the
+                // U's depth), and the drawn bight would then move with the
+                // empty space around the pair — a tie between two pins
+                // orbiting half the sheet, a pull-up's return swinging out
+                // past its whole block. One body or two reads the same: with
+                // one rect the two side lines coincide.
+                if chain.runs.len() == 3 && a.side == b.side {
+                    let (ac, bc) = (a.side_coord(), b.side_coord());
+                    let t = match a.side {
+                        Side::Left | Side::Top => ac.min(bc),
+                        Side::Right | Side::Bottom => ac.max(bc),
+                    };
                     (t.max(clipped.walls.0).min(clipped.walls.1), None)
                 } else {
                     (clipped.anchor(), None)

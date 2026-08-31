@@ -223,7 +223,7 @@ input_file: samples/links_hard.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="hub" data-to="north.n1">
-      <path d="M 42.2725 -18 L 77.2415 -18 A 10 10 0 0 0 87.2415 -28 L 87.2415 -237.5 A 10 10 0 0 0 77.2415 -247.5 L 40.2375 -247.5"/>
+      <path d="M 42.2725 -18 L 57.9425 -18 A 10 10 0 0 0 67.9425 -28 L 67.9425 -237.5 A 10 10 0 0 0 57.9425 -247.5 L 40.2375 -247.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="36.2375,-247.5 45.2375,-252 45.2375,-243"/>
     </g>
     <g class="lini-link" data-from="hub" data-to="east.e1">
@@ -231,8 +231,8 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="115.6475,-18 106.6475,-13.5 106.6475,-22.5"/>
     </g>
     <g class="lini-link" data-from="hub" data-to="south.s1">
-      <mask id="lini-label-cut-a6ecf762" maskUnits="userSpaceOnUse" x="-48.9002" y="-20" width="58.3292" height="168"><rect class="lini-cut-bg" x="-48.9002" y="-20" width="58.3292" height="168"/><rect class="lini-cut" x="-71.7107" y="55.1" width="27.489" height="14.3"/></mask>
-      <path d="M -28.3175 -18 L -36.9002 -18 A 10 10 0 0 0 -46.9002 -8 L -46.9002 62.25 A 10 10 0 0 0 -36.9002 72.25 L -2.571 72.25 A 10 10 0 0 1 7.429 82.25 L 7.429 142.5" mask="url(#lini-label-cut-a6ecf762)"/>
+      <mask id="lini-label-cut-cff63696" maskUnits="userSpaceOnUse" x="-40.3175" y="-20" width="49.7465" height="168"><rect class="lini-cut-bg" x="-40.3175" y="-20" width="49.7465" height="168"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/></mask>
+      <path d="M -28.3175 -18 L -28.3175 -18 A 10 10 0 0 0 -38.3175 -8 L -38.3175 67.25 A 10 10 0 0 0 -28.3175 77.25 L -2.571 77.25 A 10 10 0 0 1 7.429 87.25 L 7.429 142.5" mask="url(#lini-label-cut-cff63696)"/>
       <polygon class="lini-marker lini-marker-arrow" points="7.429,146.5 2.929,137.5 11.929,137.5"/>
     </g>
     <g class="lini-link" data-from="hub" data-to="west.w1">
@@ -240,36 +240,36 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="-105.6925,-18 -96.6925,-22.5 -96.6925,-13.5"/>
     </g>
     <g class="lini-link lini-style-cool" data-from="north.n2" data-to="east.e1">
-      <path d="M 11.9775 -146 L 11.9775 -87 A 10 10 0 0 0 21.9775 -77 L 57.2415 -77 A 20 20 0 0 1 77.2415 -57 L 77.2415 -51.5 A 10 10 0 0 0 87.2415 -41.5 L 111.6475 -41.5"/>
+      <path d="M 11.9775 -146 L 11.9775 -87 A 10 10 0 0 0 21.9775 -77 L 67.9425 -77 A 13.3333 13.3333 0 0 1 81.2758 -63.6667 L 81.2758 -51.5 A 10 10 0 0 0 91.2758 -41.5 L 111.6475 -41.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="115.6475,-41.5 106.6475,-37 106.6475,-46"/>
     </g>
     <g class="lini-link lini-style-cool" data-from="north.n2" data-to="east.e1">
-      <path d="M 1.9775 -146 L 1.9775 -87 A 20 20 0 0 0 21.9775 -67 L 57.2415 -67 A 10 10 0 0 1 67.2415 -57 L 67.2415 -51.5 A 20 20 0 0 0 87.2415 -31.5 L 111.6475 -31.5"/>
+      <path d="M 1.9775 -146 L 1.9775 -87 A 20 20 0 0 0 21.9775 -67 L 67.9425 -67 A 6.6667 6.6667 0 0 1 74.6092 -60.3333 L 74.6092 -49.8333 A 18.3333 18.3333 0 0 0 92.9425 -31.5 L 111.6475 -31.5"/>
       <polygon class="lini-marker lini-marker-arrow" points="115.6475,-31.5 106.6475,-27 106.6475,-36"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-8378c8f9" maskUnits="userSpaceOnUse" x="-133.745" y="63" width="114.125" height="108.5"><rect class="lini-cut-bg" x="-133.745" y="63" width="114.125" height="108.5"/><rect class="lini-cut" x="-71.7107" y="55.1" width="27.489" height="14.3"/></mask>
-      <path d="M -131.745 65 L -131.745 119 A 10 10 0 0 0 -121.745 129 L -86.9002 129 A 20 20 0 0 1 -66.9002 149 L -66.9002 159.5 A 10 10 0 0 0 -56.9002 169.5 L -25.12 169.5" mask="url(#lini-label-cut-8378c8f9)"/>
+      <mask id="lini-label-cut-62faec6a" maskUnits="userSpaceOnUse" x="-133.745" y="63" width="114.125" height="108.5"><rect class="lini-cut-bg" x="-133.745" y="63" width="114.125" height="108.5"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/></mask>
+      <path d="M -131.745 65 L -131.745 119 A 10 10 0 0 0 -121.745 129 L -88.1534 129 A 19.9766 19.9766 0 0 1 -68.1769 148.9766 L -68.1769 159.5469 A 9.9531 9.9531 0 0 0 -58.2238 169.5 L -25.12 169.5" mask="url(#lini-label-cut-62faec6a)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,169.5 -30.12,174 -30.12,165"/>
     </g>
     <g class="lini-link" data-from="west.w2" data-to="south.s1">
-      <mask id="lini-label-cut-95ae729f" maskUnits="userSpaceOnUse" x="-143.745" y="63" width="124.125" height="118.5"><rect class="lini-cut-bg" x="-143.745" y="63" width="124.125" height="118.5"/><rect class="lini-cut" x="-71.7107" y="55.1" width="27.489" height="14.3"/></mask>
-      <path d="M -141.745 65 L -141.745 119 A 20 20 0 0 0 -121.745 139 L -86.9002 139 A 10 10 0 0 1 -76.9002 149 L -76.9002 159.5 A 20 20 0 0 0 -56.9002 179.5 L -25.12 179.5" mask="url(#lini-label-cut-95ae729f)"/>
+      <mask id="lini-label-cut-002577ee" maskUnits="userSpaceOnUse" x="-143.745" y="63" width="124.125" height="118.5"><rect class="lini-cut-bg" x="-143.745" y="63" width="124.125" height="118.5"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/></mask>
+      <path d="M -141.745 65 L -141.745 119 A 20 20 0 0 0 -121.745 139 L -88.13 139 A 10 10 0 0 1 -78.13 149 L -78.13 159.5938 A 19.9062 19.9062 0 0 0 -58.2238 179.5 L -25.12 179.5" mask="url(#lini-label-cut-002577ee)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,179.5 -30.12,184 -30.12,175"/>
     </g>
     <g class="lini-link" data-from="alpha" data-to="delta">
-      <mask id="lini-label-cut-68dae115" maskUnits="userSpaceOnUse" x="-97.7275" y="-213" width="204.0225" height="426"><rect class="lini-cut-bg" x="-97.7275" y="-213" width="204.0225" height="426"/><rect class="lini-cut" x="-80.8812" y="-91.4716" width="27.962" height="14.3"/><rect class="lini-cut" x="-71.7107" y="55.1" width="27.489" height="14.3"/><rect class="lini-cut" x="59.8493" y="75.2781" width="35.024" height="14.3"/></mask>
-      <path d="M -95.7275 -211 L -76.9002 -211 A 10 10 0 0 1 -66.9002 -201 L -66.9002 52.25 A 10 10 0 0 0 -56.9002 62.25 L 67.3613 62.25 A 10 10 0 0 1 77.3613 72.25 L 77.3613 201 A 10 10 0 0 0 87.3613 211 L 100.795 211" mask="url(#lini-label-cut-68dae115)"/>
+      <mask id="lini-label-cut-bde5d780" maskUnits="userSpaceOnUse" x="-97.7275" y="-213" width="204.0225" height="426"><rect class="lini-cut-bg" x="-97.7275" y="-213" width="204.0225" height="426"/><rect class="lini-cut" x="-82.2048" y="-90.1481" width="27.962" height="14.3"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/><rect class="lini-cut" x="59.8493" y="75.2781" width="35.024" height="14.3"/></mask>
+      <path d="M -95.7275 -211 L -78.2238 -211 A 10 10 0 0 1 -68.2238 -201 L -68.2238 47.25 A 10 10 0 0 0 -58.2238 57.25 L 67.3613 57.25 A 10 10 0 0 1 77.3613 67.25 L 77.3613 201 A 10 10 0 0 0 87.3613 211 L 100.795 211" mask="url(#lini-label-cut-bde5d780)"/>
       <polygon class="lini-marker lini-marker-arrow" points="104.795,211 95.795,215.5 95.795,206.5"/>
       <g class="lini-link-label">
-        <use href="#lini-g1400-94" transform="translate(-77.5812 -80.3836) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-265" transform="translate(-68.5392 -80.3836) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-213" transform="translate(-62.3902 -80.3836) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-94" transform="translate(-78.9048 -79.0601) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-265" transform="translate(-69.8628 -79.0601) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-213" transform="translate(-63.7138 -79.0601) scale(0.011 -0.011)"/>
       </g>
       <g class="lini-link-label">
-        <use href="#lini-g1400-132" transform="translate(-68.4107 66.188) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-335" transform="translate(-62.5807 66.188) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-271" transform="translate(-54.0557 66.188) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-132" transform="translate(-63.4108 61.188) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-335" transform="translate(-57.5808 61.188) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-271" transform="translate(-49.0558 61.188) scale(0.011 -0.011)"/>
       </g>
       <g class="lini-link-label">
         <use href="#lini-g1400-132" transform="translate(63.1493 86.3661) scale(0.011 -0.011)"/>
@@ -280,8 +280,8 @@ input_file: samples/links_hard.lini
       </g>
     </g>
     <g class="lini-link" data-from="beta" data-to="gamma">
-      <mask id="lini-label-cut-2d8b1a49" maskUnits="userSpaceOnUse" x="-90.13" y="-213" width="198.9075" height="426"><rect class="lini-cut-bg" x="-90.13" y="-213" width="198.9075" height="426"/><rect class="lini-cut" x="-80.8812" y="-91.4716" width="27.962" height="14.3"/><rect class="lini-cut" x="-71.7107" y="55.1" width="27.489" height="14.3"/><rect class="lini-cut" x="59.8493" y="75.2781" width="35.024" height="14.3"/></mask>
-      <path d="M 106.7775 -211 L 87.2415 -211 A 10 10 0 0 0 77.2415 -201 L 77.2415 -97 A 10 10 0 0 1 67.2415 -87 L -46.9002 -87 A 10 10 0 0 0 -56.9002 -77 L -56.9002 201 A 10 10 0 0 1 -66.9002 211 L -84.63 211" mask="url(#lini-label-cut-2d8b1a49)"/>
+      <mask id="lini-label-cut-41095a6b" maskUnits="userSpaceOnUse" x="-90.13" y="-213" width="198.9075" height="426"><rect class="lini-cut-bg" x="-90.13" y="-213" width="198.9075" height="426"/><rect class="lini-cut" x="-82.2048" y="-90.1481" width="27.962" height="14.3"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/><rect class="lini-cut" x="59.8493" y="75.2781" width="35.024" height="14.3"/></mask>
+      <path d="M 106.7775 -211 L 91.2758 -211 A 10 10 0 0 0 81.2758 -201 L 81.2758 -97 A 10 10 0 0 1 71.2758 -87 L -48.2238 -87 A 10 10 0 0 0 -58.2238 -77 L -58.2238 201 A 10 10 0 0 1 -68.2238 211 L -84.63 211" mask="url(#lini-label-cut-41095a6b)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-88.63,211 -79.63,206.5 -79.63,215.5"/>
     </g>
     <g class="lini-link" data-from="gamma" data-to="south.s1">
@@ -289,12 +289,12 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="-21.12,192.75 -30.12,197.25 -30.12,188.25"/>
     </g>
     <g class="lini-link" data-from="south.s1" data-to="delta">
-      <path d="M 17.429 146 L 17.429 113.5 A 10 10 0 0 1 27.429 103.5 L 133.7225 103.5 A 10 10 0 0 1 143.7225 113.5 L 143.7225 179"/>
+      <path d="M 17.429 146 L 17.429 125.5 A 10 10 0 0 1 27.429 115.5 L 133.7225 115.5 A 10 10 0 0 1 143.7225 125.5 L 143.7225 179"/>
       <polygon class="lini-marker lini-marker-arrow" points="143.7225,183 139.2225,174 148.2225,174"/>
     </g>
     <g class="lini-link" data-from="east" data-to="east.e2">
-      <path d="M 143.7225 81.5 L 143.7225 68.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="143.7225,64.5 148.2225,73.5 139.2225,73.5"/>
+      <path d="M 148.7225 81.5 L 148.7225 68.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="148.7225,64.5 153.2225,73.5 144.2225,73.5"/>
     </g>
     <g class="lini-link lini-style-hot" data-from="alpha" data-to="west.w2">
       <path d="M -177.7625 -211 L -189.5025 -211 A 10 10 0 0 0 -199.5025 -201 L -199.5025 26.5 A 10 10 0 0 0 -189.5025 36.5 L -174.5025 36.5"/>
@@ -309,13 +309,13 @@ input_file: samples/links_hard.lini
       <polygon class="lini-marker lini-marker-arrow" points="182.65,211 191.65,206.5 191.65,215.5"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="west">
-      <mask id="lini-label-cut-55481a50" maskUnits="userSpaceOnUse" x="-138.745" y="-107.5" width="238.6875" height="104.5"><rect class="lini-cut-bg" x="-138.745" y="-107.5" width="238.6875" height="104.5"/><rect class="lini-cut" x="-80.8812" y="-91.4716" width="27.962" height="14.3"/></mask>
-      <path d="M 97.9425 -5 L 70.2415 -5 A 13 13 0 0 1 57.2415 -18 L 57.2415 -95.5 A 10 10 0 0 0 47.2415 -105.5 L -126.745 -105.5 A 10 10 0 0 0 -136.745 -95.5 L -136.745 -89" mask="url(#lini-label-cut-55481a50)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-136.745,-85 -141.245,-94 -132.245,-94"/>
+      <mask id="lini-label-cut-54e8cb78" maskUnits="userSpaceOnUse" x="-85.9875" y="-2" width="226.71" height="107.5"><rect class="lini-cut-bg" x="-85.9875" y="-2" width="226.71" height="107.5"/><rect class="lini-cut" x="-66.7108" y="50.1" width="27.489" height="14.3"/><rect class="lini-cut" x="59.8493" y="75.2781" width="35.024" height="14.3"/></mask>
+      <path d="M 138.7225 81.5 L 138.7225 93.5 A 10 10 0 0 1 128.7225 103.5 L 53.6128 103.5 A 10 10 0 0 1 43.6128 93.5 L 43.6128 77.25 A 10 10 0 0 0 33.6128 67.25 L -38.3175 67.25 A 9.9531 9.9531 0 0 1 -48.2706 57.2969 L -48.2706 9.9531 A 9.9531 9.9531 0 0 0 -58.2238 0 L -80.4875 0" mask="url(#lini-label-cut-54e8cb78)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-84.4875,0 -75.4875,-4.5 -75.4875,4.5"/>
     </g>
     <g class="lini-link lini-style-attention" data-from="east" data-to="hub">
-      <path d="M 97.9425 5 L 45.7725 5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="41.7725,5 50.7725,0.5 50.7725,9.5"/>
+      <path d="M 97.9425 0 L 45.7725 0"/>
+      <polygon class="lini-marker lini-marker-arrow" points="41.7725,0 50.7725,-4.5 50.7725,4.5"/>
     </g>
   </g>
 </svg>

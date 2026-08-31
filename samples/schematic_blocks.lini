@@ -22,7 +22,7 @@
 }
 
 |page| {
-  sheet: a5 landscape; layout: grid; columns: repeat(2, 820); rows: repeat(2, 540); gap: 24; align: stretch; justify: stretch;
+  sheet: a5 landscape; layout: grid; columns: repeat(2, 820); rows: repeat(1, 880); gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#boost| "5.5v Boost" { cell: 1 1; } [

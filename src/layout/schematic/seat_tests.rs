@@ -183,6 +183,46 @@ fn chains_turning_onto_one_ray_from_opposite_sides_keep_their_own_lanes() {
 }
 
 #[test]
+fn two_pins_of_one_side_never_share_a_lane_however_their_chains_grow() {
+    // [SPEC 16.1] one ladder per **side**, not per growth ray: an up-chain off
+    // one pin and a down-chain off the pin below it leave along the one lane
+    // axis, so laddered per ray they both take the innermost lane and their
+    // two leads turn on one column a pin pitch apart — the drain's rail flag
+    // standing over the source's return, one broken line where a reader sees
+    // a short (the hero's fan drive). Only a *pin's own* pair shares.
+    // A bare symbol, so a node's centre *is* its connection point and the two
+    // lanes compare directly.
+    let sheet = "{ |flag::label| { symbol: power } }\n";
+    let part = "  |component#u1| [\n    |pin#d| { side: right }; |pin#s| { side: right }; |pin#l| { side: left }\n  ]\n";
+    let nodes = laid(
+        &(sheet.to_owned()
+            + &scope(
+                "",
+                &(part.to_owned() + "  |flag#f|\n  |gnd#g|\n  u1.d - f\n  u1.s - g\n"),
+            )),
+    );
+    let (fx, gx) = (at(&nodes, "f").0, at(&nodes, "g").0);
+    assert!(
+        !close(fx, gx),
+        "the flag and the ground take a lane each: {fx} vs {gx}"
+    );
+    // The pair *on one pin* still leaves on one lead and splits once — the
+    // rail up to its flag, down to its decoupling cap, one column.
+    let shared = laid(
+        &(sheet.to_owned()
+            + &scope(
+                "",
+                &(part.to_owned() + "  |flag#f|\n  |gnd#g|\n  u1.d - f\n  u1.d - g\n"),
+            )),
+    );
+    let (sfx, sgx) = (at(&shared, "f").0, at(&shared, "g").0);
+    assert!(
+        close(sfx, sgx),
+        "one pin's up- and down-chain share one column: {sfx} vs {sgx}"
+    );
+}
+
+#[test]
 fn a_lane_answers_to_the_symbol_not_to_the_name_beside_it() {
     // [SPEC 16.1] the seat gap is measured on what a wire arrives at — a
     // flag's symbol — and the name beside it only may not reach back over the

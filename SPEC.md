@@ -3424,13 +3424,19 @@ declaration order, being the inner geography. And every **wired** pin's row
 is a corridor of its own: a member seats clear of every wired row but its
 own pin's, so a column's body never lands where a through wire or a
 neighbouring trunk runs, and the wires cross its lead square instead — the
-decoupling cap stands below the bus pair, never woven into it. Column order is the pins' own, measured **canonically**
-(downward, rightward) whichever way the chains grow, because a pin's up-chain
-and its down-chain share one column: the **first** chain of each ray off one
-pin takes the outermost lane its opposite number asked for — one lead,
-splitting once at the turn — and every later same-ray chain ladders out into
-its own column (two rails up, or two returns down, never stack one lane).
-Chains sharing one pin and ray keep statement order. A seated satellite
+decoupling cap stands below the bus pair, never woven into it. **The ladder
+is a side's, not a ray's**: every chain turning off one side of a part leaves
+along the one lane axis, so an up-chain and a down-chain off two *different*
+pins ladder against each other like any pair — laddered per ray they would
+both take the innermost lane and turn on one column a pin pitch apart, a rail
+flag standing over the return below it, one broken line where a reader sees a
+short. Column order is therefore the pins' own, measured **canonically**
+(downward, rightward) whichever way the chains grow. Only a **pin's own**
+pair shares: the **first** chain of each ray off one pin takes the outermost
+lane its opposite number asked for — one lead, splitting once at the turn —
+and every later same-ray chain ladders out into its own column (two rails up,
+or two returns down, never stack one lane). Chains sharing one pin and ray
+keep statement order. A seated satellite
 registers as a router obstacle like any node. **`cell:` promotes a satellite
 to an anchor**; `translate:` nudges it from its seat (pin-relative — move
 the component and the nudge travels along, [SPEC 5](#5-the-box-model)).
