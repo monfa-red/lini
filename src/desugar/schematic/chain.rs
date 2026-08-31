@@ -99,8 +99,8 @@ pub(crate) struct Chain {
 /// member). A tap seats off its attachment member along its own drawn
 /// convention rather than taking a slot in the trunk's stack, where a BFS
 /// linearization stood the buck's 5 V flag upside-down between the inductor
-/// and the feedback divider. Multi-member side branches stay in the stack —
-/// the documented limit.
+/// and the feedback divider. A tap is the one-member case of a **branch**
+/// ([`limbs`]); the multi-member ones grow their own sub-chains.
 ///
 /// One classifier for the pose chooser and the seat pass; each supplies its
 /// own reading of "this member is a symbol label".
@@ -110,8 +110,43 @@ pub(crate) fn taps(chain: &Chain, symbol_label: impl Fn(usize) -> bool) -> Vec<b
     for p in chain.parents.iter().flatten() {
         leaf[*p] = false;
     }
+    let limbs = limbs(chain);
     (0..n)
-        .map(|i| i + 1 != n && leaf[i] && symbol_label(chain.members[i]))
+        .map(|i| limbs[i] == Some(i) && leaf[i] && symbol_label(chain.members[i]))
+        .collect()
+}
+
+/// A chain's **limb decomposition** [SPEC 16.1]: per member, `None` on the
+/// **trunk** — the walk from the held end to the chain's terminator (the
+/// BFS-last member, whose convention sets the growth ray) — or `Some(root)`,
+/// naming the off-trunk subtree it belongs to by the **branch**'s root
+/// member index. A branch hangs off a trunk member at a junction and grows
+/// its own way from there: a one-member symbol branch is a tap ([`taps`]),
+/// anything larger a sub-chain along its own ray. Shared by the pose
+/// chooser and the seat pass, so a branch is never posed for one ray and
+/// seated along another.
+pub(crate) fn limbs(chain: &Chain) -> Vec<Option<usize>> {
+    let n = chain.members.len();
+    let mut on_trunk = vec![false; n];
+    let mut cur = n.checked_sub(1);
+    while let Some(i) = cur {
+        on_trunk[i] = true;
+        cur = chain.parents[i];
+    }
+    (0..n)
+        .map(|i| {
+            if on_trunk[i] {
+                return None;
+            }
+            let mut r = i;
+            while let Some(p) = chain.parents[r] {
+                if on_trunk[p] {
+                    break;
+                }
+                r = p;
+            }
+            Some(r)
+        })
         .collect()
 }
 
@@ -129,6 +164,14 @@ pub(crate) fn tap_ray(natural: Option<Side>, trunk: Side, pin_facing: Option<Sid
     if natural != trunk.opposite() {
         return natural;
     }
+    beside(trunk, pin_facing)
+}
+
+/// The sideways direction **beside** a trunk [SPEC 16.1] — where a
+/// conflicted tap steps and a trunk-axis branch lays its lane: out along
+/// the pin's own normal where the trunk turned off it, else onto the fixed
+/// side rank's first free direction.
+pub(crate) fn beside(trunk: Side, pin_facing: Option<Side>) -> Side {
     match pin_facing {
         Some(p) if p != trunk && p != trunk.opposite() => p,
         _ if matches!(trunk, Side::Top | Side::Bottom) => Side::Right,

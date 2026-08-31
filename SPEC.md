@@ -3384,13 +3384,17 @@ everything else keeps the centring.
   flips it), and a part-terminated chain on a pin that also carries a wire
   to another placed part yields the **straight corridor** — that line
   belongs to the through wire — turning down off a side pin, rightward off
-  a top or bottom one. A **tap** — a single symbol-label leaf hanging off a
-  mid-chain member, the rail flag beside a junction — takes no slot in the
-  stack: it hangs off its attachment member along its own drawn convention,
-  stepping aside (out along the pin's normal) when that points back into the
-  trunk — **upright**, one gap out along both rays, so a flag is never laid
-  sideways and its lead is the router's one square corner. Multi-member
-  side branches stay in the stack, in walk order;
+  a top or bottom one. The chain's **trunk** is the walk from the pin to its
+  terminator; every subtree hanging off a mid-trunk member is a **branch**,
+  grown from its attachment junction as a sub-chain along its *own*
+  terminator's ray (the trunk's when it states none) — stepping its lane
+  beside the trunk when the two rays share an axis, so two columns descend
+  side by side rather than interleaving into one. A **tap** — a
+  single symbol-label branch, the rail flag beside a junction — takes no
+  slot in any stack: it hangs off its attachment member along its own drawn
+  convention, stepping aside (out along the pin's normal) when that points
+  back into the trunk — **upright**, one gap out along both rays, so a flag
+  is never laid sideways and its lead is the router's one square corner;
 - **two placed ends on one anchor** — a **bridge** (`U2.EN - R5 -
   U2.VIN`): the chain grows like a one-end chain off the **first-named**
   pin — the member stands in that pin's own corridor, entry terminal

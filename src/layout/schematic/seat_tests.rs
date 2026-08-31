@@ -713,6 +713,35 @@ fn a_rail_flag_taps_the_trunk_instead_of_standing_in_it() {
 }
 
 #[test]
+fn a_multi_member_side_branch_grows_its_own_column() {
+    // [SPEC 16.1] a subtree hanging off a mid-trunk member is a **branch**:
+    // it grows from its attachment junction as a sub-chain along its own
+    // ray, its lane stepped beside the trunk when the rays share an axis —
+    // not tucked into the trunk's stack in walk order, where the two
+    // series interleaved into one smeared column.
+    let nodes = laid(&scope(
+        "",
+        &(sided("u1")
+            + "  |R#r1| \"10k\"\n  |R#r2| \"20k\"\n  |C#c1| \"100n\"\n"
+            + "  u1.b - r1 - r2 - |gnd|\n  r1.p2 - c1 - |gnd|\n"),
+    ));
+    let ((r1x, r1y), (r2x, r2y), (c1x, c1y)) =
+        (at(&nodes, "r1"), at(&nodes, "r2"), at(&nodes, "c1"));
+    assert!(
+        close(c1x, r1x),
+        "the trunk keeps one column: {c1x} vs {r1x}"
+    );
+    assert!(
+        !close(r2x, r1x),
+        "the branch takes a lane of its own: {r2x} vs {r1x}"
+    );
+    assert!(
+        r2y > r1y && c1y > r1y,
+        "both descend from the junction: {r1y} {r2y} {c1y}"
+    );
+}
+
+#[test]
 fn a_two_by_two_divider_takes_two_columns() {
     // [SPEC 16.1] each pin's up-and-down pair shares one column (one lead,
     // splitting once); two pins make two columns, ordered canonically. The

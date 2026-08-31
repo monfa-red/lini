@@ -94,6 +94,30 @@ struct GrowCx<'a> {
     rows: &'a [((f64, f64), Painted)],
 }
 
+/// One stack's rail — trunk or branch: the frame it grows in, the lane it
+/// runs along, the anchor its seats belong to, and the corridors its
+/// members clear ([`Seats::seat_one`]).
+struct SubStack<'a> {
+    frame: Frame,
+    along: f64,
+    anchor: usize,
+    corridors: &'a [Painted],
+}
+
+/// A member's painted reach either side of its landing, in `frame` — the
+/// band every seat is measured by.
+fn band_of(frame: Frame, box_: Bbox, point: (f64, f64)) -> Band {
+    let (lo, hi) = (
+        frame.cross(corner(box_, false)),
+        frame.cross(corner(box_, true)),
+    );
+    let c = frame.cross(point);
+    Band {
+        neg: c - lo.min(hi),
+        pos: hi.max(lo) - c,
+    }
+}
+
 /// A chain held at both ends: its satellites distribute between the two
 /// terminals once the anchors are placed.
 struct Spanning {
@@ -372,10 +396,11 @@ impl Seats {
         out
     }
 
-    /// A one-placed-end chain: each satellite seats farther out along the
-    /// growth ray, its connection point landing where the packer clears —
-    /// except a **tap** ([`crate::desugar::schematic::chain::taps`]), which
-    /// hangs off its attachment member instead of taking a slot in the stack.
+    /// A one-placed-end chain: its **trunk** members seat farther out along
+    /// the growth ray, each one's connection point landing where the packer
+    /// clears; a **tap** hangs off its attachment member, and every other
+    /// **branch** grows from its junction as a sub-chain
+    /// ([`crate::desugar::schematic::chain::limbs`]).
     fn grow(
         &mut self,
         children: &[PlacedNode],
@@ -387,6 +412,7 @@ impl Seats {
     ) {
         let (chain, held) = (&g.chain, &g.held);
         let tap = tap_flags(children, chain);
+        let limbs = crate::desugar::schematic::chain::limbs(chain);
         let wire_edges = cx.edges;
         // The anchor's wired corridors, its own pin's aside: what this
         // chain's members seat clear of, without walling in the chains that
@@ -406,52 +432,18 @@ impl Seats {
         // outer paint edge, so a later member can never tuck into a hole a
         // foreign band opened before an earlier one — "link by link" is an
         // order, not just a distance.
+        let rail = SubStack {
+            frame,
+            along,
+            anchor: held.child,
+            corridors: &corridors,
+        };
         let mut base = frame.cross(g.pin);
         for (i, (&member, inbound)) in chain.members.iter().zip(&chain.inbound).enumerate() {
-            if tap[i] {
+            if limbs[i].is_some() {
                 continue;
             }
-            let sat = &children[member];
-            let point = terminal(sat, inbound.as_deref()).at;
-            let box_ = drawn(sat);
-            // The band is the satellite's own reach either side of the point
-            // its wire lands on, so the packer measures from the connection.
-            let (lo, hi) = (
-                frame.cross(corner(box_, false)),
-                frame.cross(corner(box_, true)),
-            );
-            let c = frame.cross(point);
-            let band = Band {
-                neg: c - lo.min(hi),
-                pos: hi.max(lo) - c,
-            };
-            // A **net run**'s name steps off the trace here [SPEC 16.4]: the
-            // run's middle is `band.neg / 2` back from the innermost landing,
-            // and the freer side is read against what this anchor has already
-            // painted. The step is across the growth ray, so the band above is
-            // untouched and only the run's own reach changes.
-            if net::is_run(sat) {
-                let mid = frame.pt(along, base + self.seat + band.neg / 2.0);
-                self.text[member] = net::seat_text(sat, mid, stack.painted());
-            }
-            let box_ = self.extent(children, member);
-            let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
-            let u = frame.u(point);
-            let interval = (along + u0.min(u1) - u, along + u0.max(u1) - u);
-            let line = stack.seat(
-                SeatLine::new(frame, true, base),
-                interval,
-                self.seat,
-                &band,
-                &corridors,
-            );
-            base = line + band.pos;
-            let target = frame.pt(along, line);
-            self.seats[member] = Some(Seat {
-                anchor: held.child,
-                dx: target.0 - point.0,
-                dy: target.1 - point.1,
-            });
+            base = self.seat_one(children, &rail, stack, base, member, inbound.as_deref());
         }
         // Taps hang off their attachment member's terminal, one seat out
         // along the ray their **posed** drawing states — the pose chooser
@@ -462,31 +454,9 @@ impl Seats {
             if !tap[i] {
                 continue;
             }
-            let Some(parent) = chain.parents[i] else {
+            let Some(attach) = self.attach_of(children, chain, wire_edges, i) else {
                 continue;
             };
-            let parent_child = chain.members[parent];
-            let Some(pseat) = &self.seats[parent_child] else {
-                continue;
-            };
-            let (pdx, pdy) = (pseat.dx, pseat.dy);
-            // The wire's terminal on the attachment side — read off the edge
-            // that joins the pair, since a chain records only inbound ends.
-            let mine = End {
-                child: member,
-                terminal: chain.inbound[i].clone(),
-            };
-            let outbound = wire_edges.iter().find_map(|[a, b]| {
-                if *b == mine && a.child == parent_child {
-                    Some(a.terminal.clone())
-                } else if *a == mine && b.child == parent_child {
-                    Some(b.terminal.clone())
-                } else {
-                    None
-                }
-            });
-            let junction = terminal(&children[parent_child], outbound.flatten().as_deref()).at;
-            let attach = (junction.0 + pdx, junction.1 + pdy);
             let t = terminal(&children[member], chain.inbound[i].as_deref());
             let ray = t.facing.map_or(g.ray, Side::opposite);
             // A tap whose own convention points back into the trunk **steps
@@ -498,17 +468,12 @@ impl Seats {
             let aside = crate::desugar::schematic::chain::tap_ray(t.facing, g.ray, pin_facing);
             if aside != ray {
                 let tf = Frame::outward(aside.normal());
-                let box_ = drawn(&children[member]);
-                let (lo, hi) = (tf.cross(corner(box_, false)), tf.cross(corner(box_, true)));
-                let c = tf.cross(t.at);
-                let band = Band {
-                    neg: c - lo.min(hi),
-                    pos: hi.max(lo) - c,
-                };
+                let band = band_of(tf, drawn(&children[member]), t.at);
                 // Risen one gap along its own ray, packed out along the
                 // aside — the interval is read at the risen height.
                 let rn = ray.normal();
                 let risen = (attach.0 + rn.0 * self.seat, attach.1 + rn.1 * self.seat);
+                let box_ = drawn(&children[member]);
                 let (u0, u1) = (tf.u(corner(box_, false)), tf.u(corner(box_, true)));
                 let (au, u) = (tf.u(risen), tf.u(t.at));
                 let interval = (au + u0.min(u1) - u, au + u0.max(u1) - u);
@@ -519,10 +484,7 @@ impl Seats {
                     &band,
                     &corridors,
                 );
-                let target = {
-                    let p = tf.pt(au, line);
-                    (p.0, p.1)
-                };
+                let target = tf.pt(au, line);
                 self.seats[member] = Some(Seat {
                     anchor: held.child,
                     dx: target.0 - t.at.0,
@@ -531,13 +493,8 @@ impl Seats {
                 continue;
             }
             let tf = Frame::outward(ray.normal());
+            let band = band_of(tf, drawn(&children[member]), t.at);
             let box_ = drawn(&children[member]);
-            let (lo, hi) = (tf.cross(corner(box_, false)), tf.cross(corner(box_, true)));
-            let c = tf.cross(t.at);
-            let band = Band {
-                neg: c - lo.min(hi),
-                pos: hi.max(lo) - c,
-            };
             let (u0, u1) = (tf.u(corner(box_, false)), tf.u(corner(box_, true)));
             let (au, u) = (tf.u(attach), tf.u(t.at));
             let interval = (au + u0.min(u1) - u, au + u0.max(u1) - u);
@@ -555,6 +512,148 @@ impl Seats {
                 dy: target.1 - t.at.1,
             });
         }
+        // A multi-member **branch** grows from its junction as a sub-chain
+        // [SPEC 16.1]: along its own terminator's ray — the trunk's when it
+        // states none — monotone through the same packer. When that ray
+        // runs on the trunk's own axis, the branch's lane first steps
+        // **beside** the trunk, carried sideways until its root stands
+        // clear of everything painted, so the two columns descend side by
+        // side instead of interleaving into one.
+        for r in 0..chain.members.len() {
+            if limbs[r] != Some(r) || tap[r] {
+                continue;
+            }
+            let members_b: Vec<usize> = (0..chain.members.len())
+                .filter(|&i| limbs[i] == Some(r))
+                .collect();
+            let Some(attach) = self.attach_of(children, chain, wire_edges, r) else {
+                continue;
+            };
+            let &last = members_b.last().expect("a branch holds its root");
+            let ray = tag_facing(
+                &children[chain.members[last]],
+                chain.inbound[last].as_deref(),
+            )
+            .map_or(g.ray, Side::opposite);
+            let bf = Frame::outward(ray.normal());
+            let mut along_b = bf.u(attach);
+            let base_b = bf.cross(attach);
+            if ray == g.ray || ray == g.ray.opposite() {
+                let pin_facing = terminal(&children[held.child], held.terminal.as_deref()).facing;
+                let aside = crate::desugar::schematic::chain::beside(g.ray, pin_facing);
+                let root = chain.members[r];
+                let point = terminal(&children[root], chain.inbound[r].as_deref()).at;
+                let box_ = drawn(&children[root]);
+                let band = band_of(bf, box_, point);
+                let naive = bf.pt(along_b, base_b + self.seat + band.neg);
+                let an = aside.normal();
+                let t = stack.clear(
+                    box_.shifted(naive.0 - point.0, naive.1 - point.1),
+                    an,
+                    self.seat,
+                );
+                along_b += bf.u(an) * t;
+            }
+            let rail = SubStack {
+                frame: bf,
+                along: along_b,
+                anchor: held.child,
+                corridors: &corridors,
+            };
+            let mut base = base_b;
+            for &i in &members_b {
+                base = self.seat_one(
+                    children,
+                    &rail,
+                    stack,
+                    base,
+                    chain.members[i],
+                    chain.inbound[i].as_deref(),
+                );
+            }
+        }
+    }
+
+    /// Seat one member of a stack — trunk or branch, the same arithmetic —
+    /// at the innermost line the packer clears along `rail`, from `base`;
+    /// records the seat and returns the next base (the member's outer paint
+    /// edge, so growth stays monotone).
+    fn seat_one(
+        &mut self,
+        children: &[PlacedNode],
+        rail: &SubStack,
+        stack: &mut Stack,
+        base: f64,
+        member: usize,
+        inbound: Option<&str>,
+    ) -> f64 {
+        let frame = rail.frame;
+        let sat = &children[member];
+        let point = terminal(sat, inbound).at;
+        // The band is the satellite's own reach either side of the point
+        // its wire lands on, so the packer measures from the connection.
+        let band = band_of(frame, drawn(sat), point);
+        // A **net run**'s name steps off the trace here [SPEC 16.4]: the
+        // run's middle is `band.neg / 2` back from the innermost landing,
+        // and the freer side is read against what this anchor has already
+        // painted. The step is across the growth ray, so the band above is
+        // untouched and only the run's own reach changes.
+        if net::is_run(sat) {
+            let mid = frame.pt(rail.along, base + self.seat + band.neg / 2.0);
+            self.text[member] = net::seat_text(sat, mid, stack.painted());
+        }
+        let box_ = self.extent(children, member);
+        let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
+        let u = frame.u(point);
+        let interval = (rail.along + u0.min(u1) - u, rail.along + u0.max(u1) - u);
+        let line = stack.seat(
+            SeatLine::new(frame, true, base),
+            interval,
+            self.seat,
+            &band,
+            rail.corridors,
+        );
+        let target = frame.pt(rail.along, line);
+        self.seats[member] = Some(Seat {
+            anchor: rail.anchor,
+            dx: target.0 - point.0,
+            dy: target.1 - point.1,
+        });
+        line + band.pos
+    }
+
+    /// A branch's attachment: the junction terminal on its trunk parent, at
+    /// the parent's **seated** position — where the branch's own wire
+    /// leaves the trunk. `None` while the parent has no seat (a foreign
+    /// walk order), which leaves the member to the flow fallback's mercy —
+    /// never a panic.
+    fn attach_of(
+        &self,
+        children: &[PlacedNode],
+        chain: &Chain,
+        wire_edges: &[[End; 2]],
+        i: usize,
+    ) -> Option<(f64, f64)> {
+        let parent = chain.parents[i]?;
+        let parent_child = chain.members[parent];
+        let pseat = self.seats[parent_child].as_ref()?;
+        // The wire's terminal on the attachment side — read off the edge
+        // that joins the pair, since a chain records only inbound ends.
+        let mine = End {
+            child: chain.members[i],
+            terminal: chain.inbound[i].clone(),
+        };
+        let outbound = wire_edges.iter().find_map(|[a, b]| {
+            if *b == mine && a.child == parent_child {
+                Some(a.terminal.clone())
+            } else if *a == mine && b.child == parent_child {
+                Some(b.terminal.clone())
+            } else {
+                None
+            }
+        });
+        let junction = terminal(&children[parent_child], outbound.flatten().as_deref()).at;
+        Some((junction.0 + pseat.dx, junction.1 + pseat.dy))
     }
 
     /// A chain held at both ends distributes along the pin-to-pin line at
@@ -985,20 +1084,15 @@ fn tap_flags(children: &[PlacedNode], chain: &Chain) -> Vec<bool> {
 /// ([`ladder`]), forecast before anything has seated.
 fn stack_reach(children: &[PlacedNode], g: &Growing, seat: f64) -> f64 {
     let frame = Frame::outward(g.ray.normal());
-    let tap = tap_flags(children, &g.chain);
+    let limbs = crate::desugar::schematic::chain::limbs(&g.chain);
     let mut base = frame.cross(g.pin);
     for (i, (&member, inbound)) in g.chain.members.iter().zip(&g.chain.inbound).enumerate() {
-        if tap[i] {
+        if limbs[i].is_some() {
             continue;
         }
         let sat = &children[member];
-        let c = frame.cross(terminal(sat, inbound.as_deref()).at);
-        let box_ = drawn(sat);
-        let (lo, hi) = (
-            frame.cross(corner(box_, false)),
-            frame.cross(corner(box_, true)),
-        );
-        base = base + seat + (c - lo.min(hi)) + (hi.max(lo) - c);
+        let band = band_of(frame, drawn(sat), terminal(sat, inbound.as_deref()).at);
+        base = base + seat + band.neg + band.pos;
     }
     base
 }

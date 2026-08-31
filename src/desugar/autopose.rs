@@ -225,20 +225,19 @@ pub(super) fn choose<'a>(
         // member then presents its terminal back up that ray — the same ray
         // the seat pass reads off the lowered tree
         // ([`crate::layout::schematic`]), so the two agree.
-        let terminator = chain
-            .members
-            .last()
-            .map(|&m| &parts[m])
-            .filter(|term| term.kind == Some(SchKind::Label) && term.symbol.is_some())
-            .zip(chain.inbound.last())
-            .and_then(|(term, inbound)| {
-                let side = term.terminal_side(cx, inbound.as_deref())?;
-                Some(if term.forced {
-                    term.pose.side(side)
-                } else {
-                    side
-                })
-            });
+        let term_facing = |i: usize| -> Option<Side> {
+            let term = &parts[chain.members[i]];
+            if term.kind != Some(SchKind::Label) || term.symbol.is_none() {
+                return None;
+            }
+            let side = term.terminal_side(cx, chain.inbound[i].as_deref())?;
+            Some(if term.forced {
+                term.pose.side(side)
+            } else {
+                side
+            })
+        };
+        let terminator = chain.members.len().checked_sub(1).and_then(term_facing);
         let ray = schematic::chain::growth_ray(
             terminator,
             Some(held.pose.side(base)),
@@ -258,6 +257,7 @@ pub(super) fn choose<'a>(
             let p = &parts[m];
             p.kind == Some(SchKind::Label) && p.symbol.is_some()
         });
+        let limbs = schematic::chain::limbs(&chain);
         let normal = held.pose.side(base);
         for (i, (&member, inbound)) in chain.members.iter().zip(&chain.inbound).enumerate() {
             let part = &parts[member];
@@ -276,6 +276,16 @@ pub(super) fn choose<'a>(
                     continue;
                 }
                 tr.opposite()
+            } else if let Some(r) = limbs[i] {
+                // A **branch** member faces back up its branch's own ray —
+                // its terminator's convention, the trunk's when it states
+                // none ([`schematic::chain::limbs`]) — never the trunk's,
+                // which may run the other way entirely.
+                let last = (0..chain.members.len())
+                    .rev()
+                    .find(|&j| limbs[j] == Some(r))
+                    .expect("a branch holds its root");
+                term_facing(last).map_or(ray, Side::opposite).opposite()
             } else {
                 ray.opposite()
             };
