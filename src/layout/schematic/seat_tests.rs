@@ -259,6 +259,53 @@ fn a_side_growing_one_way_ladders_along_that_ray_not_the_canonical_one() {
     );
 }
 
+/// A part whose left side holds three wired pins, `a` over `b` over `c` — the
+/// canonical lane ladder, one column per pin.
+fn laddered(values: [&str; 3]) -> Vec<PlacedNode> {
+    let [v1, v2, v3] = values;
+    laid(&scope(
+        "",
+        &("  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left }; |pin#c| { side: left }\n  ]\n"
+            .to_owned()
+            + &format!("  |R#r1| \"{v1}\"\n  |R#r2| \"{v2}\"\n  |R#r3| \"{v3}\"\n")
+            + "  u1.a - r1 - |gnd|\n  u1.b - r2 - |gnd|\n  u1.c - r3 - |gnd|\n"),
+    ))
+}
+
+#[test]
+fn a_ladder_steps_its_columns_on_one_pitch() {
+    // [SPEC 16.1] a ladder's columns stand on **one** pitch — the greediest
+    // step any neighbouring pair of them asks, taken by them all. Stepped
+    // pair by pair the gaps between the *ink* come out even and the columns
+    // do not, so the pitch wobbles with nothing more meaningful than how many
+    // characters each part's value happens to read: the hero's MCU core
+    // stepped its five columns 92.8, 93.8, 79.7 and 107.0 apart, which a
+    // reader sees as columns dropped at random rather than as a grid.
+    //
+    // `r2`'s long value is the greedy one: its readout runs outward past its
+    // own lane, so the column after it has to clear that text — and every
+    // other column now steps by the same amount.
+    let nodes = laddered(["1k", "1000000000k", "1k"]);
+    let lane = |id| at(&nodes, id).0;
+    // The deepest pin keeps the inner lane, so the ladder reads c, b, a.
+    let (inner, mid, outer) = (lane("r3"), lane("r2"), lane("r1"));
+    assert!(
+        close(mid - inner, outer - mid),
+        "one pitch for the whole ladder: {} vs {}",
+        mid - inner,
+        outer - mid
+    );
+    // And the pitch is the greedy step itself, not some average of them: the
+    // ladder is exactly as wide as two of the widest column's steps.
+    let plain = laddered(["1k", "1k", "1k"]);
+    let step = at(&plain, "r2").0 - at(&plain, "r3").0;
+    assert!(
+        (mid - inner).abs() > step.abs(),
+        "the greediest pair sets it: {} vs {step}",
+        mid - inner
+    );
+}
+
 #[test]
 fn a_span_reserves_only_what_its_leg_will_really_swallow() {
     // [SPEC 16.1] the track demand and the seat itself read one `swallow`.
@@ -852,6 +899,43 @@ fn a_spanning_member_stands_off_the_landing_not_adrift_in_the_leg() {
         y_gap(&down, "u1", "r1") > 3.0 * LABEL_SEAT,
         "the slack hangs off the pin the wire leaves: {}",
         y_gap(&down, "u1", "r1")
+    );
+}
+
+#[test]
+fn a_spanning_member_takes_the_next_column_of_the_ladder_it_lands_on() {
+    // [SPEC 16.1] a span's members *are* the next columns of the ladder its
+    // landing belongs to, so they stand on that ladder's own **pitch** — the
+    // fuse on a bus in the column after the last part hanging off it, not a
+    // gap of its own reckoning beside them. Packed off the cluster alone the
+    // member's step is whatever its own ink and the outermost column's
+    // readout happen to add up to, which is a third rhythm in a picture that
+    // already reads as a grid.
+    //
+    // The wide value sits on the **deeper** pin, so its column is the inner
+    // one and it sets the pitch while leaving the outermost column's own ink
+    // narrow — the one arrangement where packing off the cluster and
+    // continuing the ladder part company.
+    let nodes = laid(&scope(
+        " { gap: 260 }",
+        &("  |component#u1| { cell: 1 1 } [ |pin#o| { side: right } ]\n".to_owned()
+            + "  |component#u2| { cell: 2 1 } [\n    |pin#i| { side: left }; |pin#p| { side: left }; |pin#q| { side: left }\n  ]\n"
+            + "  |F#f1| \"2A\"\n  |R#rn| \"1k\"\n  |R#rw| \"1000000000k\"\n"
+            + "  u2.p - rn - |gnd|\n  u2.q - rw - |gnd|\n  u1.o - f1 - u2.i\n"),
+    ));
+    let lane = |id| at(&nodes, id).0;
+    let pitch = lane("rn") - lane("rw");
+    assert!(
+        close(lane("f1") - lane("rn"), pitch),
+        "the member takes the next column: {} vs {pitch}",
+        lane("f1") - lane("rn")
+    );
+    // The tracks parted for that column, not for the packing it replaced:
+    // the leg still runs clear from the far pin, all its slack at that end.
+    assert!(
+        ink(&nodes, "f1").min_x - tip(&nodes, "o", true) > LABEL_SEAT,
+        "the leg holds the column it was reserved for: {}",
+        ink(&nodes, "f1").min_x - tip(&nodes, "o", true)
     );
 }
 

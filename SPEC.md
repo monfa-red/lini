@@ -3408,20 +3408,23 @@ everything else keeps the centring.
 - **two placed ends on two anchors** — a **span**: the members ride the
   wire's **landing leg** — the straight run into the second end, on that
   pin's row or column — and they stand **off that landing**, marching the
-  sheet's reading direction (rightward, downward) into it: the last-named
-  a seat gap clear of the second end's **cluster**, and each earlier
-  member a seat gap before it. The leg runs along the very axis that
-  anchor's own satellites ladder their **lanes** on, so a span's members
-  are the next columns of that ladder and read on one rhythm with them —
-  the fuse on a bus stands in the column after the last part hanging off
-  the bus. Whatever the leg is longer than they need is left where the
-  wire comes **in**, a run of bare bus, which is what a sheet draws: split
-  evenly instead, the surplus lands *between* the members and the part
-  they feed, where a reader takes it for a column of nothing — and its
-  width is nobody's, being only whatever the tracks happened to part by. A
-  stretch too short to hold them centres them on the raw pin-to-pin line.
-  The tracks part far enough for the members *and* for what each cluster
-  swallows;
+  sheet's reading direction (rightward, downward) into it. The leg runs
+  along the very axis that anchor's own satellites ladder their **lanes**
+  on, so a span's members **are** the next columns of that ladder and take
+  its own **pitch**: the last-named one pitch past the ladder's outermost
+  column — the fuse on a bus stands in the column after the last part
+  hanging off the bus — and each earlier member a pitch before it, save
+  where a member's own ink asks for more, when it stands a seat gap clear
+  of what it must clear, exactly as a column does. A landing whose side
+  holds no lane has no rhythm to join, and the seat gap off the second
+  end's **cluster** is the whole of it. Whatever the leg is longer than
+  they need is left where the wire comes **in**, a run of bare bus, which
+  is what a sheet draws: split evenly instead, the surplus lands *between*
+  the members and the part they feed, where a reader takes it for a column
+  of nothing — and its width is nobody's, being only whatever the tracks
+  happened to part by. A stretch too short to hold them centres them on
+  the raw pin-to-pin line. The tracks part far enough for the members
+  *and* for what each cluster swallows;
 - **no placed end** — the parts fall back to the flow with a warning.
 
 A chain that leaves its pin **sideways** takes a **lane** of its own — its own
@@ -3430,15 +3433,26 @@ square turn; one that grows straight out along its pin takes no lane and
 **stacks** outward instead. Lanes ladder: each column steps past the whole
 **ink** of the one before it — readout text included, both sides of its
 lane — so no two leads overtake each other and cross, and no column lands on
-another's text. A column also stands past the reach of every **stack** it
-crosses — a chain growing straight out of a deeper pin on the same side —
-by a full seat gap, so the wire off the stack's far terminal (a bridge's
-return) has a corridor to climb; the stacks seat first, whatever the
-declaration order, being the inner geography. And every **wired** pin's row
-is a corridor of its own: a member seats clear of every wired row but its
-own pin's, so a column's body never lands where a through wire or a
-neighbouring trunk runs, and the wires cross its lead square instead — the
-decoupling cap stands below the bus pair, never woven into it. **The ladder
+another's text. That step is the **ladder's**, not the pair's: the greediest
+one any neighbouring pair asks is the **pitch** every column takes, so a
+side's lanes stand on one rhythm. Stepped pair by pair the *gaps* come out
+even and the columns do not, and the pitch then wobbles with nothing more
+meaningful than how many characters each part's value happens to read —
+which a reader, who sees a row of columns and reads a grid, takes for
+columns dropped at random. The pitch is a side's own, never the sheet's or
+even the part's: one block holding a long readout has no business parting
+the next block's columns to its width. A column whose own lane already
+stands farther out keeps it — the wall it clears, or a stack floor below —
+and the rhythm carries on from where it really landed. A column also stands
+past the reach of every **stack** it crosses — a chain growing straight out
+of a deeper pin on the same side — by a full seat gap, so the wire off the
+stack's far terminal (a bridge's return) has a corridor to climb; the
+stacks seat first, whatever the declaration order, being the inner
+geography. And every **wired** pin's row is a corridor of its own: a member
+seats clear of every wired row but its own pin's, so a column's body never
+lands where a through wire or a neighbouring trunk runs, and the wires cross
+its lead square instead — the decoupling cap stands below the bus pair,
+never woven into it. **The ladder
 is a side's, not a ray's**: every chain turning off one side of a part leaves
 along the one lane axis, so an up-chain and a down-chain off two *different*
 pins ladder against each other like any pair — laddered per ray they would

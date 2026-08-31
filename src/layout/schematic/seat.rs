@@ -45,7 +45,7 @@
 
 use std::cmp::Ordering;
 
-use super::super::geom::{Frame, project};
+use super::super::geom::{Frame, dot, project};
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::stack::{Band, Painted, SeatLine, Stack};
 use super::net;
@@ -128,10 +128,27 @@ struct Spanning {
     ends: [(usize, Terminal); 2],
 }
 
+/// One ladder's **rhythm** [SPEC 16.1] — the pitch its columns step on, and
+/// where the column after its last would stand. A chain no anchor holds rides
+/// no lane of its own, so a **span** landing on this side reads its rhythm off
+/// this and carries the ladder on ([`Seats::absolutize`]).
+///
+/// `next` is an **out-coordinate**: the lane's distance along the side's own
+/// outward normal, in the anchor's own frame, exactly as [`ladder`] works.
+#[derive(Clone, Copy)]
+struct Rung {
+    anchor: usize,
+    side: Side,
+    next: f64,
+    pitch: f64,
+}
+
 /// Every satellite's placement decision, made before the tracks size.
 pub(super) struct Seats {
     seats: Vec<Option<Seat>>,
     spanning: Vec<Spanning>,
+    /// Each lane ladder's rhythm, for the spans that continue it ([`Rung`]).
+    rungs: Vec<Rung>,
     /// Satellites with no placed end — the flow fallback [SPEC 16.1].
     floating: Vec<usize>,
     /// Where each **net run**'s name steps off its own trace [SPEC 16.4] —
@@ -175,6 +192,7 @@ impl Seats {
         let mut out = Seats {
             seats: (0..children.len()).map(|_| None).collect(),
             spanning: Vec::new(),
+            rungs: Vec::new(),
             floating: Vec::new(),
             text: vec![(0.0, 0.0); children.len()],
             seat,
@@ -404,7 +422,8 @@ impl Seats {
                     b.depth.total_cmp(&a.depth)
                 })
         });
-        let lanes = ladder(children, &held, seat);
+        let (lanes, rungs) = ladder(children, &held, &rays, seat);
+        out.rungs = rungs;
         for (g, along) in held.iter().zip(lanes) {
             let frame = Frame::outward(g.ray.normal());
             out.grow(
@@ -682,10 +701,11 @@ impl Seats {
         Some((junction.0 + pseat.dx, junction.1 + pseat.dy))
     }
 
-    /// A chain held at both ends seats off the **second** end's landing, a
-    /// seat gap at a time back along the leg [SPEC 16.1]. Only the two
-    /// terminals are read here; the leg itself is not known until the anchors
-    /// place, so the seats are struck in [`Self::absolutize`].
+    /// A chain held at both ends seats off the **second** end's landing, as
+    /// the next columns of the ladder that pin's own satellites take their
+    /// lanes on [SPEC 16.1]. Only the two terminals are read here; the leg
+    /// itself is not known until the anchors place, so the seats are struck
+    /// in [`Self::absolutize`].
     fn distribute(&mut self, children: &[PlacedNode], chain: Chain, a: &End, b: &End) {
         let end = |e: &End| (e.child, terminal(&children[e.child], e.terminal.as_deref()));
         self.spanning.push(Spanning {
@@ -755,14 +775,14 @@ impl Seats {
             // run into the second end, on that pin's own row or column
             // [SPEC 16.1] — never on the raw pin-to-pin diagonal, which cuts
             // across the sheet (and, off an away-facing pin, across its own
-            // part). And they seat **off that landing**, a seat gap at a
-            // time: the leg runs along the very axis the second end's own
-            // satellites ladder their lanes on, so the members are that
-            // ladder's next columns and fall on one rhythm with them. Split
-            // evenly over the whole clear stretch they drift instead into
-            // its middle — a length nobody authored, being whatever the
-            // tracks happened to part by — and the blank left between them
-            // and the part they feed reads as a column of nothing.
+            // part). And they seat **off that landing**: the leg runs along
+            // the very axis the second end's own satellites ladder their
+            // lanes on, so the members are that ladder's next columns and
+            // step on its own pitch ([`Rung`]). Split evenly over the whole
+            // clear stretch they drift instead into its middle — a length
+            // nobody authored, being whatever the tracks happened to part by
+            // — and the blank left between them and the part they feed reads
+            // as a column of nothing.
             let (a, b) = match span.ends[1].1.facing {
                 // A pin on a vertical side faces horizontally: its landing
                 // leg runs on its row, and the members ride that row.
@@ -778,47 +798,38 @@ impl Seats {
                     .inflate(self.seat);
                 exit_t(from, (to.0 - from.0, to.1 - from.1), r)
             };
-            // Distances from `a` along the leg: where end 0's cluster lets go,
-            // and where end 1's takes over — each already a seat gap clear of
-            // that cluster's ink, the leg's own free window.
+            // How much of the leg each end's cluster swallows before the clear
+            // window opens — each already a seat gap clear of that cluster's
+            // ink — and the sign the leg leaves the landing at `b` by.
             let len = ((b.0 - a.0).abs() + (b.1 - a.1).abs()).max(1e-9);
             let horiz = (b.1 - a.1).abs() < (b.0 - a.0).abs();
-            let d0 = clear(&span.ends[0], a, b) * len;
-            let d1 = len - clear(&span.ends[1], b, a) * len;
-            // A member's whole **ink** rides the leg, not just its centre:
-            // how far it reaches each way from the point the placement below
-            // lands on it (its box centre, so the cross axis keeps the row).
+            let out = if horiz {
+                (a.0 - b.0).signum()
+            } else {
+                (a.1 - b.1).signum()
+            };
+            let swallow0 = clear(&span.ends[0], a, b) * len;
+            let swallow1 = clear(&span.ends[1], b, a) * len;
             let reach: Vec<(f64, f64)> = span
                 .members
                 .iter()
-                .map(|&m| {
-                    let bb = drawn(&children[m]);
-                    let c = children[m].bbox.center();
-                    if horiz {
-                        (c.0 - bb.min_x, bb.max_x - c.0)
-                    } else {
-                        (c.1 - bb.min_y, bb.max_y - c.1)
-                    }
-                })
+                .map(|&m| member_reach(children, m, horiz))
                 .collect();
-            let block: f64 = reach.iter().map(|(back, fwd)| back + fwd).sum::<f64>()
-                + span.members.len().saturating_sub(1) as f64 * self.seat;
-            // The members stand **off the landing** [SPEC 16.1] — the second
-            // end's cluster is the ladder they are the next columns of — and
-            // the leg's slack lies where the wire comes in. A window too
-            // short to hold them centres the block on the raw leg instead.
-            let mut inner = if d1 - block >= d0 - 1e-9 {
-                d1
+            let (at, far) = march(&reach, out, swallow1, self.rung(&span.ends[1]), self.seat);
+            // The leg's slack lies where the wire comes **in**. A window too
+            // short to hold the members centres them on the raw leg instead.
+            let at = if far <= len - swallow0 + 1e-9 {
+                at
             } else {
-                (len + block) / 2.0
+                let block = march(&reach, out, 0.0, None, self.seat).1;
+                march(&reach, out, (len - block) / 2.0, None, self.seat).0
             };
-            for (&member, &(back, fwd)) in span.members.iter().zip(&reach).rev() {
-                let f = (inner - fwd) / len;
+            for (&member, &d) in span.members.iter().zip(&at) {
+                let f = (len - d) / len;
                 let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
                 let (bx, by) = children[member].bbox.center();
                 children[member].cx = x - bx;
                 children[member].cy = y - by;
-                inner -= back + fwd + self.seat;
             }
         }
     }
@@ -858,40 +869,66 @@ impl Seats {
                     |end: &(usize, Terminal)| self.cluster(children, end.0).inflate(self.seat);
                 Demand {
                     ends: [(s.ends[0].0, s.ends[0].1.at), (s.ends[1].0, s.ends[1].1.at)],
-                    step: (
-                        step(&s.members, children, Bbox::w, self.seat),
-                        step(&s.members, children, Bbox::h, self.seat),
-                    ),
+                    reach: s
+                        .members
+                        .iter()
+                        .map(|&m| {
+                            [
+                                member_reach(children, m, true),
+                                member_reach(children, m, false),
+                            ]
+                        })
+                        .collect(),
                     cluster: [cluster(&s.ends[0]), cluster(&s.ends[1])],
-                    horiz_leg: s.ends[1].1.facing.map(Side::is_vertical),
+                    leg: s.ends[1].1.facing,
+                    rung: self.rung(&s.ends[1]),
+                    seat: self.seat,
                 }
             })
             .collect()
     }
+
+    /// The **rhythm** a span landing on `end` carries on [SPEC 16.1]: how far
+    /// out along that pin's own normal the ladder's next column would stand,
+    /// measured from the landing itself, and the pitch it goes on by. `None`
+    /// where that side holds no lane at all — there is no rhythm to fall in
+    /// with, and the members then stand off the cluster alone.
+    fn rung(&self, end: &(usize, Terminal)) -> Option<(f64, f64)> {
+        let side = end.1.facing?;
+        let r = self
+            .rungs
+            .iter()
+            .find(|r| r.anchor == end.0 && r.side == side)?;
+        Some((r.next - dot(end.1.at, side.normal()), r.pitch))
+    }
 }
 
-/// What one spanning chain asks of the tracks [SPEC 16.1]. Its satellites pack
-/// against the landing a seat gap at a time, so the pin-to-pin line has to be
-/// long enough for that block — and for what each end's cluster swallows before
-/// it. Stated here as a distance and the two landings it is measured between;
-/// the track arithmetic is [`super::place`]'s.
+/// What one spanning chain asks of the tracks [SPEC 16.1]. Its satellites
+/// march out from the landing as the next columns of that side's ladder, so
+/// the pin-to-pin line has to be long enough for that march — and for what
+/// each end's cluster swallows before it. Everything [`march`] reads is
+/// carried here, so the reserve is struck by the very arithmetic the seat
+/// then runs; the track arithmetic on top is [`super::place`]'s.
 pub(super) struct Demand {
     /// Each end's anchor, and the landing's offset in that anchor's own frame.
     pub ends: [(usize, (f64, f64)); 2],
-    /// The room the members themselves take along x, along y.
-    step: (f64, f64),
+    /// Each member's ink either side of its centre — along x, along y.
+    reach: Vec<[(f64, f64); 2]>,
     /// Each end's cluster, seat gap included, in its anchor's own frame —
     /// the very box [`Seats::absolutize`] measures the leg against.
     cluster: [Bbox; 2],
-    /// Which way the landing leg runs — `Some(true)` on end 1's row,
-    /// `Some(false)` on its column, `None` for a facing-less end.
-    horiz_leg: Option<bool>,
+    /// The side end 1's pin faces: the landing leg runs along its normal —
+    /// `None` for a facing-less end, whose leg is the raw chord.
+    leg: Option<Side>,
+    /// The ladder rhythm that side offers ([`Seats::rung`]).
+    rung: Option<(f64, f64)>,
+    seat: f64,
 }
 
 impl Demand {
-    /// The least pin-to-pin distance along one axis: the room the members
-    /// themselves take, plus the stretch each end's cluster **swallows** of
-    /// the leg before the clear window opens.
+    /// The least pin-to-pin distance along one axis: the room the members'
+    /// own [`march`] takes, plus the stretch each end's cluster **swallows**
+    /// of the leg before the clear window opens.
     ///
     /// `order` is how end 0's track compares with end 1's, and `perp` the
     /// settled offset between the two landings across this axis, when the
@@ -907,9 +944,12 @@ impl Demand {
             Ordering::Greater => -1.0,
             Ordering::Equal => 0.0,
         };
+        // The leg leaves end 1 the way end 0 lies: the opposite of `sign`.
+        let out = -sign;
+        let horiz_leg = self.leg.map(Side::is_vertical);
         let exact = |end: usize| -> Option<f64> {
             let perp = perp?;
-            if self.horiz_leg? != horiz || sign == 0.0 {
+            if horiz_leg? != horiz || sign == 0.0 {
                 return None;
             }
             let at = self.ends[end].1;
@@ -938,44 +978,96 @@ impl Demand {
                 Ordering::Equal => lo.max(hi),
             }
         };
-        let step = if horiz { self.step.0 } else { self.step.1 };
-        step + (0..2)
-            .map(|e| exact(e).unwrap_or_else(|| projected(e)))
-            .sum::<f64>()
+        let swallowed = |end: usize| exact(end).unwrap_or_else(|| projected(end));
+        // The ladder's rhythm rides the leg only where the leg really leaves
+        // the landing along that pin's own normal — an end 0 lying *behind*
+        // end 1 turns the leg back over the part, where no lane stands.
+        let rung = self.rung.filter(|_| {
+            horiz_leg == Some(horiz)
+                && self
+                    .leg
+                    .map(|s| if horiz { s.normal().0 } else { s.normal().1 })
+                    == Some(out)
+        });
+        let reach: Vec<(f64, f64)> = self
+            .reach
+            .iter()
+            .map(|r| if horiz { r[0] } else { r[1] })
+            .collect();
+        march(&reach, out, swallowed(1), rung, self.seat).1 + swallowed(0)
     }
 }
 
-/// The room one axis's **members** take: packed against the landing, they are
-/// their own extents end to end with a seat gap between each neighbouring pair
-/// ([`Seats::absolutize`]) — and nothing more, the two gaps against the pins
-/// themselves already riding the swallows the caller adds. Asked wider than
-/// that, the surplus is a blank the tracks part for and the seat never fills.
-fn step(
-    members: &[usize],
-    children: &[PlacedNode],
-    extent: impl Fn(&Bbox) -> f64,
+/// Where a span's members stand along their leg [SPEC 16.1] — the one
+/// arithmetic the track reserve ([`Demand::need`]) and the seat itself
+/// ([`Seats::absolutize`]) both run, so the tracks part by exactly what the
+/// members then take.
+///
+/// `reach` is each member's ink either side of its centre on the leg's axis —
+/// `(toward −, toward +)` — in wire order, so the **last**-named is the one
+/// nearest the landing; `out` is the sign the leg leaves that landing by, and
+/// `start` how much of the leg the landing's own cluster swallows first. Each
+/// member stands one `rung` **pitch** past the column before it — the ladder's
+/// own rhythm, carried on — or clear of that column's ink where its own asks
+/// for more, which is also all a leg with no ladder to join ever asks.
+///
+/// Returns each member's centre as a distance out from the landing, and how
+/// far the outermost one's ink reaches past it.
+fn march(
+    reach: &[(f64, f64)],
+    out: f64,
+    start: f64,
+    rung: Option<(f64, f64)>,
     seat: f64,
-) -> f64 {
-    let sum: f64 = members.iter().map(|&m| extent(&drawn(&children[m]))).sum();
-    sum + members.len().saturating_sub(1) as f64 * seat
+) -> (Vec<f64>, f64) {
+    let (mut lane, pitch) = rung.unwrap_or((f64::NEG_INFINITY, 0.0));
+    let (mut edge, mut far) = (start, start);
+    let mut at = vec![0.0; reach.len()];
+    for (i, &(lo, hi)) in reach.iter().enumerate().rev() {
+        let (inward, outward) = if out > 0.0 { (lo, hi) } else { (hi, lo) };
+        at[i] = (edge + inward).max(lane);
+        edge = at[i] + outward + seat;
+        far = at[i] + outward;
+        lane = at[i] + pitch;
+    }
+    (at, far)
+}
+
+/// A span member's ink either side of its centre on one axis — `(toward −,
+/// toward +)`, off the same [`drawn`] extent everything else in this pass
+/// measures. The centre is its **box** centre, so the cross axis keeps the row.
+fn member_reach(children: &[PlacedNode], m: usize, horiz: bool) -> (f64, f64) {
+    let bb = drawn(&children[m]);
+    let c = children[m].bbox.center();
+    if horiz {
+        (c.0 - bb.min_x, bb.max_x - c.0)
+    } else {
+        (c.1 - bb.min_y, bb.max_y - c.1)
+    }
 }
 
 /// Every chain's **lane** [SPEC 16.1] — how far out along its pin's own normal
 /// it stands before turning onto its growth ray — one per entry of `held`, in
-/// that order.
+/// that order, and each ladder's own [`Rung`] beside them.
 ///
 /// **A lane per chain, within a ray.** A chain reaches back toward the part from
 /// its own lane, so sharing one lane stands a flag's body over its neighbour's
 /// leg — and the router, which may not cross a body, jogs that leg into a
 /// staircase rather than the one square turn a sheet draws. Each chain
-/// therefore steps out past the whole reach of the one before it, in the order
-/// `held` arrives in (see [`Seats::build`]). The step only ever pushes a lane
-/// **outward**, so the walk is monotone and its bound is a backstop, never a
-/// cutoff.
+/// therefore steps out past the one before it, in the order `held` arrives in
+/// (see [`Seats::build`]), on the ladder's own **pitch** — the greediest of
+/// those steps, taken by them all, so the columns read as a grid. The step only
+/// ever pushes a lane **outward**, so the walk is monotone and its bound is a
+/// backstop, never a cutoff.
 ///
 /// A chain growing straight out along its own pin (`lead == 0`) has no lane to
 /// take: it never turns, so there is nothing to ladder.
-fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
+fn ladder(
+    children: &[PlacedNode],
+    held: &[Growing],
+    rays: &[(usize, Side)],
+    seat: f64,
+) -> (Vec<f64>, Vec<Rung>) {
     // Everything below is in **outward** coordinates — the lane axis times the
     // pin's own outward sign — so "farther out" is always larger.
     let lead: Vec<f64> = held.iter().map(|g| g.lead).collect();
@@ -1065,30 +1157,65 @@ fn ladder(children: &[PlacedNode], held: &[Growing], seat: f64) -> Vec<f64> {
     let mut cout: Vec<f64> = cols.iter().map(|m| ask(m, &out)).collect();
     let cback: Vec<f64> = cols.iter().map(|m| ask(m, &back)).collect();
     let cfwd: Vec<f64> = cols.iter().map(|m| ask(m, &fwd)).collect();
-    // Ladder: within one side, each column steps past its predecessor's
-    // **whole** ink — a chain's readout text runs outward past its own lane,
-    // so the next column must clear that side too, or its bodies land on the
-    // text and the packer stacks the columns end to end instead of side by
-    // side. `held` is sorted canonically and one side's chains are
-    // contiguous, so the columns arrive in that order and one pass settles
-    // them: the step only ever pushes outward.
+    // The ladder's **pitch** [SPEC 16.1]: what one column must step past the
+    // one before it is its predecessor's **whole** ink — a chain's readout
+    // text runs outward past its own lane, so the next column must clear that
+    // side too, or its bodies land on the text — plus the seat gap, plus its
+    // own reach back. Taken pair by pair that step is even *between the ink*
+    // and uneven between the columns, which wobbles with nothing more
+    // meaningful than how many characters each part's value happens to read;
+    // a reader seeing a row of columns reads a grid. So the greediest step any
+    // neighbouring pair of this ladder asks is the step they all take.
+    // `held` is sorted canonically and one side's chains are contiguous, so
+    // the columns arrive in ladder order and one pass over each settles them.
+    let mut pitch: Vec<f64> = vec![0.0; rays.len()];
+    let mut prev: Option<(usize, usize)> = None;
+    for (k, members) in cols.iter().enumerate() {
+        let group = held[members[0]].group;
+        if let Some((before, j)) = prev
+            && before == group
+        {
+            pitch[group] = pitch[group].max(cfwd[j] + seat + cback[k]);
+        }
+        prev = Some((group, k));
+    }
+    // On that pitch, then — except where a column's own lane already stands
+    // farther out (the wall it clears, a stack floor under it), which it
+    // keeps: the step only ever pushes outward, and the rhythm resumes from
+    // wherever the column really landed.
     let mut prev: Option<(usize, f64)> = None;
     for (k, members) in cols.iter().enumerate() {
         let group = held[members[0]].group;
-        if let Some((before, edge)) = prev
+        if let Some((before, at)) = prev
             && before == group
-            && cout[k] - cback[k] < edge
         {
-            cout[k] = edge + cback[k];
+            cout[k] = cout[k].max(at + pitch[group]);
         }
-        prev = Some((group, cout[k] + cfwd[k] + seat));
+        prev = Some((group, cout[k]));
+    }
+    // The rhythm itself, kept for the chains no anchor holds: a **span**'s
+    // members are the next columns of the ladder its landing belongs to
+    // ([`Seats::absolutize`]), so each ladder states where its next column
+    // would stand and the pitch that carries on from there. Columns within a
+    // group are contiguous and monotone, so the last one seen is the
+    // outermost.
+    let mut rungs: Vec<Option<Rung>> = vec![None; rays.len()];
+    for (k, members) in cols.iter().enumerate() {
+        let group = held[members[0]].group;
+        let (anchor, side) = rays[group];
+        rungs[group] = Some(Rung {
+            anchor,
+            side,
+            next: cout[k] + pitch[group],
+            pitch: pitch[group],
+        });
     }
     for (i, &lead) in lead.iter().enumerate() {
         if let Some(k) = col[i] {
             along[i] = lead * cout[k];
         }
     }
-    along
+    (along, rungs.into_iter().flatten().collect())
 }
 
 /// What one chain asks of its lane before any other is consulted [SPEC 16.1]:
