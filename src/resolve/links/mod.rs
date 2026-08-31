@@ -411,11 +411,10 @@ fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, E
         Some(ResolvedValue::Ident(r)) if r == "orthogonal" => Ok(Strategy::Orthogonal),
         Some(ResolvedValue::Ident(r)) if r == "natural" => Ok(Strategy::Natural),
         Some(ResolvedValue::Ident(r)) if r == "straight" => Ok(Strategy::Straight),
-        Some(_) => Err(Error::at(
-            span,
-            "routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'",
-        )
-        .code(Code::UNKNOWN_STRATEGY)),
+        Some(_) => Err(
+            Error::at(span, "routing takes orthogonal, natural, or straight")
+                .code(Code::UNKNOWN_STRATEGY),
+        ),
     }
 }
 
