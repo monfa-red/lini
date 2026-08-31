@@ -3407,11 +3407,21 @@ everything else keeps the centring.
   the line it feeds;
 - **two placed ends on two anchors** — a **span**: the members ride the
   wire's **landing leg** — the straight run into the second end, on that
-  pin's row or column — marching the sheet's reading direction (rightward,
-  downward), at even fractions of the stretch standing clear of both ends'
-  **clusters** by a seat gap (a leg swallowed whole falls back to the raw
-  pin-to-pin line). The tracks part far enough for the members *and* for
-  what each cluster swallows;
+  pin's row or column — and they stand **off that landing**, marching the
+  sheet's reading direction (rightward, downward) into it: the last-named
+  a seat gap clear of the second end's **cluster**, and each earlier
+  member a seat gap before it. The leg runs along the very axis that
+  anchor's own satellites ladder their **lanes** on, so a span's members
+  are the next columns of that ladder and read on one rhythm with them —
+  the fuse on a bus stands in the column after the last part hanging off
+  the bus. Whatever the leg is longer than they need is left where the
+  wire comes **in**, a run of bare bus, which is what a sheet draws: split
+  evenly instead, the surplus lands *between* the members and the part
+  they feed, where a reader takes it for a column of nothing — and its
+  width is nobody's, being only whatever the tracks happened to part by. A
+  stretch too short to hold them centres them on the raw pin-to-pin line.
+  The tracks part far enough for the members *and* for what each cluster
+  swallows;
 - **no placed end** — the parts fall back to the flow with a warning.
 
 A chain that leaves its pin **sideways** takes a **lane** of its own — its own

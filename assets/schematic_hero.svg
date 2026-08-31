@@ -110,7 +110,7 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">J1</text>
           </g>
         </g>
-        <g class="lini-node lini-F lini-block" data-id="F1" transform="translate(-209.688,-94.5)">
+        <g class="lini-node lini-F lini-block" data-id="F1" transform="translate(-153.026,-94.5)">
           <rect x="-32.75" y="-6.75" width="65.5" height="13.5" rx="0" ry="0"/>
           <g class="lini-node lini-sch-line lini-path" transform="translate(-32,-6)">
             <path d="M 0 0 M 64 12 M 0 6 L 64 6 M 16 0 L 48 0 L 48 12 L 16 12 Z"/>
@@ -1987,10 +1987,10 @@
   </g>
   <g class="lini-links">
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p3" data-to="entry.F1.p1">
-      <path d="M -950.6 -476.25 L -912.482 -476.25 L -912.482 -558.5 L -893.188 -558.5"/>
+      <path d="M -950.6 -476.25 L -884.151 -476.25 L -884.151 -558.5 L -836.526 -558.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.F1.p2" data-to="entry.Q1.s">
-      <path d="M -829.188 -558.5 L -461.2 -558.5"/>
+      <path d="M -772.526 -558.5 L -461.2 -558.5"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p2" data-to="entry.lini-cap-1">
       <path d="M -950.6 -456.25 L -855.526 -456.25 L -855.526 -410.5"/>

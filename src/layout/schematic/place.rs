@@ -222,7 +222,7 @@ pub(super) fn arrange(
     }
     // A chain held at both ends seats **between** its anchors [SPEC 16.1], in
     // no cluster and no track: so it sizes the space between the two tracks it
-    // spans. Whatever the even fractions still need is charged to the gaps
+    // spans. Whatever the packed members still need is charged to the gaps
     // lying between them — the chain's own extent, never a constant bump (a
     // bump only moves the threshold at which the seats collide).
     let (mut extra_x, mut extra_y) = (vec![0.0; cols.len()], vec![0.0; rows.len()]);

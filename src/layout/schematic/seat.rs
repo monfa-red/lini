@@ -21,8 +21,9 @@
 //!   spanning chain is [`crate::desugar::schematic::chain::holder`]'s,
 //!   shared with the chooser.
 //! - **two placed ends, on two anchors** — a **span**: its satellites ride
-//!   the wire's landing leg (the second pin's row or column), at even
-//!   fractions of the stretch standing clear of both ends' clusters.
+//!   the wire's landing leg (the second pin's row or column), seated **off
+//!   that landing** a seat gap at a time — the next columns of the ladder
+//!   that end's own satellites take their lanes on.
 //! - **no placed end** — nothing to seat against: the flow fallback, and a
 //!   warning [SPEC 21].
 //!
@@ -36,8 +37,8 @@
 //! A two-end chain joins no cluster — it sits *between* the anchors, so no
 //! single one owns it — but it is not free of the tracks either: it **sizes
 //! the space it lands in**, asking the two tracks it spans to part far
-//! enough for the even fractions, and for the stretch of leg each end's
-//! cluster swallows, to clear ([`Demand`], struck in [`super::place`]).
+//! enough for the members packed end to end, and for the stretch of leg each
+//! end's cluster swallows, to clear ([`Demand`], struck in [`super::place`]).
 //! Within its window it stands clear by construction; it still enters no
 //! anchor's [`Stack`], so a pathological weave of spans and seats can
 //! overlap — the router then reports what it cannot lawfully draw.
@@ -120,8 +121,8 @@ fn band_of(frame: Frame, box_: Bbox, point: (f64, f64)) -> Band {
     }
 }
 
-/// A chain held at both ends: its satellites distribute between the two
-/// terminals once the anchors are placed.
+/// A chain held at both ends: its satellites pack off the second terminal's
+/// landing once the anchors are placed.
 struct Spanning {
     members: Vec<usize>,
     ends: [(usize, Terminal); 2],
@@ -681,10 +682,10 @@ impl Seats {
         Some((junction.0 + pseat.dx, junction.1 + pseat.dy))
     }
 
-    /// A chain held at both ends distributes along the pin-to-pin line at
-    /// even fractions — `i / (n + 1)` for the `i`-th of `n` [SPEC 16.1]. Only
-    /// the two terminals are read here; the line itself is not known until
-    /// the anchors place, so the fractions are struck in [`Self::absolutize`].
+    /// A chain held at both ends seats off the **second** end's landing, a
+    /// seat gap at a time back along the leg [SPEC 16.1]. Only the two
+    /// terminals are read here; the leg itself is not known until the anchors
+    /// place, so the seats are struck in [`Self::absolutize`].
     fn distribute(&mut self, children: &[PlacedNode], chain: Chain, a: &End, b: &End) {
         let end = |e: &End| (e.child, terminal(&children[e.child], e.terminal.as_deref()));
         self.spanning.push(Spanning {
@@ -754,10 +755,14 @@ impl Seats {
             // run into the second end, on that pin's own row or column
             // [SPEC 16.1] — never on the raw pin-to-pin diagonal, which cuts
             // across the sheet (and, off an away-facing pin, across its own
-            // part). And only on the stretch of that leg standing **clear**
-            // of both ends' clusters by a seat gap; a leg swallowed whole
-            // (degenerate ends) falls back to the raw endpoints — the router
-            // will say what it thinks of that.
+            // part). And they seat **off that landing**, a seat gap at a
+            // time: the leg runs along the very axis the second end's own
+            // satellites ladder their lanes on, so the members are that
+            // ladder's next columns and fall on one rhythm with them. Split
+            // evenly over the whole clear stretch they drift instead into
+            // its middle — a length nobody authored, being whatever the
+            // tracks happened to part by — and the blank left between them
+            // and the part they feed reads as a column of nothing.
             let (a, b) = match span.ends[1].1.facing {
                 // A pin on a vertical side faces horizontally: its landing
                 // leg runs on its row, and the members ride that row.
@@ -773,30 +778,47 @@ impl Seats {
                     .inflate(self.seat);
                 exit_t(from, (to.0 - from.0, to.1 - from.1), r)
             };
-            let t0 = clear(&span.ends[0], a, b);
-            let t1 = 1.0 - clear(&span.ends[1], b, a);
-            // A member's **body** must clear too, not just its centre: inset
-            // the window by the end members' half extents along the leg.
+            // Distances from `a` along the leg: where end 0's cluster lets go,
+            // and where end 1's takes over — each already a seat gap clear of
+            // that cluster's ink, the leg's own free window.
             let len = ((b.0 - a.0).abs() + (b.1 - a.1).abs()).max(1e-9);
             let horiz = (b.1 - a.1).abs() < (b.0 - a.0).abs();
-            let half = |m: Option<&usize>| {
-                m.map_or(0.0, |&m| {
+            let d0 = clear(&span.ends[0], a, b) * len;
+            let d1 = len - clear(&span.ends[1], b, a) * len;
+            // A member's whole **ink** rides the leg, not just its centre:
+            // how far it reaches each way from the point the placement below
+            // lands on it (its box centre, so the cross axis keeps the row).
+            let reach: Vec<(f64, f64)> = span
+                .members
+                .iter()
+                .map(|&m| {
                     let bb = drawn(&children[m]);
-                    (if horiz { bb.w() } else { bb.h() }) / 2.0 / len
+                    let c = children[m].bbox.center();
+                    if horiz {
+                        (c.0 - bb.min_x, bb.max_x - c.0)
+                    } else {
+                        (c.1 - bb.min_y, bb.max_y - c.1)
+                    }
                 })
+                .collect();
+            let block: f64 = reach.iter().map(|(back, fwd)| back + fwd).sum::<f64>()
+                + span.members.len().saturating_sub(1) as f64 * self.seat;
+            // The members stand **off the landing** [SPEC 16.1] — the second
+            // end's cluster is the ladder they are the next columns of — and
+            // the leg's slack lies where the wire comes in. A window too
+            // short to hold them centres the block on the raw leg instead.
+            let mut inner = if d1 - block >= d0 - 1e-9 {
+                d1
+            } else {
+                (len + block) / 2.0
             };
-            let (t0, t1) = (
-                t0 + half(span.members.first()),
-                t1 - half(span.members.last()),
-            );
-            let (t0, t1) = if t0 + 1e-9 < t1 { (t0, t1) } else { (0.0, 1.0) };
-            let steps = span.members.len() + 1;
-            for (i, &member) in span.members.iter().enumerate() {
-                let f = t0 + (t1 - t0) * (i + 1) as f64 / steps as f64;
+            for (&member, &(back, fwd)) in span.members.iter().zip(&reach).rev() {
+                let f = (inner - fwd) / len;
                 let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
                 let (bx, by) = children[member].bbox.center();
                 children[member].cx = x - bx;
                 children[member].cy = y - by;
+                inner -= back + fwd + self.seat;
             }
         }
     }
@@ -848,15 +870,15 @@ impl Seats {
     }
 }
 
-/// What one spanning chain asks of the tracks [SPEC 16.1]. Its satellites are
-/// struck at even fractions of the pin-to-pin line, so that line has to be long
-/// enough for consecutive seats — and the two pins themselves — to clear by a
-/// seat gap. Stated here as a distance and the two landings it is measured
-/// between; the track arithmetic is [`super::place`]'s.
+/// What one spanning chain asks of the tracks [SPEC 16.1]. Its satellites pack
+/// against the landing a seat gap at a time, so the pin-to-pin line has to be
+/// long enough for that block — and for what each end's cluster swallows before
+/// it. Stated here as a distance and the two landings it is measured between;
+/// the track arithmetic is [`super::place`]'s.
 pub(super) struct Demand {
     /// Each end's anchor, and the landing's offset in that anchor's own frame.
     pub ends: [(usize, (f64, f64)); 2],
-    /// The members' own least step along x, along y.
+    /// The room the members themselves take along x, along y.
     step: (f64, f64),
     /// Each end's cluster, seat gap included, in its anchor's own frame —
     /// the very box [`Seats::absolutize`] measures the leg against.
@@ -867,9 +889,9 @@ pub(super) struct Demand {
 }
 
 impl Demand {
-    /// The least pin-to-pin distance along one axis: the members' own step,
-    /// plus the stretch each end's cluster **swallows** of the leg before
-    /// the clear window opens.
+    /// The least pin-to-pin distance along one axis: the room the members
+    /// themselves take, plus the stretch each end's cluster **swallows** of
+    /// the leg before the clear window opens.
     ///
     /// `order` is how end 0's track compares with end 1's, and `perp` the
     /// settled offset between the two landings across this axis, when the
@@ -923,28 +945,19 @@ impl Demand {
     }
 }
 
-/// The least pin-to-pin distance one axis needs: `n` members seat a `1/(n+1)`
-/// step apart, and the step is set by the greediest neighbouring pair — half of
-/// each extent, plus the seat gap. The end steps answer to one half extent
-/// only, the pin being a point.
+/// The room one axis's **members** take: packed against the landing, they are
+/// their own extents end to end with a seat gap between each neighbouring pair
+/// ([`Seats::absolutize`]) — and nothing more, the two gaps against the pins
+/// themselves already riding the swallows the caller adds. Asked wider than
+/// that, the surplus is a blank the tracks part for and the seat never fills.
 fn step(
     members: &[usize],
     children: &[PlacedNode],
     extent: impl Fn(&Bbox) -> f64,
     seat: f64,
 ) -> f64 {
-    let e: Vec<f64> = members
-        .iter()
-        .map(|&m| extent(&drawn(&children[m])))
-        .collect();
-    let (Some(&first), Some(&last)) = (e.first(), e.last()) else {
-        return 0.0;
-    };
-    let mut step = first.max(last) / 2.0;
-    for pair in e.windows(2) {
-        step = step.max((pair[0] + pair[1]) / 2.0);
-    }
-    (e.len() + 1) as f64 * (step + seat)
+    let sum: f64 = members.iter().map(|&m| extent(&drawn(&children[m]))).sum();
+    sum + members.len().saturating_sub(1) as f64 * seat
 }
 
 /// Every chain's **lane** [SPEC 16.1] — how far out along its pin's own normal
@@ -1269,8 +1282,7 @@ fn exit_t(from: (f64, f64), d: (f64, f64), r: Bbox) -> f64 {
 /// and the seat itself ([`Seats::absolutize`]) then eats it. Measured two
 /// ways they disagree, and a cluster the leg passes clear of — a connector's
 /// ground flags hanging a row below the bus its fuse rides — is reserved for
-/// and never used: the members, struck at even fractions of what is left,
-/// split the slack and stand a lane of nothing beside themselves.
+/// and never used: the tracks part for a stretch of leg nothing ever fills.
 fn swallow(r: Bbox, at: (f64, f64), d: (f64, f64)) -> f64 {
     let inside = at.0 >= r.min_x && at.0 <= r.max_x && at.1 >= r.min_y && at.1 <= r.max_y;
     if !inside {

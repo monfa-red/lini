@@ -4,7 +4,7 @@
 
 use super::tests::{
     anchor, at, body, cell, close, ink, laid, placed, pose_of, scope, seat_warnings, sided,
-    sided_with, tip, y_gap,
+    sided_with, tip, x_gap, y_gap,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::LABEL_SEAT;
@@ -356,10 +356,14 @@ fn chains_on_different_pins_seat_in_the_order_their_pins_do() {
 }
 
 #[test]
-fn two_placed_ends_distribute_at_even_fractions() {
-    // [SPEC 16.1] the satellites of a chain held at both ends space evenly
-    // along the landing leg, on the stretch standing clear of both ends'
-    // clusters — centred between the parts, in wire order.
+fn two_placed_ends_fill_the_leg_the_tracks_parted_for_them() {
+    // [SPEC 16.1] the members pack against the second end's landing, and the
+    // tracks part by **exactly** what that packing takes — so between two
+    // bare parts there is nothing else on the leg: one member lands on the
+    // midpoint and a pair straddles it, in wire order, a seat gap apart. A
+    // reserve wider than the pack (the even-fraction step asked `n+1` of the
+    // greediest pair) leaves the difference as blank beside the wire coming
+    // in, which is the one thing the seat can never fill.
     let ends = "  |component#u1| { cell: 1 1 } [ |pin#l| { side: right } ]\n                \x20 |component#u2| { cell: 2 1 } [ |pin#r| { side: left } ]\n";
     let one = laid(&scope(
         "",
@@ -390,9 +394,9 @@ fn two_placed_ends_distribute_at_even_fractions() {
         "the pair centres between symmetric parts: {x1} {x2} in [{a}, {b}]"
     );
     assert!(
-        x2 - x1 >= LABEL_SEAT,
-        "even fractions keep the members a seat apart: {}",
-        x2 - x1
+        close(x_gap(&two, "r1", "r2"), LABEL_SEAT),
+        "packed neighbours stand exactly a seat apart: {}",
+        x_gap(&two, "r1", "r2")
     );
 }
 
@@ -787,6 +791,67 @@ fn a_spanning_member_rides_the_landing_leg_between_the_clusters() {
     assert!(
         u1r < fx && fx < u2l,
         "…between the two clusters: {u1r} {fx} {u2l}"
+    );
+}
+
+#[test]
+fn a_spanning_member_stands_off_the_landing_not_adrift_in_the_leg() {
+    // [SPEC 16.1] a span's members seat **off the second end's landing**, a
+    // seat gap at a time: the leg runs along the very axis that anchor's own
+    // satellites ladder their lanes on, so the members are that ladder's next
+    // columns and read on one rhythm with them. Split evenly over the clear
+    // stretch instead, a member drifts into the middle of a length nobody
+    // authored — the hero's 24 V bus runs clear over the connector's whole
+    // cluster, so its fuse hugged the connector and left a hundred px of
+    // blank between itself and the first part hanging off the bus, which a
+    // reader takes for a column of nothing.
+    //
+    // The `gap:` is what makes the leg longer than the member needs; the
+    // resistor column off `u2.d` is what gives the landing a ladder to
+    // continue, and puts the cluster edge well inside the part.
+    let nodes = laid(&scope(
+        " { gap: 260 }",
+        &("  |component#u1| { cell: 1 1 } [ |pin#o| { side: right } ]\n".to_owned()
+            + "  |component#u2| { cell: 2 1 } [\n    |pin#i| { side: left }; |pin#d| { side: left }\n  ]\n"
+            + "  |F#f1| \"2A\"\n  |R#ra| \"1k\"\n  |gnd#g1|\n"
+            + "  u1.o - f1 - u2.i\n  u2.d - ra - g1\n"),
+    ));
+    let landing = ["u2", "ra", "g1"]
+        .iter()
+        .map(|id| ink(&nodes, id).min_x)
+        .fold(f64::INFINITY, f64::min);
+    assert!(
+        close(ink(&nodes, "f1").max_x, landing - LABEL_SEAT),
+        "one seat gap clear of the landing's cluster: {} vs {}",
+        ink(&nodes, "f1").max_x,
+        landing - LABEL_SEAT
+    );
+    // …and the leg's slack is the bare bus coming in, not a hole in the
+    // ladder: several seats' worth of it, all on the connector's side.
+    let lead = ink(&nodes, "f1").min_x - tip(&nodes, "o", true);
+    assert!(
+        lead > 3.0 * LABEL_SEAT,
+        "the surplus lies where the wire comes in: {lead}"
+    );
+
+    // A vertical leg is the same law turned: the second end's pin faces
+    // **top**, so the leg is its column and the member packs upward off it.
+    let down = laid(&scope(
+        " { gap: 260 }",
+        &("  |component#u1| { cell: 1 1 } [ |pin#o| { side: bottom } ]\n".to_owned()
+            + "  |component#u2| { cell: 1 2 } [ |pin#i| { side: top } ]\n"
+            + "  |R#r1| \"1k\"\n  u1.o - r1 - u2.i\n"),
+    ));
+    assert!(
+        close(ink(&down, "r1").max_y, ink(&down, "u2").min_y - LABEL_SEAT),
+        "a seat gap above the landing: {} vs {}",
+        ink(&down, "r1").max_y,
+        ink(&down, "u2").min_y - LABEL_SEAT
+    );
+    assert!(
+        y_gap(&down, "u1", "r1") > 3.0 * LABEL_SEAT,
+        "the slack hangs off the pin the wire leaves: {}",
+        y_gap(&down, "u1", "r1")
     );
 }
 
