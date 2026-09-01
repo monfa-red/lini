@@ -10,6 +10,7 @@ use super::tests::{anchor, close, laid, placed, program, sided};
 use crate::error::Code;
 use crate::layout::PlacedNode;
 use crate::layout::ir::LaidOut;
+use crate::ledger::consts::PIN_PITCH;
 use crate::routing::ortho::scene::SceneIndex;
 
 /// A root schematic sheet — the scene *is* the scope, so its wires route in
@@ -731,4 +732,34 @@ fn a_chain_hanging_off_a_net_run_carries_on_along_its_line() {
         close(on[1].0, landing.0),
         "…on the run's own line: {on:?} vs {landing:?}"
     );
+}
+
+/// A same-side **bridge**'s return [SPEC 16.1/16.5]: the far wire crosses back
+/// over the member to a pin one **fine** pitch off its row, so what it needs
+/// is that row, and a readout line stands further off a body than a pitch.
+/// With the pair straddling the row it drew over the pin's own line and the
+/// return orbited the member's body to get round it; stepped whole to the free
+/// side ([SPEC 16.2]), the return is the short step up a sheet draws into the
+/// line it feeds.
+#[test]
+fn a_same_side_bridges_return_steps_onto_the_row_it_feeds() {
+    let laid = routed(&sheet(
+        "|component#u2| [\n  |pin#vin| { side: left }\n  |pin#en| { side: left }\n  \
+         |pin#out| { side: right }\n]\n|R#r5| \"100k\"\nu2.en - r5 - u2.vin\n",
+    ));
+    let (vin, en) = (
+        stub_tip(&laid.nodes, "u2", "vin"),
+        stub_tip(&laid.nodes, "u2", "en"),
+    );
+    let path = wire(&laid, "r5.p2", "u2.vin");
+    let (lo, hi) = (vin.1.min(en.1), vin.1.max(en.1));
+    assert!(
+        path.iter().all(|&(x, _)| x >= path[0].0 - PIN_PITCH),
+        "the return steps out a pitch at most, never around the member: {path:?}"
+    );
+    assert!(
+        path.iter().all(|&(_, y)| y >= lo - 1e-6 && y <= hi + 1e-6),
+        "…and never leaves the band between the two rows: {path:?}"
+    );
+    assert!(laid.strays.is_empty(), "{:?}", laid.link_report);
 }

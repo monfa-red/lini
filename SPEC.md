@@ -3551,8 +3551,13 @@ on that pin's own line — on consecutive coarse cells, the last-named nearest
 that end; the region between the two tracks holds the earlier anchor's right
 lanes, then the span, then the later's left lanes. A chain whose ends are two
 terminals of **one** anchor is a **bridge** (`U2.EN - R5 - U2.VIN`): it grows off
-the first-named pin like any one-end chain, and the far wire is the router's,
-merged into the second pin's net at a junction dot. A chain distributes between
+the first-named pin like any one-end chain, whichever sides the two pins take,
+and the far wire is the router's, merged into the second pin's net at a junction
+dot. Pins on **one** side make that wire's way home the *second* pin's own row, a
+fine pitch off the member's — which is why the member's ref and value step clear
+of that row rather than straddling it ([16.2](#162-components--pins)): left on
+it they wall the return off, and a wire that must land on a port and cannot tee
+into its net can then only orbit the member's body. A chain distributes between
 **two** ends and no more, so a **third** placed end is named and dropped; a chain
 with **no** placed end falls back to the flow. Both warn ([SPEC 21](#21-errors)).
 
@@ -3623,7 +3628,13 @@ landed there. A symbol-bodied part turned to stand **across** its row stands on
 its own wire, so its pair steps beside the axis and reads its side off the field
 it is seated in — **outward**, away from the anchor (right aligned in a left
 field, left aligned in a right one, and right on neither flank); one lying
-**along** its row wears them above and below, centred.
+**along** its row wears them above and below, centred — except where the
+anchor's pins on that side crowd one way and leave the other free, when both
+lines step whole to the free side, the leading one keeping the line it had. A
+readout line stands further off a body than the one **fine** pitch the next
+pin's row sits at, so a pair left straddling draws over a live row and closes
+the corridor the wire that needs it runs in
+([16.1](#161-placement--the-lattice)'s bridge).
 A component's pin rails seat so its pins land on **fine** lattice
 lines, whatever their count: a rail of an **even** count straddles its own
 middle, so it reserves the odd slot it is short of, and a part carrying only one

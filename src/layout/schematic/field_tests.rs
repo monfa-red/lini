@@ -7,7 +7,7 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, body, cell, chrome, close, laid, landing, on_fine_grid, placed, port, pose_of,
+    anchor, at, body, cell, chrome, close, ink, laid, landing, on_fine_grid, placed, port, pose_of,
     scope, seat, seat_warnings, sided, sided_with, tip,
 };
 use crate::layout::PlacedNode;
@@ -632,22 +632,6 @@ fn two_span_members_stand_one_coarse_pitch_apart() {
 }
 
 #[test]
-fn a_bridge_grows_off_its_first_named_pin_like_any_chain() {
-    // [SPEC 16.1] both ends on one anchor is a fan, not a span: the pull-up
-    // stands in the first pin's own corridor and the router merges the rest.
-    let src = scope(
-        "",
-        &(sided_with("u1", "") + "  |R#r1| \"100k\"\n  u1.a - r1 - u1.b\n"),
-    );
-    let nodes = laid(&src);
-    let (rx, _) = at(&nodes, "r1");
-    assert!(
-        rx < at(&nodes, "u1").0,
-        "off the left pin it was named at first"
-    );
-}
-
-#[test]
 fn two_ends_on_one_anchor_grow_off_it_instead_of_spanning_it() {
     // The regression carried into Phase 5: `u1.a & u1.b - r1` is a fan onto one
     // part, not a span between two. Distributing it struck the midpoint of a
@@ -687,26 +671,71 @@ fn two_ends_on_one_anchor_grow_off_it_instead_of_spanning_it() {
     );
 }
 
-#[test]
-fn a_same_side_bridge_stands_in_its_first_pins_corridor() {
-    // [SPEC 16.1] two placed ends on one anchor: the member grows like a
-    // one-end chain off the first-named pin — in that pin's own corridor,
-    // entry terminal end-on — and the far wire is the router's, which merges
-    // it into the second pin's net at a junction, the way a sheet taps a
-    // pull-up into the line it feeds. Grown along the side instead, the
-    // member (always taller than one pin pitch) straddled the second pin's
-    // row and its return orbited the part.
-    let nodes = laid(&scope(
+/// A part carrying two left pins and one right, with `wire` beneath it — the
+/// pull-up bridge's scope, and the two-sided control for it.
+fn bridged(wire: &str) -> String {
+    scope(
         "",
-        &("  |component#u2| { cell: 1 1 } [\n    |pin#vin| { side: left }; |pin#en| { side: left }; |pin#out| { side: right }\n  ]\n"
+        &("  |component#u2| { cell: 1 1 } [\n    |pin#vin| { side: left }\n    \
+           |pin#en| { side: left }\n    |pin#out| { side: right }\n  ]\n"
             .to_owned()
-            + "  |R#r5| \"100k\"\n  u2.en - r5 - u2.vin\n"),
+            + "  |R#r5| \"100k\"\n"
+            + wire),
+    )
+}
+
+#[test]
+fn a_corridor_members_readouts_step_off_the_row_its_neighbour_needs() {
+    // [SPEC 16.2] a member lying along its own pin's row straddles that row
+    // with its ref and its value — and a readout line stands further off a
+    // body than the one **fine** pitch the next pin's row sits at, so the pair
+    // draws over a live row. Crowded on one side only, both lines step whole
+    // to the free side; the row is then a row again, which is what lets a
+    // same-side **bridge**'s return step onto it [SPEC 16.1].
+    let nodes = laid(&bridged("  u2.en - r5 - u2.vin\n"));
+    let (en, vin) = (landing(&nodes, "u2", "en"), landing(&nodes, "u2", "vin"));
+    let (p1, p2) = (landing(&nodes, "r5", "p1"), landing(&nodes, "r5", "p2"));
+    assert!(close(p1.1, en.1) && close(p2.1, en.1), "along EN's own row");
+    let drawn = ink(&nodes, "r5");
+    assert!(
+        drawn.min_y > vin.1 && drawn.max_y > en.1,
+        "the pair stepped below, leaving VIN's row clear: {drawn:?} vs {vin:?}"
+    );
+    // A middle pin is the control: with a row either side of it there is
+    // nothing to choose, and the pair straddles as desugar minted it.
+    let both = laid(&scope(
+        "",
+        &("  |component#u1| { cell: 1 1 } [\n    |pin#p1| { side: left }\n    \
+           |pin#p2| { side: left }\n    |pin#p3| { side: left }\n  ]\n"
+            .to_owned()
+            + "  |R#r1| \"1k\"\n  u1.p2 - r1\n"),
     ));
-    assert_eq!(pose_of(&nodes, "r5"), 180, "horizontal, p1 end-on at EN");
-    let ((ux, _), (rx, ry)) = (at(&nodes, "u2"), at(&nodes, "r5"));
-    assert!(rx < ux, "out along the shared left side: {rx} vs {ux}");
-    let en_y = cell(&nodes, "en").1;
-    assert!(close(ry, en_y), "riding EN's own row: {ry} vs {en_y}");
+    let straddles = ink(&both, "r1");
+    let axis = landing(&both, "u1", "p2").1;
+    assert!(
+        straddles.min_y < axis && straddles.max_y > axis,
+        "a corridor with no crowded side keeps the mint: {straddles:?}"
+    );
+}
+
+#[test]
+fn a_bridge_grows_off_its_first_named_pin_whichever_sides_its_pins_take() {
+    // [SPEC 16.1] both ends on one anchor is a fan, not a span: the member
+    // stands in the first-named pin's own corridor, and the far wire is the
+    // router's — merged into the second pin's net at a junction dot, the way a
+    // sheet taps a pull-up into the line it feeds. One side or two reads the
+    // same; only the readouts differ ([SPEC 16.2], above).
+    for wire in ["  u2.en - r5 - u2.vin\n", "  u2.en - r5 - u2.out\n"] {
+        let nodes = laid(&bridged(wire));
+        let en = landing(&nodes, "u2", "en");
+        let (p1, p2) = (landing(&nodes, "r5", "p1"), landing(&nodes, "r5", "p2"));
+        assert!(close(p1.1, p2.1), "along the row: {p1:?} {p2:?}");
+        assert!(close(p1.1, en.1), "EN's own: {} vs {}", p1.1, en.1);
+        assert!(
+            p1.0 < at(&nodes, "u2").0,
+            "out along the pin it was named at"
+        );
+    }
 }
 
 // ───────────────────────── the rails ─────────────────────────
