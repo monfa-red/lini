@@ -763,7 +763,12 @@ fn every_ground_in_a_scope_sinks_to_one_row() {
 }
 
 #[test]
-fn every_power_flag_rises_to_one_row() {
+fn a_power_flag_keeps_its_own_slot_and_no_row_of_its_own() {
+    // [SPEC 16.1] there is no flag row. One ground net earns one line and
+    // reads as that net; three flags naming three nets earn none, which is
+    // what every reference sheet draws. So a flag on a longer chain stands
+    // deeper than one on a shorter — and two chains of one length still land
+    // on one line, their slot origin being the track row's.
     let src = FLAG.replace("vp", "v3")
         + &scope(
             "",
@@ -773,8 +778,23 @@ fn every_power_flag_rises_to_one_row() {
         );
     let nodes = laid(&src);
     assert!(
+        at(&nodes, "f2").1 < at(&nodes, "f1").1,
+        "the longer chain's flag stands higher: {} vs {}",
+        at(&nodes, "f2").1,
+        at(&nodes, "f1").1
+    );
+
+    let src = FLAG.replace("vp", "v3")
+        + &scope(
+            "",
+            &(sided("u1")
+                + "  |R#r1| \"1k\"\n  |R#r2| \"2k\"\n  |v3#f1|\n  |v3#f2|\n"
+                + "  u1.a - r1 - f1\n  u1.b - r2 - f2\n"),
+        );
+    let nodes = laid(&src);
+    assert!(
         close(at(&nodes, "f1").1, at(&nodes, "f2").1),
-        "one flag row"
+        "two chains of one length share the row's own origin"
     );
 }
 

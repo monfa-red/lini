@@ -227,10 +227,10 @@ pub(super) fn arrange(
         anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
     field.absolutize(children);
-    // The rails are the scope's, so they are struck here and not in the field:
-    // a row is one line across every anchor. It can stand a coarse row past
-    // what the fields hold, and the packing measured the box off those cells —
-    // so the sheet takes the cells the rails landed on.
+    // The ground row is the scope's, so it is struck here and not in the
+    // field: it is one line across every anchor. It can stand past what the
+    // fields hold, and the packing measured the box off those cells — so the
+    // sheet takes the cells the row landed on.
     let mut body = packed.body.union(rail::rails(children, &field, lat));
     // …and the readouts turn outward, which moves text and no part, so it
     // changes nothing the box was measured from [SPEC 16.2].
