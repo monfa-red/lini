@@ -844,7 +844,34 @@ Then rewrite `place_tests.rs`'s track tests: `anchors_take_one_row_in_declaratio
 
 - [ ] **Step 2: Run to watch them fail** — `cargo test --lib schematic` — Expected: FAIL on the cell-multiple assertions.
 
-- [ ] **Step 3: Implement `pack.rs`**
+- [ ] **Step 3: Seat the pin rail on the fine lattice**
+
+`src/desugar/schematic/pins.rs` stacks a rail's pins at exact `PIN_PITCH`
+centres, so a rail of **even** pin count puts every pin a half pitch off the
+component's own centre — and the anchor then cannot land on the lattice with its
+pins on it. Fix it in the rail, not in placement: a component's pins must be a
+whole pitch from its centre whatever their count, so the property belongs to the
+part and every consumer gets it for free (this is what SPEC §16.2's closing
+sentence states). Add a test:
+
+```rust
+#[test]
+fn a_components_pins_stand_a_whole_pitch_from_its_centre() {
+    for n in 1..=6 {
+        let pins = (1..=n).map(|i| format!("|pin#p{i}|")).collect::<Vec<_>>().join("; ");
+        let nodes = laid(&scope("", &format!("  |component#u1| [ {pins} ]\n")));
+        let (_, _, cy) = placed(&nodes, "u1");
+        for i in 1..=n {
+            let (_, _, py) = placed(&nodes, &format!("p{i}"));
+            let d = py - cy;
+            assert!(close((d / PIN_PITCH).round() * PIN_PITCH, d),
+                "{n} pins: p{i} sits {d} off centre, not a whole pitch");
+        }
+    }
+}
+```
+
+- [ ] **Step 4: Implement `pack.rs`**
 
 Order, and it matters:
 
@@ -855,13 +882,13 @@ Order, and it matters:
 
 Delete `place.rs`'s `align`, `charge` and the `col_lo`/`row_lo` cluster arithmetic. `grid::read_cell` / the ordinal collapse stay — the track grid's semantics are unchanged.
 
-- [ ] **Step 4: Run to watch them pass** — `cargo test --lib schematic` — Expected: PASS.
+- [ ] **Step 5: Run to watch them pass** — `cargo test --lib schematic` — Expected: PASS.
 
-- [ ] **Step 5: Look at it**
+- [ ] **Step 6: Look at it**
 
 Render `samples/schematic.lini` and `samples/schematic_blocks.lini` at `--zoom 3` and read both PNGs. Expect even track spacing and straight part-to-part wires.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A src/layout/schematic
@@ -1253,6 +1280,23 @@ Report to the user: what landed, what the samples look like, and what the round 
 
 **Spec coverage.** §2 lattice → T3. §2.1 ink never places → T4/T5, asserted by T9's `a_readout_never_moves_a_part`. §2.2 ray/lane/slot → T4, T5. §2.3 collision and lane order → T4. §2.4 rails → T8. §2.5 packing and alignment → T7; spans and bridges → T6. §2.6 readouts → T9. §2.7 router → T2, T10. §3 shape → the File Structure table. §4 constants → T3, retuned at T11. §6 testing → tests in every task plus T11's sweep. §7 phases → T1–T12.
 
-**Known gap, accepted:** the design's "component pin rail snapped so its pins land on fine lines" (§4) is stated in SPEC at T1 Step 3 but has no task of its own — it belongs to desugar's `assemble_component`, and whether it is needed depends on whether an even pin count actually lands on half-pitches. **T11 Step 2's invariant sweep is what discovers it**; if a component's pins are off the grid, fix it there and say so in the commit.
+**Closed gap:** the design's "component pin rail seated so its pins land on fine lines" (§4) was left without a task. Confirmed real by reading `src/desugar/schematic/pins.rs` — a rail stacks its pins at exact `PIN_PITCH` centres, so an even count sits a half pitch off the body centre. It is now **T7 Step 3**, with its test.
+
+---
+
+## Appendix: the `seat_tests.rs` migration (T5 Step 1)
+
+All 32 tests in `seat_tests.rs`, classified. Port by meaning, not by line.
+
+**Survive — the rule is unchanged, only the numbers may move (20):**
+`a_chain_grows_the_way_its_terminator_faces` · `auto_pose_turns_a_satellite_to_face_back_up_the_ray` · `an_authored_rotate_forces_the_pose_and_the_seat_follows_it` · `a_chain_grows_link_by_link` · `a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own` · `chains_turning_onto_one_ray_from_opposite_sides_keep_their_own_lanes` · `two_pins_of_one_side_never_share_a_lane_however_their_chains_grow` · `a_side_growing_one_way_ladders_along_that_ray_not_the_canonical_one` · `chains_on_different_pins_seat_in_the_order_their_pins_do` · `a_satellite_with_no_placed_end_flows_and_says_so` · `a_third_placed_end_is_dropped_and_named` · `an_overlay_end_holds_nothing_for_the_pose_chooser_either` · `a_seat_rides_its_anchor` · `two_ends_on_one_anchor_grow_off_it_instead_of_spanning_it` · `a_same_side_bridge_stands_in_its_first_pins_corridor` · `a_rail_flag_taps_the_trunk_instead_of_standing_in_it` · `a_multi_member_side_branch_grows_its_own_column` · `a_two_by_two_divider_takes_two_columns` · `a_chain_grows_monotone_past_its_own_earlier_members` · `a_chain_clears_the_anchors_readouts` (the field origin still reads the anchor's readouts).
+
+**Rewritten — same intent, lattice assertion (5):**
+`chains_on_one_pin_stack_in_statement_order_one_seat_apart` → one **coarse pitch** apart · `a_ladder_steps_its_columns_on_one_pitch` → the lattice pitch, which is T5's `three_chains_off_one_pin_take_three_columns_one_coarse_pitch_apart` · `same_pin_chains_on_one_ray_ladder_side_by_side` → successive lanes · `a_cluster_widens_its_anchors_track` → **moves to `place_tests.rs` at T7** as whole-coarse-cell sizing · `a_lane_answers_to_the_symbol_not_to_the_name_beside_it` → becomes the stronger T9 test `a_readout_never_moves_a_part` (under "ink never places" neither the symbol nor the name places anything).
+
+**Deleted — they assert machinery this rebuild removes (7):**
+`laddered` (helper) · `a_span_reserves_only_what_its_leg_will_really_swallow` (the `Demand::need` reservation) · `two_placed_ends_fill_the_leg_the_tracks_parted_for_them` · `a_spanning_chain_sizes_the_space_it_lands_in` (both replaced by T6's coarse-cell span tests) · `a_spanning_member_stands_off_the_landing_not_adrift_in_the_leg` · `a_spanning_member_takes_the_next_column_of_the_ladder_it_lands_on` (the `Rung` mechanism) · `a_spanning_member_rides_the_landing_leg_between_the_clusters` → **kept in spirit** as T6's `a_span_rides_the_landing_leg_on_coarse_cells`; delete the original.
+
+Say in T5's commit message which tests were deleted and why — a deleted test is a deleted behaviour, and the record belongs in history.
 
 **Type consistency.** `Lattice`, `Ax`, `Seat`, `Field`, `Spanning`, `Packing` are each defined once, in the task that creates them, and later tasks use those exact names. `drawn` and `edges` move from `seat.rs` to `field.rs` at T5 and every caller is named. `Slot` (the ordinal track cell) stays `place.rs`'s and is distinct from a `Seat`'s `slot` field — do not merge them.
