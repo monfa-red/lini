@@ -10,10 +10,6 @@
 //! centre is always a wire line too: a column of parts and the wires reaching
 //! them would otherwise drift apart by the remainder, one cell at a time.
 
-// The lattice is built and tested before the passes that read it; the field
-// pass is its first caller.
-#![allow(dead_code)]
-
 use super::super::primitives;
 use crate::desugar::pose::Side;
 use crate::error::Error;
@@ -58,6 +54,9 @@ pub(super) struct Lattice {
 
 impl Lattice {
     /// Read the scope's lattice off its attrs.
+    // The orchestrator asks for this once it seats off the field rather than
+    // the seat pass; the arithmetic below is already the field's.
+    #[allow(dead_code)]
     pub(super) fn of(attrs: &AttrMap, span: Span) -> Result<Lattice, Error> {
         let (row, col) = primitives::gap(attrs, span)?;
         let pitch = PIN_PITCH;
@@ -96,6 +95,8 @@ impl Lattice {
     }
 
     /// `v` rounded to the nearest fine line.
+    // The packer's, for the alignment shift it strikes in whole pitches.
+    #[allow(dead_code)]
     pub(super) fn snap(self, v: f64) -> f64 {
         (v / self.pitch).round() * self.pitch
     }

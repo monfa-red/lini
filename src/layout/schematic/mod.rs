@@ -20,6 +20,7 @@ use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst};
 use crate::span::Span;
 
+mod field;
 mod hints;
 mod junction;
 mod lattice;

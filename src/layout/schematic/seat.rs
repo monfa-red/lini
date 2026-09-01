@@ -1309,7 +1309,7 @@ fn pin_rows(part: &PlacedNode, side: Side) -> Vec<f64> {
 /// Which of a chain's members are **taps** [SPEC 16.1], by this pass's own
 /// reading of "symbol label" — one classifier for the packer ([`Seats::grow`])
 /// and the stack forecast ([`stack_reach`]), so they cannot disagree.
-fn tap_flags(children: &[PlacedNode], chain: &Chain) -> Vec<bool> {
+pub(super) fn tap_flags(children: &[PlacedNode], chain: &Chain) -> Vec<bool> {
     crate::desugar::schematic::chain::taps(chain, |m| {
         crate::desugar::schematic::sch_kind(&children[m].type_chain)
             == Some(crate::desugar::schematic::SchKind::Label)
@@ -1342,10 +1342,10 @@ fn stack_reach(children: &[PlacedNode], g: &Growing, seat: f64) -> f64 {
 /// convention, yielding to the pin's normal when anti-parallel, and off the
 /// straight corridor of a shared pin.
 ///
-/// One home for the ray, because two passes need it before anything is seated:
-/// [`Seats::grow`] lays the chain along it, and [`Seats::build`] sorts the
-/// chains sharing it into arrival order first.
-fn growth(
+/// One home for the ray, because every pass that reads a chain needs it before
+/// anything is seated: the lane order sorts by it, and the walk lays the chain
+/// along it.
+pub(super) fn growth(
     children: &[PlacedNode],
     chain: &Chain,
     held: &End,
@@ -1377,7 +1377,7 @@ fn growth(
 ///
 /// Shared with the pose chooser, which decides the same ray one stage earlier
 /// ([`crate::desugar::autopose`]).
-fn tag_facing(node: &PlacedNode, inbound: Option<&str>) -> Option<Side> {
+pub(super) fn tag_facing(node: &PlacedNode, inbound: Option<&str>) -> Option<Side> {
     (crate::desugar::schematic::sch_kind(&node.type_chain)
         == Some(crate::desugar::schematic::SchKind::Label))
     .then(|| terminal(node, inbound).facing)
