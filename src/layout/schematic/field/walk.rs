@@ -8,7 +8,7 @@
 //! classifier, the limb split, the aside step — is
 //! [`crate::desugar::schematic::chain`]'s, shared with the pose chooser.
 
-use super::super::lattice::Ax;
+use super::super::lattice::{Ax, EPS};
 use super::super::terminal::{Terminal, terminal};
 use super::read::{growth, tag_facing, tap_flags};
 use super::{Field, Ladder, Seat, allocate, out};
@@ -296,6 +296,13 @@ struct Run {
 /// which cannot read depth two ways and falls back to the canonical direction,
 /// the deepest pin innermost either way. A stable sort, so the chains' own
 /// statement order breaks every tie.
+///
+/// Depth compares in whole [`EPS`] steps, never bit for bit: the pins of one
+/// rail stand at one depth, but the stub tips that measure it carry that depth
+/// to a bit or two and not to the bit — a pin whose name is wider than its
+/// neighbour's shifts the last of them. Quantised, one depth reads as one
+/// depth and the statement order decides, which is what the tie-break says;
+/// raw, a name's width silently outranks it.
 fn order(held: &mut [Held], ladders: usize) {
     let mut ray_of: Vec<Option<Side>> = vec![None; ladders];
     let mut mixed = vec![false; ladders];
@@ -305,6 +312,7 @@ fn order(held: &mut [Held], ladders: usize) {
             Some(r) => mixed[h.group] |= r != h.ray,
         }
     }
+    let rung = |v: f64| (v / EPS).round() as i64;
     held.sort_by(|a, b| {
         a.turns()
             .cmp(&b.turns())
@@ -315,7 +323,7 @@ fn order(held: &mut [Held], ladders: usize) {
                 } else {
                     (a.depth, b.depth)
                 };
-                y.total_cmp(&x)
+                rung(y).cmp(&rung(x))
             })
     });
 }
@@ -425,6 +433,30 @@ mod tests {
             Some(2),
             "and the shallower steps"
         );
+    }
+
+    #[test]
+    fn two_pins_at_one_depth_take_their_ladders_in_statement_order() {
+        // [SPEC 16.1] both chains grow straight out of one rail, so both pins
+        // stand at the same depth along the ray and statement order is the
+        // whole tie-break. That depth is measured on stub tips, which agree to
+        // a bit or two and not to the bit once the pins' names differ in
+        // width — so the order is read in fine lines, never in raw px.
+        let src = "{ layout: schematic }\n|component#u1| [\n  \
+                   |pin#NRE| \"RE\" { side: left }\n  \
+                   |pin#DE| { side: left }\n  \
+                   |pin#VCC| { side: right }\n]\n\
+                   |R#r1| \"1k\"\n|R#r2| \"2k\"\nu1.DE - r1\nu1.NRE - r2\n";
+        let (kids, f) = field(src);
+        let u1 = kids
+            .iter()
+            .position(|c| c.id.as_deref() == Some("u1"))
+            .expect("u1");
+        let line = |pin| terminal(&kids[u1], Some(pin)).at.1;
+        let (r1, r2) = (seat(&kids, &f, "r1"), seat(&kids, &f, "r2"));
+        assert_eq!((r1.lane, r2.lane), (None, None), "both grew straight out");
+        assert_eq!(r1.pin_line, line("DE"), "the first stated keeps its line");
+        assert_ne!(r2.pin_line, line("NRE"), "and the second steps beside it");
     }
 
     #[test]
