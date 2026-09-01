@@ -3472,11 +3472,11 @@ holds a part, it does not part it from the next.
   one on to another placed part — so a chain sharing such a pin turns onto the
   canonical ray: down off a side pin, rightward off a top or bottom one. A chain
   of bare net runs is exempt, being that very trace named ([16.4](#164-labels)).
-- its **lane** is the cross coordinate: a coarse line out from the anchor's ink
-  for a chain that turned off its pin, the pin's own fine line for one that grew
-  straight out and takes no lane at all.
-- its **slots** carry the members: member *k* centres on the *k*-th line a
-  coarse pitch along the ray from the field origin. Centred, not hung — so a cap
+- its **lane** is the cross coordinate: a line out from the anchor's ink for a
+  chain that turned off its pin, the pin's own line for one that grew straight
+  out and takes no lane at all.
+- its **slots** carry the members: the first on the field origin, and each one
+  after it on the first line past the one before. Centred, not hung — so a cap
   and a resistor off one bus share a body row, their leads differing by their
   own lengths.
 
@@ -3487,18 +3487,26 @@ rail flag beside a junction — takes no slot, hanging off its attachment member
 along its own drawn convention and stepping aside when that points back into the
 trunk.
 
-**Collision is the cells'.** A member's cell is one `gap` pitch along its ray,
-and across it the pitch of the **line it stands on**: a **part** takes the
-coarse cell wherever it stands — its ref and value stand off its body by rule,
-and that is the room they need — and so does anything on a lane, a lane being a
-coarse column. A **label** keeping a pin's own **fine** line, being its own
-terminal and no part ([16.4](#164-labels)), takes that line alone, widened to
-the whole fine pitches its own symbol draws across it. So a no-connect cross
-grown straight out of one pin leaves the pins either side their own rows, and a
-net run, which draws no symbol at all, takes exactly the line it lands on. A
-chain's cells run from its own **pin's** line out to its outermost member, which
-is the column it really draws. A lane is free when no cell of the chain meets
-one already committed; a taken lane steps out a coarse line and tries again.
+**A cell is its content's, and nothing steps by `gap`.** A member's cell holds
+what that member draws, and the whole placement is that one measure: a **part**
+takes the **coarse** cell across its ray — it wears a ref and a value beside its
+body by rule, that cell is the room they need, and that room is the one thing
+`gap` states — and along its ray it takes its own symbol's length and a fine
+pitch of air. A **label**, being its own terminal and no part
+([16.4](#164-labels)), takes only the whole **fine** pitches its own drawing
+covers, either way. So a no-connect cross grown out of one pin leaves the pins
+either side their own rows, a net run takes exactly the line it lands on, and
+two bare returns off one connector stand a fine pitch apart where two resistors
+stand a whole column. A chain's cells run from its own **pin's** line out to its
+outermost member, which is the column it really draws.
+
+Every line the field picks is then found by **stepping one fine line at a time
+until the cells clear**, and never by a pitch stated in advance: a lane is free
+when no cell of the chain meets one already committed, and a taken lane steps
+out a fine line and tries again; a member stands on the first fine line past the
+one before it. That is why two stacked discretes still stand a coarse pitch
+apart — their cells say so, and a wire between two bodies any closer has no
+track — while a ground ends a chain a step under the part above it.
 A chain's **lead** — the
 run from its pin out to its lane — reserves nothing, the lane order keeping it
 clear. So four things need no rule: an up-chain and a down-chain off one pin
@@ -3516,18 +3524,17 @@ innermost either way. The chains that grew **straight** out take no lane and
 compete for none, so they stand first: they are the geography every lane then
 steps past.
 
-**A lane and a slot are two measurements, not one count read twice.** A lane
-carries a part's whole cell, so the innermost one is the first **coarse** line
-whose cell stands clear of the anchor's own drawn ink on that side, readouts
-included. A slot is the first **fine** line whose cell stands clear of what
-that chain's own **lead passes**: a chain that turned into a lane is beside the
-body already — that is what the lane is — and clears only the deepest pin the
-ray's laned chains leave from; one that grew straight out has its ray pointing
-through the body, and clears the ink. Both clear by half a cell, a member
-standing centred on its line, and then the one fine pitch two wired neighbours
-always keep. A slot is fine and a lane coarse because a lane is a *position* and
-a slot a *separation*: rounding a separation up to a coarse line buys a whole
-cell of bare wire for a shortfall of one unit.
+**A field starts where its cells clear the ink.** The innermost **lane** on a
+side is the first line whose cells stand clear of the anchor's own drawn ink
+there, readouts included — so a part's cell edge lands on the body and no
+further out, and a chain carrying nothing but a ground symbol starts a fine
+pitch off it. The first **slot** clears what that chain's own **lead passes**:
+a chain that turned into a lane is beside the body already — that is what the
+lane is — and clears only the pin it hangs off; one that grew straight out has
+its ray pointing through the body, and clears the ink. Every one of these is a
+*separation*, measured in ink and quantised to the **fine** grid: rounding a
+separation up to a coarse line buys a whole cell of bare wire for a shortfall of
+one unit.
 
 A slot origin is the **track line's**, not the anchor's: every anchor riding the
 line across the ray — the same track row for an up or down ray, the same track
@@ -3535,22 +3542,12 @@ column for a left or right one — shares one, the deepest requirement among the
 That is what stands two anchors' fields on one row, bar the alignment below,
 which carries an anchor and its whole field together.
 
-**The ground row.** A chain growing **down** into a rail symbol (`gnd` · `earth`
-· `chassis` · `power` — [16.4](#164-labels)) sinks its terminator to the scope's
-one **ground row**. There is no upward twin: a block has one ground net and one
-line for it reads as that net, where three flags name three nets and aligning
-them says nothing. A chain terminating **up** stands on its own slot like any
-other member — and two single-member up-chains in one track row land on one line
-regardless, their slot origin being that row's. Which chains sink is the
-**ray**'s, never the symbol's, so a ground posed inverted above a part keeps its
-slot. The row stands a **fine** pitch clear of the deepest ink **staying** above
-it — what slot the grounds took says nothing, they being the things moved — and
-a scope whose every chain is one ground long keeps the line it drew. Only a
-**terminator** moves — the trunk's, or a branch's grown along its own ray, never
-a tap, which ends nothing and stays beside the junction it hangs off: its chain
-keeps every slot above it, and the lead down to the row is the router's ordinary
-wire. The row is vertical only — a chain running out along a pin's row ends
-where it ends.
+**Terminators end where they end.** There is no ground row and no flag row. A
+chain's last member stands a step under the one above it like any other, and
+chains of one depth therefore land on one line — which is the ground line a
+sheet draws when it draws one, and none when the chains differ, as every
+reference sheet has it. Aligning three power flags naming three nets would say
+nothing at all.
 
 **Facing pins align.** Two anchors in one track row stand centre to centre on a
 shared row line, except that a wire — or a span, whose members all ride one line
@@ -3858,11 +3855,12 @@ core types, restyled by scoped rules.
 into rails and chrome, minted label wires and capsule declarations, and
 emitted the scoped look rules; the engine then assigns every satellite its
 **cell** (ray, lane, slot), **packs** the tracks in whole coarse cells,
-absolutizes the seats, sinks the **ground row**, seats the **readouts**, and hands
+absolutizes the seats, seats the **readouts**, and hands
 every wire — with its fixed ports — to the router. Junction dots are read off
 the routed geometry and emitted as `|junction|` chrome. The scope's links stay
 ordinary routed links and its children arrange in place — no subtree is
-consumed; only the generated chrome (rails, readouts, tags, junctions) is new.
+consumed; only the generated chrome (pin rails, readouts, tags, junctions) is
+new.
 
 ---
 # Part III — Reference
