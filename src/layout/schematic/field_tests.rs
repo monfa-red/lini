@@ -7,8 +7,8 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, body, cell, chrome, close, laid, on_fine_grid, placed, port, pose_of, scope, seat,
-    seat_warnings, sided, sided_with, tip,
+    anchor, at, body, cell, chrome, close, laid, landing, on_fine_grid, placed, port, pose_of,
+    scope, seat, seat_warnings, sided, sided_with, tip,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::READOUT_OFFSET;
@@ -560,6 +560,43 @@ fn a_two_by_two_divider_takes_two_columns() {
 }
 
 // ───────────────────────── spans and bridges ─────────────────────────
+
+/// Two anchors a track row apart, the second's left rail three pins deep so
+/// its named pin sits a pitch off the first's — the alignment has something to
+/// strike.
+fn offset_pair(wire: &str) -> Vec<PlacedNode> {
+    laid(&scope(
+        "",
+        &("  |component#u1| { cell: 1 1 } [ |pin#a| { side: right } ]\n".to_owned()
+            + "  |component#u2| { cell: 2 1 } [\n    |pin#p1| { side: left }\n    \
+               |pin#p2| { side: left }\n    |pin#p3| { side: left }\n  ]\n"
+            + wire),
+    ))
+}
+
+#[test]
+fn a_span_aligns_the_facing_pins_it_joins() {
+    // [SPEC 16.1] "a wire — **or a span**, whose members all ride one line —
+    // joining a facing pin pair aligns that pair". Both of the fuse's hops are
+    // anchor-to-satellite, so only the span itself names the pair; unaligned,
+    // `u2` keeps the track's own line and its pin stands a pitch off the bus.
+    let nodes = offset_pair("  |F#f1| \"2A\"\n  u1.a - f1 - u2.p3\n");
+    let (a, p3) = (landing(&nodes, "u1", "a").1, landing(&nodes, "u2", "p3").1);
+    let f = at(&nodes, "f1").1;
+    assert!(close(a, p3), "the facing pair shares a row: {a} vs {p3}");
+    assert!(
+        close(f, a),
+        "and the span rides it dead straight: {f} vs {a}"
+    );
+    assert!(on_fine_grid(a), "a whole number of fine pitches: {a}");
+    // …and a bare wire between the same two pins still aligns them, so the
+    // span reads through the one rule rather than beside it.
+    let bare = offset_pair("  u1.a - u2.p3\n");
+    assert!(close(
+        landing(&bare, "u1", "a").1,
+        landing(&bare, "u2", "p3").1
+    ));
+}
 
 #[test]
 fn a_span_rides_the_landing_leg_on_coarse_cells() {

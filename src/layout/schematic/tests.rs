@@ -81,6 +81,16 @@ pub(super) fn port(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
     (x + at.0, y + at.1)
 }
 
+/// Where a wire lands on one **named** terminal of a placed part in scene
+/// coordinates — a pin's stub tip, a symbol part's port [SPEC 16.2] — through
+/// the same reader the router's fixed ports come from, so a test judges the
+/// point a wire really arrives at.
+pub(super) fn landing(nodes: &[PlacedNode], id: &str, terminal: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    let at = super::terminal::terminal(n, Some(terminal)).at;
+    (x + at.0, y + at.1)
+}
+
 /// A placed node's **own box** in scene coords — its drawing without the
 /// readout chrome hanging off it, for the assertions that are about where the
 /// part itself landed.

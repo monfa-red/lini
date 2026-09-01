@@ -9,20 +9,22 @@
 //! where a part lands, so a long value still overhangs the column beside it
 //! rather than parting the tracks.
 //!
-//! **Facing pins align** first: where a wire joins an earlier column's right
-//! pin to a later column's left pin, the later anchor offsets so the two
-//! landings share a line and the wire draws dead straight. The offset is a
-//! whole number of fine pitches ([`Lattice::snap`]), so the lattice survives
-//! it, and the cells it consumes are charged to the track like any other
-//! content — struck before the sizing, an aligned anchor can never overrun the
-//! allotment its neighbour was placed against.
+//! **Facing pins align** first: where a wire — or a **span**, whose members
+//! all ride one line — joins an earlier column's right pin to a later column's
+//! left pin, the later anchor offsets so the two landings share a line and the
+//! bus draws dead straight. The offset is a whole number of fine pitches
+//! ([`Lattice::snap`]), so the lattice survives it, and the cells it consumes
+//! are charged to the track like any other content — struck before the sizing,
+//! an aligned anchor can never overrun the allotment its neighbour was placed
+//! against.
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::field::{Field, drawn, edges};
 use super::lattice::{Ax, EPS, Lattice};
 use super::place::{Slot, collapse};
-use super::terminal::terminal;
+use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
+use crate::desugar::schematic::chain::End;
 use crate::resolve::ResolvedLink;
 
 /// Where every anchor lands [SPEC 16.1]: the ordinal track grid, sized in
@@ -45,7 +47,7 @@ pub(super) fn pack(
     field: &Field,
     lat: Lattice,
 ) -> Packing {
-    let offsets = align(children, links, scope, anchored, slots, lat);
+    let offsets = align(children, links, scope, anchored, slots, field, lat);
     let x = axis(Ax::X, children, anchored, slots, field, &offsets, lat);
     let y = axis(Ax::Y, children, anchored, slots, field, &offsets, lat);
     let origins: Vec<(f64, f64)> = x.into_iter().zip(y).collect();
@@ -172,10 +174,17 @@ fn spanning(field: &Field, anchored: &[usize], k: usize, j: usize) -> i32 {
 /// later anchor then offsets so the two landings share one line and the wire
 /// draws dead straight; columns mirror it with bottom pins against top.
 ///
+/// A **span** names such a pair exactly as a bare wire does — its members all
+/// ride one line, so the pin it leaves and the pin it lands on are as much a
+/// facing pair as two pins wired directly. Its hops are not: each is
+/// anchor-to-satellite, and read hop by hop the pair is never seen at all
+/// ([`Field::spans`] is the one place it is written down).
+///
 /// The offset is snapped to a whole number of **fine** pitches, so an aligned
 /// anchor is still on the lattice — which is also why a part's pins stand a
 /// whole pitch from its own centre [SPEC 16.2]: the snap is then exact and the
-/// straight wire really is straight.
+/// straight wire really is straight. A symbol whose pins straddle its centre
+/// line instead [SPEC 16.3] keeps whatever it is off by, and the wire jogs.
 ///
 /// Deterministic throughout: anchors take alignment in track order (rows, then
 /// columns within one), each aligning through the first statement-order wire
@@ -186,11 +195,30 @@ fn align(
     scope: &str,
     anchored: &[usize],
     slots: &[Slot],
+    field: &Field,
     lat: Lattice,
 ) -> Vec<(f64, f64)> {
     let mut out: Vec<(f64, f64)> = vec![(0.0, 0.0); anchored.len()];
     let hops = edges(children, links, scope);
     let anchor_of = |child: usize| anchored.iter().position(|&i| i == child);
+    // A wire's far end as a **placed** pair: the anchor it lands on and the
+    // terminal it lands at — read straight off the end where the wire reaches
+    // another anchor, and through the span the end starts where it reaches a
+    // satellite instead.
+    let facing_end = |k: usize, theirs: &End| -> Option<(usize, Terminal)> {
+        if let Some(j) = anchor_of(theirs.child) {
+            return Some((
+                j,
+                terminal(&children[anchored[j]], theirs.terminal.as_deref()),
+            ));
+        }
+        let span = field
+            .spans()
+            .iter()
+            .find(|s| s.members.contains(&theirs.child))?;
+        let (child, far) = *span.ends.iter().find(|(c, _)| *c != anchored[k])?;
+        Some((anchor_of(child)?, far))
+    };
     // One pass per axis: `set` marks anchors whose offset on that axis is
     // final (the first anchor of every track seeds it), and each later anchor
     // takes the first wire to a set neighbour whose pins face each other.
@@ -213,7 +241,7 @@ fn align(
                 } else {
                     return None;
                 };
-                let j = anchor_of(theirs.child)?;
+                let (j, their_t) = facing_end(k, theirs)?;
                 let same_track = if vertical {
                     slots[j].row == slots[k].row && slots[j].col != slots[k].col
                 } else {
@@ -223,7 +251,6 @@ fn align(
                     return None;
                 }
                 let mine_t = terminal(&children[anchored[k]], mine.terminal.as_deref());
-                let their_t = terminal(&children[anchored[j]], theirs.terminal.as_deref());
                 // Only pins pointing **at** each other align — the pair a
                 // straight wire can actually join.
                 let facing = if vertical {

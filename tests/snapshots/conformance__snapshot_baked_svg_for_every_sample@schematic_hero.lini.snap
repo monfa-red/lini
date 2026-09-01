@@ -209,7 +209,7 @@ input_file: samples/schematic_hero.lini
             </g>
           </g>
         </g>
-        <g class="lini-node lini-J lini-component lini-pose-180 lini-block" data-id="J1" transform="translate(-400,-100)">
+        <g class="lini-node lini-J lini-component lini-pose-180 lini-block" data-id="J1" transform="translate(-400,-80)">
           <rect x="-8" y="-38" width="16" height="76" rx="0" ry="0"/>
           <g class="lini-node lini-column lini-block" transform="translate(0,0)">
             <g class="lini-node lini-pin lini-block" data-id="p3" transform="translate(0,-20)">
@@ -3151,16 +3151,16 @@ input_file: samples/schematic_hero.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p3" data-to="entry.F1.p1">
-      <path d="M -1632.75 -1040 L -1520 -1040 L -1520 -1028 L -1392 -1028"/>
+      <path d="M -1632.75 -1020 L -1520 -1020 L -1520 -1028 L -1392 -1028"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.F1.p2" data-to="entry.Q1.s">
       <path d="M -1328 -1028 L -988 -1028"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p2" data-to="entry.lini-cap-1">
-      <path d="M -1632.75 -1020 L -1460 -1020 L -1460 -720"/>
+      <path d="M -1632.75 -1000 L -1460 -1000 L -1460 -720"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p1" data-to="entry.lini-cap-2">
-      <path d="M -1632.75 -1000 L -1560 -1000 L -1560 -720"/>
+      <path d="M -1632.75 -980 L -1560 -980 L -1560 -720"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.Q1.s" data-to="entry.R2.p1">
       <path d="M -988 -1028 L -1260 -1028 L -1260 -952"/>
