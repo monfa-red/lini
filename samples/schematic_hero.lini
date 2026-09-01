@@ -7,9 +7,11 @@
 // six signals that genuinely leave a block are written out as net names
 // [SPEC 16].
 {
-  // The sheet is A4 at 11 px per millimetre — `density:` is screen resolution
-  // alone, so the paper stays true-scale in print [SPEC 15.1].
-  density: 5.2;
+  // `density:` is screen resolution alone — px per millimetre — so the paper
+  // stays true-scale in print [SPEC 15.1] and the number says how much circuit
+  // an A3 holds: the parts are drawn in sheet px [SPEC 16.6], so 10 fits these
+  // seven blocks on the sheet edge to edge.
+  density: 10;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -36,11 +38,14 @@
 }
 
 // The page is an ordinary container inside its frame [SPEC 15.8], so the blocks
-// take a grid: auto tracks size to the blocks the lattice draws, stretched to
-// tile the sheet, leaving the bottom-right cell to the title block, which is
-// seated by type.
+// take a grid: fixed tracks, each sized to the widest and tallest block the
+// lattice draws in it, stretched to tile the sheet edge to edge. The
+// bottom-right cell is left empty for the title block, which takes no cell at
+// all — a `|title-block|` is pulled out of the flow and pinned flush inside the
+// frame's corner [SPEC 15.8]. `padding:` clears the frame, which is inset
+// 10 mm from the trimmed edge, so no block draws over it.
 |page| {
-  sheet: a3 landscape; padding: 60; layout: grid; columns: auto, auto, auto; rows: auto, auto, auto; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; padding: 110; layout: grid; columns: 1450, 1330, 1150; rows: 920, 920, 860; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [
@@ -85,9 +90,7 @@
       |pin#ONOFF| "ON/OFF" { side: left; number: 5; }
       |pin#GND| { side: bottom; number: 3; }
       |pin#OUT| { side: right; number: 2; }
-      // A pin's `translate:` slides it along the side it lives on [SPEC 16.2],
-      // clearing the feedback lead of the ground below it.
-      |pin#FB| { side: right; number: 4; translate: 0 40; }
+      |pin#FB| { side: right; number: 4; }
     ]
     |C#C2| "100n"
     |R#R3| "10k"
@@ -265,9 +268,13 @@
     Q2.s - |gnd|
     Q2.d - J4.p3
     Q2.d - D8.a - |v24|
-    // The fan header reads down the way its wires leave: the rail on the top
-    // screw takes the outer lane, the tach the one inside it, and the switched
-    // return the bottom screw, whose run to the drain crosses nothing.
+    // The fan header reads down the way its wires leave. Both upward chains
+    // turn off their pins, so both take a lane, and the lane order is the
+    // pins' own [SPEC 16.1]: the top screw is the deeper one along the ray, so
+    // the rail keeps the inner column and the tach steps outside it — which is
+    // what lets the tach's lead cross the rail's column below where it is
+    // live. The switched return takes the bottom screw, and its run to the
+    // drain crosses nothing.
     J4.p1 - |v24|
     // The tach net is named first, and the pull-up taps the name: two wires to
     // one label merge at its connection point [SPEC 16.5], so the resistor

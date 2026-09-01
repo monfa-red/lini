@@ -5,7 +5,7 @@
 // **value**; its id is drawn verbatim as the reference designator, and an
 // anonymous part mints a display-only one from its type — R1, C1, D1…
 {
-  layout: schematic; gap: 40 34;
+  layout: schematic; gap: 40;
   // A row header is an ordinary box on the track grid — a `|caption|` would
   // pin itself out of the flow and take no cell [SPEC 5].
   |head::block| { font-size: 13; color: --muted; padding: 0 8; }
