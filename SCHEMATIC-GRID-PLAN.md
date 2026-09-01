@@ -1222,7 +1222,86 @@ keeps its circuit. SCH_GAP settles where the eye put it."
 
 ---
 
-### Task 12: the audit round
+### Task 12: `clearance` is the sheet's one unit
+
+Lands **after** T11's visual gate, because it changes routing density and the
+gate is where that gets looked at. `Lattice::of` is the only place the numbers
+are read, so this is one function body, two error arms and a SPEC sentence.
+
+**Files:**
+- Modify: `src/layout/schematic/lattice.rs` — `Lattice::of`
+- Modify: `src/ledger/consts.rs` — `PIN_PITCH` retires into `SCH_CLEARANCE`
+- Modify: `src/ledger/defaults.rs` — `SCH_CLEARANCE` 10 → 20
+- Modify: `src/error/` — two new arms under `Code::SCHEMATIC_TRACKS`
+- Modify: `SPEC.md` §16.1 (the two-pitches paragraph), §10.5, §21 (the errors)
+- Modify: `ROUTING.md` — the track quantum entry names clearance
+
+**The rule:** a schematic scope has one unit, `clearance` — the minimum a wire
+keeps from any body, the pitch wires keep from each other, **and** the pitch a
+rail's pins stand on. `gap` is the part pitch, rounded up to a multiple of it.
+The relationship `PIN_PITCH` documents today but nothing enforces becomes a law.
+
+- [ ] **Step 1: Write the failing tests**
+
+```rust
+#[test]
+fn clearance_is_the_fine_pitch() {
+    let l = lat(" { clearance: 25 }");
+    assert_eq!(l.pitch, 25.0, "the scope's unit");
+    assert_eq!(l.row, 125.0, "and gap rounds up to a multiple of it");
+}
+
+#[test]
+fn a_clearance_below_the_text_floor_errors() {
+    // Pin names are ~12px and numbers 10px: pins closer than this collide
+    // whatever routing wants, so the sheet says so [SPEC 21].
+    let e = layout_err("|schematic#s| { clearance: 8 } [ |gnd#g| ]\n");
+    assert!(e.contains("clearance") && e.contains("16"), "{e}");
+}
+
+#[test]
+fn a_gap_under_four_clearances_errors() {
+    let e = layout_err("|schematic#s| { clearance: 20; gap: 60 } [ |gnd#g| ]\n");
+    assert!(e.contains("gap") && e.contains("four"), "{e}");
+}
+```
+
+- [ ] **Step 2: Run to watch them fail** — `cargo test --lib schematic::lattice`
+
+- [ ] **Step 3: Implement**
+
+`Lattice::of` reads `clearance` (falling back to `SCH_CLEARANCE`) as `pitch`,
+errors below **16**, rounds each `gap` axis up to a multiple of it, and errors
+below `4 × pitch`. `PIN_PITCH` retires: every reader takes the scope's clearance
+instead — grep for it and convert each site, since a baked pin pitch and an
+authored one are exactly the parallel implementation AGENTS.md forbids. The
+router's quantum (T10) becomes the world's clearance, which it already carries.
+
+- [ ] **Step 4: Run the suite and look at it**
+
+`cargo test`, then re-render all four samples at `--zoom 3` and read them.
+Schematic clearance goes 10 → 20, so every keep-out doubles: check for closed
+channels, new strays and crowded leads. This is the step this task exists for.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "A sheet has one unit, and it is clearance
+
+Pin pitch was a baked 20 with a doc comment promising it stayed above the
+router's minimum at the scope's clearance — a relationship nothing
+enforced and nobody checked. It is the same question asked twice: what
+two neighbouring landings owe each other. So clearance is the fine
+pitch now, gap a multiple of it, and the schematic's track quantum is
+just its clearance. Below 16 the pin text collides whatever routing
+wants, and below four clearances a discrete has no lead left, so both
+error rather than clamp."
+```
+
+---
+
+### Task 13: the audit round
 
 **Files:** everything the rebuild touched.
 
@@ -1278,7 +1357,7 @@ Report to the user: what landed, what the samples look like, and what the round 
 
 ## Self-review
 
-**Spec coverage.** §2 lattice → T3. §2.1 ink never places → T4/T5, asserted by T9's `a_readout_never_moves_a_part`. §2.2 ray/lane/slot → T4, T5. §2.3 collision and lane order → T4. §2.4 rails → T8. §2.5 packing and alignment → T7; spans and bridges → T6. §2.6 readouts → T9. §2.7 router → T2, T10. §3 shape → the File Structure table. §4 constants → T3, retuned at T11. §6 testing → tests in every task plus T11's sweep. §7 phases → T1–T12.
+**Spec coverage.** §2 lattice → T3. §2.1 ink never places → T4/T5, asserted by T9's `a_readout_never_moves_a_part`. §2.2 ray/lane/slot → T4, T5. §2.3 collision and lane order → T4. §2.4 rails → T8. §2.5 packing and alignment → T7; spans and bridges → T6. §2.6 readouts → T9. §2.7 router → T2, T10. §3 shape → the File Structure table. §4 constants → T3, retuned at T11. §6 testing → tests in every task plus T11's sweep. §7 phases → T1–T13; `clearance` as the sheet's unit is T12, added after the design was approved.
 
 **Closed gap:** the design's "component pin rail seated so its pins land on fine lines" (§4) was left without a task. Confirmed real by reading `src/desugar/schematic/pins.rs` — a rail stacks its pins at exact `PIN_PITCH` centres, so an even count sits a half pitch off the body centre. It is now **T7 Step 3**, with its test.
 
