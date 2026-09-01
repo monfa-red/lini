@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/schematic.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-384.414 -230 768.828 460" width="768.828" height="460" class="lini lini-scope-de409ed0">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-330 -174 660 348" width="660" height="348" class="lini lini-scope-de409ed0">
   <style>
     .lini-scope-de409ed0 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini-scope-de409ed0 .lini-canvas { fill: #faf5e6; }
@@ -67,9 +67,9 @@ input_file: samples/schematic.lini
     <path id="lini-g1600-315" d="…"/>
     <path id="lini-g1600-1653" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-384.414" y="-230" width="768.828" height="460"/>
+  <rect class="lini-canvas" x="-330" y="-174" width="660" height="348"/>
   <g class="lini-scene">
-    <g class="lini-node lini-component lini-block" data-id="u1" transform="translate(-80,-60)">
+    <g class="lini-node lini-component lini-block" data-id="u1" transform="translate(-140,-40)">
       <rect x="-39.0355" y="-38" width="78.071" height="76" rx="0" ry="0"/>
       <g class="lini-node lini-row lini-block" transform="translate(0,-20)">
       </g>
@@ -161,7 +161,7 @@ input_file: samples/schematic.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-J lini-component lini-block" data-id="j1" transform="translate(320,-60)">
+    <g class="lini-node lini-J lini-component lini-block" data-id="j1" transform="translate(260,-40)">
       <rect x="-8" y="-58" width="16" height="116" rx="0" ry="0"/>
       <g class="lini-node lini-column lini-block" transform="translate(0,0)">
         <g class="lini-node lini-pin lini-block" data-id="p1" transform="translate(0,-40)">
@@ -228,7 +228,7 @@ input_file: samples/schematic.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-C lini-pose-90 lini-block" data-id="c1" transform="translate(120,20)">
+    <g class="lini-node lini-C lini-pose-90 lini-block" data-id="c1" transform="translate(0,20)">
       <rect x="-12.75" y="-32.75" width="25.5" height="65.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-line lini-path" transform="translate(-12,-32)">
         <path d="M 24 0 M 0 64 M 12 0 L 12 29 M 12 35 L 12 64"/>
@@ -256,13 +256,13 @@ input_file: samples/schematic.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-gnd lini-label lini-block" data-id="g1" transform="translate(120,86)">
+    <g class="lini-node lini-gnd lini-label lini-block" data-id="g1" transform="translate(0,86)">
       <rect x="-8.75" y="-6.75" width="17.5" height="13.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-8,-6)">
         <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
       </g>
     </g>
-    <g class="lini-node lini-v5 lini-label lini-block" data-id="lini-cap-1" transform="translate(-271.257,-150)">
+    <g class="lini-node lini-v5 lini-label lini-block" data-id="lini-cap-1" transform="translate(-231.257,-90)">
       <rect x="-17.493" y="-10.75" width="34.986" height="21.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-16.743,-10)">
         <path d="M 0 0 M 16 20 M 8 20 L 8 0 M 3 9 L 8 0 L 13 9"/>
@@ -272,13 +272,13 @@ input_file: samples/schematic.lini
         <use href="#lini-g1500-156" transform="translate(10.244 3.938) scale(0.011 -0.011)"/>
       </g>
     </g>
-    <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-2" transform="translate(-80,86)">
+    <g class="lini-node lini-gnd lini-label lini-block" data-id="lini-cap-2" transform="translate(-140,66)">
       <rect x="-8.75" y="-6.75" width="17.5" height="13.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-tag-line lini-path" transform="translate(-8,-6)">
         <path d="M 0 0 M 16 12 M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>
       </g>
     </g>
-    <g class="lini-node lini-tag-flag-right lini-label lini-block" data-id="lini-label-1" transform="translate(220,-100)">
+    <g class="lini-node lini-tag-flag-right lini-label lini-block" data-id="lini-label-1" transform="translate(180,-80)">
       <rect x="-30.856" y="-7.5" width="61.712" height="15" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lini-g1500-88" transform="translate(-24.856 3.938) scale(0.011 -0.011)"/>
@@ -292,7 +292,7 @@ input_file: samples/schematic.lini
         <path d="M -30.106 -6.75 L 23.356 -6.75 L 30.106 0 L 23.356 6.75 L -30.106 6.75 Z"/>
       </g>
     </g>
-    <g class="lini-node lini-tag-flag-left lini-label lini-block" data-id="lini-label-2" transform="translate(220,-80)">
+    <g class="lini-node lini-tag-flag-left lini-label lini-block" data-id="lini-label-2" transform="translate(180,-60)">
       <rect x="-25.4825" y="-7.5" width="50.965" height="15" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lini-g1500-126" transform="translate(-11.4825 3.938) scale(0.011 -0.011)"/>
@@ -305,7 +305,7 @@ input_file: samples/schematic.lini
         <path d="M -17.982 -6.75 L 24.732 -6.75 L 24.732 6.75 L -17.982 6.75 L -24.732 0 Z"/>
       </g>
     </g>
-    <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-3" transform="translate(220,-40)">
+    <g class="lini-node lini-net-run lini-label lini-block" data-id="lini-label-3" transform="translate(180,-20)">
       <rect x="-20.4395" y="-5.5" width="40.879" height="11" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lini-g1500-126" transform="translate(-16.4395 -5.562) scale(0.011 -0.011)"/>
@@ -318,35 +318,35 @@ input_file: samples/schematic.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="u1.vin" data-to="lini-cap-1">
-      <path d="M -138.2855 -60 L -280 -60 L -280 -140"/>
+      <path d="M -198.2855 -40 L -240 -40 L -240 -80"/>
     </g>
     <g class="lini-link" data-from="u1.vout" data-to="c1.p1">
-      <path d="M -21.7145 -60 L 120 -60 L 120 -12"/>
+      <path d="M -81.7145 -40 L 0 -40 L 0 -12"/>
     </g>
     <g class="lini-link" data-from="c1.p2" data-to="g1">
-      <path d="M 120 52 L 120 80"/>
+      <path d="M 0 52 L 0 80"/>
     </g>
     <g class="lini-link" data-from="u1.vout" data-to="j1.p3">
-      <path d="M -21.7145 -60 L 292.75 -60"/>
+      <path d="M -81.7145 -40 L 232.75 -40"/>
       <g class="lini-link-label">
-        <use href="#lini-g1400-1655" transform="translate(126.1733 -65.562) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-156" transform="translate(132.0363 -65.562) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-1655" transform="translate(138.9993 -65.562) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-1655" transform="translate(66.1733 -45.562) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-156" transform="translate(72.0363 -45.562) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-1655" transform="translate(78.9993 -45.562) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link" data-from="u1.gnd" data-to="lini-cap-2">
-      <path d="M -80 -2.75 L -80 80"/>
+      <path d="M -140 17.25 L -140 60"/>
     </g>
     <g class="lini-link" data-from="j1.p1" data-to="lini-label-1">
-      <path d="M 292.75 -100 L 250.856 -100"/>
+      <path d="M 232.75 -80 L 210.856 -80"/>
     </g>
     <g class="lini-link" data-from="j1.p2" data-to="lini-label-2">
-      <path d="M 292.75 -80 L 245.4825 -80"/>
+      <path d="M 232.75 -60 L 205.4825 -60"/>
     </g>
     <g class="lini-link" data-from="j1.p4" data-to="lini-label-3">
-      <path d="M 292.75 -40 L 199.5605 -40"/>
+      <path d="M 232.75 -20 L 159.5605 -20"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(120,-60)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(0,-40)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
   </g>

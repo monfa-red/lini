@@ -11,7 +11,7 @@ use super::tests::{
     scope, seat, seat_warnings, sided, sided_with, tip,
 };
 use crate::layout::PlacedNode;
-use crate::ledger::consts::READOUT_OFFSET;
+use crate::ledger::consts::{PIN_PITCH, READOUT_OFFSET};
 use crate::ledger::defaults::SCH_GAP;
 
 /// A user-defined power flag — the terminator for the chains that grow **up**.
@@ -243,10 +243,11 @@ fn every_placed_part_lands_on_the_scopes_own_fine_lattice() {
 }
 
 #[test]
-fn chains_on_one_pin_stand_one_coarse_pitch_apart_in_statement_order() {
+fn chains_on_one_pin_step_beside_each_other_in_statement_order() {
     // [SPEC 16.1] a pin's straight corridor belongs to its **first claimant**:
-    // the second chain's cells meet the first's, so it steps one coarse cell
-    // beside them rather than landing on top of them.
+    // the second chain's cells meet the first's, so it steps beside them
+    // rather than landing on top of them — by what the two cells need, which
+    // for two bare grounds is a fine pitch and not a column.
     let nodes = laid(&scope(
         "",
         &(sided("u1") + "  |gnd#g1|\n  |gnd#g2|\n  u1.c - g1\n  u1.c - g2\n"),
@@ -254,8 +255,8 @@ fn chains_on_one_pin_stand_one_coarse_pitch_apart_in_statement_order() {
     let ((x1, y1), (x2, y2)) = (at(&nodes, "g1"), at(&nodes, "g2"));
     assert!(close(y1, y2), "one slot row: {y1} {y2}");
     assert!(
-        close(x2 - x1, SCH_GAP),
-        "one coarse pitch, in statement order: {x1} {x2}"
+        x2 > x1 && close(x2 - x1, PIN_PITCH),
+        "a fine pitch beside it, in statement order: {x1} {x2}"
     );
     // The **parts'** order decides, like everything else the engine places —
     // writing the wires the other way round changes nothing.
@@ -321,9 +322,11 @@ fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
     assert!(close(tax, tbx), "both stubs tip on one rail: {tax} {tbx}");
     let ((gax, gay), (gbx, gby)) = (at(&nodes, "ga"), at(&nodes, "gb"));
     assert!(!close(gax, gbx), "a lane each: {gax} {gbx}");
+    // Their cells hold a ground symbol apiece, so the lanes stand a fine pitch
+    // apart and not a whole column: a bare wire to a rail is not a part.
     assert!(
-        close((gax - gbx).abs(), SCH_GAP),
-        "one coarse pitch apart: {gax} {gbx}"
+        close((gax - gbx).abs(), PIN_PITCH),
+        "a fine pitch apart: {gax} {gbx}"
     );
     // Both take slot 1 of the same field, so they land on one row — the way a
     // sheet drops two returns to one rail height.
@@ -741,9 +744,11 @@ fn a_bridge_grows_off_its_first_named_pin_whichever_sides_its_pins_take() {
 // ───────────────────────── the rails ─────────────────────────
 
 #[test]
-fn every_ground_in_a_scope_sinks_to_one_row() {
-    // The reference sheet's line: a one-member chain's ground and a
-    // three-member chain's stand on the same row [SPEC 16.1].
+fn a_ground_ends_its_own_chain_and_equal_chains_share_the_line() {
+    // [SPEC 16.1] there is no ground row: a ground stands under the member it
+    // terminates. Two chains of one depth therefore land on one line — which
+    // is the ground line a sheet draws when it draws one — and a deeper chain
+    // ends deeper, which is what both reference sheets draw.
     let src = scope(
         "",
         &(sided("u1")
@@ -753,12 +758,27 @@ fn every_ground_in_a_scope_sinks_to_one_row() {
     );
     let nodes = laid(&src);
     assert!(
-        close(at(&nodes, "g1").1, at(&nodes, "g2").1),
-        "one ground row"
+        at(&nodes, "g2").1 > at(&nodes, "g1").1,
+        "the deeper chain ends deeper: {} vs {}",
+        at(&nodes, "g2").1,
+        at(&nodes, "g1").1
     );
     assert!(
-        at(&nodes, "g1").1 > at(&nodes, "d1").1,
-        "below the deepest member"
+        at(&nodes, "g2").1 > at(&nodes, "d1").1,
+        "each below the member it terminates"
+    );
+
+    // Two chains of one depth, and their grounds share the line.
+    let src = scope(
+        "",
+        &(sided("u1")
+            + "  |C#c1| \"1u\"\n  |R#r1| \"1k\"\n  |gnd#g1|\n  |gnd#g2|\n"
+            + "  u1.a - c1 - g1\n  u1.b - r1 - g2\n"),
+    );
+    let nodes = laid(&src);
+    assert!(
+        close(at(&nodes, "g1").1, at(&nodes, "g2").1),
+        "one line for two equal chains"
     );
 }
 

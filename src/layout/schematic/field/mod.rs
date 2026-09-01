@@ -32,7 +32,7 @@ mod walk;
 
 use super::lattice::{Ax, Lattice};
 use super::place::Slot;
-use super::terminal::{self, Terminal, terminal};
+use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
 use crate::desugar::schematic::{Role, SchKind, sch_kind};
@@ -44,7 +44,10 @@ use crate::resolve::{LinkKind, ResolvedLink};
 pub(super) const STRAIGHT: usize = 0;
 pub(super) const LANED: usize = 1;
 
-/// Where a satellite sits [SPEC 16.1], in cells, before the tracks size.
+/// Where a satellite sits [SPEC 16.1], in its anchor's own frame, before the
+/// tracks size. Both coordinates are **fine** lines: a lane and a slot are
+/// found by stepping one out at a time until the cell clears, so neither is an
+/// ordinal of anything.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct Seat {
     /// The anchor whose field holds it.
@@ -53,17 +56,10 @@ pub(super) struct Seat {
     pub ray: Side,
     /// The side of the anchor its lead leaves by — the pin's own normal.
     pub side: Side,
-    /// Coarse lanes out from the anchor's ink on `side`, 1-based; `None` for
-    /// a seat that keeps a fine line instead.
-    pub lane: Option<i32>,
-    /// The fine line a laneless seat keeps, in the anchor's own frame: its
-    /// pin's own for a chain that grew straight out, its attachment's stepped
-    /// one cell for anything hanging beside such a chain.
-    pub pin_line: f64,
-    /// The **fine** line it stands on along `ray` [SPEC 16.1] — absolute in
-    /// the anchor's own frame, not an ordinal, so a branch grown back along
-    /// the opposite ray needs no second origin to be read against.
-    pub slot: i32,
+    /// The line it stands on **across** its ray.
+    pub cross: f64,
+    /// …and **along** it.
+    pub along: f64,
 }
 
 /// A chain held at two *different* anchors [SPEC 16.1]: it sits between the
@@ -81,18 +77,18 @@ pub(super) struct Field {
     floating: Vec<usize>,
     /// Per anchor, the cells its field has committed — the whole of collision.
     cells: Vec<Vec<Bbox>>,
-    /// Per anchor, its **lane** origin on each side, by [`Side::index`]: the
-    /// first coarse line whose cell clears the anchor's ink that way.
-    lanes: Vec<[i32; 4]>,
-    /// Per anchor, its **slot** origin along each ray, by [`Side::index`] and
-    /// then by whether the chain turned — in **fine** lines, because a slot
-    /// clears what its own lead passes and that is no coarse distance
+    /// Per anchor, where its field's **first** slot stands along each ray, by
+    /// [`Side::index`] and then by whether the chain turned — the one line the
+    /// track row shares, and the only one that is a rule rather than a search
     /// [SPEC 16.1].
-    slots: Vec<[[i32; 2]; 4]>,
+    slots: Vec<[[f64; 2]; 4]>,
+    /// Per child, the box its own drawing takes — what its cell holds.
+    boxes: Vec<Bbox>,
+    /// Per child, everything it draws, readouts included — what a field origin
+    /// and a lane's base stand clear of.
+    inks: Vec<Bbox>,
     /// Per child, what its cell has to hold **across** its ray.
     bodies: Vec<Body>,
-    /// Which children end a **run** — a trunk's terminator, or a branch's.
-    terminators: Vec<bool>,
     lat: Lattice,
 }
 
@@ -111,10 +107,10 @@ impl Field {
             spans: Vec::new(),
             floating: Vec::new(),
             cells: vec![Vec::new(); children.len()],
-            lanes: children.iter().map(|c| lane_origins(c, lat)).collect(),
-            slots: children.iter().map(|c| slot_origins(c, lat)).collect(),
+            slots: vec![[[0.0; 2]; 4]; children.len()],
+            boxes: children.iter().map(|c| c.bbox).collect(),
+            inks: children.iter().map(drawn).collect(),
             bodies: children.iter().map(Body::of).collect(),
-            terminators: vec![false; children.len()],
             lat,
         };
         if !satellite.contains(&true) {
@@ -157,17 +153,13 @@ impl Field {
         self.reach(anchor, side)
     }
 
-    /// The first line out on `side` that an anchor's field leaves **free**,
-    /// as a distance from the anchor's own origin [SPEC 16.1] — where the next
-    /// thing on that side may stand. With nothing there it is the **lane**
-    /// origin, which already stands a whole cell clear of the anchor's own ink:
-    /// one measure for the packer's tracks and for the members of a span
-    /// landing there.
+    /// The first line out on `side` that an anchor's field leaves **free**, as
+    /// a distance from the anchor's own origin [SPEC 16.1] — where the next
+    /// thing on that side may stand, and with nothing there, the one clear
+    /// column two neighbouring anchors keep. Their own ink is the packer's to
+    /// read; this answers only what the field holds.
     pub(in crate::layout::schematic) fn free(&self, anchor: usize, side: Side) -> f64 {
-        match self.reach(anchor, side) {
-            d if d <= 0.0 => self.lane_coord(anchor, side, 1).abs(),
-            d => d + self.lat.step(Ax::of(side)),
-        }
+        self.reach(anchor, side) + self.lat.step(Ax::of(side))
     }
 
     /// Satellites no wire held — the flow fallback [SPEC 16.1].
@@ -180,16 +172,6 @@ impl Field {
         &self.spans
     }
 
-    /// Whether a member is the last of a **run** — the trunk out from its pin,
-    /// or a branch grown along its own ray — and so the terminator whose own
-    /// drawing set that ray. The rails read it [SPEC 16.1]: a **tap** ends
-    /// nothing, hanging beside the junction it taps rather than growing to it,
-    /// and a branch that marched *across* its trunk carries the trunk's ray on
-    /// its seat, so neither is a rail's to move.
-    pub(in crate::layout::schematic) fn terminates(&self, i: usize) -> bool {
-        self.terminators[i]
-    }
-
     /// Seat one member, and commit its cell to its anchor's occupancy.
     fn take(&mut self, member: usize, seat: Seat) {
         let cell = self.cell(member, seat);
@@ -197,87 +179,101 @@ impl Field {
         self.seats[member] = Some(seat);
     }
 
-    /// Where a ladder stands at step `k`: the lane it names, and the
-    /// coordinate that lies on.
-    fn ladder_at(&self, anchor: usize, ladder: Ladder, k: i32) -> (Option<i32>, f64) {
-        match ladder {
-            Ladder::Lanes(side) => (Some(k), self.lane_coord(anchor, side, k)),
-            Ladder::Beside(side, base) => (None, base + f64::from(k - 1) * self.step(side)),
+    /// Where a run's cross ladder stands at step `k` [SPEC 16.1] — one **fine**
+    /// line out per step from its own base, so what the cells need decides the
+    /// spacing rather than a pitch stated in advance.
+    fn ladder_at(&self, ladder: Ladder, k: i32) -> f64 {
+        ladder.base + f64::from(k - 1) * self.lat.pitch * Ax::outward(ladder.side)
+    }
+
+    /// The seat one step `across` from this one — where a tap hangs, and where
+    /// a branch crossing the trunk marches. The step is the two drawings' own:
+    /// half of what stands here, half of what stands there, and out to the
+    /// first fine line past it.
+    fn stepped(&self, at: (usize, Seat), member: usize, across: Side) -> Seat {
+        let out = Ax::outward(across);
+        let half = |i: usize| self.across(i, at.1.ray) / 2.0;
+        Seat {
+            cross: self
+                .lat
+                .past(at.1.cross + out * (half(at.0) + half(member)), out),
+            ..at.1
         }
     }
 
-    /// The seat one coarse step `across` from this one, on its own slot —
-    /// where a tap hangs, and where a branch crossing the trunk marches.
-    fn stepped(&self, seat: Seat, across: Side) -> Seat {
-        match seat.lane {
-            // Stepping along the lane axis is stepping a lane.
-            Some(k) if Ax::of(seat.side) == Ax::of(across) => Seat {
-                lane: Some(k + if across == seat.side { 1 } else { -1 }),
-                ..seat
-            },
-            _ => Seat {
-                lane: None,
-                pin_line: self.cross(seat) + self.step(across),
-                ..seat
-            },
-        }
-    }
-
-    /// Where a seat's cell centres, in its anchor's own frame: the slot line
-    /// along its ray, and the lane line — or the fine line it kept — across.
+    /// Where a seat's cell centres, in its anchor's own frame.
     fn point(&self, seat: Seat) -> (f64, f64) {
-        let along = f64::from(seat.slot) * self.lat.pitch;
-        let cross = self.cross(seat);
         match Ax::of(seat.ray) {
-            Ax::X => (along, cross),
-            Ax::Y => (cross, along),
+            Ax::X => (seat.along, seat.cross),
+            Ax::Y => (seat.cross, seat.along),
         }
     }
 
-    /// The line a seat stands on across its ray.
-    fn cross(&self, seat: Seat) -> f64 {
-        match seat.lane {
-            Some(k) => self.lane_coord(seat.anchor, seat.side, k),
-            None => seat.pin_line,
-        }
-    }
-
-    /// A member's cell [SPEC 16.1] — one coarse pitch **along** its ray, and
-    /// across it the pitch of the line it stands on ([`Field::across`]).
+    /// A member's **cell** [SPEC 16.1] — what its own drawing takes, and no
+    /// pitch stated in advance: across its ray by [`Field::across`], along it
+    /// by [`Field::along`].
     fn cell(&self, member: usize, seat: Seat) -> Bbox {
         let (x, y) = self.point(seat);
-        let ray = Ax::of(seat.ray);
-        let along = self.lat.step(ray);
-        let across = self.across(member, seat);
-        let (w, h) = match ray {
+        let (along, across) = (self.along(member, seat.ray), self.across(member, seat.ray));
+        let (w, h) = match Ax::of(seat.ray) {
             Ax::X => (along, across),
             Ax::Y => (across, along),
         };
         Bbox::centered(w, h).shifted(x, y)
     }
 
-    /// How wide a member's cell stands **across** its ray [SPEC 16.1]: the
-    /// pitch of the line it stands on. A **part** takes the coarse cell
-    /// wherever it stands — its ref and value stand off its body by rule and
-    /// the cell is the room they need — and so does anything on a lane, a lane
-    /// being a coarse column. A **label** on a pin's own fine line takes that
-    /// line, widened to the whole fine pitches its own symbol draws across it:
-    /// a label is its own terminal and no part [SPEC 16.4], so a no-connect
-    /// cross seated off one pin leaves the pins either side their own rows,
-    /// and a net run — a stretch of trace with no drawing at all — takes
-    /// exactly the line it lands on.
-    fn across(&self, member: usize, seat: Seat) -> f64 {
-        let ax = Ax::of(seat.ray).other();
+    /// How wide a member's cell stands **across** its ray [SPEC 16.1] — the
+    /// one split SPEC 16.4 opens with. A **part** takes the coarse cell: it
+    /// wears a ref and a value beside its body, and that cell is the room they
+    /// need, which is the one thing `gap` states. A **label** is its own
+    /// terminal and no part, so it takes the whole fine pitches its own symbol
+    /// draws across the line — a no-connect cross grown off one pin leaves the
+    /// pins either side their rows, a net run takes exactly the line it lands
+    /// on, and two bare grounds off one connector stand a fine pitch apart
+    /// rather than a column.
+    fn across(&self, member: usize, ray: Side) -> f64 {
+        let ax = Ax::of(ray).other();
         match self.bodies[member] {
-            Body::Tag(symbol) if seat.lane.is_none() => {
-                let drawn = symbol.map_or(0.0, |b| match ax {
-                    Ax::X => b.w(),
-                    Ax::Y => b.h(),
-                });
-                self.lat.pitch.max(self.lat.pitches(drawn))
-            }
-            _ => self.lat.step(ax),
+            Body::Tag => self
+                .lat
+                .pitch
+                .max(self.lat.pitches(spans(self.boxes[member], ax))),
+            Body::Part => self.lat.step(ax),
         }
+    }
+
+    /// How deep a member's cell stands **along** its ray [SPEC 16.1]: what its
+    /// own drawing reaches that way, and the one fine pitch two wired
+    /// neighbours keep. Along the ray there is no readout to hold — a part
+    /// wears its pair beside its body — so this is the symbol's own length,
+    /// which is why a ground ends a chain a fine step under the part above it
+    /// and two stacked discretes still stand a coarse pitch apart.
+    fn along(&self, member: usize, ray: Side) -> f64 {
+        self.lat
+            .pitches(self.reaches(member, Ax::of(ray)) + self.lat.pitch)
+    }
+
+    /// How far a member's own drawing reaches on one axis.
+    fn reaches(&self, member: usize, ax: Ax) -> f64 {
+        spans(self.boxes[member], ax)
+    }
+
+    /// Where the member after `prev` stands along `ray`: half of each drawing,
+    /// the one fine pitch of air any two of them keep, and out to the first
+    /// fine line past that.
+    fn after(&self, prev: (usize, f64), member: usize, ray: Side) -> f64 {
+        let out = Ax::outward(ray);
+        let ax = Ax::of(ray);
+        let apart = (self.reaches(prev.0, ax) + self.reaches(member, ax)) / 2.0 + self.lat.pitch;
+        self.lat.past(prev.1 + out * apart, out)
+    }
+
+    /// Where a run's **first** member stands, past whatever its lead had to
+    /// clear: half its own drawing, and the same fine pitch of air.
+    pub(super) fn past_ink(&self, member: usize, ray: Side, ink: f64) -> f64 {
+        let out = Ax::outward(ray);
+        let apart = self.reaches(member, Ax::of(ray)) / 2.0 + self.lat.pitch;
+        self.lat.past(ink + out * apart, out)
     }
 
     /// How far out on `side` an anchor's field reaches, as a distance from the
@@ -293,35 +289,10 @@ impl Field {
             .fold(0.0f64, f64::max)
     }
 
-    /// The `k`-th **lane** out from `anchor`'s ink on `side` [SPEC 16.1] — a
-    /// coarse line, because a lane carries a part's whole cell.
-    pub(super) fn lane_line(&self, anchor: usize, side: Side, k: i32) -> i32 {
-        self.lanes[anchor][side.index()] + (k - 1) * out(side)
-    }
-
-    fn lane_coord(&self, anchor: usize, side: Side, k: i32) -> f64 {
-        self.lat.line(Ax::of(side), self.lane_line(anchor, side, k))
-    }
-
-    /// The `k`-th **slot** along `ray` from `anchor`'s field origin
-    /// [SPEC 16.1] — a **fine** line index, stepping a coarse pitch per slot.
-    /// Which origin is the chain's own: one that turned into a lane clears the
-    /// deepest pin on that ray, one that grew straight out clears the ink.
-    pub(super) fn slot_line(&self, anchor: usize, ray: Side, turned: bool, k: i32) -> i32 {
-        self.slots[anchor][ray.index()][usize::from(turned)] + (k - 1) * self.stride(ray)
-    }
-
-    /// One coarse step along `ray`, in **fine** lines and signed the way it
-    /// faces — what a slot steps by. The lattice rounds a coarse pitch up to a
-    /// whole number of fine ones, so this is exact.
-    pub(super) fn stride(&self, ray: Side) -> i32 {
-        let whole = (self.lat.step(Ax::of(ray)) / self.lat.pitch).round() as i32;
-        whole * out(ray)
-    }
-
-    /// One coarse step the way `side` faces.
-    fn step(&self, side: Side) -> f64 {
-        self.lat.step(Ax::of(side)) * Ax::outward(side)
+    /// Where the **first** slot along `ray` stands [SPEC 16.1] — the one line
+    /// the track row shares, so two anchors' fields keep one row.
+    pub(super) fn origin(&self, anchor: usize, ray: Side, turned: bool) -> f64 {
+        self.slots[anchor][ray.index()][usize::from(turned)]
     }
 }
 
@@ -331,33 +302,35 @@ impl Field {
 #[derive(Clone, Copy)]
 enum Body {
     /// A **part** — a component, a discrete, an amplifier. It wears a
-    /// reference designator, so it takes a coarse cell across its ray wherever
-    /// it stands: the ref and the value stand off its body by rule.
+    /// reference designator **beside** its body by rule, so across its ray it
+    /// takes the coarse cell: that room is the pair's, and it is the one thing
+    /// `gap` states.
     Part,
-    /// A **label**: a terminal, not a part, so it asks only for the line its
-    /// wire runs on — widened to whatever its own symbol draws across that
-    /// line ([`terminal::body`]), and to nothing at all for a net run, which
-    /// draws none.
-    Tag(Option<Bbox>),
+    /// A **label**: a terminal, not a part, so it asks only for the fine
+    /// pitches its own drawing takes across the line it stands on — one line
+    /// for a net run, which is the trace it names, and a symbol's own reach
+    /// for a ground or a flag, which has no rule setting its name aside.
+    Tag,
 }
 
 impl Body {
     fn of(node: &PlacedNode) -> Body {
         match sch_kind(&node.type_chain) {
-            Some(SchKind::Label) => Body::Tag(terminal::body(node)),
+            Some(SchKind::Label) => Body::Tag,
             _ => Body::Part,
         }
     }
 }
 
-/// How a run finds its line **across** its ray [SPEC 16.1]: the lane ladder
-/// out from the anchor's ink, or coarse steps **beside** the pin line a
-/// straight-grown chain kept. Both count from 1 — step 1 of a beside ladder is
-/// the pin's own line — so the one allocator walks either.
+/// How a run finds its line **across** its ray [SPEC 16.1]: the base its
+/// innermost step stands on, and the side it steps out toward. One **fine**
+/// line per step, whether the chain turned into a lane out past the anchor's
+/// ink or grew straight out and kept its pin's own line — so the one allocator
+/// walks either, and the cells alone say how far apart two runs land.
 #[derive(Clone, Copy)]
-enum Ladder {
-    Lanes(Side),
-    Beside(Side, f64),
+struct Ladder {
+    side: Side,
+    base: f64,
 }
 
 /// The innermost step of a [`Ladder`] whose cells meet nothing already
@@ -430,56 +403,22 @@ pub(super) fn edges(
 ///
 /// Read in the anchor's own frame, which placing it never changes, so the
 /// ordinals a seat records outlive the tracks.
-fn lane_origins(node: &PlacedNode, lat: Lattice) -> [i32; 4] {
-    let ink = drawn(node);
-    Side::ALL.map(|s| {
-        let (ax, out) = (Ax::of(s), Ax::outward(s));
-        lat.beyond(ax, ink_edge(&ink, s) + out * lat.step(ax) / 2.0, out)
-    })
-}
-
-/// A node's **slot** origins [SPEC 16.1], per ray and then per class, as fine
-/// line indices — seeded here from the anchor's own ink, which is what a chain
-/// growing **straight** out of a pin really passes. The walk overwrites the
-/// laned class, and shares both across the track line, once it knows which
-/// chains grew which way.
-fn slot_origins(node: &PlacedNode, lat: Lattice) -> [[i32; 2]; 4] {
-    let ink = drawn(node);
-    Side::ALL.map(|s| {
-        let line = straight_origin(&ink, s, lat);
-        [line, line]
-    })
-}
-
-/// The first fine line whose cell clears `ink` on `side` — the slot origin of
-/// a chain whose ray points through the anchor's body.
-fn straight_origin(ink: &Bbox, side: Side, lat: Lattice) -> i32 {
-    lat.fine_beyond(ink_edge(ink, side) + clear(side, lat), Ax::outward(side))
-}
-
-/// What a slot origin stands clear of whatever it measures [SPEC 16.1], signed
-/// outward: half a cell, because a member centres on its line, and then the
-/// one **fine pitch** two wired neighbours always keep — without it a member's
-/// body lands exactly on the ink it was cleared of, and the wire between them
-/// has no track to run on.
-pub(super) fn clear(side: Side, lat: Lattice) -> f64 {
-    Ax::outward(side) * (lat.step(Ax::of(side)) / 2.0 + lat.pitch)
+/// How far a box spans on one axis.
+fn spans(b: Bbox, ax: Ax) -> f64 {
+    match ax {
+        Ax::X => b.w(),
+        Ax::Y => b.h(),
+    }
 }
 
 /// How far a box reaches on one side, in its own frame.
-fn ink_edge(ink: &Bbox, side: Side) -> f64 {
+pub(super) fn ink_edge(ink: &Bbox, side: Side) -> f64 {
     match side {
         Side::Left => ink.min_x,
         Side::Right => ink.max_x,
         Side::Top => ink.min_y,
         Side::Bottom => ink.max_y,
     }
-}
-
-/// `+1` when a side's normal points the increasing way, `-1` otherwise — the
-/// integer twin of [`Ax::outward`] that lattice line indices step by.
-fn out(side: Side) -> i32 {
-    if Ax::outward(side) > 0.0 { 1 } else { -1 }
 }
 
 /// A span end: the anchor it lands on, and the terminal it lands at.

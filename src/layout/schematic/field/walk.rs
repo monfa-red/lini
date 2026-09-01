@@ -12,7 +12,7 @@ use super::super::lattice::{Ax, EPS};
 use super::super::place::Slot;
 use super::super::terminal::{Terminal, terminal};
 use super::read::{growth, tag_facing, tap_flags};
-use super::{Field, LANED, Ladder, STRAIGHT, Seat, allocate, clear};
+use super::{Field, LANED, Ladder, STRAIGHT, Seat, allocate, ink_edge};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
 use crate::layout::geom::dot;
@@ -37,6 +37,13 @@ impl Field {
             .collect();
         order(&mut held, ladders.len());
         self.strike_origins(tracks, &held);
+        let bases: Vec<f64> = held
+            .iter()
+            .map(|h| self.base(h.anchor, h.side, &held))
+            .collect();
+        for (h, base) in held.iter_mut().zip(bases) {
+            h.base = base;
+        }
         for h in &held {
             self.grow(children, h);
         }
@@ -49,15 +56,14 @@ impl Field {
         let chain = &h.chain;
         let tap = tap_flags(children, chain);
         let limbs = limbs(chain);
-        let ladder = self.ladder(h);
         let turned = h.turns();
-        let trunk = Run {
-            ray: h.ray,
-            ladder,
-            first: self.slot_line(h.anchor, h.ray, turned, 1),
-            members: pick(chain, |i| limbs[i].is_none()),
-            origin: Some(h.pin.at),
-        };
+        let trunk = self.run(
+            h,
+            h.ray,
+            self.origin(h.anchor, h.ray, turned),
+            pick(chain, |i| limbs[i].is_none()),
+            Some(h.pin.at),
+        );
         // One allocation for either ladder [SPEC 16.1]: a chain that turned off
         // its pin takes the innermost free lane, and one that grew straight out
         // asks for its pin's own line — stepping beside it only where a chain
@@ -66,7 +72,7 @@ impl Field {
         self.commit(h, &trunk, k);
 
         // A **tap** takes no slot [SPEC 16.1]: it stands on its attachment's,
-        // one coarse cell across, the way its own drawing points.
+        // one step across, the way its own drawing points.
         for (i, &member) in chain.members.iter().enumerate() {
             if !tap[i] {
                 continue;
@@ -84,7 +90,7 @@ impl Field {
             } else {
                 aside
             };
-            self.take(member, self.stepped(attach, across));
+            self.take(member, self.stepped(attach, member, across));
         }
 
         // A multi-member **branch** grows from its junction as a sub-chain
@@ -107,71 +113,109 @@ impl Field {
             .map_or(h.ray, Side::opposite);
             let members: Vec<usize> = limb.iter().map(|&i| chain.members[i]).collect();
             if Ax::of(ray) != Ax::of(h.ray) {
-                // Across the trunk: the members march out from the junction
-                // on its own slot, a coarse cell each, exactly as a tap does.
-                let mut seat = attach;
+                // Across the trunk: the members march out from the junction on
+                // its own slot, a step each, exactly as a tap does.
+                let mut at = attach;
                 for &m in &members {
-                    seat = self.stepped(seat, ray);
-                    self.take(m, seat);
+                    at = (m, self.stepped(at, m, ray));
+                    self.take(m, at.1);
                 }
                 continue;
             }
             // On the trunk's own axis: a lane of its own — the occupancy
             // carries it sideways until it stands clear — with its slots
             // carrying on from the junction.
-            let branch = Run {
-                ray,
-                ladder,
-                first: attach.slot + self.stride(ray),
-                members,
-                origin: None,
-            };
+            let first = self.after((attach.0, attach.1.along), members[0], ray);
+            let branch = self.run(h, ray, first, members, None);
             let k = self.allot(h, &branch);
             self.commit(h, &branch, k);
         }
     }
 
-    /// Strike every **slot origin** [SPEC 16.1], before a chain grows.
+    /// One run laid out along its ray [SPEC 16.1]: its first member on `start`
+    /// — the field's own origin for a trunk, the junction's next step for a
+    /// branch — and each one after it a step past the one before, which is
+    /// half of each of their drawings and a fine pitch of air. Its ladder's
+    /// base is the innermost line across the ray whose cells clear the
+    /// anchor's ink, for a chain that turned; the pin's own line, for one that
+    /// grew straight out.
+    fn run(
+        &self,
+        h: &Held,
+        ray: Side,
+        start: f64,
+        members: Vec<usize>,
+        origin: Option<(f64, f64)>,
+    ) -> Run {
+        let mut lines = Vec::with_capacity(members.len());
+        let mut prev: Option<(usize, f64)> = None;
+        for &m in &members {
+            let at = match prev {
+                None => start,
+                Some(p) => self.after(p, m, ray),
+            };
+            lines.push(at);
+            prev = Some((m, at));
+        }
+        let ladder = if h.turns() {
+            // The lanes count from the **side's** base ([`Field::base`]), so
+            // an up-chain and a down-chain off one pin can share one.
+            Ladder {
+                side: h.side,
+                base: h.base,
+            }
+        } else {
+            Ladder {
+                side: beside(ray, h.pin.facing),
+                base: across(h.pin.at, ray),
+            }
+        };
+        Run {
+            ray,
+            ladder,
+            lines,
+            members,
+            origin,
+        }
+    }
+
+    /// Strike every **slot origin**    /// Strike every **slot origin** [SPEC 16.1], before a chain grows.
     ///
     /// A slot clears what its own chain's lead actually passes. A chain that
     /// **turned** into a lane is beside the anchor's body already — that is
     /// what the lane is — so its slots clear only the deepest pin the ray's
     /// laned chains leave from. One that grew **straight** out has its ray
     /// pointing through the body, and clears the anchor's whole ink. Both by
-    /// half a coarse cell, a member standing centred on its line, and both
-    /// onto the first **fine** line beyond: the separation is ink's, and a
-    /// coarse line would round up to a whole cell of bare wire.
+    /// half of the member that stands there, and both onto the first **fine**
+    /// line beyond: the separation is ink's, and a coarse line would round it
+    /// up to a whole cell of bare wire.
     ///
     /// And the origin belongs to the **track line**, not the anchor: every
     /// anchor riding the line across the ray — the same row for an up or down
     /// ray, the same column for a left or right one — takes the deepest
     /// requirement among them, which is what stands two anchors' fields on one
-    /// row.
+    /// row. It is the one line in the field that is a rule rather than a
+    /// search, and the alignment is what it buys.
     fn strike_origins(&mut self, tracks: &[Option<Slot>], held: &[Held]) {
         for ray in Side::ALL {
             let (ax, out) = (Ax::of(ray), Ax::outward(ray));
-            let deeper = |a: i32, b: i32| {
-                if f64::from(b) * out > f64::from(a) * out {
-                    b
-                } else {
-                    a
-                }
-            };
-            // A track line and a class; the line seeded from the anchor's own
-            // ink, which is exactly the straight class's own measure.
-            let mut want: Vec<(usize, usize, i32)> = Vec::new();
-            for (i, track) in tracks.iter().enumerate() {
-                let Some(track) = track else { continue };
-                want.push((track.on(ax), STRAIGHT, self.slots[i][ray.index()][STRAIGHT]));
-            }
-            for h in held.iter().filter(|h| h.ray == ray && h.turns()) {
+            let deeper = |a: f64, b: f64| if b * out > a * out { b } else { a };
+            // What one chain asks of the line its first member stands on: half
+            // of that member's own drawing past whatever its lead passes —
+            // the deepest pin, for a lead that turned into a lane; the
+            // anchor's ink, for one whose ray points through the body.
+            let mut want: Vec<(usize, usize, f64)> = Vec::new();
+            for h in held.iter().filter(|h| h.ray == ray) {
                 let Some(track) = tracks[h.anchor] else {
                     continue;
                 };
-                let line = self
-                    .lat
-                    .fine_beyond(h.depth * out + clear(ray, self.lat), out);
-                want.push((track.on(ax), LANED, line));
+                let passes = if h.turns() {
+                    h.depth * out
+                } else {
+                    ink_edge(&self.inks[h.anchor], ray)
+                };
+                let line = self.past_ink(h.chain.members[0], ray, passes);
+                want.push((track.on(ax), usize::from(h.turns()), line));
             }
             for (i, track) in tracks.iter().enumerate() {
                 let Some(track) = track else { continue };
@@ -189,6 +233,27 @@ impl Field {
         }
     }
 
+    /// The innermost line a **side**'s lanes may start on [SPEC 16.1]: past the
+    /// anchor's ink by the fine pitch of air, and by half the widest cell any
+    /// chain leaving that side carries — so a part's cell edge lands on the
+    /// body and no further out, and a side carrying only bare ground wires
+    /// starts a fine pitch off it.
+    ///
+    /// The **side's**, not one chain's: an up-chain and a down-chain off one
+    /// pin share a lane because their cells are disjoint, and they can only do
+    /// that if they count from one line.
+    fn base(&self, anchor: usize, side: Side, held: &[Held]) -> f64 {
+        let out = Ax::outward(side);
+        let widest = held
+            .iter()
+            .filter(|h| h.anchor == anchor && h.side == side && h.turns())
+            .flat_map(|h| h.chain.members.iter().map(|&m| self.across(m, h.ray)))
+            .fold(0.0f64, f64::max);
+        let ink = ink_edge(&self.inks[anchor], side);
+        self.lat
+            .past(ink + out * (widest / 2.0 + self.lat.pitch), out)
+    }
+
     /// The innermost cross step a run's cells leave free [SPEC 16.1].
     fn allot(&self, h: &Held, run: &Run) -> i32 {
         allocate(&self.cells[h.anchor], |k| self.claim(h, run, k))
@@ -200,9 +265,6 @@ impl Field {
         let stem = self.stem(h, run, k);
         for (member, seat) in seats {
             self.take(member, seat);
-        }
-        if let Some(&last) = run.members.last() {
-            self.terminators[last] = true;
         }
         self.cells[h.anchor].extend(stem);
     }
@@ -231,54 +293,44 @@ impl Field {
     fn stem(&self, h: &Held, run: &Run, k: i32) -> Option<Bbox> {
         let (px, py) = run.origin?;
         let (member, seat) = self.seats_of(h, run, k).next()?;
-        let cross = self.cross(seat);
         let pin = match Ax::of(run.ray) {
-            Ax::X => (px, cross),
-            Ax::Y => (cross, py),
+            Ax::X => (px, seat.cross),
+            Ax::Y => (seat.cross, py),
         };
         Some(self.cell(member, seat).union(Bbox::from_points(&[pin])))
     }
 
-    /// The seats a run's members take with its cross ladder at step `k`, each
-    /// beside the member that takes it.
+    /// The seats a run's members take with its cross ladder at step `k`.
     fn seats_of<'a>(
         &'a self,
         h: &'a Held,
         run: &'a Run,
         k: i32,
     ) -> impl Iterator<Item = (usize, Seat)> + 'a {
-        let (lane, pin_line) = self.ladder_at(h.anchor, run.ladder, k);
-        run.members.iter().enumerate().map(move |(j, &member)| {
-            (
-                member,
-                Seat {
-                    anchor: h.anchor,
-                    ray: run.ray,
-                    side: h.side,
-                    lane,
-                    pin_line,
-                    slot: run.first + j as i32 * self.stride(run.ray),
-                },
-            )
-        })
+        let cross = self.ladder_at(run.ladder, k);
+        run.members
+            .iter()
+            .zip(&run.lines)
+            .map(move |(&member, &along)| {
+                (
+                    member,
+                    Seat {
+                        anchor: h.anchor,
+                        ray: run.ray,
+                        side: h.side,
+                        cross,
+                        along,
+                    },
+                )
+            })
     }
 
-    /// The seat of the member `i` hangs off — its attachment up the walk.
+    /// The member `i` hangs off and its seat — its attachment up the walk.
     /// `None` while that member has none, which leaves `i` unseated rather
     /// than guessing a junction.
-    fn attachment(&self, chain: &Chain, i: usize) -> Option<Seat> {
-        self.seats[chain.members[chain.parents[i]?]]
-    }
-
-    /// The cross ladder a chain's trunk — and every branch sharing its axis —
-    /// steps on: the lanes of the side it left by where it turned off its
-    /// pin, else fine lines **beside** the pin line it kept.
-    fn ladder(&self, h: &Held) -> Ladder {
-        if h.turns() {
-            Ladder::Lanes(h.side)
-        } else {
-            Ladder::Beside(beside(h.ray, h.pin.facing), across(h.pin.at, h.ray))
-        }
+    fn attachment(&self, chain: &Chain, i: usize) -> Option<(usize, Seat)> {
+        let parent = chain.members[chain.parents[i]?];
+        Some((parent, self.seats[parent]?))
     }
 }
 
@@ -299,6 +351,9 @@ struct Held {
     /// and the same depth read along the canonical direction of that axis.
     depth: f64,
     canon: f64,
+    /// The innermost line its side's lanes start on ([`Field::base`]), struck
+    /// once every chain on that side is known.
+    base: f64,
 }
 
 impl Held {
@@ -325,6 +380,7 @@ impl Held {
             side,
             ray,
             group,
+            base: 0.0,
         }
     }
 
@@ -341,8 +397,8 @@ impl Held {
 struct Run {
     ray: Side,
     ladder: Ladder,
-    /// The fine line its first member stands on along the ray.
-    first: i32,
+    /// The line each member stands on along the ray, in the anchor's frame.
+    lines: Vec<f64>,
     members: Vec<usize>,
     /// Where the run's own column starts, for a trunk: its pin, in the
     /// anchor's frame ([`Field::stem`]). A branch starts at a junction whose
@@ -472,13 +528,21 @@ mod tests {
         out
     }
 
-    /// One coarse slot, in the fine lines a [`Seat::slot`] counts: the default
-    /// `gap` of 100 over the pin pitch of 20.
-    const SLOT: i32 = 5;
+    /// Two discretes stand this far apart along their ray: half of each of
+    /// their 64-long drawings and the fine pitch of air between them, out to
+    /// the next fine line — which is the default `gap`, derived rather than
+    /// stated.
+    const STEP: f64 = 100.0;
 
-    /// A seat's coordinate along its ray, in the anchor's own frame.
-    fn slot_at(seat: Seat) -> f64 {
-        f64::from(seat.slot) * crate::ledger::consts::PIN_PITCH
+    /// Whether a seat's chain **turned** off its pin, and so runs in a lane.
+    fn turned(seat: Seat) -> bool {
+        seat.ray != seat.side
+    }
+
+    /// How far out on its own side a seat stands, from the anchor's origin —
+    /// the lane, as a distance rather than an ordinal.
+    fn lane(seat: Seat) -> f64 {
+        seat.cross * Ax::outward(seat.side)
     }
 
     /// One child's drawn ink, in its own frame.
@@ -504,15 +568,16 @@ mod tests {
         // line, so it keeps that fine line and competes for no lane.
         let (kids, f) = field(&sheet("", "|gnd#g1|\nu1.c - g1\n"));
         let g = seat(&kids, &f, "g1");
-        assert_eq!((g.ray, g.side, g.lane), (Side::Bottom, Side::Bottom, None));
-        // …and its ray points through the body, so its slots clear the whole
-        // ink [SPEC 16.1] — half a cell for the member's own width, and the
-        // fine pitch two wired neighbours keep.
-        let clear = ink(&kids, "u1").max_y + 50.0 + 20.0;
+        assert_eq!((g.ray, g.side), (Side::Bottom, Side::Bottom));
+        assert!(!turned(g), "it grew straight out and took no lane");
+        // …and its ray points through the body, so its slot clears the whole
+        // ink [SPEC 16.1] — half its own drawing, and the fine pitch two wired
+        // neighbours keep.
+        let ink = ink(&kids, "u1").max_y;
         assert!(
-            slot_at(g) > clear && slot_at(g) <= clear + 20.0,
-            "the first fine line past {clear}, not {}",
-            slot_at(g)
+            g.along > ink + 20.0 && g.along < ink + 60.0,
+            "a fine pitch clear of {ink}, and no cell more: {}",
+            g.along
         );
     }
 
@@ -522,15 +587,22 @@ mod tests {
         // takes lane 1; its members step one coarse slot at a time.
         let (kids, f) = field(&sheet("", "|R#r1| \"1k\"\n|gnd#g1|\nu1.a - r1 - g1\n"));
         let (r, g) = (seat(&kids, &f, "r1"), seat(&kids, &f, "g1"));
-        assert_eq!((r.ray, r.side, r.lane), (Side::Bottom, Side::Left, Some(1)));
-        assert_eq!(g.lane, Some(1), "one lane for the chain");
-        assert_eq!(g.slot, r.slot + SLOT, "link by link, a slot each");
+        assert_eq!((r.ray, r.side), (Side::Bottom, Side::Left));
+        assert!(turned(r), "off a left pin, growing down, it turned");
+        assert_eq!(g.cross, r.cross, "one lane for the chain");
+        // A ground is a symbol and no part, so it ends the chain a step under
+        // the resistor rather than a whole cell under it.
+        assert!(
+            g.along - r.along < STEP,
+            "the ground steps under the part, not a cell: {}",
+            g.along - r.along
+        );
         // The lane already cleared the body, so the slots clear the **pin**
         // and the first member stands beside the part, not below it.
         assert!(
-            slot_at(r) < ink(&kids, "u1").max_y,
+            r.along < ink(&kids, "u1").max_y,
             "seated beside the anchor, at {}",
-            slot_at(r)
+            r.along
         );
     }
 
@@ -540,11 +612,12 @@ mod tests {
         // crosses the inner column only above where that column is live.
         // `b` is the lower of the two left pins, whatever the wire order.
         let (kids, f) = field(&sheet("", "|gnd#ga|\n|gnd#gb|\nu1.a - ga\nu1.b - gb\n"));
-        assert_eq!(seat(&kids, &f, "gb").lane, Some(1), "the deeper pin's");
-        assert_eq!(
-            seat(&kids, &f, "ga").lane,
-            Some(2),
-            "and the shallower steps"
+        let (ga, gb) = (seat(&kids, &f, "ga"), seat(&kids, &f, "gb"));
+        assert!(
+            lane(gb) < lane(ga),
+            "the deeper pin keeps the inner lane: {} vs {}",
+            lane(gb),
+            lane(ga)
         );
     }
 
@@ -567,9 +640,9 @@ mod tests {
             .expect("u1");
         let line = |pin| terminal(&kids[u1], Some(pin)).at.1;
         let (r1, r2) = (seat(&kids, &f, "r1"), seat(&kids, &f, "r2"));
-        assert_eq!((r1.lane, r2.lane), (None, None), "both grew straight out");
-        assert_eq!(r1.pin_line, line("DE"), "the first stated keeps its line");
-        assert_ne!(r2.pin_line, line("NRE"), "and the second steps beside it");
+        assert!(!turned(r1) && !turned(r2), "both grew straight out");
+        assert_eq!(r1.cross, line("DE"), "the first stated keeps its line");
+        assert_ne!(r2.cross, line("NRE"), "and the second steps beside it");
     }
 
     #[test]
@@ -579,7 +652,7 @@ mod tests {
         let src = sheet(FLAG, "|gnd#g1|\n|vp#f1|\nu1.a - g1\nu1.a - f1\n");
         let (kids, f) = field(&src);
         let (g, v) = (seat(&kids, &f, "g1"), seat(&kids, &f, "f1"));
-        assert_eq!((g.lane, v.lane), (Some(1), Some(1)), "one lane, two rays");
+        assert_eq!(g.cross, v.cross, "one lane, two rays");
         assert_eq!((g.ray, v.ray), (Side::Bottom, Side::Top), "opposite ways");
     }
 
@@ -598,26 +671,22 @@ mod tests {
             seat(&kids, &f, "f1"),
             seat(&kids, &f, "r1"),
         );
-        assert_eq!(t.slot, l.slot, "the flag keeps its attachment's slot");
-        assert_eq!(t.lane, l.lane.map(|k| k + 1), "…one lane outward of it");
-        assert_eq!(r.slot, l.slot + SLOT, "and the trunk grows on past it");
+        assert_eq!(t.along, l.along, "the flag keeps its attachment's slot");
+        assert!(lane(t) > lane(l), "…one step outward of it");
+        assert_eq!(r.along, l.along + STEP, "and the trunk grows on past it");
 
         // The same chain off a **bottom** pin, where the trunk keeps its
         // pin's own fine line and there is no lane to step: the flag steps
         // that line instead, by one coarse cell.
         let (kids, f) = field(&src.replace("u1.a - l1", "u1.c - l1"));
         let (l, t) = (seat(&kids, &f, "l1"), seat(&kids, &f, "f1"));
-        assert_eq!(
-            (l.lane, t.lane),
-            (None, None),
-            "a laneless trunk, and its tap"
-        );
-        assert_eq!(t.slot, l.slot, "still on its attachment's slot");
+        assert!(!turned(l) && !turned(t), "a laneless trunk, and its tap");
+        assert_eq!(t.along, l.along, "still on its attachment's slot");
         assert!(
-            t.pin_line > l.pin_line,
+            t.cross > l.cross,
             "stepped across: {} vs {}",
-            t.pin_line,
-            l.pin_line
+            t.cross,
+            l.cross
         );
     }
 
@@ -634,11 +703,11 @@ mod tests {
             seat(&kids, &f, "r2"),
             seat(&kids, &f, "c1"),
         );
-        assert_eq!(c1.lane, r1.lane, "the trunk keeps one lane");
-        assert_eq!(r2.lane, Some(2), "the branch steps out of it");
+        assert_eq!(c1.cross, r1.cross, "the trunk keeps one lane");
+        assert!(lane(r2) > lane(r1), "the branch steps out of it");
         assert_eq!(
-            (r2.slot, c1.slot),
-            (r1.slot + SLOT, r1.slot + SLOT),
+            (r2.along, c1.along),
+            (r1.along + STEP, r1.along + STEP),
             "both from the junction"
         );
     }
@@ -685,10 +754,12 @@ mod tests {
             .iter()
             .position(|c| c.id.as_deref() == Some("u1"))
             .expect("u1");
-        assert_eq!(f.extent(u1, Side::Left), 100.0, "one column out");
+        // The lane holds a part, so it stands a whole cell out; the ground
+        // under it holds a symbol and asks for far less.
+        assert_eq!(f.extent(u1, Side::Left), 120.0, "one column out");
         // The chain turned off a left pin, so its slots clear that pin and not
-        // the whole part: two of them, a coarse pitch apart.
-        assert_eq!(f.extent(u1, Side::Bottom), 160.0, "two slots deep");
+        // the whole part — and its ground ends it a step under the resistor.
+        assert_eq!(f.extent(u1, Side::Bottom), 100.0, "the ground's own line");
         assert_eq!(f.extent(u1, Side::Right), 0.0, "nothing on the other side");
     }
 }

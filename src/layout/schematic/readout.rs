@@ -105,12 +105,12 @@ fn pair(children: &[PlacedNode], field: &Field, i: usize) -> Option<Pair> {
 /// again. Crowded both ways — or neither — there is nothing to choose, and the
 /// pair straddles as minted.
 fn stacked(children: &[PlacedNode], seat: super::field::Seat) -> Option<Pair> {
-    if seat.lane.is_some() || seat.ray != seat.side || !seat.side.is_vertical() {
+    if seat.ray != seat.side || !seat.side.is_vertical() {
         return None;
     }
     let rows = pin_rows(&children[seat.anchor], seat.side);
-    let above = rows.iter().any(|&r| r < seat.pin_line - EPS);
-    let below = rows.iter().any(|&r| r > seat.pin_line + EPS);
+    let above = rows.iter().any(|&r| r < seat.cross - EPS);
+    let below = rows.iter().any(|&r| r > seat.cross + EPS);
     (above != below).then_some(Pair::Stacked(if above { 1.0 } else { -1.0 }))
 }
 

@@ -98,22 +98,6 @@ impl Lattice {
         }
     }
 
-    /// The coordinate of coarse line `i` on `ax`.
-    pub(super) fn line(self, ax: Ax, i: i32) -> f64 {
-        f64::from(i) * self.step(ax)
-    }
-
-    /// The first coarse line **strictly** beyond `v` along `ax`, going the
-    /// way `outward` points (`+1` / `-1`).
-    pub(super) fn beyond(self, ax: Ax, v: f64, outward: f64) -> i32 {
-        let lines = v / self.step(ax);
-        if outward > 0.0 {
-            lines.floor() as i32 + 1
-        } else {
-            lines.ceil() as i32 - 1
-        }
-    }
-
     /// The first **fine** line strictly beyond `v`, going the way `outward`
     /// points — the coarse [`Lattice::beyond`]'s twin, for the separations a
     /// coarse line rounds away [SPEC 16.1].
@@ -124,6 +108,11 @@ impl Lattice {
         } else {
             lines.ceil() as i32 - 1
         }
+    }
+
+    /// The first **fine** line strictly beyond `v`, as a coordinate.
+    pub(super) fn past(self, v: f64, outward: f64) -> f64 {
+        f64::from(self.fine_beyond(v, outward)) * self.pitch
     }
 
     /// `v` rounded to the nearest fine line.
@@ -242,22 +231,20 @@ mod tests {
             row: 100.0,
             col: 100.0,
         };
-        assert_eq!(l.line(Ax::X, 3), 300.0);
-        assert_eq!(l.line(Ax::Y, -2), -200.0);
         assert_eq!(l.snap(53.0), 60.0);
         assert_eq!(l.snap(-53.0), -60.0);
     }
 
     #[test]
-    fn beyond_is_strict_so_a_field_never_starts_on_the_ink() {
+    fn past_is_strict_so_a_field_never_starts_on_the_ink() {
         let l = Lattice {
             pitch: 20.0,
             row: 100.0,
             col: 100.0,
         };
-        assert_eq!(l.beyond(Ax::X, 120.0, 1.0), 2, "the next line out");
-        assert_eq!(l.beyond(Ax::X, 200.0, 1.0), 3, "strictly beyond, never on");
-        assert_eq!(l.beyond(Ax::X, -120.0, -1.0), -2);
-        assert_eq!(l.beyond(Ax::X, -200.0, -1.0), -3);
+        assert_eq!(l.past(25.0, 1.0), 40.0, "the next fine line out");
+        assert_eq!(l.past(40.0, 1.0), 60.0, "strictly beyond, never on");
+        assert_eq!(l.past(-25.0, -1.0), -40.0);
+        assert_eq!(l.past(-40.0, -1.0), -60.0);
     }
 }

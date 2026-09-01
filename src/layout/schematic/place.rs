@@ -16,7 +16,6 @@ use super::super::{anchors, flex, grid};
 use super::field::Field;
 use super::lattice::{Ax, Lattice};
 use super::pack::pack;
-use super::rail;
 use super::readout;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
@@ -182,9 +181,7 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 ///    lattice ([`pack`]);
 /// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;
-/// 4. strike the **rail** ([`rail`]) — the one row every ground sinks to, which
-///    exists only in the scope's own frame — and turn the **readouts** outward
-///    ([`readout`]);
+/// 4. turn the **readouts** outward ([`readout`]);
 /// 5. flow the satellites no wire held (the caller warns), then centre the
 ///    sheet on the scope's origin a whole number of fine pitches at a time, so
 ///    the lattice the passes agreed on stays absolute;
@@ -227,13 +224,9 @@ pub(super) fn arrange(
         anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
     field.absolutize(children);
-    // The ground row is the scope's, so it is struck here and not in the
-    // field: it is one line across every anchor. It can stand past what the
-    // fields hold, and the packing measured the box off those cells — so the
-    // sheet takes the cells the row landed on.
-    let mut body = packed.body.union(rail::rails(children, &field, lat));
-    // …and the readouts turn outward, which moves text and no part, so it
-    // changes nothing the box was measured from [SPEC 16.2].
+    // The readouts turn outward, which moves text and no part, so it changes
+    // nothing the box was measured from [SPEC 16.2].
+    let mut body = packed.body;
     readout::readouts(children, &field);
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
