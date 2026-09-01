@@ -984,3 +984,54 @@ fn a_readout_never_moves_a_part() {
         "the columns stand where the lattice put them, whatever the value reads"
     );
 }
+
+/// The schematic samples land on the fine lattice [SPEC 16.1] — the analogue
+/// of the routing law checker, judged on the placed sheet alone. Measured in
+/// each **scope's own frame**, which is where the invariant is stated; a
+/// scope's own origin lands on the lattice too, so the scene's reading agrees.
+///
+/// **The one exemption**, and it belongs to the drawing rather than to
+/// placement: a symbol-bodied three-terminal part (`|Q|`, `|opamp|`) presents
+/// its glyph's own connection points, and those sit off the pin pitch — a
+/// `sch-opamp` input is 8 glyph units off the body's centre line, a FET's
+/// channel pins 8 off theirs. The part itself still lands on the lattice; what
+/// cannot is whatever is seated on *its* pin line, such as a span member
+/// riding the leg into a FET's source. So a part off the lattice must stand on
+/// a landing of one of those two families, and the test names the family it
+/// found rather than widening the tolerance until it passes.
+#[test]
+fn every_sample_lands_on_the_lattice() {
+    for path in [
+        "samples/schematic.lini",
+        "samples/schematic_hero.lini",
+        "samples/schematic_blocks.lini",
+        "samples/schematic_parts.lini",
+    ] {
+        let src = std::fs::read_to_string(path).expect("a sample");
+        let laid = crate::testutil::laid_in_samples(&src);
+        let parts = super::tests::scope_parts(&laid.nodes);
+        for p in &parts {
+            for (axis, v) in [("x", p.at.0), ("y", p.at.1)] {
+                if on_fine_grid(v) {
+                    continue;
+                }
+                let stands_on = parts
+                    .iter()
+                    .filter(|o| !std::ptr::eq(*o, p))
+                    .find(|o| {
+                        o.ports
+                            .iter()
+                            .any(|&(px, py)| close(if axis == "x" { px } else { py }, v))
+                    })
+                    .map_or("nothing at all", |o| o.ty.as_str());
+                assert!(
+                    matches!(stands_on, "Q" | "opamp"),
+                    "{path}: '{}' is off the lattice in {axis} at {v}, and what \
+                     it stands on is {stands_on} — the exemption is the \
+                     three-terminal symbol glyphs' alone",
+                    p.id
+                );
+            }
+        }
+    }
+}

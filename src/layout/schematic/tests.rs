@@ -122,6 +122,65 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .collect()
 }
 
+/// Every schematic part a scope placed, as `(written type, id, x, y)` with
+/// its centre **in that scope's own frame** — what [SPEC 16.1]'s invariant is
+/// stated in. Since a scope's own origin lands on the fine lattice too, the
+/// scene's reading and the scope's agree, and either judges the invariant.
+///
+/// A part's own anatomy — pins, rails, readouts — is its business, so the walk
+/// stops at the outermost schematic type it meets.
+pub(super) struct ScopePart {
+    pub ty: String,
+    pub id: String,
+    pub at: (f64, f64),
+    /// Where a wire lands on it, in the same frame — the router's own reading
+    /// ([`super::part_ports`]), so the test judges the points wires really
+    /// arrive at and not the pin chrome around them. A symbol-bodied part
+    /// presents its glyph's connection points, which need not be on the pitch.
+    pub ports: Vec<(f64, f64)>,
+}
+
+pub(super) fn scope_parts(nodes: &[PlacedNode]) -> Vec<ScopePart> {
+    fn walk(
+        nodes: &[PlacedNode],
+        ox: f64,
+        oy: f64,
+        scope: Option<(f64, f64)>,
+        out: &mut Vec<ScopePart>,
+    ) {
+        for n in nodes {
+            let (x, y) = (ox + n.cx, oy + n.cy);
+            let scope = if super::is_schematic(&n.attrs) {
+                Some((x, y))
+            } else {
+                scope
+            };
+            match (
+                scope,
+                crate::desugar::schematic::schematic_type(&n.type_chain),
+            ) {
+                (Some((sx, sy)), Some(ty)) => out.push(ScopePart {
+                    ty: ty.to_string(),
+                    id: n.id.clone().unwrap_or_else(|| format!("|{ty}|")),
+                    at: (x - sx, y - sy),
+                    ports: super::part_ports(n)
+                        .map(|p| {
+                            p.ports
+                                .iter()
+                                .map(|&(_, _, (px, py))| (x + px - sx, y + py - sy))
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                }),
+                _ => walk(&n.children, x, y, scope, out),
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(nodes, 0.0, 0.0, None, &mut out);
+    out
+}
+
 // ───────────────────────── the readout seats ─────────────────────────
 
 /// The chrome box a placed part hangs off itself: the union of every
