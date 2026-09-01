@@ -990,6 +990,59 @@ it ends, which is what both reference sheets draw."
 
 ---
 
+### Task 8b: a chain hanging off a net run covers its landing
+
+Found while reviewing Task 8. **Fix this before Task 9's own work**, in the same
+session — it is a placement defect, and Task 8 relieved it by editing the
+showroom, which is not where a defect belongs.
+
+**Repro** — restore the hero's original wiring:
+
+```bash
+sed 's/    J4.p2 - R16 - |v3|/    tach - R16 - |v3|/' samples/schematic_hero.lini > /tmp/hero_orig.lini
+./target/release/lini --static /tmp/hero_orig.lini -o /dev/null --strict
+```
+
+```
+warning: impossible (fan.tach -> fan.R16.p1): fixed port blocked:
+         a body covers the port's landing
+```
+
+Task 8's author read this as router fan-grouping and worked around it in
+`samples/schematic_hero.lini` (`tach - R16 - |v3|` → `J4.p2 - R16 - |v3|`,
+comment rewritten). **That diagnosis is wrong**: the isolated case —
+
+```
+{ |v3::label| { symbol: power } [ "3V3" ] }
+|schematic#s| [
+  |J#J4| "Molex 5045" { pins: 3; }   |R#R16| "10k"
+  |label#tach| "FAN_TACH"            |v3#f1|
+  J4.p2 - tach
+  tach - R16 - f1
+]
+```
+
+routes clean, and the router's message names a **body over a landing**, not a
+full side or a port conflict. The likely cause is in the field pass: a net run
+reserves only the fine line it lands on ([SPEC 16.4] — a run is no obstacle),
+but the *next member of its chain* takes a full `gap` cell one coarse step
+along, and that cell can cover the run's own far end, which is where its wire
+lands ([SPEC 16.4], `terminal.rs` — a run's landing is the edge **opposite** its
+facing, so it reaches along the chain's own ray).
+
+- [ ] **Step 1: Write the failing test** in `field_tests.rs`, asserting that a
+      chain hanging off a net run leaves that run's landing point clear — assert
+      on the geometry, not on the absence of a warning.
+- [ ] **Step 2: Fix the cause** in the field pass. One mechanism: whatever
+      reserves the run's line should account for the landing the wire actually
+      arrives at, so the next member seats clear of it.
+- [ ] **Step 3: Restore the sample.** Put `tach - R16 - |v3|` back with its
+      original comment (recover both from `git show a2397bf:samples/schematic_hero.lini`)
+      and confirm `--strict` is silent on all four samples.
+- [ ] **Step 4: Commit** — name the misdiagnosis and what it actually was.
+
+---
+
 ### Task 9: `readout.rs` — the ref/value side rule
 
 **Files:**
