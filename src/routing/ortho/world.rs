@@ -47,7 +47,11 @@ pub(super) fn build_worlds(index: &SceneIndex, reqs: &[EdgeReq], c: f64) -> Vec<
                 .map(|r| r.inflate(c))
                 .collect();
             let graph = ChannelGraph::build(wb, &keepouts, key.is_none());
-            World { key, graph }
+            World {
+                key,
+                graph,
+                quantum: index.quantum(key),
+            }
         })
         .collect()
 }

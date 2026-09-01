@@ -284,8 +284,9 @@ Six steps. Each decides once; none revisits an earlier step's answer.
      between them), the keep-out wall when the other wall is the canvas edge
      (wires hug the diagram, not the margin). Where the run's world states a
      **track quantum**, that preference rounds to the nearest multiple of it
-     and clamps back into the corridor, so a bare run between two gridded
-     parts bends on their grid rather than a hair off it;
+     **the corridor holds** — a wall is no grid line, so a corridor carrying
+     none keeps its anchor — and a bare run between two gridded parts bends
+     on their grid rather than a hair off it;
    - an **end run** prefers the straightest lawful line: its ports' shared
      window when one run serves both ends (the two side centres' midpoint,
      clamped into the window), its own side's centre otherwise. A **port

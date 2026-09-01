@@ -39,7 +39,12 @@ pub struct Routing {
 /// containers drew themselves (a sequence's messages, already lowered
 /// through `straight`).
 pub fn route(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
-    let index = ortho::scene::SceneIndex::build(nodes);
+    // The root world has no scene node of its own, so the root scope's own
+    // quantum comes from the program (ROUTING.md §Vocabulary).
+    let index = ortho::scene::SceneIndex::build(nodes).with_root_quantum(
+        crate::resolve::is_schematic(&program.scene.attrs)
+            .then_some(crate::ledger::consts::PIN_PITCH),
+    );
     let reqs = ortho::request::requests(program, &index)?;
     let (mut routing, mut req_of) = ortho::route(&index, &reqs);
     natural::route(&index, &reqs, &mut routing, &mut req_of);

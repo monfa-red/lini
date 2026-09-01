@@ -1315,3 +1315,37 @@ fn fixed_ports_hold_the_laws_across_the_clearance_sweep() {
         );
     }
 }
+
+// ── The track quantum (ROUTING.md §Vocabulary) ──
+
+/// A schematic scope states the fine pitch as its world's **track quantum**
+/// [SPEC 16.1], so the bare run between two gridded parts bends on their grid
+/// rather than a hair off it: the jog from the switch down to its ground used
+/// to cross at 83 — the midline between the two bodies — and now rides the
+/// lattice row at 80. Preference only: every law still holds.
+#[test]
+fn a_schematic_worlds_interior_runs_land_on_its_track_quantum() {
+    // The fine pitch [SPEC 10.5]; the scope places every part on it.
+    const PITCH: f64 = 20.0;
+    let src = "|schematic#s| [\n\
+               \x20 |component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n\
+               \x20 |SW#sw1|\n\
+               \x20 |gnd#g1|\n\
+               \x20 u1.c - sw1 - g1\n]\n";
+    let routes = routes(src);
+    let jog = path(&routes, "s.sw1.p2", "s.g1");
+    orthogonal(jog);
+    assert_eq!(jog.len(), 4, "down, across, down: {jog:?}");
+    assert_eq!(jog[1].1, jog[2].1, "one crossbar: {jog:?}");
+    let bar = jog[1].1;
+    assert_eq!(bar, (bar / PITCH).round() * PITCH, "off the lattice: {bar}");
+    assert!(
+        jog[1].1 > jog[0].1 && jog[3].1 > jog[2].1,
+        "and still between the two terminals: {jog:?}"
+    );
+    let breaches: Vec<_> = report(src)
+        .into_iter()
+        .filter(|v| v.severity != Severity::Info)
+        .collect();
+    assert!(breaches.is_empty(), "{breaches:?}");
+}

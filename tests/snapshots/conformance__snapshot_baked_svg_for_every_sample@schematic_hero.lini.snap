@@ -3151,7 +3151,7 @@ input_file: samples/schematic_hero.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-schematic-wire" data-from="entry.J1.p3" data-to="entry.F1.p1">
-      <path d="M -1197.75 -965 L -1077.375 -965 L -1077.375 -953 L -957 -953"/>
+      <path d="M -1197.75 -965 L -1080 -965 L -1080 -953 L -957 -953"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.F1.p2" data-to="entry.Q1.s">
       <path d="M -893 -953 L -553 -953"/>
@@ -3166,10 +3166,10 @@ input_file: samples/schematic_hero.lini
       <path d="M -553 -953 L -825 -953 L -825 -877"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.R2.p2" data-to="entry.D2.a">
-      <path d="M -825 -813 L -825 -795 L -828 -795 L -828 -777"/>
+      <path d="M -825 -813 L -825 -800 L -828 -800 L -828 -777"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.D2.k" data-to="entry.lini-cap-3">
-      <path d="M -828 -713 L -828 -682 L -825 -682 L -825 -651"/>
+      <path d="M -828 -713 L -828 -680 L -825 -680 L -825 -651"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.Q1.s" data-to="entry.D1.k">
       <path d="M -553 -953 L -725 -953 L -725 -883"/>
@@ -3187,7 +3187,7 @@ input_file: samples/schematic_hero.lini
       <path d="M -553 -937 L -627 -937 L -627 -877"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.C1.p2" data-to="entry.lini-cap-6">
-      <path d="M -627 -813 L -627 -732 L -625 -732 L -625 -651"/>
+      <path d="M -627 -813 L -627 -740 L -625 -740 L -625 -651"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.Q1.d" data-to="entry.lini-cap-7">
       <path d="M -553 -937 L -636.9275 -937 L -636.9275 -1035"/>
@@ -3214,7 +3214,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 111.5515 -925 L 245 -925 L 245 -1073"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.L1.p2" data-to="buck.lini-cap-5">
-      <path d="M 245 -1137 L 245 -1171 L 231.257 -1171 L 231.257 -1195"/>
+      <path d="M 245 -1137 L 245 -1165 L 231.257 -1165 L 231.257 -1195"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.U1.OUT" data-to="buck.D3.k">
       <path d="M 111.5515 -925 L 440 -925 L 440 -737"/>
@@ -3223,32 +3223,32 @@ input_file: samples/schematic_hero.lini
       <path d="M 440 -673 L 440 -511"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.L1.p2" data-to="buck.U1.FB">
-      <path d="M 245 -1137 L 245 -1161 L 224.25 -1161 L 224.25 -865 L 111.5515 -865"/>
+      <path d="M 245 -1137 L 245 -1155 L 224.25 -1155 L 224.25 -865 L 111.5515 -865"/>
       <g class="lini-link-label" style="fill: #0e6a6a; font-weight: 500">
-        <use href="#lini-g1400-1657" transform="translate(228.25 -975.0878) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-156" transform="translate(234.399 -975.0878) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-1657" transform="translate(228.25 -969.0878) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-156" transform="translate(234.399 -969.0878) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.U1.FB" data-to="buck.C3.p1">
       <path d="M 111.5515 -865 L 238 -865 L 238 -737"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.C3.p2" data-to="buck.lini-cap-7">
-      <path d="M 238 -673 L 238 -592 L 240 -592 L 240 -511"/>
+      <path d="M 238 -673 L 238 -600 L 240 -600 L 240 -511"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.U1.FB" data-to="buck.R4.p1">
       <path d="M 111.5515 -865 L 340 -865 L 340 -737"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.R4.p2" data-to="buck.D4.a">
-      <path d="M 340 -673 L 340 -655 L 337 -655 L 337 -637"/>
+      <path d="M 340 -673 L 340 -660 L 337 -660 L 337 -637"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="buck.D4.k" data-to="buck.lini-cap-8">
-      <path d="M 337 -573 L 337 -542 L 340 -542 L 340 -511"/>
+      <path d="M 337 -573 L 337 -540 L 340 -540 L 340 -511"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.U2.VIN" data-to="ldo.lini-cap-1">
-      <path d="M 861.671 -965 L 791.9295 -965 L 791.9295 -1058.375 L 616.257 -1058.375 L 616.257 -1135"/>
+      <path d="M 861.671 -965 L 795 -965 L 795 -1065 L 616.257 -1065 L 616.257 -1135"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.U2.VIN" data-to="ldo.C4.p1">
-      <path d="M 861.671 -965 L 809.3355 -965 L 809.3355 -847.625 L 625 -847.625 L 625 -777"/>
+      <path d="M 861.671 -965 L 800 -965 L 800 -840 L 625 -840 L 625 -777"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.C4.p2" data-to="ldo.lini-cap-2">
       <path d="M 625 -713 L 625 -551"/>
@@ -3257,7 +3257,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 861.671 -945 L 757 -945"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.R5.p2" data-to="ldo.U2.VIN">
-      <path d="M 693 -945 L 618.75 -945 L 618.75 -1048.375 L 801.9295 -1048.375 L 801.9295 -965 L 861.671 -965"/>
+      <path d="M 693 -945 L 620 -945 L 620 -1055 L 805 -1055 L 805 -965 L 861.671 -965"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.U2.GND" data-to="ldo.lini-cap-3">
       <path d="M 925 -867.75 L 925 -551"/>
@@ -3272,10 +3272,10 @@ input_file: samples/schematic_hero.lini
       <path d="M 988.329 -945 L 1225 -945 L 1225 -777"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.R6.p2" data-to="ldo.D5.a">
-      <path d="M 1225 -713 L 1225 -695 L 1222 -695 L 1222 -677"/>
+      <path d="M 1225 -713 L 1225 -700 L 1222 -700 L 1222 -677"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.D5.k" data-to="ldo.lini-cap-5">
-      <path d="M 1222 -613 L 1222 -582 L 1225 -582 L 1225 -551"/>
+      <path d="M 1222 -613 L 1222 -580 L 1225 -580 L 1225 -551"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="ldo.U2.VOUT" data-to="ldo.lini-cap-6">
       <path d="M 988.329 -945 L 1113.2705 -945 L 1113.2705 -1135"/>
@@ -3308,7 +3308,7 @@ input_file: samples/schematic_hero.lini
       <path d="M -366.188 -20 L -668.5 -20 L -668.5 148"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mcu.SW1.p2" data-to="mcu.lini-cap-6">
-      <path d="M -668.5 212 L -668.5 293 L -662.5 293 L -662.5 374"/>
+      <path d="M -668.5 212 L -668.5 300 L -662.5 300 L -662.5 374"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mcu.U3.PA5" data-to="mcu.R8.p1">
       <path d="M -366.188 0 L -462.5 0 L -462.5 148"/>
@@ -3317,7 +3317,7 @@ input_file: samples/schematic_hero.lini
       <path d="M -462.5 212 L -462.5 230 L -465.5 230 L -465.5 248"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mcu.D6.k" data-to="mcu.lini-cap-7">
-      <path d="M -465.5 312 L -465.5 343 L -462.5 343 L -462.5 374"/>
+      <path d="M -465.5 312 L -465.5 340 L -462.5 340 L -462.5 374"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mcu.J2.p1" data-to="mcu.lini-cap-8">
       <path d="M 110.25 0 L 25.7705 0 L 25.7705 -310"/>
@@ -3353,7 +3353,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 957 32 L 785 32 L 785 -28"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mon.R9.p2" data-to="mon.lini-cap-1">
-      <path d="M 785 -92 L 785 -121 L 773.0725 -121 L 773.0725 -150"/>
+      <path d="M 785 -92 L 785 -120 L 773.0725 -120 L 773.0725 -150"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mon.U4.inp" data-to="mon.R10.p1">
       <path d="M 957 32 L 785 32 L 785 108"/>
@@ -3365,7 +3365,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 957 48 L 885 48 L 885 -28"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mon.R11.p2" data-to="mon.lini-cap-3">
-      <path d="M 885 -92 L 885 -121 L 873.2705 -121 L 873.2705 -150"/>
+      <path d="M 885 -92 L 885 -120 L 873.2705 -120 L 873.2705 -150"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="mon.U4.inn" data-to="mon.D7.k">
       <path d="M 957 48 L 885 48 L 885 108"/>
@@ -3404,7 +3404,7 @@ input_file: samples/schematic_hero.lini
       <path d="M -906.929 885 L -765 885 L -765 717"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="bus.R12.p2" data-to="bus.lini-cap-4">
-      <path d="M -765 653 L -765 624 L -776.7295 624 L -776.7295 595"/>
+      <path d="M -765 653 L -765 620 L -776.7295 620 L -776.7295 595"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="bus.U5.B" data-to="bus.R13.p1">
       <path d="M -906.929 905 L -765 905 L -765 1053"/>
@@ -3428,7 +3428,7 @@ input_file: samples/schematic_hero.lini
       <path d="M -72 1005 L -170.895 1005"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="fan.Q2.g" data-to="fan.R15.p1">
-      <path d="M 32 1005 L 12 1005 L 12 1052.375 L -240 1052.375 L -240 1073"/>
+      <path d="M 32 1005 L 20 1005 L 20 1060 L -240 1060 L -240 1073"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="fan.R15.p2" data-to="fan.lini-cap-1">
       <path d="M -240 1137 L -240 1199"/>
@@ -3443,7 +3443,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 88 997 L 160 997 L 160 937"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="fan.D8.k" data-to="fan.lini-cap-3">
-      <path d="M 160 873 L 160 734 L 148.0725 734 L 148.0725 595"/>
+      <path d="M 160 873 L 160 740 L 148.0725 740 L 148.0725 595"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="fan.J4.p1" data-to="fan.lini-cap-4">
       <path d="M 432.75 965 L 348.0725 965 L 348.0725 595"/>
@@ -3455,7 +3455,7 @@ input_file: samples/schematic_hero.lini
       <path d="M 260 765 L 260 717"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="fan.R16.p2" data-to="fan.lini-cap-5">
-      <path d="M 260 653 L 260 624 L 248.2705 624 L 248.2705 595"/>
+      <path d="M 260 653 L 260 620 L 248.2705 620 L 248.2705 595"/>
     </g>
     <g class="lini-node lini-junction lini-oval" transform="translate(-825,-953)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
@@ -3472,7 +3472,7 @@ input_file: samples/schematic_hero.lini
     <g class="lini-node lini-junction lini-oval" transform="translate(245,-925)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(245,-1161)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(245,-1155)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-junction lini-oval" transform="translate(224.25,-865)">
@@ -3481,10 +3481,10 @@ input_file: samples/schematic_hero.lini
     <g class="lini-node lini-junction lini-oval" transform="translate(238,-865)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(809.3355,-965)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(800,-965)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(801.9295,-965)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(805,-965)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-junction lini-oval" transform="translate(1125,-945)">
@@ -3514,7 +3514,7 @@ input_file: samples/schematic_hero.lini
     <g class="lini-node lini-junction lini-oval" transform="translate(-765,905)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
-    <g class="lini-node lini-junction lini-oval" transform="translate(12,1005)">
+    <g class="lini-node lini-junction lini-oval" transform="translate(20,1005)">
       <ellipse cx="0" cy="0" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-junction lini-oval" transform="translate(160,997)">

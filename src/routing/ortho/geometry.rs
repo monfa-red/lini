@@ -378,7 +378,11 @@ mod tests {
             1,
             C,
         ))];
-        let worlds = [World { key: None, graph }];
+        let worlds = [World {
+            key: None,
+            graph,
+            quantum: None,
+        }];
         place(&worlds, &mut chains, C);
         polyline(chains[0].as_ref().unwrap())
     }
