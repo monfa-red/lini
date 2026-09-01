@@ -19,7 +19,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::field::{Field, drawn, edges};
-use super::lattice::{Ax, Lattice};
+use super::lattice::{Ax, EPS, Lattice};
 use super::place::{Slot, collapse};
 use super::terminal::terminal;
 use crate::desugar::pose::Side;
@@ -114,7 +114,10 @@ fn axis(
     let apart = |k: usize, j: usize| -> f64 {
         let cells =
             f64::from(holds(k, ahead) + spanning(field, anchored, k, j) + holds(j, back) + 1);
-        let bodies = (ink(k, ahead) + lat.pitch + ink(j, back)) / step;
+        // Less the lattice's slack before the ceiling, as every other count of
+        // cells takes it: two bodies that exactly fill their columns owe the
+        // next one, not the one after it that rounding noise would ask for.
+        let bodies = (ink(k, ahead) + lat.pitch + ink(j, back)) / step - EPS;
         cells.max(bodies.ceil()) + (shift(k) - shift(j)) / step
     };
     let mut line = vec![0i32; ordinals.len()];
