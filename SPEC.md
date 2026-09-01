@@ -3462,13 +3462,16 @@ trunk.
 
 **Collision is the cells'.** A member's cell is one `gap` square on its lattice
 point — a **net run**'s the fine line it lands on, since a run is a stretch of
-trace and not a body ([16.4](#164-labels)). A lane is free when no cell of the
-chain meets one already committed; a taken lane steps out a coarse line and
-tries again. A chain's **lead** — the run from its pin out to its lane —
-reserves nothing, the lane order keeping it clear. So three things need no rule:
-an up-chain and a down-chain off one pin **share a lane**, their cells being
-disjoint; a second chain claiming a pin's straight corridor steps beside it,
-theirs being the same cell; and no chain lands where a lead must cross.
+trace and not a body ([16.4](#164-labels)) — and a chain's cells run from its
+own **pin's** line out to its outermost member, which is the column it really
+draws. A lane is free when no cell of the chain meets one already committed; a
+taken lane steps out a coarse line and tries again. A chain's **lead** — the
+run from its pin out to its lane — reserves nothing, the lane order keeping it
+clear. So four things need no rule: an up-chain and a down-chain off one pin
+**share a lane**, their columns meeting at exactly the one line; two pins whose
+rays point *at* each other take a lane each, both claiming the band between
+them; a second chain claiming a pin's straight corridor steps beside it, theirs
+being the same cell; and no chain lands where a lead must cross.
 
 **Lane order is the pins' own**, read along the ray: the pin **deeper** along it
 keeps the inner lane and the shallower steps out, so a lead crosses an inner

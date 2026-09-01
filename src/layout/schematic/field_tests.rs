@@ -779,3 +779,49 @@ fn an_overlay_end_holds_nothing_for_the_pose_chooser_either() {
         ["'g1' has no placed end — its chain falls back to the flow"]
     );
 }
+
+#[test]
+fn a_pins_own_pair_shares_one_lane() {
+    // [SPEC 16.1] one pin's up-chain and down-chain leave on one lead and
+    // split once — the rail up to its flag, down to its decoupling cap, one
+    // column. A bare symbol, so a node's centre **is** its connection point.
+    let sheet = "{ |flag::label| { symbol: power } }\n";
+    let part = "  |component#u1| [\n    |pin#d| { side: right }; |pin#s| { side: right }; |pin#l| { side: left }\n  ]\n";
+    let nodes = laid(
+        &(sheet.to_owned()
+            + &scope(
+                "",
+                &(part.to_owned() + "  |flag#f|\n  |gnd#g|\n  u1.d - f\n  u1.d - g\n"),
+            )),
+    );
+    let (fx, gx) = (at(&nodes, "f").0, at(&nodes, "g").0);
+    assert!(close(fx, gx), "one pin, one column: {fx} vs {gx}");
+}
+
+#[test]
+fn two_pins_share_a_lane_only_where_their_columns_never_meet() {
+    // [SPEC 16.1] a chain's cells run from its own **pin** to its outermost
+    // member, so two pins of one side whose rays point *at* each other claim
+    // the band between them twice and take a lane each — without that reading
+    // their member cells are disjoint and two nets braid into one column.
+    // Pointing *away* they never meet, and one column holds both: the rail
+    // climbing off the upper pin, the return dropping off the lower, which is
+    // the compact idiom a sheet draws.
+    let sheet = "{ |v3::label| { symbol: power } [ \"3V3\" ] }\n";
+    let part = "  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left }; |pin#z| { side: right }\n  ]\n";
+    let parts = "  |C#c1| \"1u\"\n  |gnd#g1|\n  |R#r1| \"10k\"\n  |v3#f1|\n";
+    let lanes_of = |wires: &str| {
+        let nodes = laid(&(sheet.to_owned() + &scope("", &(part.to_owned() + parts + wires))));
+        (at(&nodes, "c1").0, at(&nodes, "r1").0)
+    };
+    // `a` is the upper pin and grows **down**; `b` the lower, growing **up**.
+    let (cx, rx) = lanes_of("  u1.a - c1 - g1\n  u1.b - r1 - f1\n");
+    assert!(
+        !close(cx, rx),
+        "pointing at each other, a lane each: {cx} {rx}"
+    );
+    // The mirror: `a` up and `b` down, so neither column enters the other's
+    // band and one lane holds both.
+    let (cx, rx) = lanes_of("  u1.a - r1 - f1\n  u1.b - c1 - g1\n");
+    assert!(close(cx, rx), "pointing away, one lane: {cx} {rx}");
+}

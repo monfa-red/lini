@@ -15,7 +15,7 @@ use super::{Field, Ladder, Seat, allocate, out};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
 use crate::layout::geom::dot;
-use crate::layout::ir::PlacedNode;
+use crate::layout::ir::{Bbox, PlacedNode};
 
 impl Field {
     /// Grow every chain one anchor holds, in the lane order.
@@ -52,6 +52,7 @@ impl Field {
             ladder,
             first: self.line_of(h.anchor, h.ray, 1),
             members: pick(chain, |i| limbs[i].is_none()),
+            origin: Some(h.pin.at),
         };
         // One allocation for either ladder [SPEC 16.1]: a chain that turned off
         // its pin takes the innermost free lane, and one that grew straight out
@@ -119,6 +120,7 @@ impl Field {
                 ladder,
                 first: self.line_of(h.anchor, h.ray, attach.slot) + out(ray),
                 members,
+                origin: None,
             };
             let k = self.allot(h, &branch);
             self.commit(h, &branch, k);
@@ -127,19 +129,49 @@ impl Field {
 
     /// The innermost cross step a run's cells leave free [SPEC 16.1].
     fn allot(&self, h: &Held, run: &Run) -> i32 {
-        allocate(&self.cells[h.anchor], |k| {
-            self.seats_of(h, run, k)
-                .map(|(m, s)| self.cell(m, s))
-                .collect()
-        })
+        allocate(&self.cells[h.anchor], |k| self.claim(h, run, k))
     }
 
     /// Record a run's seats and commit its cells to the anchor's occupancy.
     fn commit(&mut self, h: &Held, run: &Run, k: i32) {
         let seats: Vec<(usize, Seat)> = self.seats_of(h, run, k).collect();
+        let stem = self.stem(h, run, k);
         for (member, seat) in seats {
             self.take(member, seat);
         }
+        self.cells[h.anchor].extend(stem);
+    }
+
+    /// Everything a run at cross step `k` would occupy: its members' cells,
+    /// and the **stem** below.
+    fn claim(&self, h: &Held, run: &Run, k: i32) -> Vec<Bbox> {
+        self.seats_of(h, run, k)
+            .map(|(m, s)| self.cell(m, s))
+            .chain(self.stem(h, run, k))
+            .collect()
+    }
+
+    /// The column a trunk actually draws, from its own pin's line out to its
+    /// first cell [SPEC 16.1] — a chain's cells begin at its **pin**, not at
+    /// the field origin.
+    ///
+    /// Two chains off *different* pins of one side whose rays point at each
+    /// other both cross the band between those pins, and only the stem says
+    /// so; without it their member cells are disjoint and they share a lane,
+    /// braiding two nets into one column. A pin's **own** up/down pair still
+    /// shares, because their stems meet at exactly one line and overlap is
+    /// strict — the sharing stays a consequence of the cells rather than a
+    /// rule beside them. The *lead* — the run out to the lane — still claims
+    /// nothing; this is the chain's own column.
+    fn stem(&self, h: &Held, run: &Run, k: i32) -> Option<Bbox> {
+        let (px, py) = run.origin?;
+        let (member, seat) = self.seats_of(h, run, k).next()?;
+        let cross = self.cross(seat);
+        let pin = match Ax::of(run.ray) {
+            Ax::X => (px, cross),
+            Ax::Y => (cross, py),
+        };
+        Some(self.cell(member, seat).union(Bbox::from_points(&[pin])))
     }
 
     /// The seats a run's members take with its cross ladder at step `k`, each
@@ -247,6 +279,10 @@ struct Run {
     /// The coarse line its first member stands on along the ray.
     first: i32,
     members: Vec<usize>,
+    /// Where the run's own column starts, for a trunk: its pin, in the
+    /// anchor's frame ([`Field::stem`]). A branch starts at a junction whose
+    /// cell is already committed, so it needs none.
+    origin: Option<(f64, f64)>,
 }
 
 /// The **allocation order** [SPEC 16.1]. Chains that grew straight out along
