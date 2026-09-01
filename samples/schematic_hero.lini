@@ -11,7 +11,7 @@
   // stays true-scale in print [SPEC 15.1] and the number says how much circuit
   // an A3 holds: the parts are drawn in sheet px [SPEC 16.6], so 10 fits these
   // seven blocks on the sheet edge to edge.
-  density: 6.8;
+  density: 5.9;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -34,7 +34,13 @@
   // states no `gap:` — the sheet's own coarse pitch is the lattice every part
   // centre lands on [SPEC 16.1], and a block that overrode it would draw on a
   // grid of its own.
-  |region::group| { layout: schematic; padding: 20; }
+  |region::group| { layout: schematic; padding: 10; }
+
+  // A caption is pinned just **above** its group's top-left corner by default
+  // [SPEC 17]; on a tiled sheet that puts every block's name in the gutter
+  // between blocks. `translate:` moves it back inside the frame it names —
+  // still top-left, one line in [SPEC 5].
+  |region| |caption| { translate: 8 8; }
 }
 
 // The page is an ordinary container inside its frame [SPEC 15.8], so the blocks
@@ -45,7 +51,7 @@
 // frame's corner [SPEC 15.8]. `padding:` clears the frame, which is inset
 // 10 mm from the trimmed edge, so no block draws over it.
 |page| {
-  sheet: a3 landscape; padding: 110; layout: grid; columns: 950, 880, 750; rows: 600, 550, 590; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; layout: grid; columns: 850, 800, 610; rows: 500, 480, 500; padding: 0; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [
@@ -53,7 +59,7 @@
     // channel pins on its right, and a half turn re-sides them at the fuse
     // — read at lowering, every text upright [SPEC 16.1] — so the 24 V path
     // runs straight through instead of orbiting the body.
-    |Q#Q1| "AOD4185" { symbol: pfet; cell: 2 1; rotate: 180; }
+    |Q#Q1| "AOD4185" { symbol: pfet-circled; cell: 2 1; rotate: 180; }
     // `pins: N` gives a connector one column of pins, facing left; the terminal
     // block sits at the sheet's edge, so it is turned to face its circuit —
     // `rotate: 180` re-sides the whole column [SPEC 16.1/16.2].
@@ -252,7 +258,7 @@
   ]
 
   |region#fan| "Fan drive" { cell: 2 3; } [
-    |Q#Q2| "IRLZ44N" { symbol: nfet; }
+    |Q#Q2| "IRLZ44N" { symbol: nfet-circled; }
     |J#J4| "Molex 5045" { pins: 3; }
     |R#R14| "100R"
     |R#R15| "100k"
