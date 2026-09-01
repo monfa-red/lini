@@ -2,7 +2,7 @@
 //! sheet, placement stops at a nested scope while the link scope reaches
 //! through it, and the whole pass is deterministic. The helpers every
 //! schematic suite shares live here — the tracks and roles are
-//! [`super::place_tests`], the seats [`super::seat_tests`], the router
+//! [`super::place_tests`], the cells [`super::field_tests`], the router
 //! [`super::route_tests`].
 
 use crate::layout::PlacedNode;
@@ -34,11 +34,11 @@ pub(super) fn at(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
 }
 
 /// A placed node's **drawn** extent in scene coordinates — the engine's one
-/// extent notion ([`super::seat::drawn`]), so a test measures the ink the
+/// extent notion ([`super::field::drawn`]), so a test measures the ink the
 /// tracks reserved and never the box inside it.
 pub(super) fn ink(nodes: &[PlacedNode], id: &str) -> crate::layout::ir::Bbox {
     let (n, x, y) = placed(nodes, id);
-    super::seat::drawn(n).shifted(x, y)
+    super::field::drawn(n).shifted(x, y)
 }
 
 /// The clear space between two placed nodes along x, in scene coordinates.
@@ -54,6 +54,43 @@ pub(super) fn cell(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
     (bx, by, b.w(), b.h())
 }
 
+/// The point the lattice holds a placed part by [SPEC 16.1]: an **anchor** by
+/// its own origin, which the packer lands on a coarse line, and a
+/// **satellite** by its connection geometry, which the field pass stands on
+/// the cell. One reading for every test that judges the invariant.
+pub(super) fn seat(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    seat_of(n, (x, y))
+}
+
+/// …the same reading, for a walk that already holds the node and its origin.
+pub(super) fn seat_of(node: &PlacedNode, at: (f64, f64)) -> (f64, f64) {
+    if super::place::role(node) != crate::desugar::schematic::Role::Satellite {
+        return at;
+    }
+    let (sx, sy) = super::terminal::seat_point(node);
+    (at.0 + sx, at.1 + sy)
+}
+
+/// A placed part's own **connection point** in scene coordinates — where a
+/// bare wire to it lands [SPEC 16.4], read through the one connection-geometry
+/// reader the engine seats by.
+pub(super) fn port(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    let at = super::terminal::terminal(n, None).at;
+    (x + at.0, y + at.1)
+}
+
+/// Where a wire lands on one **named** terminal of a placed part in scene
+/// coordinates — a pin's stub tip, a symbol part's port [SPEC 16.2] — through
+/// the same reader the router's fixed ports come from, so a test judges the
+/// point a wire really arrives at.
+pub(super) fn landing(nodes: &[PlacedNode], id: &str, terminal: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    let at = super::terminal::terminal(n, Some(terminal)).at;
+    (x + at.0, y + at.1)
+}
+
 /// A placed node's **own box** in scene coords — its drawing without the
 /// readout chrome hanging off it, for the assertions that are about where the
 /// part itself landed.
@@ -63,13 +100,14 @@ pub(super) fn body(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
     (x + bx, y + by, n.bbox.w(), n.bbox.h())
 }
 
-/// The clear space between two placed nodes along y.
-pub(super) fn y_gap(nodes: &[PlacedNode], top: &str, bottom: &str) -> f64 {
-    ink(nodes, bottom).min_y - ink(nodes, top).max_y
-}
-
 pub(super) fn close(a: f64, b: f64) -> bool {
     (a - b).abs() < 1e-6
+}
+
+/// Whether a coordinate lands on a fine lattice point [SPEC 16.1] — the one
+/// reading of the invariant, shared by the cell suite and the track suite.
+pub(super) fn on_fine_grid(v: f64) -> bool {
+    close(v, (v / consts::PIN_PITCH).round() * consts::PIN_PITCH)
 }
 
 /// A three-pin `|component|` whose pins take one side each — `a` left, `b`
@@ -119,6 +157,69 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .filter(|d| d.code == crate::error::Code::SCHEMATIC_SEAT)
         .map(|d| d.message.clone())
         .collect()
+}
+
+/// Every schematic part a scope placed, as `(written type, id, x, y)` with the
+/// point the lattice holds it by ([`seat_of`]) **in that scope's own frame** —
+/// what [SPEC 16.1]'s invariant is stated in. Since a scope's own origin lands
+/// on the fine lattice too, the scene's reading and the scope's agree, and
+/// either judges the invariant.
+///
+/// A part's own anatomy — pins, rails, readouts — is its business, so the walk
+/// stops at the outermost schematic type it meets.
+pub(super) struct ScopePart {
+    pub ty: String,
+    pub id: String,
+    pub at: (f64, f64),
+    /// Where a wire lands on it, in the same frame — the router's own reading
+    /// ([`super::part_ports`]), so the test judges the points wires really
+    /// arrive at and not the pin chrome around them. A symbol-bodied part
+    /// presents its glyph's connection points, which need not be on the pitch.
+    pub ports: Vec<(f64, f64)>,
+}
+
+pub(super) fn scope_parts(nodes: &[PlacedNode]) -> Vec<ScopePart> {
+    fn walk(
+        nodes: &[PlacedNode],
+        ox: f64,
+        oy: f64,
+        scope: Option<(f64, f64)>,
+        out: &mut Vec<ScopePart>,
+    ) {
+        for n in nodes {
+            let (x, y) = (ox + n.cx, oy + n.cy);
+            let scope = if super::is_schematic(&n.attrs) {
+                Some((x, y))
+            } else {
+                scope
+            };
+            match (
+                scope,
+                crate::desugar::schematic::schematic_type(&n.type_chain),
+            ) {
+                (Some((sx, sy)), Some(ty)) => out.push(ScopePart {
+                    ty: ty.to_string(),
+                    id: n.id.clone().unwrap_or_else(|| format!("|{ty}|")),
+                    at: {
+                        let (px, py) = seat_of(n, (x, y));
+                        (px - sx, py - sy)
+                    },
+                    ports: super::part_ports(n)
+                        .map(|p| {
+                            p.ports
+                                .iter()
+                                .map(|&(_, _, (px, py))| (x + px - sx, y + py - sy))
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                }),
+                _ => walk(&n.children, x, y, scope, out),
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(nodes, 0.0, 0.0, None, &mut out);
+    out
 }
 
 // ───────────────────────── the readout seats ─────────────────────────
@@ -305,7 +406,11 @@ fn a_root_schematic_scene_is_the_scope() {
     let ((x1, y1), (x2, y2)) = (at(&nodes, "u1"), at(&nodes, "u2"));
     assert!(x1 < x2, "declaration order: {x1} {x2}");
     assert!(close(y1, y2), "one row: {y1} {y2}");
-    assert!(close(x_gap(&nodes, "u1", "u2"), SCH_GAP));
+    assert!(
+        close((x2 - x1) % SCH_GAP, 0.0),
+        "a whole number of coarse cells apart: {}",
+        x2 - x1
+    );
 }
 
 #[test]
@@ -362,7 +467,7 @@ fn a_nested_row_places_its_own_children_though_the_scope_still_reaches_them() {
     );
 
     // The row itself is the anchor — one child of the scope, on its track row.
-    let ((ux, uy, ..), (cwx, cwy, ..)) = (cell(&nodes, "u1"), cell(&nodes, "r"));
+    let ((ux, uy), (cwx, cwy)) = (at(&nodes, "u1"), at(&nodes, "r"));
     assert!(cwx > ux, "the row rides the scope's track row: {ux} {cwx}");
     assert!(close(uy, cwy), "beside the anchor, not seated below it");
     let (wx, wy) = at(&nodes, "r");

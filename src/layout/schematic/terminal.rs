@@ -21,7 +21,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::pose::{Pose, Side};
-use crate::desugar::schematic::{is_net_run, part_pin_ids, terminal_facing};
+use crate::desugar::schematic::{is_net_run, part_pin_ids, terminal_facing, terminal_ids};
 use crate::resolve::{AttrMap, ResolvedValue};
 
 /// A wirable terminal, in its **part's** coordinates (the part's origin is
@@ -69,36 +69,54 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
         }
         return Terminal { at, facing };
     }
-    // No node to read — a `|label|`'s connection point is its symbol's, and
-    // the symbol is drawn by its one `|path|` child. The wire meets the
-    // **ink**: the paint bbox is deflated by the glyph's painted half-stroke,
-    // or the landing floats a half-stroke off the drawing.
-    let body = drawing(part).map_or(part.bbox, |c| {
-        c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy)
-    });
+    // No node to read — a `|label|`'s connection point is its symbol's ([`body`]).
+    let body = body(part).unwrap_or(part.bbox);
     Terminal {
         at: facing.map_or(body.center(), |s| edge_midpoint(body, s)),
         facing,
     }
 }
 
-/// The drawing a `|label|`'s wire lands on — its one symbol child. One home,
-/// because two passes measure off it: the landing point above, and the lane a
-/// chain hangs its satellites in ([`connection_box`]).
-fn drawing(part: &PlacedNode) -> Option<&PlacedNode> {
+/// The point the lattice holds a satellite by [SPEC 16.1] — the **centre of
+/// its connection geometry**, never of its drawn box: the terminals a part
+/// carries, the one connection point a label is, and the whole run of trace a
+/// net run draws, whose box *is* the conductor [SPEC 16.4] — so a name still
+/// stands centred on its slot rather than hung off one end of it.
+///
+/// For a symmetric two-terminal symbol the two readings are the same point, so
+/// nothing moves; for a flag drawing its name beside its symbol they are half
+/// a name apart, and it is the symbol's port that belongs on the wire's line.
+pub(super) fn seat_point(part: &PlacedNode) -> (f64, f64) {
+    if super::net::is_run(part) {
+        return part.bbox.center();
+    }
+    let ports: Vec<(f64, f64)> = terminal_ids(part)
+        .iter()
+        .map(|id| terminal(part, id.as_deref()).at)
+        .collect();
+    // A `|label|` carries no terminal ids at all: it *is* its own terminal.
+    if ports.is_empty() {
+        return terminal(part, None).at;
+    }
+    let n = ports.len() as f64;
+    let (x, y) = ports.iter().fold((0.0, 0.0), |a, p| (a.0 + p.0, a.1 + p.1));
+    (x / n, y / n)
+}
+
+/// A part's **body** [SPEC 16.1] — the drawing its terminals belong to, in the
+/// part's own frame: the symbol it wears, or the outline a shaped tag draws.
+/// `None` for a part that draws none, which is the honest answer for a net run
+/// — a stretch of trace with a name over it, and no body at all [SPEC 16.4].
+///
+/// Never the label's text beside its symbol, and never a part's ref / value
+/// readouts: neither is a conductor, so neither may reserve a thing. The wire
+/// meets the **ink** — the paint bbox deflated by the drawing's own painted
+/// half-stroke, or the landing floats a half-stroke off the symbol.
+pub(super) fn body(part: &PlacedNode) -> Option<Bbox> {
     ["sch-tag-line", "sch-line"]
         .iter()
         .find_map(|k| child_wearing(part, k))
-}
-
-/// A part's **connection-bearing** extent in its own frame — what a wire
-/// actually arrives at. For a `|label|` that is its symbol alone: the text
-/// beside it is annotation, *placed by* the symbol rather than placing it, so
-/// it never sets how far out the part must stand ([SPEC 16.1/16.4]). For
-/// everything else it is the part's own box, readouts excluded for the same
-/// reason.
-pub(super) fn connection_box(part: &PlacedNode) -> Bbox {
-    drawing(part).map_or(part.bbox, |c| c.bbox.shifted(c.cx, c.cy))
+        .map(|c| c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy))
 }
 
 /// A component pin's connection point: the far end of its stub, on the side

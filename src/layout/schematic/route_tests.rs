@@ -10,6 +10,7 @@ use super::tests::{anchor, close, laid, placed, program, sided};
 use crate::error::Code;
 use crate::layout::PlacedNode;
 use crate::layout::ir::LaidOut;
+use crate::ledger::consts::PIN_PITCH;
 use crate::routing::ortho::scene::SceneIndex;
 
 /// A root schematic sheet — the scene *is* the scope, so its wires route in
@@ -533,13 +534,18 @@ fn a_nested_sheet_routes_its_own_interior_with_no_margin_at_all() {
 }
 
 #[test]
-fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
-    // The carry-over's other half, closed. A sheet's box now holds its parts'
-    // **ink** ([`super::seat::drawn`]), so a part's stub tips can no longer
-    // poke out of the scope and eat the neighbouring gap from the outside: the
-    // old non-monotone "band" collapses into ROUTING.md's own rule — a wire
-    // needs a corridor, so the free space in front of a fixed port has to
-    // exceed `2 × clearance`, and nothing else moves the answer.
+fn a_wire_into_a_sheet_needs_a_corridor_and_that_corridor_is_the_whole_rule() {
+    // The carry-over's other half, closed. A sheet's box holds its parts'
+    // **ink** ([`super::field::drawn`]), so a part's stub tips cannot poke out
+    // of the scope and eat the neighbouring gap from the outside: the old
+    // non-monotone "band" collapses into ROUTING.md's own rule — a wire needs
+    // a corridor, so the free space in front of a fixed port has to exceed
+    // `2 × clearance`, and nothing else moves the answer.
+    //
+    // The corridor is **measured, not authored**: a scope's frame lands on the
+    // fine lattice [SPEC 16.1], so the flow gap it is handed rounds by up to
+    // half a pitch either way. That is the one thing between the author's
+    // `gap:` and the router's rule, and the rule itself is untouched.
     let sheet = |gap: f64, clearance: f64, pad: &str| {
         format!(
             "{{ direction: row; gap: {gap}; clearance: {clearance} }}\n\
@@ -547,25 +553,33 @@ fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
             anchor("u1", "")
         )
     };
-    let strays = |src: &str| {
-        crate::layout::layout(&program(src))
-            .expect("layout")
-            .strays
-            .len()
+    // The free space in front of the port, and whether the wire drew.
+    let corridor = |src: &str| {
+        let laid = crate::layout::layout(&program(src)).expect("layout");
+        let (a, ax, _) = placed(&laid.nodes, "a");
+        let (s, sx, _) = placed(&laid.nodes, "s");
+        (
+            sx + s.bbox.min_x - (ax + a.bbox.max_x),
+            laid.strays.is_empty(),
+        )
     };
-    // Monotone in `gap`, and the threshold is exactly the corridor's:
-    for (c, tight, wide) in [(16.0, 32.0, 33.0), (8.0, 16.0, 17.0)] {
-        assert_eq!(strays(&sheet(tight, c, "")), 1, "no corridor at 2×{c}");
-        assert_eq!(strays(&sheet(wide, c, "")), 0, "one past it draws");
-        assert_eq!(strays(&sheet(tight / 4.0, c, "")), 1, "and below it too");
+    for c in [16.0, 8.0] {
+        for gap in [12.0, 20.0, 28.0, 33.0, 36.0, 44.0, 60.0] {
+            let (free, drew) = corridor(&sheet(gap, c, ""));
+            assert_eq!(
+                drew,
+                free > 2.0 * c,
+                "clearance {c}, gap {gap}: {free} of corridor and drew {drew}"
+            );
+        }
     }
     // Interior padding buys nothing — it grows the sheet, and the flow moves
     // the neighbour out with it — but the scope's own gap is the honest lever.
     for pad in [" { padding: 30 }", " { padding: 120 }"] {
-        assert_eq!(
-            strays(&sheet(20.0, 16.0, pad)),
-            1,
-            "padding is not the corridor: {pad}"
+        let (free, drew) = corridor(&sheet(20.0, 16.0, pad));
+        assert!(
+            !drew && free < 32.0,
+            "padding is not the corridor: {pad} left {free}"
         );
     }
 }
@@ -686,4 +700,66 @@ fn two_pins_on_one_side_of_one_part_tie_with_a_u_route() {
         "the lead arrives along de's pin"
     );
     assert!(laid.strays.is_empty(), "a same-side pin pair routes whole");
+}
+
+/// A chain hanging off a **net run** carries on along the run's own line
+/// [SPEC 16.4/16.5]. The pin's wire crosses the run and lands on its far end;
+/// the pull-up leaves that very point, and the two are one conductor — the
+/// wire being named and its continuation — so they weld on the line rather
+/// than laddering apart, which no port pinned to it could survive.
+#[test]
+fn a_chain_hanging_off_a_net_run_carries_on_along_its_line() {
+    let src = "{ layout: schematic;\n  |v3::label| { symbol: power } [ \"3V3\" ]\n}\n\
+               |J#j4| { pins: 3 }\n|R#r16| \"10k\"\n|label#tach| \"FAN_TACH\"\n\
+               j4.p1 - |v3|\nj4.p2 - tach\ntach - r16 - |v3|\n";
+    let laid = routed(src);
+    // The chain grows up into the flag, so the wire enters the run's bottom
+    // edge and lands on its top one — the end away from the pin.
+    let (run, rx, ry) = placed(&laid.nodes, "tach");
+    let landing = (rx, ry + run.bbox.min_y);
+    let lead = wire(&laid, "j4.p2", "tach");
+    assert!(
+        near(lead[lead.len() - 1], landing),
+        "the lead lands on the run's far end {landing:?}, drew {:?}",
+        lead[lead.len() - 1]
+    );
+    let on = wire(&laid, "tach", "r16.p1");
+    assert!(
+        near(on[0], landing) && on.len() == 2,
+        "the pull-up leaves that same point straight on: {on:?}"
+    );
+    assert!(
+        close(on[1].0, landing.0),
+        "…on the run's own line: {on:?} vs {landing:?}"
+    );
+}
+
+/// A same-side **bridge**'s return [SPEC 16.1/16.5]: the far wire crosses back
+/// over the member to a pin one **fine** pitch off its row, so what it needs
+/// is that row, and a readout line stands further off a body than a pitch.
+/// With the pair straddling the row it drew over the pin's own line and the
+/// return orbited the member's body to get round it; stepped whole to the free
+/// side ([SPEC 16.2]), the return is the short step up a sheet draws into the
+/// line it feeds.
+#[test]
+fn a_same_side_bridges_return_steps_onto_the_row_it_feeds() {
+    let laid = routed(&sheet(
+        "|component#u2| [\n  |pin#vin| { side: left }\n  |pin#en| { side: left }\n  \
+         |pin#out| { side: right }\n]\n|R#r5| \"100k\"\nu2.en - r5 - u2.vin\n",
+    ));
+    let (vin, en) = (
+        stub_tip(&laid.nodes, "u2", "vin"),
+        stub_tip(&laid.nodes, "u2", "en"),
+    );
+    let path = wire(&laid, "r5.p2", "u2.vin");
+    let (lo, hi) = (vin.1.min(en.1), vin.1.max(en.1));
+    assert!(
+        path.iter().all(|&(x, _)| x >= path[0].0 - PIN_PITCH),
+        "the return steps out a pitch at most, never around the member: {path:?}"
+    );
+    assert!(
+        path.iter().all(|&(_, y)| y >= lo - 1e-6 && y <= hi + 1e-6),
+        "…and never leaves the band between the two rows: {path:?}"
+    );
+    assert!(laid.strays.is_empty(), "{:?}", laid.link_report);
 }

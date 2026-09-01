@@ -63,6 +63,19 @@ fn id(name: &str, v: &str) -> Decl {
 fn pair(name: &str, a: f64, b: f64) -> Decl {
     decl(name, vec![Value::Number(a), Value::Number(b)])
 }
+/// A four-value box decl — `top right bottom left`, as `padding` reads
+/// [SPEC 5].
+fn quad(name: &str, t: f64, r: f64, b: f64, l: f64) -> Decl {
+    decl(
+        name,
+        vec![
+            Value::Number(t),
+            Value::Number(r),
+            Value::Number(b),
+            Value::Number(l),
+        ],
+    )
+}
 
 fn bare_node(ty: &str, classes: Vec<String>, style: Vec<Decl>, children: Vec<Child>) -> Node {
     let mut n = super::synth::node(ty, Span::empty());
@@ -129,10 +142,12 @@ pub(super) fn value_readout(
 /// readouts of one part can never drift apart.
 ///
 /// A **turned** part stands on its wire, which runs straight down the column
-/// above and below it: the pair moves **beside** the symbol instead, stacked
-/// about its middle [`consts::READOUT_OFFSET`] off the axis — far enough that
-/// the wire's own corridor stays clear. `translate:` on the styled label
-/// overrides either, as ever.
+/// above and below it: the pair moves **beside** the symbol instead
+/// ([`readout_beside`]), stacked about its middle [`consts::READOUT_OFFSET`]
+/// off the axis. Which side of the axis is the **field**'s to say — a seated
+/// part wears the pair away from its anchor
+/// ([`crate::layout::schematic`]) — so the seat minted here is the sheet's
+/// own reading side, and the placement pass turns it.
 ///
 /// **The offsets carry the text's own height.** `pin:` aligns *edges*, so a
 /// readout pinned to the part's top edge and nudged by `d` stands `d − line`
@@ -159,7 +174,7 @@ fn readout_at(kind: SchKind, pose: Pose, band: f64, value: bool) -> (&'static st
                     out + line + consts::READOUT_STACK
                 }),
         ),
-        _ if pose.is_turned() => (
+        _ if readout_beside(kind, pose) => (
             "center",
             consts::READOUT_OFFSET,
             (line + consts::READOUT_STACK) / 2.0 * if value { 1.0 } else { -1.0 },
@@ -167,6 +182,21 @@ fn readout_at(kind: SchKind, pose: Pose, band: f64, value: bool) -> (&'static st
         _ if value => ("bottom", 0.0, out),
         _ => ("top", 0.0, -out),
     }
+}
+
+/// Whether a part wears its ref / value pair **beside** its drawing rather than
+/// over and under it [SPEC 16.2] — a part standing **across** its own row
+/// stands on its wire, so the pair steps off the column running through it. It
+/// is the quarter turns that stand a part up, never the half turn: a `rotate:
+/// 180` discrete lies along its row exactly as an unturned one does, and rides
+/// a row's reading. A `|component|` is a box whichever way its pins landed and
+/// always stacks its pair above.
+///
+/// One reading, shared with the placement pass that picks the pair's *side*
+/// ([`crate::layout::schematic`]): a part seated beside its axis by one and
+/// over its body by the other would wear its two readouts in two places.
+pub(crate) fn readout_beside(kind: SchKind, pose: Pose) -> bool {
+    kind != SchKind::Component && pose.swaps_axes()
 }
 
 /// The chrome a component's **top rail** hangs above its box [SPEC 16.2]: one

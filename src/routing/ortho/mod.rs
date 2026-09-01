@@ -40,6 +40,9 @@ use world::{build_worlds, world_ladder};
 pub(crate) struct World {
     pub key: scene::WorldKey,
     pub graph: ChannelGraph,
+    /// The grid step this world's scope states, if any (ROUTING.md
+    /// §Vocabulary) — placement rounds an interior run's preference to it.
+    pub quantum: Option<f64>,
 }
 
 /// One end of a chain: the side it lands on, the endpoint's body, the lawful

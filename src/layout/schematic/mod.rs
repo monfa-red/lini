@@ -20,18 +20,26 @@ use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst};
 use crate::span::Span;
 
+mod field;
 mod hints;
 mod junction;
+mod lattice;
 mod net;
+mod pack;
 mod place;
 mod ports;
-mod seat;
+mod readout;
 mod tag;
 mod terminal;
 
 pub(super) use hints::seat_hints;
 /// The generated connection dots [SPEC 16.5], read off the routed geometry.
 pub(crate) use junction::junctions;
+/// The track quantum a schematic world hands the router [SPEC 16.1].
+pub(crate) use lattice::quantum;
+/// The pass that puts every scope's origin on that quantum, before a wire is
+/// asked for [SPEC 16.1].
+pub(super) use lattice::snap_scopes;
 /// The **net-label convention** [SPEC 16.4] — which side of its wire a net
 /// name takes and how far off it sits. Shared with the router's label pass,
 /// which places the two-ended spelling (`u7.vs - c24.p1 "VM"`) while
@@ -117,26 +125,19 @@ fn arrange(
     // every one [SPEC 16.7].
     let links: Vec<&crate::resolve::ResolvedLink> =
         crate::layout::scope_links(program, path, owner);
+    // Placement centres the sheet on the scope's origin itself, a whole number
+    // of fine pitches at a time [SPEC 16.1] — so the box the caller sizes (and
+    // the rect it draws) is the sheet's own, and every part is still on the
+    // lattice. A `width` floor grows around it [SPEC 5].
     let body = place::arrange(&mut children, attrs, span, &links, path)?;
-    // Centre the placed sheet on the scope's origin — the tracks already sit
-    // there, but a spanning chain or a flowed-out satellite can hang the body
-    // off to one side. The box the caller sizes (and the rect it draws) is then
-    // the sheet's own, and a `width` floor grows around it [SPEC 5].
-    let (sx, sy) = body.center();
-    if (sx, sy) != (0.0, 0.0) {
-        for c in children.iter_mut() {
-            c.cx -= sx;
-            c.cy -= sy;
-        }
-    }
-    Ok((children, body.shifted(-sx, -sy)))
+    Ok((children, body))
 }
 
+#[cfg(test)]
+mod field_tests;
 #[cfg(test)]
 mod place_tests;
 #[cfg(test)]
 mod route_tests;
-#[cfg(test)]
-mod seat_tests;
 #[cfg(test)]
 mod tests;

@@ -317,7 +317,7 @@ fn variants(ty: &str) -> &'static [Variant] {
             v!("cell" "sch-bt-cell" &["plus", "minus"], "battery" "sch-bt-battery" &["plus", "minus"])
         }
         "V" => v!("dc" "sch-v-dc" &["plus", "minus"], "ac" "sch-v-ac" &["plus", "minus"]),
-        "I" => v!("dc" "sch-i" &["plus", "minus"], "ac" "sch-i" &["plus", "minus"]),
+        "I" => v!("dc" "sch-i" &["plus", "minus"], "ac" "sch-i-ac" &["plus", "minus"]),
         _ => &[],
     }
 }

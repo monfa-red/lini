@@ -5,7 +5,7 @@
 // **value**; its id is drawn verbatim as the reference designator, and an
 // anonymous part mints a display-only one from its type — R1, C1, D1…
 {
-  layout: schematic; gap: 40 34;
+  layout: schematic; gap: 40;
   // A row header is an ordinary box on the track grid — a `|caption|` would
   // pin itself out of the flow and take no cell [SPEC 5].
   |head::block| { font-size: 13; color: --muted; padding: 0 8; }
@@ -40,10 +40,11 @@
 |V#V1| "5V" { cell: 2 4; }
 |V#V2| "230V" { cell: 3 4; symbol: ac; }
 |I#I1| "20m" { cell: 4 4; }
-|BT#BT1| "3V" { cell: 5 4; }
-|BT#BT2| "12V" { cell: 6 4; symbol: battery; }
-|SW#SW1| "ON" { cell: 7 4; }
-|SW#SW2| "RST" { cell: 8 4; symbol: push; }
+|I#I2| "20m" { cell: 5 4; symbol: ac; }
+|BT#BT1| "3V" { cell: 6 4; }
+|BT#BT2| "12V" { cell: 7 4; symbol: battery; }
+|SW#SW1| "ON" { cell: 8 4; }
+|SW#SW2| "RST" { cell: 9 4; symbol: push; }
 
 // A `|label|` is its own terminal — the net tag. `symbol:` swaps in a drawing
 // from the schematic set; `shape:` picks the outline the text rides in.

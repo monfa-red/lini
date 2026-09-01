@@ -208,13 +208,6 @@ impl Stack {
         self.painted.push(Painted::of_box(bbox));
     }
 
-    /// What has been painted so far — read by a caller that must choose
-    /// between two symmetric seats and wants to know which side is freer
-    /// ([SPEC 16.4]'s net text). Measuring it is the caller's own business.
-    pub fn painted(&self) -> &[Painted] {
-        &self.painted
-    }
-
     /// The distance along unit `dir` that carries `b` clear of **everything
     /// painted**, standing `margin` off it — an annotation that leaves along
     /// a ray instead of seating on a line ([`clear_past`], applied to the
@@ -326,7 +319,14 @@ mod tests {
         let d = std::f64::consts::FRAC_1_SQRT_2;
         let mut stack = Stack::default();
         stack.seat(
-            SeatLine::new(Frame::outward((d, d)), true, 0.0),
+            SeatLine::new(
+                Frame {
+                    u: (d, -d),
+                    n: (d, d),
+                },
+                true,
+                0.0,
+            ),
             (-100.0, 100.0),
             0.0,
             &Band { neg: 2.0, pos: 2.0 },

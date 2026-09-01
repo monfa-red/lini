@@ -217,7 +217,7 @@ const SPEC_LEDGER: &[Row] = &[
     ),
     (
         24,
-        "schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 8 (a flag's nose reservation; the nose draws at 45°)",
+        "schematic gap 100 (the coarse lattice — the part pitch, five fine ones; SPEC 16.1)",
         Kind::NotLini("the schematic chrome constants [SPEC 10.5]"),
     ),
     (

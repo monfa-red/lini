@@ -61,7 +61,7 @@ fn report(
     }
     let links: Vec<&crate::resolve::ResolvedLink> =
         crate::layout::scope_links(program, scope, owner);
-    for chain in chains(&satellite, &super::seat::edges(children, &links, scope)) {
+    for chain in chains(&satellite, &super::field::edges(children, &links, scope)) {
         // Held is exactly what the seat pass calls held — the same placed-end
         // filter, so a chain cannot flow, or lose an end, silently.
         let held = placed_ends(&chain, &roles);

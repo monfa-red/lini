@@ -9,13 +9,13 @@
 //! | Written | Text stepped off by | Against the tangent of |
 //! |---|---|---|
 //! | `u7.vs - c24.p1 "VM"` — the wire's own label | the router's label pass ([`crate::routing::ortho::labels`]) | the drawn route at the `along:` anchor |
-//! | `u7.en - "EN"` — the minted net run | the seat pass ([`super::seat`]) | the run's own axis |
+//! | `u7.en - "EN"` — the minted net run | the field pass ([`super::field`]) | the run's own axis |
 //!
 //! Two answers, shared by both: **which side** of the wire the text takes
 //! ([`text_normal`]) and **how far off** it sits ([`offset`]). Each caller
-//! brings its own painted set for the freer-side reading — the scene's
-//! obstacles for a routed label, the anchor's own stack for a seated run —
-//! and both measure it with [`clear_run`].
+//! brings its own reading of "which way is freer" — a routed label measures the
+//! scene's obstacles with [`clear_run`]; a seated run reads its field instead,
+//! and steps outward, away from the anchor it hangs off [SPEC 16.4].
 
 use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::pose::{Pose, Side};
@@ -129,40 +129,18 @@ pub(super) fn run_tangent(node: &PlacedNode) -> (f64, f64) {
 }
 
 /// Where a seated run's name steps to [SPEC 16.4]: the displacement of every
-/// child it carries (its text), decided against `painted` — the anchor's own
-/// stack, in the anchor's frame — at `mid`, the middle of the run.
-pub(super) fn seat_text(run: &PlacedNode, mid: (f64, f64), painted: &[Painted]) -> (f64, f64) {
+/// child it carries (its text). A horizontal run carries it above; a vertical
+/// one **outward** — `outward` is the side away from the anchor whose field the
+/// run stands in, and `None` where no field holds it, which leaves the routing
+/// side rank to decide.
+pub(super) fn seat_text(run: &PlacedNode, outward: Option<Side>) -> (f64, f64) {
     let Some(text) = content_box(run) else {
         return (0.0, 0.0);
     };
     let normal = text_normal(run_tangent(run), forced_side(&run.attrs), |side| {
-        clear_run(mid, side.normal(), painted)
+        f64::from(Some(side) == outward)
     });
     offset(normal, text)
-}
-
-/// What a seated net run actually reserves [SPEC 16.4]: its **trace** — a
-/// line, because a wire has no thickness of its own — and its name where the
-/// step put it. A run's box is a stretch of wire, not a body, so reserving its
-/// cross-section would hold the next net name a whole text-height further off
-/// for nothing, and on a sheet at pin pitch that is the difference between
-/// names sitting in the gaps and every second wire doglegging around one.
-pub(super) fn run_extent(run: &PlacedNode, off: (f64, f64)) -> Bbox {
-    let (cx, cy) = run.bbox.center();
-    let trace = if run_tangent(run).0 != 0.0 {
-        Bbox {
-            min_y: cy,
-            max_y: cy,
-            ..run.bbox
-        }
-    } else {
-        Bbox {
-            min_x: cx,
-            max_x: cx,
-            ..run.bbox
-        }
-    };
-    content_box(run).map_or(trace, |c| trace.union(c.shifted(off.0, off.1)))
 }
 
 /// A run's content box in its own frame — the union of what it carries, which

@@ -173,6 +173,12 @@ The rest of this document is the `orthogonal` contract.
 - **Run** — one straight piece of a route, lying in one channel of its axis.
   A run's **track** is its ordinate across the channel. A route is an
   alternating chain of runs.
+- **Track quantum** — a world's own grid step, where its scope states one (a
+  schematic's fine pitch, [SPEC 16.1](SPEC.md#161-placement--the-lattice)). It
+  is an **absolute** step, measured in scene coordinates, which is why such a
+  scope lands its own origin on it — the parts' grid and the wires' are one
+  grid. It rounds an interior run's *preference*, never its lawful range: no
+  law reads it, and a world without one is unchanged.
 - **Port** — the point where a link meets a side: the ordinate of its end
   run. Ports are not chosen ahead of routing; they fall out of placement.
 - **Bundle** — the links sharing one unordered endpoint pair and the same
@@ -278,7 +284,11 @@ Six steps. Each decides once; none revisits an earlier step's answer.
    - an **interior run** prefers its channel's **anchor** — the midline when
      both walls are keep-out edges (a bend between two nodes lands halfway
      between them), the keep-out wall when the other wall is the canvas edge
-     (wires hug the diagram, not the margin);
+     (wires hug the diagram, not the margin). Where the run's world states a
+     **track quantum**, that preference rounds to the nearest multiple of it
+     **the corridor holds** — a wall is no grid line, so a corridor carrying
+     none keeps its anchor — and a bare run between two gridded parts bends
+     on their grid rather than a hair off it;
    - an **end run** prefers the straightest lawful line: its ports' shared
      window when one run serves both ends (the two side centres' midpoint,
      clamped into the window), its own side's centre otherwise. A **port
@@ -457,10 +467,10 @@ src/routing/
   mod.rs        strategy dispatch, shared Routing result (links, report, strays)
   report.rs     violations, crossings, stray construction
   straight.rs   the straight strategy (sequence messages)
-  ortho/        the six-step model — scene index (scene, rect), channel graph
-                (graph), requests/bundles (request), admission (admit, cost,
-                entry, ledger), search, placement (place, ladder, order,
-                pairwise), geometry, labels
+  ortho/        the six-step model — scene index (scene, rect), worlds (world),
+                channel graph (graph), requests/bundles (request), admission
+                (admit, cost, entry, ledger), search, placement (place, cluster,
+                ladder, order, pairwise), geometry, labels
   natural/      the natural strategy — sides & ports (port), the direct
                 spline fit and via dodges (curve, dodge)
   validate.rs   the independent law checker (+ validate/excuse.rs) — a test

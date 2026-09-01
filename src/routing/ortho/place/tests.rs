@@ -10,6 +10,7 @@ fn world(bounds: Rect, keepouts: &[Rect]) -> World {
     World {
         key: None,
         graph: ChannelGraph::build(bounds, keepouts, false),
+        quantum: None,
     }
 }
 

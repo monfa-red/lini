@@ -208,15 +208,34 @@ pub(super) fn branch_of(chain: &Chain, ri: usize) -> Option<usize> {
 /// **line** owe each other nothing unless their spans overlap (a U's
 /// doubled-back legs; a Z's jog collapses to zero and the legs weld) — and
 /// two branches off one fan trunk are pieces of one line just as two runs
-/// of one wire are ([`branch_of`]).
+/// of one wire are ([`branch_of`]), as are two legs meeting at a **through
+/// point** ([`through_point`]).
 pub(super) fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
     let one_line = a
         .members
         .iter()
         .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1))
-        || (a.branch.is_some() && a.branch == b.branch);
+        || (a.branch.is_some() && a.branch == b.branch)
+        || through_point(a, b);
     let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
     overlap || (near(a.span, b.span, clearance) && !one_line)
+}
+
+/// Whether two runs meet at one **through point**: a landing they share on a
+/// body whose frame has collapsed to its own landing *line*.
+///
+/// Only a plain net run collapses that way ([`crate::layout::schematic`]'s
+/// connection frame, SPEC 16.4): it is a stretch of trace with a name over it,
+/// so the wire arriving crosses it whole and a wire continuing extends that
+/// same conductor straight on, end to end — never a fan orbiting a shared
+/// side, and never two conductors leaving one point [SPEC 16.5]. Their legs
+/// therefore weld on one ordinate exactly as two runs of one wire do; charged
+/// a pitch they could not both hold the port's own line, and the continuation
+/// strays.
+fn through_point(a: &Item, b: &Item) -> bool {
+    a.landings
+        .iter()
+        .any(|(_, r)| (r.x0 == r.x1 || r.y0 == r.y1) && b.landings.iter().any(|(_, s)| s == r))
 }
 
 /// The ordinate pitch two items genuinely owe, at separation `pitch`
