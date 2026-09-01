@@ -467,10 +467,10 @@ src/routing/
   mod.rs        strategy dispatch, shared Routing result (links, report, strays)
   report.rs     violations, crossings, stray construction
   straight.rs   the straight strategy (sequence messages)
-  ortho/        the six-step model — scene index (scene, rect), channel graph
-                (graph), requests/bundles (request), admission (admit, cost,
-                entry, ledger), search, placement (place, ladder, order,
-                pairwise), geometry, labels
+  ortho/        the six-step model — scene index (scene, rect), worlds (world),
+                channel graph (graph), requests/bundles (request), admission
+                (admit, cost, entry, ledger), search, placement (place, cluster,
+                ladder, order, pairwise), geometry, labels
   natural/      the natural strategy — sides & ports (port), the direct
                 spline fit and via dodges (curve, dodge)
   validate.rs   the independent law checker (+ validate/excuse.rs) — a test

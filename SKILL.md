@@ -548,7 +548,10 @@ outer:west (-) outer.entry (-) outer:east { side: bottom }  // locate the door
 `layout: schematic` seats parts and lets the router draw square, junction-dotted
 wires onto pins. 3+-pin parts are anchors on tracks (`columns:`/`cell:` order
 them); 1–2-pin parts and labels are satellites seated at the pin their wire
-touches. No auto-create — unknown bare ids error.
+touches. The sheet is on a grid — `gap` is the part pitch (column and row,
+default 100), and it is the one lever when a long value overhangs the column
+beside it, since no part's ink ever moves another part. No auto-create —
+unknown bare ids error.
 
 ```
 { layout: schematic; |vcc::label| { symbol: power } [ "5V" ] }
