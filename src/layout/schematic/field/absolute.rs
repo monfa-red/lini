@@ -80,9 +80,10 @@ impl Field {
         };
         let step = self.lat.step(ax) * Ax::outward(back);
         let across = coordinate(at, ax.other());
-        let first = self.free(anchor, back) + span.members.len() as i32 - 1;
+        let free = (self.free(anchor, back) / self.lat.step(ax)).ceil();
+        let first = free + span.members.len() as f64 - 1.0;
         for (k, &member) in span.members.iter().enumerate() {
-            let line = origin + step * f64::from(first - k as i32);
+            let line = origin + step * (first - k as f64);
             let point = match ax {
                 Ax::X => (line, across),
                 Ax::Y => (across, line),

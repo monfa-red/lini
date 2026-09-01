@@ -65,11 +65,11 @@ pub(super) fn pack(
 /// sheet's edge rather than growing it.
 fn extent(field: &Field, node: &PlacedNode, anchor: usize, lat: Lattice) -> Bbox {
     let ink = drawn(node);
-    // A cell is centred on its line, so a field reaching `n` lines out stands
+    // A cell is centred on its line, so a field reaching that far out stands
     // half a cell further still.
-    let out = |side: Side| match field.cells(anchor, side) {
-        0 => 0.0,
-        n => (f64::from(n) + 0.5) * lat.step(Ax::of(side)),
+    let out = |side: Side| match field.extent(anchor, side) {
+        d if d <= 0.0 => 0.0,
+        d => d + lat.step(Ax::of(side)) / 2.0,
     };
     ink.union(Bbox::from_points(&[
         (-out(Side::Left), -out(Side::Top)),
@@ -105,7 +105,11 @@ fn axis(
         Ax::Y => (Side::Top, Side::Bottom),
     };
     let ink = |k: usize, side| edge(&children[anchored[k]], side);
-    let holds = |k: usize, side| field.free(anchored[k], side) - 1;
+    // The field answers a distance; a track counts in whole coarse cells, and
+    // takes the lattice's slack before the ceiling as every other count does.
+    let holds = |k: usize, side| {
+        (field.free(anchored[k], side) / lat.step(Ax::of(side)) - EPS).ceil() - 1.0
+    };
     // What one anchor owes another ahead of it, in cells: the cells it holds
     // that way, whatever spans between them, the cells held back at it, and
     // the one column two neighbours with nothing between them stand apart by
@@ -115,7 +119,7 @@ fn axis(
     // part of the distance rather than a shift applied over the top of it.
     let apart = |k: usize, j: usize| -> f64 {
         let cells =
-            f64::from(holds(k, ahead) + spanning(field, anchored, k, j) + holds(j, back) + 1);
+            holds(k, ahead) + f64::from(spanning(field, anchored, k, j)) + holds(j, back) + 1.0;
         // Less the lattice's slack before the ceiling, as every other count of
         // cells takes it: two bodies that exactly fill their columns owe the
         // next one, not the one after it that rounding noise would ask for.

@@ -92,7 +92,7 @@ fn read_columns(attrs: &AttrMap, span: Span) -> Result<Option<usize>, Error> {
 /// Assign every anchor its ordinal slot: an explicit `cell: c r` places, and
 /// the rest flow in declaration order through the slots the explicit ones left
 /// free, wrapping at `columns` (one unbounded row without it) [SPEC 16.1].
-fn slots(
+pub(super) fn slots(
     children: &[PlacedNode],
     riders: &[usize],
     columns: Option<usize>,
@@ -174,16 +174,17 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 /// the content bbox. **The pass order**, which is what lets a field be struck
 /// before anything is placed:
 ///
-/// 1. classify (the role table), then run the **field** pass — every satellite
-///    takes a ray, a lane and a slot in its anchor's own frame, so no anchor
-///    need be placed yet;
+/// 1. classify (the role table) and strike the **ordinal slots**, then run the
+///    **field** pass — every satellite takes a ray, a lane and a slot in its
+///    anchor's own frame, so no anchor need be placed yet, and a slot origin
+///    can be shared by the track line the anchor rides;
 /// 2. **pack** the tracks in whole coarse cells and land every anchor on the
 ///    lattice ([`pack`]);
 /// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;
-/// 4. strike the **rails** ([`rail`]) — the one row every ground sinks to and
-///    the one every flag rises to, which exist only in the scope's own frame —
-///    and turn the **readouts** outward ([`readout`]);
+/// 4. strike the **rail** ([`rail`]) — the one row every ground sinks to, which
+///    exists only in the scope's own frame — and turn the **readouts** outward
+///    ([`readout`]);
 /// 5. flow the satellites no wire held (the caller warns), then centre the
 ///    sheet on the scope's origin a whole number of fine pitches at a time, so
 ///    the lattice the passes agreed on stays absolute;
@@ -204,9 +205,16 @@ pub(super) fn arrange(
     let anchored: Vec<usize> = (0..children.len())
         .filter(|&i| roles[i] == Role::Anchor)
         .collect();
-    let field = Field::build(children, &roles, links, scope, lat);
-
+    // The slots are struck **before** the field, so a chain's slot origin can
+    // be the track line's rather than its own anchor's [SPEC 16.1]. Nothing
+    // here reads a field: an ordinal is the author's `cell:` or the flow's.
     let slots = slots(children, &anchored, read_columns(attrs, span)?)?;
+    let mut tracks: Vec<Option<Slot>> = vec![None; children.len()];
+    for (&i, &s) in anchored.iter().zip(&slots) {
+        tracks[i] = Some(s);
+    }
+    let field = Field::build(children, &roles, links, scope, &tracks, lat);
+
     let packed = pack(children, &anchored, &slots, links, scope, &field, lat);
     for (&i, &(x, y)) in anchored.iter().zip(&packed.origins) {
         (children[i].cx, children[i].cy) = (x, y);

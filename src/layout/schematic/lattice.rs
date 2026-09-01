@@ -114,6 +114,18 @@ impl Lattice {
         }
     }
 
+    /// The first **fine** line strictly beyond `v`, going the way `outward`
+    /// points — the coarse [`Lattice::beyond`]'s twin, for the separations a
+    /// coarse line rounds away [SPEC 16.1].
+    pub(super) fn fine_beyond(self, v: f64, outward: f64) -> i32 {
+        let lines = v / self.pitch;
+        if outward > 0.0 {
+            lines.floor() as i32 + 1
+        } else {
+            lines.ceil() as i32 - 1
+        }
+    }
+
     /// `v` rounded to the nearest fine line.
     pub(super) fn snap(self, v: f64) -> f64 {
         (v / self.pitch).round() * self.pitch
