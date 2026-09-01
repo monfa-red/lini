@@ -269,11 +269,12 @@
     // screw takes the outer lane, the tach the one inside it, and the switched
     // return the bottom screw, whose run to the drain crosses nothing.
     J4.p1 - |v24|
-    // The tach net is named and pulled up off the same screw. A plain net run
-    // *is* the trace it names, so its lead never counts and the point stays
-    // dotless [SPEC 16.5] — one wire out of the pin, with a name over it.
+    // The tach net is named first, and the pull-up taps the name: two wires to
+    // one label merge at its connection point [SPEC 16.5], so the resistor
+    // stands off the tach trace instead of queueing in a second lane beside the
+    // connector.
     J4.p2 - tach
-    J4.p2 - R16 - |v3|
+    tach - R16 - |v3|
   ]
 
   |title-block| {

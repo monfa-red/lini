@@ -687,3 +687,35 @@ fn two_pins_on_one_side_of_one_part_tie_with_a_u_route() {
     );
     assert!(laid.strays.is_empty(), "a same-side pin pair routes whole");
 }
+
+/// A chain hanging off a **net run** carries on along the run's own line
+/// [SPEC 16.4/16.5]. The pin's wire crosses the run and lands on its far end;
+/// the pull-up leaves that very point, and the two are one conductor — the
+/// wire being named and its continuation — so they weld on the line rather
+/// than laddering apart, which no port pinned to it could survive.
+#[test]
+fn a_chain_hanging_off_a_net_run_carries_on_along_its_line() {
+    let src = "{ layout: schematic;\n  |v3::label| { symbol: power } [ \"3V3\" ]\n}\n\
+               |J#j4| { pins: 3 }\n|R#r16| \"10k\"\n|label#tach| \"FAN_TACH\"\n\
+               j4.p1 - |v3|\nj4.p2 - tach\ntach - r16 - |v3|\n";
+    let laid = routed(src);
+    // The chain grows up into the flag, so the wire enters the run's bottom
+    // edge and lands on its top one — the end away from the pin.
+    let (run, rx, ry) = placed(&laid.nodes, "tach");
+    let landing = (rx, ry + run.bbox.min_y);
+    let lead = wire(&laid, "j4.p2", "tach");
+    assert!(
+        near(lead[lead.len() - 1], landing),
+        "the lead lands on the run's far end {landing:?}, drew {:?}",
+        lead[lead.len() - 1]
+    );
+    let on = wire(&laid, "tach", "r16.p1");
+    assert!(
+        near(on[0], landing) && on.len() == 2,
+        "the pull-up leaves that same point straight on: {on:?}"
+    );
+    assert!(
+        close(on[1].0, landing.0),
+        "…on the run's own line: {on:?} vs {landing:?}"
+    );
+}
