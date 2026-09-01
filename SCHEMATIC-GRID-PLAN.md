@@ -1283,82 +1283,38 @@ keeps its circuit. SCH_GAP settles where the eye put it."
 
 ---
 
-### Task 12: `clearance` is the sheet's one unit
+### Task 12: the pin pitch and the clearance stop being an unenforced promise
 
-Lands **after** T11's visual gate, because it changes routing density and the
-gate is where that gets looked at. `Lattice::of` is the only place the numbers
-are read, so this is one function body, two error arms and a SPEC sentence.
+`consts.rs` says `PIN_PITCH` "must stay ≥ the router's min pitch at the scope's
+clearance" — a relationship nothing checks and nobody can check by reading.
+**Decided against merging them** (the first design made `clearance` the fine
+pitch outright): Task 11's evidence is that the sheets are spacing-sensitive —
+`gap` 80 raises nine warnings, 120 and 160 each leave one, 100 is silent and not
+by much — so doubling every keep-out to make one number out of two is a bad
+trade. Make the promise an error instead.
 
-**Files:**
-- Modify: `src/layout/schematic/lattice.rs` — `Lattice::of`
-- Modify: `src/ledger/consts.rs` — `PIN_PITCH` retires into `SCH_CLEARANCE`
-- Modify: `src/ledger/defaults.rs` — `SCH_CLEARANCE` 10 → 20
-- Modify: `src/error/` — two new arms under `Code::SCHEMATIC_TRACKS`
-- Modify: `SPEC.md` §16.1 (the two-pitches paragraph), §10.5, §21 (the errors)
-- Modify: `ROUTING.md` — the track quantum entry names clearance
+**Files:** `src/layout/schematic/lattice.rs` (`Lattice::of` is the one reader),
+`src/error/` (one arm), `SPEC.md` §16.1 and §21, `src/ledger/consts.rs`.
 
-**The rule:** a schematic scope has one unit, `clearance` — the minimum a wire
-keeps from any body, the pitch wires keep from each other, **and** the pitch a
-rail's pins stand on. `gap` is the part pitch, rounded up to a multiple of it.
-The relationship `PIN_PITCH` documents today but nothing enforces becomes a law.
-
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the failing test**
 
 ```rust
 #[test]
-fn clearance_is_the_fine_pitch() {
-    let l = lat(" { clearance: 25 }");
-    assert_eq!(l.pitch, 25.0, "the scope's unit");
-    assert_eq!(l.row, 125.0, "and gap rounds up to a multiple of it");
-}
-
-#[test]
-fn a_clearance_below_the_text_floor_errors() {
-    // Pin names are ~12px and numbers 10px: pins closer than this collide
-    // whatever routing wants, so the sheet says so [SPEC 21].
-    let e = layout_err("|schematic#s| { clearance: 8 } [ |gnd#g| ]\n");
-    assert!(e.contains("clearance") && e.contains("16"), "{e}");
-}
-
-#[test]
-fn a_gap_under_four_clearances_errors() {
-    let e = layout_err("|schematic#s| { clearance: 20; gap: 60 } [ |gnd#g| ]\n");
-    assert!(e.contains("gap") && e.contains("four"), "{e}");
+fn a_clearance_wider_than_the_pin_pitch_errors() {
+    // [SPEC 16.1/21] two wired neighbouring pins stand one pin pitch apart, so
+    // a clearance past it is a sheet whose own rails cannot be routed — said
+    // once, at the scope, rather than as a stray per wire.
+    let e = layout_err("|schematic#s| { clearance: 30 } [ |gnd#g| ]\n");
+    assert!(e.contains("clearance") && e.contains("pin pitch"), "{e}");
 }
 ```
 
-- [ ] **Step 2: Run to watch them fail** — `cargo test --lib schematic::lattice`
-
-- [ ] **Step 3: Implement**
-
-`Lattice::of` reads `clearance` (falling back to `SCH_CLEARANCE`) as `pitch`,
-errors below **16**, rounds each `gap` axis up to a multiple of it, and errors
-below `4 × pitch`. `PIN_PITCH` retires: every reader takes the scope's clearance
-instead — grep for it and convert each site, since a baked pin pitch and an
-authored one are exactly the parallel implementation AGENTS.md forbids. The
-router's quantum (T10) becomes the world's clearance, which it already carries.
-
-- [ ] **Step 4: Run the suite and look at it**
-
-`cargo test`, then re-render all four samples at `--zoom 3` and read them.
-Schematic clearance goes 10 → 20, so every keep-out doubles: check for closed
-channels, new strays and crowded leads. This is the step this task exists for.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add -A
-git commit -m "A sheet has one unit, and it is clearance
-
-Pin pitch was a baked 20 with a doc comment promising it stayed above the
-router's minimum at the scope's clearance — a relationship nothing
-enforced and nobody checked. It is the same question asked twice: what
-two neighbouring landings owe each other. So clearance is the fine
-pitch now, gap a multiple of it, and the schematic's track quantum is
-just its clearance. Below 16 the pin text collides whatever routing
-wants, and below four clearances a discrete has no lead left, so both
-error rather than clamp."
-```
+- [ ] **Step 2: Run it to watch it fail** — `cargo test --lib schematic::lattice`
+- [ ] **Step 3: Implement.** `Lattice::of` errors when the scope's `clearance`
+      exceeds `PIN_PITCH`, naming both numbers and why. Replace the doc comment's
+      promise with a pointer to the arm that now keeps it.
+- [ ] **Step 4:** `cargo test`, then SPEC §21's error table gains the row.
+- [ ] **Step 5: Commit.**
 
 ---
 
