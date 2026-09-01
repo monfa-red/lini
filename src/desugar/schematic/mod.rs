@@ -63,6 +63,19 @@ fn id(name: &str, v: &str) -> Decl {
 fn pair(name: &str, a: f64, b: f64) -> Decl {
     decl(name, vec![Value::Number(a), Value::Number(b)])
 }
+/// A four-value box decl — `top right bottom left`, as `padding` reads
+/// [SPEC 5].
+fn quad(name: &str, t: f64, r: f64, b: f64, l: f64) -> Decl {
+    decl(
+        name,
+        vec![
+            Value::Number(t),
+            Value::Number(r),
+            Value::Number(b),
+            Value::Number(l),
+        ],
+    )
+}
 
 fn bare_node(ty: &str, classes: Vec<String>, style: Vec<Decl>, children: Vec<Child>) -> Node {
     let mut n = super::synth::node(ty, Span::empty());

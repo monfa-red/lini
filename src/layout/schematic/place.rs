@@ -13,10 +13,9 @@
 use super::super::flex::Axis;
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{anchors, flex, grid};
-use super::field::{Field, edges};
+use super::field::Field;
 use super::lattice::{Ax, Lattice};
-use super::terminal::terminal;
-use crate::desugar::pose::Side;
+use super::pack::pack;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
@@ -46,9 +45,19 @@ pub(super) fn role(node: &PlacedNode) -> Role {
 
 /// A place on the ordinal grid, 1-indexed as authored.
 #[derive(Clone, Copy)]
-struct Slot {
-    col: usize,
-    row: usize,
+pub(super) struct Slot {
+    pub col: usize,
+    pub row: usize,
+}
+
+impl Slot {
+    /// Its ordinal on one lattice axis — the column on `X`, the row on `Y`.
+    pub(super) fn on(self, ax: Ax) -> usize {
+        match ax {
+            Ax::X => self.col,
+            Ax::Y => self.row,
+        }
+    }
 }
 
 /// `columns: N` — how many columns the schematic's **flow** takes before it
@@ -152,7 +161,7 @@ fn advance(col: usize, row: usize, columns: Option<usize>) -> (usize, usize) {
 /// The **ordinal collapse** [SPEC 16.1]: the sorted distinct ordinals used on
 /// one axis, so `10, 20, 30` become tracks 0, 1, 2 and every skipped ordinal
 /// vanishes instead of reserving space.
-fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
+pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
     let mut v: Vec<usize> = used.collect();
     v.sort_unstable();
     v.dedup();
@@ -166,12 +175,15 @@ fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 /// 1. classify (the role table), then run the **field** pass — every satellite
 ///    takes a ray, a lane and a slot in its anchor's own frame, so no anchor
 ///    need be placed yet;
-/// 2. size the tracks from each anchor's **cluster** (its ink plus its cells);
-/// 3. place the anchors on the collapsed ordinal grid;
-/// 4. **absolutize** the field — a seated satellite rides its anchor, a span
+/// 2. **pack** the tracks in whole coarse cells and land every anchor on the
+///    lattice ([`pack`]);
+/// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;
-/// 5. flow the satellites no wire held (the caller warns), seat the `pin:`
-///    overlays on the finished box, and take every `translate:` nudge last.
+/// 4. flow the satellites no wire held (the caller warns), then centre the
+///    sheet on the scope's origin a whole number of fine pitches at a time, so
+///    the lattice the passes agreed on stays absolute;
+/// 5. seat the `pin:` overlays on the finished box, and take every
+///    `translate:` nudge last.
 pub(super) fn arrange(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
@@ -183,7 +195,6 @@ pub(super) fn arrange(
         return Ok(Bbox::empty());
     }
     let lat = Lattice::of(attrs, span)?;
-    let (gap_y, gap_x) = (lat.row, lat.col);
     let roles: Vec<Role> = children.iter().map(role).collect();
     let anchored: Vec<usize> = (0..children.len())
         .filter(|&i| roles[i] == Role::Anchor)
@@ -191,115 +202,19 @@ pub(super) fn arrange(
     let field = Field::build(children, &roles, links, scope, lat);
 
     let slots = slots(children, &anchored, read_columns(attrs, span)?)?;
-    let cols = collapse(slots.iter().map(|s| s.col));
-    let rows = collapse(slots.iter().map(|s| s.row));
-    let index = |list: &[usize], ord: usize| list.binary_search(&ord).expect("a collapsed ordinal");
-
-    // Auto tracks only: each sizes to the widest / tallest cluster it holds —
-    // an anchor's satellites consume space without consuming cells.
-    let clusters: Vec<Bbox> = anchored
-        .iter()
-        .map(|&i| field.cluster(children, i))
-        .collect();
-    // Each anchor's origin offset from its cell **centre**: cluster centring
-    // by default, overridden per axis where a wired facing pin pair aligns
-    // it to a neighbour ([`align`]) — the straight part-to-part wire.
-    let offsets = align(children, links, scope, &anchored, &slots, &clusters);
-    // A track sizes to the union of its (aligned) clusters, and remembers
-    // where that union starts so placement can seat every anchor off one
-    // edge — with pure centring this degenerates to the widest cluster,
-    // centred, exactly the unaligned behaviour.
-    let mut widths = vec![0.0f64; cols.len()];
-    let mut heights = vec![0.0f64; rows.len()];
-    let mut col_lo = vec![f64::INFINITY; cols.len()];
-    let mut row_lo = vec![f64::INFINITY; rows.len()];
-    for ((extent, slot), &(ox, oy)) in clusters.iter().zip(&slots).zip(&offsets) {
-        let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
-        col_lo[c] = col_lo[c].min(ox + extent.min_x);
-        row_lo[r] = row_lo[r].min(oy + extent.min_y);
-    }
-    for ((extent, slot), &(ox, oy)) in clusters.iter().zip(&slots).zip(&offsets) {
-        let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
-        widths[c] = widths[c].max(ox + extent.max_x - col_lo[c]);
-        heights[r] = heights[r].max(oy + extent.max_y - row_lo[r]);
-    }
-    // A chain held at both ends rides **between** its anchors [SPEC 16.1], in
-    // no cluster and no track: so it sizes the space between the two tracks it
-    // spans. It asks for the coarse cells its members take on the landing leg,
-    // and one more, so the outermost of them still stands a cell clear of the
-    // pin the wire leaves; the shortfall is charged to the gaps in between.
-    let (mut extra_x, mut extra_y) = (vec![0.0; cols.len()], vec![0.0; rows.len()]);
-    for chain in field.spans() {
-        let landing = |end: usize| {
-            let (child, t) = &chain.ends[end];
-            let k = anchored.iter().position(|i| i == child)?;
-            let (c, r) = (index(&cols, slots[k].col), index(&rows, slots[k].row));
-            // The landing's offset from its **cell centre** — the origin's
-            // aligned offset, re-based off the track union's own extent.
-            let off = (
-                offsets[k].0 - col_lo[c] - widths[c] / 2.0,
-                offsets[k].1 - row_lo[r] - heights[r] / 2.0,
-            );
-            Some((slots[k], (off.0 + t.at.0, off.1 + t.at.1)))
-        };
-        let (Some((sa, oa)), Some((sb, ob))) = (landing(0), landing(1)) else {
-            continue;
-        };
-        let (ca, cb) = (index(&cols, sa.col), index(&cols, sb.col));
-        let (ra, rb) = (index(&rows, sa.row), index(&rows, sb.row));
-        let cells = f64::from(field.span_cells(chain) + 1);
-        // The leg runs along the landing pin's own normal, so only that axis
-        // owes the cells; a facing-less landing states no axis and both do.
-        let leg = chain.ends[1].1.facing.map(Ax::of);
-        if leg != Some(Ax::Y) {
-            charge(
-                &mut extra_x,
-                &widths,
-                gap_x,
-                (ca, oa.0),
-                (cb, ob.0),
-                cells * lat.col,
-            );
-        }
-        if leg != Some(Ax::X) {
-            charge(
-                &mut extra_y,
-                &heights,
-                gap_y,
-                (ra, oa.1),
-                (rb, ob.1),
-                cells * lat.row,
-            );
-        }
-    }
-    let col_off = grid::cumulative_gaps(&widths, |i| gap_x + extra_x[i]);
-    let row_off = grid::cumulative_gaps(&heights, |i| gap_y + extra_y[i]);
-    let total_w = (col_off[cols.len()] - gap_x).max(0.0);
-    let total_h = (row_off[rows.len()] - gap_y).max(0.0);
-
-    // The anchor lands where its **cluster** centres — shifted where a wired
-    // facing pin pair aligned it ([`align`]) — so a part with a ground
-    // hanging under it sits high in its cell rather than straddling the row,
-    // and a part wired straight across stands level with its neighbour.
-    for ((&i, slot), &(ox, oy)) in anchored.iter().zip(&slots).zip(&offsets) {
-        let (c, r) = (index(&cols, slot.col), index(&rows, slot.row));
-        children[i].cx = col_off[c] - total_w / 2.0 + ox - col_lo[c];
-        children[i].cy = row_off[r] - total_h / 2.0 + oy - row_lo[r];
+    let packed = pack(children, &anchored, &slots, links, scope, &field, lat);
+    for (&i, &(x, y)) in anchored.iter().zip(&packed.origins) {
+        (children[i].cx, children[i].cy) = (x, y);
     }
     // An anchor's `translate:` lands **before** its seats absolutize, so the
     // satellites ride along — move the component and the nudge travels with it
-    // [SPEC 16.1]. It cannot grow the scope: the tracks already sized from the
-    // un-nudged clusters, and a nudge never reshapes a box [SPEC 5].
+    // [SPEC 16.1]. It cannot grow the scope: the packing already measured the
+    // sheet off the un-nudged cells, and a nudge never reshapes a box [SPEC 5].
     for &i in &anchored {
         anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
-    let mut body = Bbox::centered(total_w, total_h);
     field.absolutize(children);
-    // Every anchor's ink is already in its cluster, and so in a track; a
-    // spanning chain rides neither, so its parts join the box here.
-    if let Some(span) = field.spanning_extent(children) {
-        body = body.union(span);
-    }
+    let mut body = packed.body;
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
     // falls back to the flow — one trailing row under the grid, declaration
@@ -311,7 +226,7 @@ pub(super) fn arrange(
         let dy = if anchored.is_empty() {
             0.0
         } else {
-            body.max_y + gap_y - strip.min_y
+            body.max_y + lat.row - strip.min_y
         };
         for (&i, placed) in adrift.iter().zip(row) {
             children[i] = placed;
@@ -319,6 +234,24 @@ pub(super) fn arrange(
         }
         body = body.union(strip.shifted(0.0, dy));
     }
+
+    // The sheet centres on the scope's origin — the tracks start at it, but a
+    // flowed-out satellite or a wide field hangs the body off to one side — and
+    // the shift is a whole number of **fine** pitches, so the lattice every
+    // pass agreed on survives the move [SPEC 16.1]. The half pitch that leaves
+    // off centre goes to the **box**, which the caller draws a rect of and an
+    // overlay seats flush on: it holds the sheet evenly either way.
+    let (sx, sy) = body.center();
+    let (sx, sy) = (lat.snap(sx), lat.snap(sy));
+    for c in children.iter_mut() {
+        c.cx -= sx;
+        c.cy -= sy;
+    }
+    body = body.shifted(-sx, -sy);
+    let body = Bbox::centered(
+        2.0 * body.min_x.abs().max(body.max_x),
+        2.0 * body.min_y.abs().max(body.max_y),
+    );
 
     // `pin:` in a schematic scope is the drawing precedent [SPEC 5/15.8]: an
     // out-of-flow overlay flush on the scope's finished content box — sheet
@@ -335,122 +268,6 @@ pub(super) fn arrange(
             anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
         }
     }
+
     Ok(body)
-}
-
-/// Each anchor's origin offset from its cell centre [SPEC 16.1]. The default
-/// is cluster centring (`−cluster.center()`). Where a wire pairs an anchor's
-/// pin with a **facing** pin of an already-seated anchor in the same row —
-/// its right pins against a later column's left pins — the later anchor's
-/// vertical offset instead puts the two landings on one row, the straight
-/// wire a sheet draws; columns mirror it with bottom-against-top pins and the
-/// horizontal offset. Deterministic throughout: anchors take alignment in
-/// track order (rows, then columns within one), each aligning through the
-/// first statement-order wire that reaches a seated neighbour; everything
-/// else keeps the centring.
-fn align(
-    children: &[PlacedNode],
-    links: &[&ResolvedLink],
-    scope: &str,
-    anchored: &[usize],
-    slots: &[Slot],
-    clusters: &[Bbox],
-) -> Vec<(f64, f64)> {
-    let mut out: Vec<(f64, f64)> = clusters
-        .iter()
-        .map(|c| {
-            let (ex, ey) = c.center();
-            (-ex, -ey)
-        })
-        .collect();
-    let hops = edges(children, links, scope);
-    let anchor_of = |child: usize| anchored.iter().position(|&i| i == child);
-    // One pass per axis: `set` marks anchors whose offset on that axis is
-    // final (the first anchor of every track seeds it), and each later anchor
-    // takes the first wire to a set neighbour whose pins face each other.
-    let pass = |vertical: bool, out: &mut Vec<(f64, f64)>| {
-        let mut order: Vec<usize> = (0..anchored.len()).collect();
-        order.sort_by_key(|&k| {
-            if vertical {
-                (slots[k].row, slots[k].col)
-            } else {
-                (slots[k].col, slots[k].row)
-            }
-        });
-        let mut set = vec![false; anchored.len()];
-        for &k in &order {
-            let hit = hops.iter().find_map(|[a, b]| {
-                let (mine, theirs) = if anchor_of(a.child) == Some(k) {
-                    (a, b)
-                } else if anchor_of(b.child) == Some(k) {
-                    (b, a)
-                } else {
-                    return None;
-                };
-                let j = anchor_of(theirs.child)?;
-                let same_track = if vertical {
-                    slots[j].row == slots[k].row && slots[j].col != slots[k].col
-                } else {
-                    slots[j].col == slots[k].col && slots[j].row != slots[k].row
-                };
-                if !set[j] || !same_track {
-                    return None;
-                }
-                let mine_t = terminal(&children[anchored[k]], mine.terminal.as_deref());
-                let their_t = terminal(&children[anchored[j]], theirs.terminal.as_deref());
-                // Only pins pointing **at** each other align — the pair a
-                // straight wire can actually join.
-                let facing = if vertical {
-                    if slots[k].col > slots[j].col {
-                        (Some(Side::Left), Some(Side::Right))
-                    } else {
-                        (Some(Side::Right), Some(Side::Left))
-                    }
-                } else if slots[k].row > slots[j].row {
-                    (Some(Side::Top), Some(Side::Bottom))
-                } else {
-                    (Some(Side::Bottom), Some(Side::Top))
-                };
-                if (mine_t.facing, their_t.facing) != facing {
-                    return None;
-                }
-                Some(if vertical {
-                    out[j].1 + their_t.at.1 - mine_t.at.1
-                } else {
-                    out[j].0 + their_t.at.0 - mine_t.at.0
-                })
-            });
-            if let Some(o) = hit {
-                if vertical {
-                    out[k].1 = o;
-                } else {
-                    out[k].0 = o;
-                }
-            }
-            set[k] = true;
-        }
-    };
-    pass(true, &mut out);
-    pass(false, &mut out);
-    out
-}
-
-/// Charge one axis's gaps with what a spanning chain's cells still lack
-/// [SPEC 16.1]: the pin-to-pin distance the tracks currently offer is the two half tracks,
-/// everything between them, their gaps (charges included, so a second chain
-/// asks only for what the first left short) and the two landings' own offsets
-/// from their cell centres. The shortfall spreads over the gaps in between —
-/// [`grid::charge`], the same spreader a grid's spanning cell runs through.
-/// Anchors sharing a track ask nothing of it — there is no gap between a track
-/// and itself; the chain then sizes the other axis alone.
-fn charge(extra: &mut [f64], sizes: &[f64], gap: f64, a: (usize, f64), b: (usize, f64), need: f64) {
-    let ((lo, lo_off), (hi, hi_off)) = if a.0 <= b.0 { (a, b) } else { (b, a) };
-    if lo == hi {
-        return;
-    }
-    let between: f64 = sizes[lo + 1..hi].iter().sum::<f64>()
-        + extra[lo..hi].iter().sum::<f64>()
-        + (hi - lo) as f64 * gap;
-    let have = sizes[lo] / 2.0 + between + sizes[hi] / 2.0 + hi_off - lo_off;
-    grid::charge(&mut extra[lo..hi], have, need);
 }

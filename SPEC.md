@@ -3418,7 +3418,9 @@ part centre lands on: here `gap` is the column and row pitch, not the space
 between two tracks, and it rounds **up** to a whole number of fine pitches, so a
 part centre is always a wire line too (`gap: 120 80` states row and column
 apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
-them stand one coarse column apart.
+them stand one coarse column apart. The finished sheet centres on the scope's
+own origin, and that shift is a whole number of **fine** pitches — so a part
+placed on the lattice is still on it once the sheet is squared up.
 
 **Ink never places.** A satellite's cell comes from the lattice — never from its
 symbol's size, never from the width of its ref or value. A long value overhangs
@@ -3433,7 +3435,9 @@ indices (10, 20, 30…) are safe ordering room and never inject invisible space.
 This is the engine's own track list; it does not alter the grid layout's laws
 ([SPEC 12](#12-flow-grid-stack--tree)). A track sizes in **whole coarse cells**,
 to its anchors' bodies and the lanes their fields take — so satellites consume
-cells, never tracks.
+cells, never tracks — and two neighbouring anchors take a further cell wherever
+one column would not leave their two **bodies** a fine pitch of air: a cell
+holds a part, it does not part it from the next.
 
 **A chain is a walk.** A satellite chain — the run of satellites one wire holds
 — takes a ray, a lane, and a slot per member:
@@ -3578,8 +3582,12 @@ landed there. A seated part reads its side off the field it stands in — a
 member on a lane wears both readouts **outward**, away from its anchor (right
 aligned in a left field, left aligned in a right one); one riding a pin's row
 wears them above and below, centred. `translate:` on the styled-label form
-nudges either. A component's pin rail seats so its pins land on **fine** lattice
-lines, whatever their count.
+nudges either. A component's pin rails seat so its pins land on **fine** lattice
+lines, whatever their count: a rail of an **even** count straddles its own
+middle, so it reserves the odd slot it is short of, and a part carrying only one
+of the two horizontal rails reserves the other, so its side pins ride the body's
+own centre line. A pin off the lattice cannot be aligned to a neighbour's
+([16.1](#161-placement--the-lattice)), and the wire between them jogs.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins

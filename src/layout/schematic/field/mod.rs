@@ -127,18 +127,29 @@ impl Field {
         self.seats[i]
     }
 
-    /// How many coarse lanes `anchor`'s field takes on `side`.
-    // The packer's, which sizes a track in whole coarse cells.
-    #[allow(dead_code)]
-    pub(super) fn lanes(&self, anchor: usize, side: Side) -> i32 {
-        self.reach(anchor, side)
+    /// How far out on `side` an anchor's field stands from the anchor's **own
+    /// origin**, in whole coarse cells — the lanes a track must hold there,
+    /// and the slots a ray runs deep, which is one count read on two axes
+    /// [SPEC 16.1]. `0` where no chain went that way.
+    ///
+    /// The field counts its lines from its own origin; the packer works in the
+    /// scope's, so the conversion belongs here, where that origin lives.
+    pub(in crate::layout::schematic) fn cells(&self, anchor: usize, side: Side) -> i32 {
+        match self.reach(anchor, side) {
+            0 => 0,
+            k => self.line_of(anchor, side, k).abs(),
+        }
     }
 
-    /// How many coarse slots deep `anchor`'s field runs along `ray`.
-    // The packer's too, and the rail pass's floor.
-    #[allow(dead_code)]
-    pub(super) fn depth(&self, anchor: usize, ray: Side) -> i32 {
-        self.reach(anchor, ray)
+    /// The first coarse cell out on `side` that an anchor's field leaves
+    /// **free**, from the anchor's own origin [SPEC 16.1] — where the next
+    /// thing on that side may stand, and one back, how many cells the anchor
+    /// holds there. Cell 1 is the field origin itself, which already stands a
+    /// whole cell clear of the anchor's own ink, so this is one measure for
+    /// the packer's tracks and for the members of a span landing there.
+    pub(in crate::layout::schematic) fn free(&self, anchor: usize, side: Side) -> i32 {
+        self.line_of(anchor, side, self.reach(anchor, side) + 1)
+            .abs()
     }
 
     /// Satellites no wire held — the flow fallback [SPEC 16.1].

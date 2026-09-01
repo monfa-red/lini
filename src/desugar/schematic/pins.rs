@@ -6,8 +6,8 @@
 use super::super::Lower;
 use super::super::pose::{Pose, Side};
 use super::{
-    bare_node, id, lowered, lowered_chain, lowered_chrome, n, pair, readout, style_number, text,
-    trim_number, walk_pins,
+    bare_node, id, lowered, lowered_chain, lowered_chrome, n, pair, quad, readout, style_number,
+    text, trim_number, walk_pins,
 };
 use crate::error::{Code, Error};
 use crate::ledger::consts;
@@ -74,6 +74,11 @@ pub(in crate::desugar) fn assemble_component(
     if !style.iter().any(|d| d.name == "direction") {
         style.push(id("direction", "column"));
     }
+    // Every rail is one pitch deep, so the rails' own boxes are the body's
+    // rhythm and a gap between them would only push each pin off it.
+    if !style.iter().any(|d| d.name == "gap") {
+        style.push(n("gap", 0.0));
+    }
     let mut pins: Vec<Node> = Vec::new();
     let mut rest: Vec<Child> = Vec::new();
     for c in std::mem::take(children) {
@@ -107,25 +112,52 @@ pub(in crate::desugar) fn assemble_component(
     }
     let [left, right, top, bottom] = rails;
     let rail = |dir: &str, align: &str, kids: Vec<Child>| -> Result<Child, Error> {
-        lowered(
-            cx,
-            &bare_node(
-                dir,
-                Vec::new(),
-                vec![n("gap", 0.0), id("align", align)],
-                kids,
-            ),
-        )
+        let mut style = vec![n("gap", 0.0), id("align", align)];
+        // A rail stacks its pins on exact pitch centres, so an **even** count
+        // straddles the rail's own middle and puts every one of them half a
+        // pitch off the part's centre — a pin no lattice can hold, and no
+        // placement can put back [SPEC 16.2]. The rail reserves the odd slot
+        // it is short of, at its far end.
+        if kids.len().is_multiple_of(2) {
+            style.push(match dir {
+                "column" => quad("padding", 0.0, 0.0, consts::PIN_PITCH, 0.0),
+                _ => quad("padding", 0.0, consts::PIN_PITCH, 0.0, 0.0),
+            });
+        }
+        // A horizontal rail states its **depth**, so the two of them weigh the
+        // same and the side rails ride the body's own centre line.
+        if dir == "row" {
+            style.push(n("height", consts::PIN_PITCH));
+        }
+        lowered(cx, &bare_node(dir, Vec::new(), style, kids))
     };
-    if !top.is_empty() {
-        children.push(rail("row", "center", top)?);
-    }
     let mut middle = Vec::new();
     if !left.is_empty() {
         middle.push(rail("column", "start", left)?);
     }
     if !right.is_empty() {
         middle.push(rail("column", "end", right)?);
+    }
+    // …and where a part carries side pins and only **one** horizontal rail,
+    // that rail alone would push the middle band off the body's centre by half
+    // its depth, taking every side pin off the lattice with it. Its empty twin
+    // holds the balance.
+    let twin = !middle.is_empty() && top.is_empty() != bottom.is_empty();
+    let empty = || {
+        lowered(
+            cx,
+            &bare_node(
+                "row",
+                Vec::new(),
+                vec![n("height", consts::PIN_PITCH)],
+                Vec::new(),
+            ),
+        )
+    };
+    if !top.is_empty() {
+        children.push(rail("row", "start", top)?);
+    } else if twin {
+        children.push(empty()?);
     }
     match middle.len() {
         0 => {}
@@ -141,7 +173,9 @@ pub(in crate::desugar) fn assemble_component(
         )?),
     }
     if !bottom.is_empty() {
-        children.push(rail("row", "center", bottom)?);
+        children.push(rail("row", "end", bottom)?);
+    } else if twin {
+        children.push(empty()?);
     }
     children.extend(rest);
     Ok(())

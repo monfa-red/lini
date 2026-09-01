@@ -100,8 +100,6 @@ impl Lattice {
     }
 
     /// `v` rounded to the nearest fine line.
-    // The packer's, for the alignment shift it strikes in whole pitches.
-    #[allow(dead_code)]
     pub(super) fn snap(self, v: f64) -> f64 {
         (v / self.pitch).round() * self.pitch
     }

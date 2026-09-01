@@ -2,9 +2,23 @@
 //! `columns:` wraps, ordinal `cell:` collapses, every track sizes to its
 //! widest anchor — and which children ride a track at all.
 
-use super::tests::{anchor, at, cell, close, laid, placed, pose_of, scope, sided, x_gap, y_gap};
+use super::tests::{anchor, at, cell, close, laid, placed, pose_of, scope, sided};
+use crate::layout::PlacedNode;
 use crate::ledger::consts::PIN_PITCH;
 use crate::ledger::defaults::SCH_GAP;
+
+/// How many coarse cells apart two anchors stand [SPEC 16.1] — a track is
+/// packed in whole cells, so this is always a whole number, and the ink
+/// between two of them is whatever their own widths leave.
+fn apart(nodes: &[PlacedNode], from: &str, to: &str, vertical: bool) -> f64 {
+    let (a, b) = (at(nodes, from), at(nodes, to));
+    (if vertical { b.1 - a.1 } else { b.0 - a.0 }) / SCH_GAP
+}
+
+/// Whether a cell distance is a whole number of them, and at least one.
+fn whole_cells(d: f64) -> bool {
+    close(d, d.round()) && d >= 1.0
+}
 
 // ───────────────────────── tracks ─────────────────────────
 
@@ -19,9 +33,9 @@ fn anchors_take_one_row_in_declaration_order() {
     assert!(x1 < x2 && x2 < x3, "declaration order: {x1} {x2} {x3}");
     assert!(close(y1, y2) && close(y2, y3), "one row: {y1} {y2} {y3}");
     assert!(
-        close(x_gap(&nodes, "u1", "u2"), SCH_GAP),
-        "the track gap defaults to {SCH_GAP}: {}",
-        x_gap(&nodes, "u1", "u2")
+        whole_cells(apart(&nodes, "u1", "u2", false)),
+        "a whole number of coarse cells apart: {}",
+        apart(&nodes, "u1", "u2", false)
     );
 }
 
@@ -38,9 +52,9 @@ fn columns_wraps_the_flow() {
     assert!(close(x1, x3), "and back to column 1: {x1} vs {x3}");
     assert!(x2 > x1, "column 2 is to the right: {x2}");
     assert!(
-        close(y_gap(&nodes, "u1", "u3"), SCH_GAP),
-        "rows are one gap apart: {}",
-        y_gap(&nodes, "u1", "u3")
+        whole_cells(apart(&nodes, "u1", "u3", true)),
+        "rows stand a whole number of coarse cells apart: {}",
+        apart(&nodes, "u1", "u3", true)
     );
 }
 
@@ -71,9 +85,9 @@ fn sparse_cell_ordinals_collapse_to_adjacent_tracks() {
         );
     }
     assert!(
-        close(x_gap(&a, "u1", "u2"), SCH_GAP),
+        whole_cells(apart(&a, "u1", "u2", false)),
         "no invisible space between collapsed tracks: {}",
-        x_gap(&a, "u1", "u2")
+        apart(&a, "u1", "u2", false)
     );
 }
 
@@ -87,9 +101,9 @@ fn sparse_row_ordinals_collapse_too() {
     assert!(close(x1, x2), "one column: {x1} {x2}");
     assert!(y2 > y1, "row order follows the ordinals: {y1} {y2}");
     assert!(
-        close(y_gap(&nodes, "u1", "u2"), SCH_GAP),
+        whole_cells(apart(&nodes, "u1", "u2", true)),
         "two adjacent rows, not nine: {}",
-        y_gap(&nodes, "u1", "u2")
+        apart(&nodes, "u1", "u2", true)
     );
 }
 
@@ -123,43 +137,40 @@ fn an_explicit_cell_may_reach_past_the_wrap_count() {
 
 #[test]
 fn a_track_sizes_to_its_widest_anchor() {
-    // Every track size goes through the cluster seam, and a track takes the
-    // **max** over every anchor in it —
-    // including one in another row. `u3` (wide, tall) sits in column 1 / row 2,
-    // so it is what pushes column 2 rightward and row 2 downward; nothing in
-    // row 1 or column 2 could account for the offsets on its own.
-    let nodes = laid(&scope(
-        " { columns: 2 }",
-        &(anchor("u1", " { cell: 1 1 }")
-            + &anchor("u2", " { cell: 2 1 }")
-            + &anchor("u3", " { cell: 1 2; width: 200; height: 120 }")),
-    ));
-    let (x1, y1, w1, h1) = cell(&nodes, "u1");
-    let (x2, _, w2, h2) = cell(&nodes, "u2");
-    let (x3, y3, w3, h3) = cell(&nodes, "u3");
-    assert!(
-        w3 > w1 && w3 > w2 && h3 > h1 && h3 > h2,
-        "u3 really is the widest and tallest: {w3}x{h3} vs {w1}x{h1}, {w2}x{h2}"
-    );
-    // Column 1 is `w3` wide even though `u3` sits a row down — a rule that
-    // sized the column to its own row's anchor would land `u2` at
-    // `w1/2 + gap + w2/2`, a good 30 px short.
-    assert!(
-        close(x2 - x1, w3 / 2.0 + SCH_GAP + w2 / 2.0),
-        "column 1 sized to its widest anchor: {} vs {}",
-        x2 - x1,
-        w3 / 2.0 + SCH_GAP + w2 / 2.0
+    // A track is packed in whole coarse cells and takes the **max** over every
+    // anchor in it — including one in another row. `u3` (wide and tall) sits in
+    // column 1 / row 2, so it is what parts column 2 and row 2; a rule reading
+    // only its own row's anchors would leave both where the bare sheet has
+    // them.
+    let sheet = |u3: &str| {
+        laid(&scope(
+            " { columns: 2 }",
+            &(anchor("u1", " { cell: 1 1 }") + &anchor("u2", " { cell: 2 1 }") + u3),
+        ))
+    };
+    let wide = sheet(&anchor("u3", " { cell: 1 2; width: 400; height: 240 }"));
+    let bare = sheet(&anchor("u3", " { cell: 1 2 }"));
+    let (col, row) = (
+        apart(&wide, "u1", "u2", false),
+        apart(&wide, "u1", "u3", true),
     );
     assert!(
-        close(x3, x1),
-        "both column-1 anchors centre in it: {x1} {x3}"
+        col > apart(&bare, "u1", "u2", false),
+        "column 1 sized to its widest anchor, a row down: {col} vs {}",
+        apart(&bare, "u1", "u2", false)
     );
-    // The row axis reads the same seam: row 1 is as tall as its tallest.
     assert!(
-        close(y3 - y1, h1.max(h2) / 2.0 + SCH_GAP + h3 / 2.0),
-        "row 1 sized to its tallest anchor: {} vs {}",
-        y3 - y1,
-        h1.max(h2) / 2.0 + SCH_GAP + h3 / 2.0
+        row > apart(&bare, "u1", "u3", true),
+        "and row 1 to its tallest: {row} vs {}",
+        apart(&bare, "u1", "u3", true)
+    );
+    assert!(
+        whole_cells(col) && whole_cells(row),
+        "both in whole coarse cells: {col} {row}"
+    );
+    assert!(
+        close(at(&wide, "u3").0, at(&wide, "u1").0),
+        "and both column-1 anchors stand on its line"
     );
 }
 
@@ -182,6 +193,59 @@ fn a_rail_spaces_its_pins_at_the_pitch_whichever_side_it_runs_along() {
         assert!(
             close(step.abs(), PIN_PITCH),
             "'{side}' pins sit one pitch apart along their rail: {step}"
+        );
+    }
+}
+
+#[test]
+fn a_components_pins_stand_a_whole_pitch_from_its_centre() {
+    // [SPEC 16.2] the rails seat so every pin lands on a **fine** lattice line,
+    // whatever their count: an even rail straddles its own middle, and a part
+    // carrying only one horizontal rail drags its side pins off the body's
+    // centre with it. Either way the pin sits half a pitch out, and a wire to a
+    // neighbour's pin can no longer run straight — the alignment shift is a
+    // whole number of pitches [SPEC 16.1], so what it cannot reach, it jogs.
+    let whole = |v: f64| close((v / PIN_PITCH).round() * PIN_PITCH, v);
+    let stands = |what: &str, part: &str, pins: &[(String, bool)]| {
+        let nodes = laid(&scope("", part));
+        let (_, cx, cy) = placed(&nodes, "u1");
+        for (id, vertical) in pins {
+            let (_, px, py) = placed(&nodes, id);
+            // Along the rail it stands on: a side pin's row, a top or bottom
+            // pin's column — the coordinate its wire arrives on.
+            let along = if *vertical { py - cy } else { px - cx };
+            assert!(whole(along), "{what}: '{id}' sits {along} off the centre");
+        }
+    };
+    for n in 1..=6 {
+        let ids: Vec<(String, bool)> = (1..=n).map(|i| (format!("p{i}"), true)).collect();
+        let pins: Vec<String> = ids.iter().map(|(id, _)| format!("|pin#{id}|")).collect();
+        stands(
+            &format!("{n} split pins"),
+            &format!("  |component#u1| [ {} ]\n", pins.join("; ")),
+            &ids,
+        );
+    }
+    for sides in [
+        ["left", "right", "bottom"],
+        ["left", "right", "top"],
+        ["left", "top", "bottom"],
+        ["bottom", "bottom", "left"],
+    ] {
+        let ids: Vec<(String, bool)> = sides
+            .iter()
+            .enumerate()
+            .map(|(i, s)| (format!("p{}", i + 1), *s == "left" || *s == "right"))
+            .collect();
+        let pins: Vec<String> = ids
+            .iter()
+            .zip(sides)
+            .map(|((id, _), side)| format!("|pin#{id}| {{ side: {side} }}"))
+            .collect();
+        stands(
+            &sides.join("/"),
+            &format!("  |component#u1| [ {} ]\n", pins.join("; ")),
+            &ids,
         );
     }
 }
@@ -215,11 +279,11 @@ fn an_anonymous_parts_pins_still_count() {
     // an unnamed three-pin `|Q|` anchors, an unnamed `|R|` still seats.
     let nodes = laid(&scope("", &(anchor("u1", "") + "  |Q|\n  |R| \"1k\"\n")));
     let (s, _, _) = placed(&nodes, "s");
-    // Anonymous, so measured off the scope's own children: each part's drawn
-    // centre, which is what a track holds [SPEC 16.1].
+    // Anonymous, so measured off the scope's own children: each part's own
+    // centre, which is what lands on a track's line [SPEC 16.1].
     let [u1, q, r] = [0, 1, 2].map(|i| {
         let c = &s.children[i];
-        super::field::drawn(c).shifted(c.cx, c.cy).center().1
+        c.cy + c.bbox.center().1
     });
     assert!(close(u1, q), "the 3-pin |Q| rides the track row: {u1} {q}");
     assert!(r > q, "the 2-pin |R| seats below: {r} vs {q}");
@@ -237,8 +301,8 @@ fn a_label_is_a_satellite_and_a_cell_promotes_it() {
         "",
         &(anchor("u1", " { cell: 1 1 }") + "  |gnd#g1| { cell: 2 1 }\n"),
     ));
-    let (ux, uy, ..) = cell(&promoted, "u1");
-    let (gx, gy, ..) = cell(&promoted, "g1");
+    let (ux, uy) = at(&promoted, "u1");
+    let (gx, gy) = at(&promoted, "g1");
     assert!(
         close(uy, gy),
         "the promoted label shares the row: {uy} {gy}"
@@ -284,7 +348,7 @@ fn only_cell_promotes_a_satellite_translate_just_nudges_it() {
         "",
         &(sided("u1") + "  |gnd#g1| { cell: 2 1 }\n  u1.a - g1\n"),
     ));
-    let ((ux, uy, ..), (cgx, cgy, ..)) = (cell(&celled, "u1"), cell(&celled, "g1"));
+    let ((ux, uy), (cgx, cgy)) = (at(&celled, "u1"), at(&celled, "g1"));
     assert!(
         close(uy, cgy) && cgx > ux,
         "`cell:` puts it on the track row"
@@ -385,9 +449,26 @@ fn a_defines_own_gap_and_clearance_reach_the_scope_it_opens() {
         at(&nodes, "u2").0 - at(&nodes, "u1").0
     };
     assert!(
-        (sep(300.0) - sep(100.0) - 200.0).abs() < 0.01,
-        "the define's own gap parts the tracks: {} vs {}",
+        sep(300.0) > sep(100.0) && close(sep(100.0) % 100.0, 0.0) && close(sep(300.0) % 300.0, 0.0),
+        "the define's own gap parts the tracks, in its own cells: {} vs {}",
         sep(100.0),
         sep(300.0)
     );
+}
+
+#[test]
+fn tmp_dbg() {
+    let src = format!(
+        "{{ layout: schematic }}\n{}",
+        anchor("u1", "").trim_start().to_string() + anchor("u2", "").trim_start() + "u1.c - u2.a\n"
+    );
+    let nodes = laid(&src);
+    for id in ["u1", "u2", "a", "b", "c"] {
+        let (n, x, y) = placed(&nodes, id);
+        eprintln!(
+            "{id}: at ({x},{y}) bbox={:?} drawn={:?}",
+            n.bbox,
+            super::field::drawn(n)
+        );
+    }
 }

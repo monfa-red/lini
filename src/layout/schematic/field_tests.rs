@@ -190,25 +190,25 @@ fn an_up_chain_and_a_down_chain_off_one_pin_share_a_column() {
 }
 
 #[test]
-fn every_seated_part_stands_on_its_anchors_fine_lattice() {
-    // The invariant [SPEC 16.1], in the frame the field is struck in: a cell
-    // is a whole number of coarse pitches off its anchor's own origin, and a
-    // coarse pitch is a whole number of fine ones. The scope's own lattice
-    // becomes absolute when the tracks size in cells — that is the packer's.
+fn every_placed_part_lands_on_the_scopes_own_fine_lattice() {
+    // The invariant [SPEC 16.1], and it is **absolute**: the packer lands
+    // every anchor on a coarse line, a cell is a whole number of coarse
+    // pitches off its anchor, a coarse pitch is a whole number of fine ones,
+    // and the sheet's own centring shift is a whole number of fine ones too.
+    // So the sheet's lattice, not just each anchor's, holds every part.
     let src = scope(
         "",
         &(sided("u1")
-            + "  |R#r1| \"1k\"\n  |C#c1| \"1u\"\n  |gnd#g1|\n  |gnd#g2|\n"
-            + "  u1.a - r1 - g1\n  u1.c - c1 - g2\n"),
+            + &sided("u2")
+            + "  |R#r1| \"1k\"\n  |C#c1| \"1u\"\n  |gnd#g1|\n  |gnd#g2|\n  |F#f1| \"2A\"\n"
+            + "  u1.a - r1 - g1\n  u1.c - c1 - g2\n  u1.b - f1 - u2.a\n"),
     );
     let nodes = laid(&src);
-    let (ux, uy) = at(&nodes, "u1");
-    for id in ["r1", "c1", "g1", "g2"] {
+    for id in ["u1", "u2", "r1", "c1", "g1", "g2", "f1"] {
         let (x, y) = at(&nodes, id);
-        let (dx, dy) = (x - ux, y - uy);
         assert!(
-            on_fine_grid(dx) && on_fine_grid(dy),
-            "'{id}' off the grid: {dx} {dy}"
+            on_fine_grid(x) && on_fine_grid(y),
+            "'{id}' off the grid: {x} {y}"
         );
     }
 }

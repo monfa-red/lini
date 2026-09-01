@@ -25,6 +25,7 @@ mod hints;
 mod junction;
 mod lattice;
 mod net;
+mod pack;
 mod place;
 mod ports;
 mod tag;
@@ -118,19 +119,12 @@ fn arrange(
     // every one [SPEC 16.7].
     let links: Vec<&crate::resolve::ResolvedLink> =
         crate::layout::scope_links(program, path, owner);
+    // Placement centres the sheet on the scope's origin itself, a whole number
+    // of fine pitches at a time [SPEC 16.1] — so the box the caller sizes (and
+    // the rect it draws) is the sheet's own, and every part is still on the
+    // lattice. A `width` floor grows around it [SPEC 5].
     let body = place::arrange(&mut children, attrs, span, &links, path)?;
-    // Centre the placed sheet on the scope's origin — the tracks already sit
-    // there, but a spanning chain or a flowed-out satellite can hang the body
-    // off to one side. The box the caller sizes (and the rect it draws) is then
-    // the sheet's own, and a `width` floor grows around it [SPEC 5].
-    let (sx, sy) = body.center();
-    if (sx, sy) != (0.0, 0.0) {
-        for c in children.iter_mut() {
-            c.cx -= sx;
-            c.cy -= sy;
-        }
-    }
-    Ok((children, body.shifted(-sx, -sy)))
+    Ok((children, body))
 }
 
 #[cfg(test)]

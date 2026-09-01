@@ -63,11 +63,6 @@ pub(super) fn body(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
     (x + bx, y + by, n.bbox.w(), n.bbox.h())
 }
 
-/// The clear space between two placed nodes along y.
-pub(super) fn y_gap(nodes: &[PlacedNode], top: &str, bottom: &str) -> f64 {
-    ink(nodes, bottom).min_y - ink(nodes, top).max_y
-}
-
 pub(super) fn close(a: f64, b: f64) -> bool {
     (a - b).abs() < 1e-6
 }
@@ -305,7 +300,11 @@ fn a_root_schematic_scene_is_the_scope() {
     let ((x1, y1), (x2, y2)) = (at(&nodes, "u1"), at(&nodes, "u2"));
     assert!(x1 < x2, "declaration order: {x1} {x2}");
     assert!(close(y1, y2), "one row: {y1} {y2}");
-    assert!(close(x_gap(&nodes, "u1", "u2"), SCH_GAP));
+    assert!(
+        close((x2 - x1) % SCH_GAP, 0.0),
+        "a whole number of coarse cells apart: {}",
+        x2 - x1
+    );
 }
 
 #[test]
@@ -362,7 +361,7 @@ fn a_nested_row_places_its_own_children_though_the_scope_still_reaches_them() {
     );
 
     // The row itself is the anchor — one child of the scope, on its track row.
-    let ((ux, uy, ..), (cwx, cwy, ..)) = (cell(&nodes, "u1"), cell(&nodes, "r"));
+    let ((ux, uy), (cwx, cwy)) = (at(&nodes, "u1"), at(&nodes, "r"));
     assert!(cwx > ux, "the row rides the scope's track row: {ux} {cwx}");
     assert!(close(uy, cwy), "beside the anchor, not seated below it");
     let (wx, wy) = at(&nodes, "r");

@@ -14,25 +14,11 @@
 use super::super::lattice::Ax;
 use super::super::net;
 use super::super::terminal::Terminal;
-use super::{Field, Spanning, drawn};
+use super::{Field, Spanning};
 use crate::desugar::pose::Side;
-use crate::layout::ir::{Bbox, PlacedNode};
+use crate::layout::ir::PlacedNode;
 
 impl Field {
-    /// One anchor's **cluster** [SPEC 16.1]: its own drawn ink and every cell
-    /// its field committed, in the anchor's own frame — what a track sizes
-    /// against. Cells, never the satellites' ink: a long value overhangs the
-    /// column beside it rather than parting the tracks.
-    pub(in crate::layout::schematic) fn cluster(
-        &self,
-        children: &[PlacedNode],
-        anchor: usize,
-    ) -> Bbox {
-        self.cells[anchor]
-            .iter()
-            .fold(drawn(&children[anchor]), |b, c| b.union(*c))
-    }
-
     /// Land every seated satellite on its lattice point, now that its anchor
     /// is placed [SPEC 16.1], and lay the spans along their landing legs.
     pub(in crate::layout::schematic) fn absolutize(&self, children: &mut [PlacedNode]) {
@@ -53,24 +39,17 @@ impl Field {
         span.members.len() as i32
     }
 
-    /// The placed extent of everything riding a **landing leg** — the spanning
-    /// chains, which join no cluster and so no track. The caller unions it into
-    /// the scope's box, so the sheet still holds all its ink.
-    pub(in crate::layout::schematic) fn spanning_extent(
-        &self,
-        children: &[PlacedNode],
-    ) -> Option<Bbox> {
-        self.spans
-            .iter()
-            .flat_map(|s| &s.members)
-            .map(|&m| drawn(&children[m]).shifted(children[m].cx, children[m].cy))
-            .reduce(|a, b| a.union(b))
-    }
-
     /// One span's members on the **landing leg** [SPEC 16.1]: the straight run
     /// into the second-named end, on that pin's own line, its members on
-    /// consecutive coarse cells outward from that landing — the last-named
-    /// nearest it, so the wire order reads along the leg.
+    /// consecutive coarse cells back from that end — the last-named nearest
+    /// it, so the wire order reads along the leg.
+    ///
+    /// The cells are the **scope's**, counted out from the landing anchor's
+    /// own origin past whatever its field already holds ([`Field::free`]) —
+    /// which is the very count the packer parted the two tracks by, so the
+    /// members land in the region it reserved for them. Counted from the
+    /// landing itself they would not: a pin stands on a *fine* line, so its
+    /// own leg's cells fall between the scope's.
     fn lay(&self, children: &mut [PlacedNode], span: &Spanning) {
         let landing = |(child, t): &(usize, Terminal)| {
             let n = &children[*child];
@@ -89,22 +68,21 @@ impl Field {
             },
             Ax::of,
         );
-        let (along, across) = match ax {
-            Ax::X => (at.0, at.1),
-            Ax::Y => (at.1, at.0),
+        // Back toward the first end, whichever way the second pin faces.
+        let anchor = span.ends[1].0;
+        let node = &children[anchor];
+        let origin = coordinate((node.cx, node.cy), ax);
+        let back = match (ax, coordinate(from, ax) < coordinate(at, ax)) {
+            (Ax::X, true) => Side::Left,
+            (Ax::X, false) => Side::Right,
+            (Ax::Y, true) => Side::Top,
+            (Ax::Y, false) => Side::Bottom,
         };
-        // Cells counted **from the landing**, not from the scope's own origin:
-        // a pin lands on a fine line, so the leg's own cells are the only ones
-        // the last-named member can be "nearest that end" of.
-        let step = self.lat.step(ax)
-            * if coordinate(from, ax) < along {
-                -1.0
-            } else {
-                1.0
-            };
-        let n = span.members.len() as f64;
+        let step = self.lat.step(ax) * Ax::outward(back);
+        let across = coordinate(at, ax.other());
+        let first = self.free(anchor, back) + span.members.len() as i32 - 1;
         for (k, &member) in span.members.iter().enumerate() {
-            let line = along + step * (n - k as f64);
+            let line = origin + step * f64::from(first - k as i32);
             let point = match ax {
                 Ax::X => (line, across),
                 Ax::Y => (across, line),

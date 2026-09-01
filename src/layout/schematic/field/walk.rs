@@ -530,14 +530,17 @@ mod tests {
     #[test]
     fn a_fields_reach_counts_the_lines_its_cells_stand_on() {
         // One measure, two axes: the lanes a track holds on a side, and the
-        // slots a ray runs deep.
+        // slots a ray runs deep — both read in the anchor's own coarse lines,
+        // which is the frame the packer sizes a track in.
         let (kids, f) = field(&sheet("", "|R#r1| \"1k\"\n|gnd#g1|\nu1.a - r1 - g1\n"));
         let u1 = kids
             .iter()
             .position(|c| c.id.as_deref() == Some("u1"))
             .expect("u1");
-        assert_eq!(f.lanes(u1, Side::Left), 1, "one column");
-        assert_eq!(f.depth(u1, Side::Bottom), 2, "two slots deep");
-        assert_eq!(f.lanes(u1, Side::Right), 0, "nothing on the other side");
+        assert_eq!(f.cells(u1, Side::Left), 1, "one column out");
+        // The part's own bottom pin fills the first cell down, so its field
+        // origin is the second and its two slots stand on lines 2 and 3.
+        assert_eq!(f.cells(u1, Side::Bottom), 3, "two slots deep");
+        assert_eq!(f.cells(u1, Side::Right), 0, "nothing on the other side");
     }
 }
