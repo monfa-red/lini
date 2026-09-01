@@ -158,10 +158,16 @@ pub(crate) const REF_FONT: f64 = 12.0;
 pub(crate) const READOUT_GAP: f64 = 8.0;
 pub(crate) const READOUT_STACK: f64 = 4.0;
 /// How far a **turned** part's ref / value readouts sit beside its axis
-/// [SPEC 16.2] — clear of the symbol *and* of the wire's own corridor running
-/// down through it, so a typical value (up to ~5 characters) never blocks a
-/// landing. A longer one is `translate:`'s to move.
-pub(crate) const READOUT_OFFSET: f64 = 40.0;
+/// [SPEC 16.2] — the daylight from the axis to the pair's **inner** edge, so
+/// it clears the symbol and the wire's own corridor running down through it,
+/// and a long value overhangs outward rather than crowding the landing.
+///
+/// 24 by eye against `fadec.pdf`, where a designator sits about a symbol
+/// half-width off the line it names: a discrete's widest half is 14 and the
+/// scope's clearance 10, so 24 is the first line that clears both and no more.
+/// 40 — the old number, which was read as the pair's *centre* before the pair
+/// aligned on its inner edge — stood the text a whole column away.
+pub(crate) const READOUT_OFFSET: f64 = 24.0;
 
 /// The absurd-rendered-extent hint threshold [SPEC 21]: a drawing wider or
 /// taller than this many px almost certainly authored a magnitude into

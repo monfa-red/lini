@@ -1424,7 +1424,7 @@ net-label-run 40 (2 × pin-pitch — the floor on a plain net label's run of
   trace; a longer name grows it, `width:` raises the floor — SPEC 16.4)
 net-label-offset 4 (the clear space that name keeps off the trace, and off
   the run's two ends)
-pin-number offset 9 (across the lead)    readout offset 40 (beside a turned part's axis)
+pin-number offset 9 (across the lead)    readout offset 24 (beside a turned part's axis)
 readout gap 8 (part edge → its ref / value)    readout stack 4 (between the two)
 schematic clearance 10 (the scope's config — pin-pitch stays ≥ min pitch)
 schematic link stroke-width 1.5    corner-radius 0 (the scope's link default)

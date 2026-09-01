@@ -29,6 +29,16 @@ pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 /// centre lands on, not the space between two tracks: a discrete plus the lead
 /// each side of it, so a column of them reads as a column. Shared by the
 /// `|schematic|` template and the root `{ layout: schematic }` form.
+///
+/// Held at 100 by eye against `fadec.pdf` and `even.pdf`, having rendered 80,
+/// 120 and 140 and read them: at 80 the showroom strays nine times and a value
+/// lands on the next symbol; at 120 and 160 — the *even* multiples, which would
+/// put a two-column corridor's midline on a fine line — the coarse cell is the
+/// collision unit, so a body seated straight out off a pin swallows a whole
+/// cell of its neighbours' rows and a rail of net names is pushed off its own
+/// pins; 140 draws a block half again as wide as the reference's. The midline
+/// gain is theoretical in the showroom besides: every interior run there rides
+/// a part column or a pin row, not a corridor between two columns.
 pub(crate) const SCH_GAP: f64 = 100.0;
 
 /// The `|mindmap|` depth ramp + wrap cap [SPEC 8] — one obvious table, retuned
