@@ -17,6 +17,7 @@ use super::field::Field;
 use super::lattice::{Ax, Lattice};
 use super::pack::pack;
 use super::rail;
+use super::readout;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
@@ -181,7 +182,8 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 /// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;
 /// 4. strike the **rails** ([`rail`]) — the one row every ground sinks to and
-///    the one every flag rises to, which exist only in the scope's own frame;
+///    the one every flag rises to, which exist only in the scope's own frame —
+///    and turn the **readouts** outward ([`readout`]);
 /// 5. flow the satellites no wire held (the caller warns), then centre the
 ///    sheet on the scope's origin a whole number of fine pitches at a time, so
 ///    the lattice the passes agreed on stays absolute;
@@ -222,6 +224,9 @@ pub(super) fn arrange(
     // what the fields hold, and the packing measured the box off those cells —
     // so the sheet takes the cells the rails landed on.
     let mut body = packed.body.union(rail::rails(children, &field, lat));
+    // …and the readouts turn outward, which moves text and no part, so it
+    // changes nothing the box was measured from [SPEC 16.2].
+    readout::readouts(children, &field);
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
     // falls back to the flow — one trailing row under the grid, declaration

@@ -95,7 +95,9 @@ impl Field {
 /// Stand a part's **body** on a lattice point [SPEC 16.1], and step the name
 /// of a net run off the trace it rides ([`net::seat_text`]) — `outward` being
 /// the side away from the anchor whose field holds it, `None` where no field
-/// does.
+/// does. A part's own ref / value pair turns outward too, but later and by its
+/// own pass ([`super::super::readout`]), which reads the seat rather than this
+/// one hint.
 fn stand(node: &mut PlacedNode, at: (f64, f64), outward: Option<Side>) {
     let (bx, by) = node.bbox.center();
     node.cx = at.0 - bx;
@@ -105,18 +107,6 @@ fn stand(node: &mut PlacedNode, at: (f64, f64), outward: Option<Side>) {
         for c in node.children.iter_mut() {
             c.cx += dx;
             c.cy += dy;
-        }
-        return;
-    }
-    // A part's ref/value pair is minted on the sheet's reading side (+x,
-    // [SPEC 16.2]); in an anchor's **left** field that side reaches back over
-    // the pin the part hangs from, closing the corridor its own lead needs.
-    // Mirror it outward — the field is the first pass that knows the side.
-    if outward == Some(Side::Left) {
-        for c in node.children.iter_mut() {
-            if c.type_chain.iter().any(|t| t == "ref" || t == "part-value") {
-                c.cx = -c.cx - (c.bbox.min_x + c.bbox.max_x);
-            }
         }
     }
 }

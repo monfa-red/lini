@@ -7,11 +7,11 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, body, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with,
-    tip,
+    anchor, at, body, cell, chrome, close, laid, placed, pose_of, scope, seat_warnings, sided,
+    sided_with, tip,
 };
 use crate::layout::PlacedNode;
-use crate::ledger::consts::PIN_PITCH;
+use crate::ledger::consts::{PIN_PITCH, READOUT_OFFSET};
 use crate::ledger::defaults::SCH_GAP;
 
 /// A user-defined power flag — the terminator for the chains that grow **up**.
@@ -904,4 +904,89 @@ fn two_pins_share_a_lane_only_where_their_columns_never_meet() {
     // band and one lane holds both.
     let (cx, rx) = lanes_of("  u1.a - r1 - f1\n  u1.b - c1 - g1\n");
     assert!(close(cx, rx), "pointing away, one lane: {cx} {rx}");
+}
+
+// ───────────────────────── the readout side ─────────────────────────
+
+#[test]
+fn a_left_field_part_wears_its_readouts_to_its_left() {
+    // [SPEC 16.2] outward, away from the anchor: on the left flank the reading
+    // side points back over the pin the part hangs from.
+    let src = scope(
+        "",
+        &(sided("u1") + "  |C#c1| \"100n\"\n  |gnd#g1|\n  u1.a - c1 - g1\n"),
+    );
+    let nodes = laid(&src);
+    let axis = body(&nodes, "c1").0;
+    let (name, value) = (
+        chrome(&nodes, "c1", "ref"),
+        chrome(&nodes, "c1", "part-value"),
+    );
+    assert!(
+        close(axis - value.max_x, READOUT_OFFSET) && close(axis - name.max_x, READOUT_OFFSET),
+        "right aligned one offset off the axis: {name:?} {value:?} vs {axis}"
+    );
+    assert!(name.max_y <= value.min_y, "the ref over the value");
+}
+
+#[test]
+fn a_right_field_part_wears_them_to_its_right() {
+    let src = scope(
+        "",
+        &(sided("u1") + "  |C#c1| \"100n\"\n  |gnd#g1|\n  u1.b - c1 - g1\n"),
+    );
+    let nodes = laid(&src);
+    let axis = body(&nodes, "c1").0;
+    let (name, value) = (
+        chrome(&nodes, "c1", "ref"),
+        chrome(&nodes, "c1", "part-value"),
+    );
+    assert!(
+        close(value.min_x - axis, READOUT_OFFSET) && close(name.min_x - axis, READOUT_OFFSET),
+        "left aligned one offset off the axis: {name:?} {value:?} vs {axis}"
+    );
+}
+
+#[test]
+fn a_part_riding_a_row_wears_them_above_and_below() {
+    // [SPEC 16.2] the third reading: a part lying along its pin's own row
+    // stacks the pair over and under its drawing, centred — the field has no
+    // side to give it and none is wanted.
+    let src = scope(
+        "",
+        &(sided("u1") + "  |R#r1| \"1k\"\n  |label#n1| \"NET\"\n  u1.a - r1 - n1\n"),
+    );
+    let nodes = laid(&src);
+    let (rx, ry, ..) = body(&nodes, "r1");
+    let (name, value) = (
+        chrome(&nodes, "r1", "ref"),
+        chrome(&nodes, "r1", "part-value"),
+    );
+    assert!(
+        name.max_y <= ry && value.min_y >= ry,
+        "ref above, value below: {name:?} {value:?} vs {ry}"
+    );
+    assert!(
+        close(name.center().0, rx) && close(value.center().0, rx),
+        "centred on the part: {name:?} {value:?} vs {rx}"
+    );
+}
+
+#[test]
+fn a_readout_never_moves_a_part() {
+    // [SPEC 16.1] ink never places: a long value overhangs its neighbour's
+    // column rather than parting the columns.
+    let columns = |value: &str| {
+        let nodes = laid(&scope(
+            "",
+            &(sided("u1")
+                + &format!("  |C#c1| \"1n\"\n  |C#c2| \"{value}\"\n  |gnd#g1|\n  |gnd#g2|\n")
+                + "  u1.a - c1 - g1\n  u1.a - c2 - g2\n"),
+        ));
+        at(&nodes, "c1").0 - at(&nodes, "c2").0
+    };
+    assert!(
+        close(columns("1n"), columns("4700000pF x7r 25V")),
+        "the columns stand where the lattice put them, whatever the value reads"
+    );
 }

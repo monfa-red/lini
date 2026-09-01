@@ -29,6 +29,7 @@ mod pack;
 mod place;
 mod ports;
 mod rail;
+mod readout;
 mod tag;
 mod terminal;
 
