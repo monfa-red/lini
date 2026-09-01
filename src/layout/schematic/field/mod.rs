@@ -5,15 +5,17 @@
 //! (its line across that ray — a coarse line out from the anchor's ink where
 //! it turned off its pin, the pin's own fine line where it grew straight out)
 //! and a *slot* per member (the k-th coarse line along the ray from the field
-//! origin). Nothing here reads ink but the field origin itself: a satellite's
-//! cell comes from the lattice, never from its symbol's size or the width of
-//! its value.
+//! origin). A satellite's cell comes from the lattice, never from the width of
+//! its value: the only ink this pass reads is the field origin, and how far a
+//! label's own symbol reaches across the line it stands on ([`Field::across`])
+//! — both quantised straight back onto the lattice [SPEC 16.1].
 //!
-//! **Collision is the cells'.** A member's cell is one `gap` square on its
-//! lattice point — a **net run**'s the fine line it lands on, being a stretch
-//! of trace and not a body [SPEC 16.4]. A lane is free when no cell of the
-//! chain meets one already committed, and a taken lane steps out a coarse line
-//! and tries again ([`allocate`]). That one test is the whole of it — an
+//! **Collision is the cells'.** A member's cell is one `gap` pitch along its
+//! ray, and across it the pitch of the line it stands on: a **part** takes the
+//! coarse cell wherever it stands, a **label** on a pin's own line takes that
+//! fine line ([`Body`]). A lane is free when no cell of the chain meets one
+//! already committed, and a taken lane steps out a coarse line and tries again
+//! ([`allocate`]). That one test is the whole of it — an
 //! up-chain and a down-chain off one pin share a lane because their cells are
 //! disjoint; a second chain claiming a pin's straight corridor steps beside it
 //! because they are not; and no chain lands where a lead must cross, because
@@ -28,12 +30,11 @@ mod absolute;
 mod read;
 mod walk;
 
-use super::lattice::{Ax, Lattice};
-use super::net;
-use super::terminal::{Terminal, terminal};
+use super::lattice::{Ax, EPS, Lattice};
+use super::terminal::{self, Terminal, terminal};
 use crate::desugar::pose::Side;
-use crate::desugar::schematic::Role;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
+use crate::desugar::schematic::{Role, SchKind, sch_kind};
 use crate::layout::ir::{Bbox, PlacedNode};
 use crate::resolve::{LinkKind, ResolvedLink};
 
@@ -74,9 +75,8 @@ pub(super) struct Field {
     cells: Vec<Vec<Bbox>>,
     /// Per anchor, its field origin on each side, by [`Side::index`].
     origins: Vec<[i32; 4]>,
-    /// Which children are **net runs** — a stretch of trace with a name over
-    /// it rather than a body [SPEC 16.4], and so a line to reserve, not a cell.
-    runs: Vec<bool>,
+    /// Per child, what its cell has to hold **across** its ray.
+    bodies: Vec<Body>,
     /// Which children end a **run** — a trunk's terminator, or a branch's.
     terminators: Vec<bool>,
     lat: Lattice,
@@ -97,7 +97,7 @@ impl Field {
             floating: Vec::new(),
             cells: vec![Vec::new(); children.len()],
             origins: children.iter().map(|c| origins(c, lat)).collect(),
-            runs: children.iter().map(net::is_run).collect(),
+            bodies: children.iter().map(Body::of).collect(),
             terminators: vec![false; children.len()],
             lat,
         };
@@ -227,26 +227,42 @@ impl Field {
         }
     }
 
-    /// A member's cell [SPEC 16.1] — the cell, never the part's ink: one coarse
-    /// pitch along its ray, and one across it. A **net run** is the exception
-    /// [SPEC 16.4]: being a stretch of trace rather than a body, it reserves
-    /// the fine line it lands on and no more, so a rail of pins each naming a
-    /// net keeps every name on its own row instead of each pushing the next a
-    /// whole cell aside.
+    /// A member's cell [SPEC 16.1] — one coarse pitch **along** its ray, and
+    /// across it the pitch of the line it stands on ([`Field::across`]).
     fn cell(&self, member: usize, seat: Seat) -> Bbox {
         let (x, y) = self.point(seat);
         let ray = Ax::of(seat.ray);
         let along = self.lat.step(ray);
-        let across = if self.runs[member] {
-            self.lat.pitch
-        } else {
-            self.lat.step(ray.other())
-        };
+        let across = self.across(member, seat);
         let (w, h) = match ray {
             Ax::X => (along, across),
             Ax::Y => (across, along),
         };
         Bbox::centered(w, h).shifted(x, y)
+    }
+
+    /// How wide a member's cell stands **across** its ray [SPEC 16.1]: the
+    /// pitch of the line it stands on. A **part** takes the coarse cell
+    /// wherever it stands — its ref and value stand off its body by rule and
+    /// the cell is the room they need — and so does anything on a lane, a lane
+    /// being a coarse column. A **label** on a pin's own fine line takes that
+    /// line, widened to the whole fine pitches its own symbol draws across it:
+    /// a label is its own terminal and no part [SPEC 16.4], so a no-connect
+    /// cross seated off one pin leaves the pins either side their own rows,
+    /// and a net run — a stretch of trace with no drawing at all — takes
+    /// exactly the line it lands on.
+    fn across(&self, member: usize, seat: Seat) -> f64 {
+        let ax = Ax::of(seat.ray).other();
+        match self.bodies[member] {
+            Body::Tag(symbol) if seat.lane.is_none() => {
+                let drawn = symbol.map_or(0.0, |b| match ax {
+                    Ax::X => b.w(),
+                    Ax::Y => b.h(),
+                });
+                self.lat.pitch.max(self.lat.pitches(drawn))
+            }
+            _ => self.lat.step(ax),
+        }
     }
 
     /// How far out on `side` an anchor's field reaches, in coarse lines — the
@@ -287,6 +303,31 @@ impl Field {
     /// One coarse step the way `side` faces.
     fn step(&self, side: Side) -> f64 {
         self.lat.step(Ax::of(side)) * Ax::outward(side)
+    }
+}
+
+/// What a member's cell has to hold **across** its ray [SPEC 16.1] — the one
+/// split SPEC 16.4 opens with: components have pins, and a label is its own
+/// terminal.
+#[derive(Clone, Copy)]
+enum Body {
+    /// A **part** — a component, a discrete, an amplifier. It wears a
+    /// reference designator, so it takes a coarse cell across its ray wherever
+    /// it stands: the ref and the value stand off its body by rule.
+    Part,
+    /// A **label**: a terminal, not a part, so it asks only for the line its
+    /// wire runs on — widened to whatever its own symbol draws across that
+    /// line ([`terminal::body`]), and to nothing at all for a net run, which
+    /// draws none.
+    Tag(Option<Bbox>),
+}
+
+impl Body {
+    fn of(node: &PlacedNode) -> Body {
+        match sch_kind(&node.type_chain) {
+            Some(SchKind::Label) => Body::Tag(terminal::body(node)),
+            _ => Body::Part,
+        }
     }
 }
 
@@ -397,11 +438,6 @@ fn landing(children: &[PlacedNode], end: &End) -> (usize, Terminal) {
         terminal(&children[end.child], end.terminal.as_deref()),
     )
 }
-
-/// Slack for the one division this module does: a cell centre sits on its
-/// line to the last bit, so anything larger than rounding noise is a real
-/// step out.
-const EPS: f64 = 1e-9;
 
 #[cfg(test)]
 mod tests {

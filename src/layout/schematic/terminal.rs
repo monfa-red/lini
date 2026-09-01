@@ -69,25 +69,28 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
         }
         return Terminal { at, facing };
     }
-    // No node to read — a `|label|`'s connection point is its symbol's, and
-    // the symbol is drawn by its one `|path|` child. The wire meets the
-    // **ink**: the paint bbox is deflated by the glyph's painted half-stroke,
-    // or the landing floats a half-stroke off the drawing.
-    let body = drawing(part).map_or(part.bbox, |c| {
-        c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy)
-    });
+    // No node to read — a `|label|`'s connection point is its symbol's ([`body`]).
+    let body = body(part).unwrap_or(part.bbox);
     Terminal {
         at: facing.map_or(body.center(), |s| edge_midpoint(body, s)),
         facing,
     }
 }
 
-/// The drawing a `|label|`'s wire lands on — its one symbol child, which is
-/// where the wire meets the ink rather than the paint box around it.
-fn drawing(part: &PlacedNode) -> Option<&PlacedNode> {
+/// A part's **body** [SPEC 16.1] — the drawing its terminals belong to, in the
+/// part's own frame: the symbol it wears, or the outline a shaped tag draws.
+/// `None` for a part that draws none, which is the honest answer for a net run
+/// — a stretch of trace with a name over it, and no body at all [SPEC 16.4].
+///
+/// Never the label's text beside its symbol, and never a part's ref / value
+/// readouts: neither is a conductor, so neither may reserve a thing. The wire
+/// meets the **ink** — the paint bbox deflated by the drawing's own painted
+/// half-stroke, or the landing floats a half-stroke off the symbol.
+pub(super) fn body(part: &PlacedNode) -> Option<Bbox> {
     ["sch-tag-line", "sch-line"]
         .iter()
         .find_map(|k| child_wearing(part, k))
+        .map(|c| c.bbox.inflate(-c.attrs.half_stroke()).shifted(c.cx, c.cy))
 }
 
 /// A component pin's connection point: the far end of its stub, on the side

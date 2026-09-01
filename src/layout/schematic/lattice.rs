@@ -104,7 +104,17 @@ impl Lattice {
     pub(super) fn snap(self, v: f64) -> f64 {
         (v / self.pitch).round() * self.pitch
     }
+
+    /// `w` in whole **fine** pitches — the lattice a body of that width takes
+    /// up across the line it stands on [SPEC 16.1]. `0` for no body at all.
+    pub(super) fn pitches(self, w: f64) -> f64 {
+        (w / self.pitch - EPS).ceil().max(0.0) * self.pitch
+    }
 }
+
+/// Slack for the divisions the lattice does: a cell centre sits on its line to
+/// the last bit, so anything larger than rounding noise is a real step out.
+pub(super) const EPS: f64 = 1e-9;
 
 /// A scope's **track quantum** (ROUTING.md §Vocabulary) — its fine pitch
 /// [SPEC 16.1] — or `None` for a node that is no schematic scope.

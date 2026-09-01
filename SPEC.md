@@ -3426,10 +3426,13 @@ sheet's grid and the scene's are **one** grid, which is what lets the router
 round a wire to it ([ROUTING.md](ROUTING.md), Track quantum). A nested sheet
 therefore takes the flow's gap rounded to the nearest half pitch.
 
-**Ink never places.** A satellite's cell comes from the lattice — never from its
-symbol's size, never from the width of its ref or value. A long value overhangs
-the column beside it, and `gap` is the lever. The one reading of a part's own
-ink is its **field origin**.
+**Ink never places.** A satellite's cell comes from the lattice, never from the
+width of its ref or value: a long value overhangs the column beside it, and
+`gap` is the lever. Exactly two readings of a part's own drawing stand against
+that, and both are bounded and quantised onto the lattice — an anchor's **field
+origin**, and the reach of a label's own **symbol** across the line it stands
+on. Neither reads a word the author wrote, so no part's text ever moves another
+part.
 
 **Anchors ride tracks.** Anchors take the scope's **track grid**: one row by
 default, in declaration order; `columns: N` wraps; `cell: c r` places
@@ -3468,11 +3471,16 @@ rail flag beside a junction — takes no slot, hanging off its attachment member
 along its own drawn convention and stepping aside when that points back into the
 trunk.
 
-**Collision is the cells'.** A member's cell is one `gap` square on its lattice
-point — a **net run**'s the fine line it lands on, since a run is a stretch of
-trace and not a body ([16.4](#164-labels)) — and a chain's cells run from its
-own **pin's** line out to its outermost member, which is the column it really
-draws. A lane is free when no cell of the chain meets one already committed; a
+**Collision is the cells'.** A member's cell is one `gap` pitch along its ray,
+and across it the pitch of the **line it stands on**: a **part** takes the
+coarse cell wherever it stands — its ref and value stand off its body by rule,
+and that is the room they need — while a **label**, being its own terminal and
+no part ([16.4](#164-labels)), takes the fine line its wire runs on, widened to
+the whole fine pitches its own symbol draws across it. So a no-connect cross
+grown straight out of one pin leaves the pins either side their own rows, and a
+net run, which draws no symbol at all, takes exactly the line it lands on. A
+chain's cells run from its own **pin's** line out to its outermost member, which
+is the column it really draws. A lane is free when no cell of the chain meets one already committed; a
 taken lane steps out a coarse line and tries again. A chain's **lead** — the
 run from its pin out to its lane — reserves nothing, the lane order keeping it
 clear. So four things need no rule: an up-chain and a down-chain off one pin

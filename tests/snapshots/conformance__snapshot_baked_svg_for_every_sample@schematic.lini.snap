@@ -292,7 +292,7 @@ input_file: samples/schematic.lini
         <path d="M -30.106 -6.75 L 23.356 -6.75 L 30.106 0 L 23.356 6.75 L -30.106 6.75 Z"/>
       </g>
     </g>
-    <g class="lini-node lini-tag-flag-left lini-label lini-block" data-id="lini-label-2" transform="translate(220,20)">
+    <g class="lini-node lini-tag-flag-left lini-label lini-block" data-id="lini-label-2" transform="translate(220,-80)">
       <rect x="-25.4825" y="-7.5" width="50.965" height="15" rx="0" ry="0"/>
       <g class="lini-text">
         <use href="#lini-g1500-126" transform="translate(-11.4825 3.938) scale(0.011 -0.011)"/>
@@ -341,7 +341,7 @@ input_file: samples/schematic.lini
       <path d="M 292.75 -100 L 250.856 -100"/>
     </g>
     <g class="lini-link" data-from="j1.p2" data-to="lini-label-2">
-      <path d="M 292.75 -80 L 220 -80 L 220 12.5"/>
+      <path d="M 292.75 -80 L 245.4825 -80"/>
     </g>
     <g class="lini-link" data-from="j1.p4" data-to="lini-label-3">
       <path d="M 292.75 -40 L 199.5605 -40"/>

@@ -245,6 +245,39 @@ fn chains_on_one_pin_stand_one_coarse_pitch_apart_in_statement_order() {
 }
 
 #[test]
+fn a_symbol_grown_out_of_one_pin_leaves_the_rows_either_side_free() {
+    // [SPEC 16.1] a member's cell across its ray is the pitch of the **line it
+    // stands on** — the fine pin pitch for a chain that grew straight out —
+    // widened only to what the part's own symbol needs. So the `|nc|` seated
+    // off one pin covers that pin's row and no other, and the net runs on the
+    // pins above and below it keep their own rows instead of each being shoved
+    // a whole coarse cell aside.
+    // One name on every pin, so all four stubs tip on exactly one line and the
+    // lane order is the statement order it ties to.
+    let pin = |id: &str| format!("    |pin#{id}| \"IO\" {{ side: left }}\n");
+    let rail = format!(
+        "  |component#u1| [\n{}{}{}{}  ]\n",
+        pin("a"),
+        pin("b"),
+        pin("c"),
+        pin("d")
+    );
+    let nodes = laid(&scope(
+        "",
+        &(rail
+            + "  |nc#x1|\n  |label#n1| \"NA\"\n  |label#n2| \"NC\"\n  |label#n3| \"ND\"\n"
+            + "  u1.b - x1\n  u1.a - n1\n  u1.c - n2\n  u1.d - n3\n"),
+    ));
+    for (pin, run) in [("a", "n1"), ("c", "n2"), ("d", "n3")] {
+        let (py, ry) = (at(&nodes, pin).1, at(&nodes, run).1);
+        assert!(
+            close(py, ry),
+            "'{run}' sits off '{pin}''s own row: {ry} vs {py}"
+        );
+    }
+}
+
+#[test]
 fn a_chain_that_turns_onto_its_ray_takes_a_lane_of_its_own() {
     // [SPEC 16.1] a chain leaving its pin sideways gets its own lane, so its
     // lead is one square turn — out along the pin, then away. Sharing a lane
