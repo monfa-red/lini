@@ -3708,6 +3708,15 @@ A **three**-terminal symbol cannot: its two same-side pins straddle the line,
 and whatever rides one of them ([16.1](#161-placement--the-lattice)'s span) is
 off the lattice by that much.
 
+A symbol's **pin-to-pin length** is no whole number of fine pitches, and at the
+default `gap` it cannot be: two parts stacked one coarse pitch apart leave
+`gap − length` between their bodies, and the router wants a `clearance` either
+side of the wire joining them, so the length falls short of the pitch it would
+need. Nothing asks it to be whole. A two-terminal part's wire leaves **along**
+its own axis and turns on the line its **centre** stands on — a coarse line, and
+so a fine one — which is the line the track runs on; the pin's own coordinate
+along that axis is where a wire *ends*, never a track it travels.
+
 ### 16.4 Labels
 
 **Components have pins; a label is its own terminal.** `|label|` is the net

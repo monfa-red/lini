@@ -11,7 +11,7 @@
   // stays true-scale in print [SPEC 15.1] and the number says how much circuit
   // an A3 holds: the parts are drawn in sheet px [SPEC 16.6], so 10 fits these
   // seven blocks on the sheet edge to edge.
-  density: 10;
+  density: 8.6;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -45,7 +45,7 @@
 // frame's corner [SPEC 15.8]. `padding:` clears the frame, which is inset
 // 10 mm from the trimmed edge, so no block draws over it.
 |page| {
-  sheet: a3 landscape; padding: 110; layout: grid; columns: 1450, 1330, 1150; rows: 920, 920, 860; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; padding: 110; layout: grid; columns: 1100, 1100, 900; rows: 800, 800, 700; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [
