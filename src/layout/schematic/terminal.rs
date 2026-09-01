@@ -21,7 +21,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use crate::desugar::pose::{Pose, Side};
-use crate::desugar::schematic::{is_net_run, part_pin_ids, terminal_facing};
+use crate::desugar::schematic::{is_net_run, part_pin_ids, terminal_facing, terminal_ids};
 use crate::resolve::{AttrMap, ResolvedValue};
 
 /// A wirable terminal, in its **part's** coordinates (the part's origin is
@@ -75,6 +75,32 @@ pub(super) fn terminal(part: &PlacedNode, path: Option<&str>) -> Terminal {
         at: facing.map_or(body.center(), |s| edge_midpoint(body, s)),
         facing,
     }
+}
+
+/// The point the lattice holds a satellite by [SPEC 16.1] — the **centre of
+/// its connection geometry**, never of its drawn box: the terminals a part
+/// carries, the one connection point a label is, and the whole run of trace a
+/// net run draws, whose box *is* the conductor [SPEC 16.4] — so a name still
+/// stands centred on its slot rather than hung off one end of it.
+///
+/// For a symmetric two-terminal symbol the two readings are the same point, so
+/// nothing moves; for a flag drawing its name beside its symbol they are half
+/// a name apart, and it is the symbol's port that belongs on the wire's line.
+pub(super) fn seat_point(part: &PlacedNode) -> (f64, f64) {
+    if super::net::is_run(part) {
+        return part.bbox.center();
+    }
+    let ports: Vec<(f64, f64)> = terminal_ids(part)
+        .iter()
+        .map(|id| terminal(part, id.as_deref()).at)
+        .collect();
+    // A `|label|` carries no terminal ids at all: it *is* its own terminal.
+    if ports.is_empty() {
+        return terminal(part, None).at;
+    }
+    let n = ports.len() as f64;
+    let (x, y) = ports.iter().fold((0.0, 0.0), |a, p| (a.0 + p.0, a.1 + p.1));
+    (x / n, y / n)
 }
 
 /// A part's **body** [SPEC 16.1] — the drawing its terminals belong to, in the

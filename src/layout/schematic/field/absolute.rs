@@ -13,7 +13,7 @@
 
 use super::super::lattice::Ax;
 use super::super::net;
-use super::super::terminal::Terminal;
+use super::super::terminal::{Terminal, seat_point};
 use super::{Field, Spanning};
 use crate::desugar::pose::Side;
 use crate::layout::ir::PlacedNode;
@@ -92,14 +92,15 @@ impl Field {
     }
 }
 
-/// Stand a part's **body** on a lattice point [SPEC 16.1], and step the name
-/// of a net run off the trace it rides ([`net::seat_text`]) — `outward` being
-/// the side away from the anchor whose field holds it, `None` where no field
-/// does. A part's own ref / value pair turns outward too, but later and by its
-/// own pass ([`super::super::readout`]), which reads the seat rather than this
-/// one hint.
+/// Stand a part's **connection geometry** on a lattice point [SPEC 16.1] —
+/// never its drawn box, so a flag's symbol lands on the wire's line and its
+/// name hangs off ([`seat_point`]) — and step the name of a net run off the
+/// trace it rides ([`net::seat_text`]), `outward` being the side away from the
+/// anchor whose field holds it and `None` where no field does. A part's own
+/// ref / value pair turns outward too, but later and by its own pass
+/// ([`super::super::readout`]), which reads the seat rather than this one hint.
 fn stand(node: &mut PlacedNode, at: (f64, f64), outward: Option<Side>) {
-    let (bx, by) = node.bbox.center();
+    let (bx, by) = seat_point(node);
     node.cx = at.0 - bx;
     node.cy = at.1 - by;
     if net::is_run(node) {

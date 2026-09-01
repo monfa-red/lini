@@ -7,7 +7,7 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, body, cell, chrome, close, laid, on_fine_grid, placed, pose_of, scope,
+    anchor, at, body, cell, chrome, close, laid, on_fine_grid, placed, port, pose_of, scope, seat,
     seat_warnings, sided, sided_with, tip,
 };
 use crate::layout::PlacedNode;
@@ -191,6 +191,34 @@ fn an_up_chain_and_a_down_chain_off_one_pin_share_a_column() {
 }
 
 #[test]
+fn a_satellite_seats_by_its_connection_geometry_not_its_drawn_box() {
+    // [SPEC 16.1] a power flag draws its name **beside** its symbol, so its
+    // box centre stands half a name off its own connection point. The lattice
+    // holds the connection point: the flag's lead runs dead straight up the
+    // lane its chain took and the name hangs off it, which is what a sheet
+    // draws. Ink deciding where a wire goes is the one thing 16.1 forbids
+    // outright.
+    let src = FLAG.to_owned()
+        + &scope(
+            "",
+            &(sided("u1") + "  |R#r1| \"10k\"\n  |vp#f1|\n  u1.a - r1 - f1\n"),
+        );
+    let nodes = laid(&src);
+    // The resistor's own leads ride its centre line [SPEC 16.3], so its centre
+    // **is** the lane the whole chain stands on.
+    let lane = at(&nodes, "r1").0;
+    let (fx, _) = port(&nodes, "f1");
+    assert!(
+        close(fx, lane),
+        "the flag lands off the lane: {fx} vs {lane}"
+    );
+    assert!(
+        !close(at(&nodes, "f1").0, lane),
+        "…and its box does not stand on it, the name hanging off"
+    );
+}
+
+#[test]
 fn every_placed_part_lands_on_the_scopes_own_fine_lattice() {
     // The invariant [SPEC 16.1], and it is **absolute**: the packer lands
     // every anchor on a coarse line, a cell is a whole number of coarse
@@ -206,7 +234,7 @@ fn every_placed_part_lands_on_the_scopes_own_fine_lattice() {
     );
     let nodes = laid(&src);
     for id in ["u1", "u2", "r1", "c1", "g1", "g2", "f1"] {
-        let (x, y) = at(&nodes, id);
+        let (x, y) = seat(&nodes, id);
         assert!(
             on_fine_grid(x) && on_fine_grid(y),
             "'{id}' off the grid: {x} {y}"
@@ -714,11 +742,11 @@ fn a_tap_keeps_the_junction_it_taps() {
         );
     let nodes = laid(&src);
     assert!(
-        close(body(&nodes, "t1").1, body(&nodes, "l1").1),
+        close(seat(&nodes, "t1").1, seat(&nodes, "l1").1),
         "the tap stays on its attachment's row"
     );
     assert!(
-        body(&nodes, "f1").1 < body(&nodes, "l1").1,
+        seat(&nodes, "f1").1 < seat(&nodes, "l1").1,
         "and only the terminator rose"
     );
 }
@@ -1022,6 +1050,8 @@ fn a_readout_never_moves_a_part() {
 /// of the routing law checker, judged on the placed sheet alone. Measured in
 /// each **scope's own frame**, which is where the invariant is stated; a
 /// scope's own origin lands on the lattice too, so the scene's reading agrees.
+/// A part is judged at the point the lattice holds it by [SPEC 16.1] — an
+/// anchor's own origin, a satellite's connection geometry.
 ///
 /// **The one exemption**, and it belongs to the drawing rather than to
 /// placement: a symbol-bodied three-terminal part (`|Q|`, `|opamp|`) presents

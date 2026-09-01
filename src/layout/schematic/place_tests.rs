@@ -2,7 +2,9 @@
 //! `columns:` wraps, ordinal `cell:` collapses, every track sizes to its
 //! widest anchor — and which children ride a track at all.
 
-use super::tests::{anchor, at, cell, close, laid, on_fine_grid, placed, pose_of, scope, sided};
+use super::tests::{
+    anchor, at, cell, close, laid, on_fine_grid, placed, pose_of, scope, seat, sided,
+};
 use crate::layout::PlacedNode;
 use crate::ledger::consts::PIN_PITCH;
 use crate::ledger::defaults::SCH_GAP;
@@ -472,7 +474,7 @@ fn a_nested_scope_stands_on_the_fine_lattice_the_router_rounds_to() {
     );
     let nodes = laid(&src);
     for id in ["u1", "c1", "g1"] {
-        let (x, y) = at(&nodes, id);
+        let (x, y) = seat(&nodes, id);
         assert!(
             on_fine_grid(x) && on_fine_grid(y),
             "'{id}' at {x} {y} is off the scene's lattice"

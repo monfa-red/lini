@@ -19,7 +19,7 @@
 
 use super::field::Field;
 use super::lattice::{Ax, Lattice};
-use super::terminal::ident;
+use super::terminal::{ident, seat_point};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::{SchKind, sch_kind};
 use crate::layout::ir::{Bbox, PlacedNode};
@@ -62,10 +62,11 @@ pub(super) fn rails(children: &mut [PlacedNode], field: &Field, lat: Lattice) ->
     Bbox::from_points(&cells)
 }
 
-/// The lattice point a placed part stands on: its **body's** centre, which is
-/// what the field pass stood on the cell [SPEC 16.1].
+/// The lattice point a placed part stands on: its **connection geometry**,
+/// which is what the field pass stood on the cell [SPEC 16.1] — so a row is
+/// the line the wires end on, whatever each terminator's symbol measures.
 fn point(node: &PlacedNode) -> (f64, f64) {
-    let (bx, by) = node.bbox.center();
+    let (bx, by) = seat_point(node);
     (node.cx + bx, node.cy + by)
 }
 

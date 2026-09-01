@@ -54,6 +54,33 @@ pub(super) fn cell(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
     (bx, by, b.w(), b.h())
 }
 
+/// The point the lattice holds a placed part by [SPEC 16.1]: an **anchor** by
+/// its own origin, which the packer lands on a coarse line, and a
+/// **satellite** by its connection geometry, which the field pass stands on
+/// the cell. One reading for every test that judges the invariant.
+pub(super) fn seat(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    seat_of(n, (x, y))
+}
+
+/// …the same reading, for a walk that already holds the node and its origin.
+pub(super) fn seat_of(node: &PlacedNode, at: (f64, f64)) -> (f64, f64) {
+    if super::place::role(node) != crate::desugar::schematic::Role::Satellite {
+        return at;
+    }
+    let (sx, sy) = super::terminal::seat_point(node);
+    (at.0 + sx, at.1 + sy)
+}
+
+/// A placed part's own **connection point** in scene coordinates — where a
+/// bare wire to it lands [SPEC 16.4], read through the one connection-geometry
+/// reader the engine seats by.
+pub(super) fn port(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
+    let (n, x, y) = placed(nodes, id);
+    let at = super::terminal::terminal(n, None).at;
+    (x + at.0, y + at.1)
+}
+
 /// A placed node's **own box** in scene coords — its drawing without the
 /// readout chrome hanging off it, for the assertions that are about where the
 /// part itself landed.
@@ -122,10 +149,11 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .collect()
 }
 
-/// Every schematic part a scope placed, as `(written type, id, x, y)` with
-/// its centre **in that scope's own frame** — what [SPEC 16.1]'s invariant is
-/// stated in. Since a scope's own origin lands on the fine lattice too, the
-/// scene's reading and the scope's agree, and either judges the invariant.
+/// Every schematic part a scope placed, as `(written type, id, x, y)` with the
+/// point the lattice holds it by ([`seat_of`]) **in that scope's own frame** —
+/// what [SPEC 16.1]'s invariant is stated in. Since a scope's own origin lands
+/// on the fine lattice too, the scene's reading and the scope's agree, and
+/// either judges the invariant.
 ///
 /// A part's own anatomy — pins, rails, readouts — is its business, so the walk
 /// stops at the outermost schematic type it meets.
@@ -162,7 +190,10 @@ pub(super) fn scope_parts(nodes: &[PlacedNode]) -> Vec<ScopePart> {
                 (Some((sx, sy)), Some(ty)) => out.push(ScopePart {
                     ty: ty.to_string(),
                     id: n.id.clone().unwrap_or_else(|| format!("|{ty}|")),
-                    at: (x - sx, y - sy),
+                    at: {
+                        let (px, py) = seat_of(n, (x, y));
+                        (px - sx, py - sy)
+                    },
                     ports: super::part_ports(n)
                         .map(|p| {
                             p.ports

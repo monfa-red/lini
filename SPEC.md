@@ -3434,6 +3434,15 @@ origin**, and the reach of a label's own **symbol** across the line it stands
 on. Neither reads a word the author wrote, so no part's text ever moves another
 part.
 
+**A satellite seats by its connection geometry**, never by its drawn box: the
+centre of the terminals a part carries, the one connection point a label is,
+the whole run of trace a net run draws ([16.4](#164-labels)). A symmetric
+two-terminal symbol's port midpoint *is* its box centre, so nothing moves; a
+flag drawing its name beside its symbol stands the **symbol** on the lattice
+line and lets the text hang off, which is what a sheet draws. Seating such a
+part by its box would put its wire half a name off the line the wire belongs
+on, which is ink deciding where a wire goes.
+
 **Anchors ride tracks.** Anchors take the scope's **track grid**: one row by
 default, in declaration order; `columns: N` wraps; `cell: c r` places
 explicitly. Track indices are **ordinal** — tracks spring into existence up to
