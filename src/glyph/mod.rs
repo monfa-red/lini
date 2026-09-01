@@ -138,6 +138,7 @@ glyphs! {
     "sch-fb" => 64.0, 26.0, [(0.0, 13.0), (64.0, 13.0)], [(Line, r#"<path d="M 0 13 L 25.65 13 M 38.35 13 L 64 13 M 42.26 6.22 L 32.74 0.72 L 21.74 19.78 L 31.26 25.28 Z"/>"#)];
     "sch-gnd" => 16.0, 12.0, [(8.0, 0.0)], [(Line, r#"<path d="M 8 0 L 8 5 M 1 5 L 15 5 L 8 12 Z"/>"#)];
     "sch-i" => 64.0, 24.0, [(0.0, 12.0), (64.0, 12.0)], [(Line, r#"<path d="M 0 12 L 20 12 M 20 12 A 12 12 0 1 0 44 12 A 12 12 0 1 0 20 12 M 44 12 L 64 12 M 26 12 L 38 12 M 34 8 L 38 12 L 34 16"/>"#)];
+    "sch-i-ac" => 64.0, 24.0, [(0.0, 12.0), (64.0, 12.0)], [(Line, r#"<path d="M 0 12 L 20 12 M 20 12 A 12 12 0 1 0 44 12 A 12 12 0 1 0 20 12 M 44 12 L 64 12 M 26 7 Q 29 3 32 7 Q 35 11 38 7 M 26 16 L 38 16 M 34 12 L 38 16 L 34 20"/>"#)];
     "sch-l" => 64.0, 10.0, [(0.0, 5.0), (64.0, 5.0)], [(Line, r#"<path d="M 0 5 L 12 5 A 5 5 0 0 1 22 5 A 5 5 0 0 1 32 5 A 5 5 0 0 1 42 5 A 5 5 0 0 1 52 5 L 64 5"/>"#)];
     "sch-led" => 64.0, 28.0, [(0.0, 14.0), (64.0, 14.0)], [(Line, r#"<path d="M 0 14 L 24 14 M 24 6 L 40 14 L 24 22 Z M 40 6 L 40 22 M 40 14 L 64 14 M 28 6 L 34 0 M 34 3 L 34 0 L 31 0 M 36 8 L 42 2 M 42 5 L 42 2 L 39 2"/>"#)];
     "sch-nc" => 12.0, 10.0, [(0.0, 5.0)], [(Line, r#"<path d="M 0 5 L 8 5 M 4 1 L 12 9 M 12 1 L 4 9"/>"#)];
@@ -209,8 +210,8 @@ mod tests {
     #[test]
     fn table_is_sorted_and_lookup_hits_every_glyph() {
         let all: Vec<_> = names().collect();
-        // 14 characteristics + 5 modifiers + 3 vees + 32 schematic symbols.
-        assert_eq!(all.len(), 54);
+        // 14 characteristics + 5 modifiers + 3 vees + 33 schematic symbols.
+        assert_eq!(all.len(), 55);
         assert!(all.windows(2).all(|w| w[0] < w[1]));
         for n in all {
             let g = lookup(n).expect(n);
@@ -248,7 +249,7 @@ mod tests {
             );
             swept += 1;
         }
-        assert_eq!(swept, 32);
+        assert_eq!(swept, 33);
         // Drafting glyphs carry no ports — they are not wired.
         assert!(lookup("flatness").unwrap().ports.is_empty());
     }
