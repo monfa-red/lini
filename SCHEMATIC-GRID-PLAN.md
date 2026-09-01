@@ -1366,6 +1366,21 @@ error rather than clamp."
 
 **Files:** everything the rebuild touched.
 
+**Carried findings** — raised by the tasks that found them, to settle here:
+
+- **§16.2's `translate:` on the styled-label form.** SPEC says it "nudges
+  either" readout, but desugar's `readout()` builds the pair from the label's
+  *text only* and drops its style, and the bracketed styled-label form
+  (`|R#r1| [ "10k" { … } ]`) never becomes a readout at all — it lowers to an
+  in-flow text child. Decide which of the two is wrong and fix that one.
+- **Task 8b's plan text is wrong and should not survive in history's only
+  record.** It hypothesised the field pass seating a member over a net run's
+  landing; the actual cause was `cluster::contend` charging a pitch between two
+  legs meeting tip to tip at a through point, which `ROUTING.md` §Fixed ports
+  already sanctioned ("that end-to-end contact is sanctioned exactly as a fan's
+  trunk is") but the code never implemented. The commit message carries the
+  truth; make sure `ROUTING.md` does too.
+
 - [ ] **Step 1: SPEC ↔ code audit**
 
 Re-read `SPEC.md` §16 against `lattice.rs`, `field.rs`, `pack.rs`, `rail.rs`, `readout.rs`, `place.rs`. Every sentence must be implemented and every behaviour must be stated; where they disagree, decide which is wrong and fix that one. Re-read `ROUTING.md`'s new clause against `place.rs`'s `chain_prefs`.
