@@ -3637,6 +3637,16 @@ semantic (`d3.a`, `q1.b`, `q1.g` per variant, `bt1.plus`). Polarity in a
 wire is a pin path (`vm - |D|.k - x` — cathode first). Orientation is
 `rotate:` ([16.1](#161-placement--the-lattice)).
 
+A **two-terminal** symbol's two leads are one line, and that line is the
+symbol's own **centre** line: a drawing that lies to one side of it — an
+inductor's coil, a polarized cap's plus mark, a switch's blade — reserves the
+side it does not use, exactly as an even pin rail reserves the slot it is short
+of ([16.2](#162-components--pins)). Placement seats a part by its body, so a
+lead off that centre would put the part on the lattice and its wire beside it.
+A **three**-terminal symbol cannot: its two same-side pins straddle the line,
+and whatever rides one of them ([16.1](#161-placement--the-lattice)'s span) is
+off the lattice by that much.
+
 ### 16.4 Labels
 
 **Components have pins; a label is its own terminal.** `|label|` is the net

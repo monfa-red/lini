@@ -1319,29 +1319,39 @@ fn fixed_ports_hold_the_laws_across_the_clearance_sweep() {
 // ── The track quantum (ROUTING.md §Vocabulary) ──
 
 /// A schematic scope states the fine pitch as its world's **track quantum**
-/// [SPEC 16.1], so the bare run between two gridded parts bends on their grid
-/// rather than a hair off it: the jog from the switch down to its ground used
-/// to cross at 83 — the midline between the two bodies — and now rides the
-/// lattice row at 80. Preference only: every law still holds.
+/// [SPEC 16.1], so a bare run between two gridded parts bends on their grid
+/// rather than on whatever midline their two ink-sized bodies leave.
+/// Preference only: every law still holds.
 #[test]
 fn a_schematic_worlds_interior_runs_land_on_its_track_quantum() {
     // The fine pitch [SPEC 10.5]; the scope places every part on it.
     const PITCH: f64 = 20.0;
-    let src = "|schematic#s| [\n\
-               \x20 |component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n\
-               \x20 |SW#sw1|\n\
-               \x20 |gnd#g1|\n\
-               \x20 u1.c - sw1 - g1\n]\n";
+    // Two anchors of unequal width, so the corridor between them is anchored
+    // nowhere near a grid line, and a second wire whose pins the alignment
+    // pass did not pair, so it must cross that corridor.
+    let src = "|schematic#s| { gap: 200 } [\n\
+               \x20 |component#u1| [ |pin#a| { side: right }; |pin#b| { side: right }; \
+               |pin#x| { side: right } ]\n\
+               \x20 |component#u2| \"WIDE PART NAME\" { cell: 2 1 } [ \
+               |pin#c| \"LONGNAME\" { side: left }; |pin#d| \"OTHERNAME\" { side: left } ]\n\
+               \x20 u1.a - u2.c\n\
+               \x20 u1.x - u2.d\n]\n";
     let routes = routes(src);
-    let jog = path(&routes, "s.sw1.p2", "s.g1");
+    let jog = path(&routes, "s.u1.x", "s.u2.d");
     orthogonal(jog);
-    assert_eq!(jog.len(), 4, "down, across, down: {jog:?}");
-    assert_eq!(jog[1].1, jog[2].1, "one crossbar: {jog:?}");
-    let bar = jog[1].1;
+    assert_eq!(jog.len(), 4, "across, over, across: {jog:?}");
+    assert_eq!(jog[1].0, jog[2].0, "one crossbar: {jog:?}");
+    let bar = jog[1].0;
     assert_eq!(bar, (bar / PITCH).round() * PITCH, "off the lattice: {bar}");
+    let midline = (jog[0].0 + jog[3].0) / 2.0;
+    assert_ne!(
+        (midline / PITCH).round() * PITCH,
+        midline,
+        "the corridor's own anchor is on the grid, so this proves nothing"
+    );
     assert!(
-        jog[1].1 > jog[0].1 && jog[3].1 > jog[2].1,
-        "and still between the two terminals: {jog:?}"
+        jog[0].0 < bar && bar < jog[3].0,
+        "and still inside the corridor: {jog:?}"
     );
     let breaches: Vec<_> = report(src)
         .into_iter()
