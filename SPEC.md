@@ -3400,6 +3400,7 @@ by role:
 | a `\|label\|`, or an *unplaced* 1–2-pin part | a **satellite** | seated at the pin its wire touches |
 | a link (`a - b`) | a **wire** | routed orthogonally, square-cornered, junction-dotted |
 | a one-ended link with text or a capsule (`U7.DIAG - "NSTDBY"`, `c24.p2 - \|gnd\|`) | a **label wire** | a lead to a seated `\|label\|` — a run of trace under a plain net name, a stub to a tag or a symbol ([16.4](#164-labels)) |
+| a `pin:` child (a note, a legend) | sheet **chrome** | an overlay flush on the finished sheet, in neither the tracks nor the seats ([SPEC 5](#5-the-box-model)) |
 
 Vocabulary: a **component** is the part instance; a **symbol** is the drawing
 it (or a label) wears — `symbol:` names one, exactly as on `|icon|`
@@ -3421,21 +3422,22 @@ apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
 them stand one coarse column apart. Two wired neighbouring pins stand one
 **fine** pitch apart, so a scope whose `clearance` runs past that pitch is an
 error ([SPEC 21](#21-errors)) — said once, where the number is written, rather
-than as a stray for every lead that then finds no track. The finished sheet centres on the scope's
-own origin, and that shift is a whole number of **fine** pitches — so a part
-placed on the lattice is still on it once the sheet is squared up. The scope's
+than as a stray for every lead that then finds no track. The finished sheet
+centres on the scope's own origin, and that shift is a whole number of **fine**
+pitches — so a part placed on the lattice is still on it once the sheet is
+squared up. The scope's
 own origin then lands on that same lattice, wherever its parent seated it: the
 sheet's grid and the scene's are **one** grid, which is what lets the router
 round a wire to it ([ROUTING.md](ROUTING.md), Track quantum). A nested sheet
-therefore takes the flow's gap rounded to the nearest half pitch.
+therefore stands within half a fine pitch of where its parent's flow put it.
 
 **Ink never places.** A satellite's cell comes from the lattice, never from the
 width of its ref or value: a long value overhangs the column beside it, and
-`gap` is the lever. Exactly two readings of a part's own drawing stand against
-that, and both are bounded and quantised onto the lattice — an anchor's **field
-origin**, and the reach of a label's own **symbol** across the line it stands
-on. Neither reads a word the author wrote, so no part's text ever moves another
-part.
+`gap` is the lever. Ink is read only where a **count of cells** is owed — a
+field's origin, the air two neighbouring anchors keep, a label symbol's reach
+across the line it stands on — and every such reading rounds onto the lattice.
+So a part's text can hold a field or a track one cell wider, and never says
+which cell another part takes.
 
 **A satellite seats by its connection geometry**, never by its drawn box: the
 centre of the terminals a part carries, the one connection point a label is,
@@ -3466,9 +3468,10 @@ holds a part, it does not part it from the next.
   power flag's at its bottom, so up); with no such convention the chain runs
   straight out along the pin's normal. A ray **anti-parallel** to that normal
   yields to it, the terminator posing inverted as a sheet flips a ground above a
-  part. A pin's straight corridor belongs to its **first claimant** in statement
-  order; a later chain there turns onto the canonical ray — down off a side pin,
-  rightward off a top or bottom one.
+  part. A pin's straight corridor belongs to the wire running **through** it —
+  one on to another placed part — so a chain sharing such a pin turns onto the
+  canonical ray: down off a side pin, rightward off a top or bottom one. A chain
+  of bare net runs is exempt, being that very trace named ([16.4](#164-labels)).
 - its **lane** is the cross coordinate: a coarse line out from the anchor's ink
   for a chain that turned off its pin, the pin's own fine line for one that grew
   straight out and takes no lane at all.
@@ -3486,14 +3489,16 @@ trunk.
 **Collision is the cells'.** A member's cell is one `gap` pitch along its ray,
 and across it the pitch of the **line it stands on**: a **part** takes the
 coarse cell wherever it stands — its ref and value stand off its body by rule,
-and that is the room they need — while a **label**, being its own terminal and
-no part ([16.4](#164-labels)), takes the fine line its wire runs on, widened to
+and that is the room they need — and so does anything on a lane, a lane being a
+coarse column. A **label** keeping a pin's own **fine** line, being its own
+terminal and no part ([16.4](#164-labels)), takes that line alone, widened to
 the whole fine pitches its own symbol draws across it. So a no-connect cross
 grown straight out of one pin leaves the pins either side their own rows, and a
 net run, which draws no symbol at all, takes exactly the line it lands on. A
 chain's cells run from its own **pin's** line out to its outermost member, which
-is the column it really draws. A lane is free when no cell of the chain meets one already committed; a
-taken lane steps out a coarse line and tries again. A chain's **lead** — the
+is the column it really draws. A lane is free when no cell of the chain meets
+one already committed; a taken lane steps out a coarse line and tries again.
+A chain's **lead** — the
 run from its pin out to its lane — reserves nothing, the lane order keeping it
 clear. So four things need no rule: an up-chain and a down-chain off one pin
 **share a lane**, their columns meeting at exactly the one line; two pins whose
@@ -3506,13 +3511,17 @@ keeps the inner lane and the shallower steps out, so a lead crosses an inner
 column only above where that column is live. Lanes are taken in that order,
 deepest first, ties on statement order. A side carrying **both** rays cannot
 read it two ways and falls back to the canonical direction, the deepest pin
-innermost either way.
+innermost either way. The chains that grew **straight** out take no lane and
+compete for none, so they stand first: they are the geography every lane then
+steps past.
 
 A **field origin** — the first slot line and the innermost lane line on one side
 of an anchor — is the first coarse line a whole **cell** stands clear of that
 anchor's own drawn ink on, readouts included: a member centres on its line, so a
 line merely past the ink would seat it half over the part. Lanes and slots are
-the scope's **absolute** coarse lines, so two anchors' fields share their rows.
+**absolute** coarse lines counted from an anchor that stands on one itself, so
+two anchors' fields share their rows — bar the alignment below, which carries an
+anchor and its whole field together.
 
 **Rails.** A chain growing **down** into a rail symbol (`gnd` · `earth` ·
 `chassis` · `power` — [16.4](#164-labels)) sinks its terminator to the scope's
@@ -3520,10 +3529,11 @@ one **ground row**; one growing **up** raises it to the **flag row**. The row is
 the **ray**'s, never the symbol's, so an inverted ground above a part rides the
 flag row. Each row stands a coarse row past the deepest slot its ray's other
 members reached, and never short of a terminator already deeper — so a scope of
-one-member chains keeps the line it drew. Only the **terminator** moves: its
-chain keeps every slot above it, and the lead down to the rail is the router's
-ordinary wire. Rails are vertical only — a chain running out along a
-pin's row ends where it ends.
+one-member chains keeps the line it drew. Only a **terminator** moves — the
+trunk's, or a branch's grown along its own ray, never a tap, which ends nothing
+and stays beside the junction it hangs off: its chain keeps every slot above it,
+and the lead down to the rail is the router's ordinary wire. Rails are vertical
+only — a chain running out along a pin's row ends where it ends.
 
 **Facing pins align.** Two anchors in one track row stand centre to centre on a
 shared row line, except that a wire — or a span, whose members all ride one line
@@ -3542,8 +3552,9 @@ that end; the region between the two tracks holds the earlier anchor's right
 lanes, then the span, then the later's left lanes. A chain whose ends are two
 terminals of **one** anchor is a **bridge** (`U2.EN - R5 - U2.VIN`): it grows off
 the first-named pin like any one-end chain, and the far wire is the router's,
-merged into the second pin's net at a junction dot. A chain with **no** placed
-end falls back to the flow with a warning ([SPEC 21](#21-errors)).
+merged into the second pin's net at a junction dot. A chain distributes between
+**two** ends and no more, so a **third** placed end is named and dropped; a chain
+with **no** placed end falls back to the flow. Both warn ([SPEC 21](#21-errors)).
 
 A seated satellite registers as a router obstacle like any node. **`cell:`
 promotes a satellite to an anchor**; `translate:` nudges it from its seat
@@ -3552,9 +3563,9 @@ promotes a satellite to an anchor**; `translate:` nudges it from its seat
 
 **Pose is rotation.** Every schematic part has authored connection geometry
 — pins on parts, one connection point on a label symbol. A satellite
-**auto-poses**: the field pass picks the 90°-step pose that presents its
-terminal back up the chain's own growth ray (deterministic tie-break: the
-unrotated pose, then clockwise) — so a ground, which sets that ray from its
+**auto-poses** to the 90°-step pose that presents its terminal back up the
+chain's own growth ray (deterministic tie-break: the unrotated pose, then
+clockwise) — so a ground, which sets that ray from its
 own drawing, is never turned, and a part in the middle of the chain stands to
 meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose;
 the seat direction derives from the rotated connection point. Rotation on a
@@ -3605,14 +3616,15 @@ overriding (`|ic::component| { prefix: "IC" }` mints IC1…), declaration
 order, skipping authored names. A minted ref is **display-only, never an
 endpoint** — wiring `R1.p1` to a minted ref is an unknown endpoint
 ([SPEC 21](#21-errors)): don't care → free numbering; wire it → name it.
-Ref/value text places by rule, and places nothing itself
+Ref/value text places by **rule**, never by search
 ([SPEC 16.1](#161-placement--the-lattice)): above a component, the ref over the
 value, the pair clearing the **top rail** — stubs and numbers — where pins
-landed there. A seated part reads its side off the field it stands in — a
-member on a lane wears both readouts **outward**, away from its anchor (right
-aligned in a left field, left aligned in a right one); one riding a pin's row
-wears them above and below, centred. `translate:` on the styled-label form
-nudges either. A component's pin rails seat so its pins land on **fine** lattice
+landed there. A symbol-bodied part turned to stand **across** its row stands on
+its own wire, so its pair steps beside the axis and reads its side off the field
+it is seated in — **outward**, away from the anchor (right aligned in a left
+field, left aligned in a right one, and right on neither flank); one lying
+**along** its row wears them above and below, centred.
+A component's pin rails seat so its pins land on **fine** lattice
 lines, whatever their count: a rail of an **even** count straddles its own
 middle, so it reserves the odd slot it is short of, and a part carrying only one
 of the two horizontal rails reserves the other, so its side pins ride the body's
@@ -3661,8 +3673,9 @@ A **two-terminal** symbol's two leads are one line, and that line is the
 symbol's own **centre** line: a drawing that lies to one side of it — an
 inductor's coil, a polarized cap's plus mark, a switch's blade — reserves the
 side it does not use, exactly as an even pin rail reserves the slot it is short
-of ([16.2](#162-components--pins)). Placement seats a part by its body, so a
-lead off that centre would put the part on the lattice and its wire beside it.
+of ([16.2](#162-components--pins)). A part's cell is centred on its lattice
+point, and so is the pair naming it, so a lead off that centre would hang both
+to one side of the wire they belong to.
 A **three**-terminal symbol cannot: its two same-side pins straddle the line,
 and whatever rides one of them ([16.1](#161-placement--the-lattice)'s span) is
 off the lattice by that much.
@@ -3678,8 +3691,9 @@ conventional readings — output, input, bidirectional — are the reader's, as 
 sequence's `->` vs `-->` are); **`symbol:`** swaps in a drawing from the
 **schematic symbol set** — `gnd` · `earth` · `chassis` · `power` · `nc` ·
 `antenna` — text beside it like an icon's, never under it: the symbol's own
-edge is the label's connection point, and the wire arrives there. Text alone is a net label, a symbol alone a
-ground, symbol + text a power flag. `|gnd|` and `|nc|` ship as built-in
+edge is the label's connection point, and the wire arrives there. Text alone
+is a net label, a symbol alone a ground, symbol + text a power flag. `|gnd|`
+and `|nc|` ship as built-in
 defines; a power net is a one-line define with intrinsic text
 ([SPEC 8](#8-templates)):
 
@@ -3712,7 +3726,7 @@ does not ([SPEC 9](#9-links)).
 | Run | Text |
 |---|---|
 | horizontal | **above** |
-| vertical | **beside**, **outward** — away from the anchor whose field the run stands in ([SPEC 16.1](#161-placement--the-lattice)); ties break on the routing side rank (right → bottom → left → top) |
+| vertical | **beside**, on the **freer** side: a minted run reads its field and steps outward, away from the anchor it hangs off ([SPEC 16.1](#161-placement--the-lattice)), a wire's own label the room the scene leaves either way; ties break on the routing side rank (right → bottom → left → top) |
 
 **`side: left \| right \| top \| bottom`** forces it — on the `|label|` for the
 minted run, on the **wire statement** for the two-ended form (`u7.vs -
@@ -3788,7 +3802,7 @@ The classic sheet is the default *inside the scope*, riding role variables
 green, part bodies pale yellow with dark-red outlines, labels teal, pin
 numbers muted, the scene beige — each a `light-dark()` pair. The scope's
 generated link defaults ([SPEC 17](#17-property-ledger--support)): a thinner
-wire, a tighter `clearance`, `corner-radius: 0`.
+wire, the net tag's ink, `corner-radius: 0`.
 
 **Opting into the engine is one decision.** `layout: schematic` carries the
 scope's own config — the lattice `gap` and that tighter `clearance` — wherever
@@ -3809,9 +3823,9 @@ emitted the scoped look rules; the engine then assigns every satellite its
 **cell** (ray, lane, slot), **packs** the tracks in whole coarse cells,
 absolutizes the seats, sinks the **rails**, seats the **readouts**, and hands
 every wire — with its fixed ports — to the router. Junction dots are read off
-the routed geometry and emitted as `|junction|` chrome. The scope's links stay ordinary routed
-links and its children arrange in place — no subtree is consumed; only the
-generated chrome (rails, readouts, tags, junctions) is new.
+the routed geometry and emitted as `|junction|` chrome. The scope's links stay
+ordinary routed links and its children arrange in place — no subtree is
+consumed; only the generated chrome (rails, readouts, tags, junctions) is new.
 
 ---
 # Part III — Reference
@@ -3861,7 +3875,7 @@ text, and box-model properties are universal to every node — the tables that f
 | Property | `flow` | `grid` | `tree` | `sequence` | `chart` | `pie` | `drawing` | `schematic` |
 |---|---|---|---|---|---|---|---|---|
 | `direction` | ✓ `row`/`column` | — | ✓ `+bilateral` | — | ✓ `+radial` | — | — | — |
-| `gap` | ✓ spacing | ✓ spacing | ✓ generation × sibling | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (a mate reads its own — [SPEC 15.5](#155-mates--seating)) | ✓ track spacing |
+| `gap` | ✓ spacing | ✓ spacing | ✓ generation × sibling | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (a mate reads its own — [SPEC 15.5](#155-mates--seating)) | ✓ the coarse lattice — column and row pitch ([SPEC 16.1](#161-placement--the-lattice)) |
 | `gap-fill` | ✓ | ✓ | — | ✓ᵇ | — | — | — | — |
 | `padding` | ✓ | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet | ✓ |
 | `align` / `justify` | ✓ | ✓ per-column | — | ✓ᵇ | — | — | — | — |
@@ -3965,7 +3979,7 @@ out of scope.
 | `layout` | any container | `flow`·`grid`·`stack`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 12 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid-stack--tree) |
-| `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--the-lattice)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
+| `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--the-lattice)) | track list · a schematic's is the **wrap count**, an integer ≥ 1 | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
 | `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--the-lattice)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid-stack--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
@@ -4007,7 +4021,7 @@ out of scope.
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
 | `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split (`left` on a `\|J\|`'s generated pins) | [SPEC 16.2](#162-components--pins) |
-| `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, outward of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
+| `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, the freer side of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
 
 ### Link properties
 
@@ -4660,7 +4674,10 @@ error.
 | Unknown schematic `symbol:` | `unknown symbol 'gnb'; did you mean 'gnd'?` |
 | Bad `shape:` / `pins:` / `number:` | `'shape' takes plain, left, right, both, or round — not 'X'` · `'pins' takes a count ≥ 1` · `'number' takes an integer` |
 | `clearance` past the fine pitch | `'clearance' 30 is past the sheet's pin pitch 20 — two wired pins stand one pitch apart, so no wire could keep it` |
+| Non-integer `columns` | `'columns' in a schematic is the wrap count — a positive integer (its tracks size to their anchors)` |
+| Two anchors on one `cell:` | `cell 2 1 already holds 'U7' — give 'U8' its own ordinal` |
 | Satellite chain with no placed end | `'C7' has no placed end — its chain falls back to the flow` (warning) |
+| A chain's third placed end | `'U3.a' also holds 'C7' — a chain distributes between two placed ends, so this one is dropped` (warning) |
 
 **Routing** — a stray's reasons ([ROUTING.md](ROUTING.md), Impossible layouts / Fixed ports); each is a warning naming the link, `--strict` an error
 
