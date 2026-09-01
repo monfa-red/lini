@@ -20,7 +20,6 @@
 
 use super::rect::Rect;
 use crate::layout::ir::PlacedNode;
-use crate::ledger::consts::PIN_PITCH;
 use parts::Parts;
 use std::collections::BTreeMap;
 
@@ -118,7 +117,7 @@ impl SceneIndex {
             overflow: Vec::new(),
             kind,
             chrome: crate::layout::drawing::chrome::is_chrome(&n.attrs),
-            quantum: crate::resolve::is_schematic(&n.attrs).then_some(PIN_PITCH),
+            quantum: crate::layout::schematic::quantum(&n.attrs),
             parent,
             children: Vec::new(),
         });

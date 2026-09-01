@@ -67,6 +67,12 @@ pub(super) fn close(a: f64, b: f64) -> bool {
     (a - b).abs() < 1e-6
 }
 
+/// Whether a coordinate lands on a fine lattice point [SPEC 16.1] — the one
+/// reading of the invariant, shared by the cell suite and the track suite.
+pub(super) fn on_fine_grid(v: f64) -> bool {
+    close(v, (v / consts::PIN_PITCH).round() * consts::PIN_PITCH)
+}
+
 /// A three-pin `|component|` whose pins take one side each — `a` left, `b`
 /// right, `c` bottom — so a test can name the outward direction it wants.
 pub(super) fn sided(id: &str) -> String {

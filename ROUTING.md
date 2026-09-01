@@ -175,8 +175,10 @@ The rest of this document is the `orthogonal` contract.
   alternating chain of runs.
 - **Track quantum** — a world's own grid step, where its scope states one (a
   schematic's fine pitch, [SPEC 16.1](SPEC.md#161-placement--the-lattice)). It
-  rounds an interior run's *preference*, never its lawful range: no law reads
-  it, and a world without one is unchanged.
+  is an **absolute** step, measured in scene coordinates, which is why such a
+  scope lands its own origin on it — the parts' grid and the wires' are one
+  grid. It rounds an interior run's *preference*, never its lawful range: no
+  law reads it, and a world without one is unchanged.
 - **Port** — the point where a link meets a side: the ordinate of its end
   run. Ports are not chosen ahead of routing; they fall out of placement.
 - **Bundle** — the links sharing one unordered endpoint pair and the same

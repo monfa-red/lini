@@ -7,11 +7,11 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, body, cell, chrome, close, laid, placed, pose_of, scope, seat_warnings, sided,
-    sided_with, tip,
+    anchor, at, body, cell, chrome, close, laid, on_fine_grid, placed, pose_of, scope,
+    seat_warnings, sided, sided_with, tip,
 };
 use crate::layout::PlacedNode;
-use crate::ledger::consts::{PIN_PITCH, READOUT_OFFSET};
+use crate::ledger::consts::READOUT_OFFSET;
 use crate::ledger::defaults::SCH_GAP;
 
 /// A user-defined power flag — the terminator for the chains that grow **up**.
@@ -212,12 +212,6 @@ fn every_placed_part_lands_on_the_scopes_own_fine_lattice() {
             "'{id}' off the grid: {x} {y}"
         );
     }
-}
-
-/// Whether a coordinate lands on a fine lattice point [SPEC 16.1].
-fn on_fine_grid(v: f64) -> bool {
-    let r = (v / PIN_PITCH).round() * PIN_PITCH;
-    (v - r).abs() < 1e-6
 }
 
 #[test]

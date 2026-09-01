@@ -2,7 +2,7 @@
 //! `columns:` wraps, ordinal `cell:` collapses, every track sizes to its
 //! widest anchor — and which children ride a track at all.
 
-use super::tests::{anchor, at, cell, close, laid, placed, pose_of, scope, sided};
+use super::tests::{anchor, at, cell, close, laid, on_fine_grid, placed, pose_of, scope, sided};
 use crate::layout::PlacedNode;
 use crate::ledger::consts::PIN_PITCH;
 use crate::ledger::defaults::SCH_GAP;
@@ -457,18 +457,25 @@ fn a_defines_own_gap_and_clearance_reach_the_scope_it_opens() {
 }
 
 #[test]
-fn tmp_dbg() {
+fn a_nested_scope_stands_on_the_fine_lattice_the_router_rounds_to() {
+    // [SPEC 16.1] a scope's parts stand on multiples of its pitch in the
+    // scope's own frame, and the router rounds a run to multiples of the same
+    // quantum in the *scene*'s (ROUTING.md §Vocabulary) — so a frame the
+    // parent seated off the grid hands the two of them different grids, and
+    // every bare run jogs by the remainder.
     let src = format!(
-        "{{ layout: schematic }}\n{}",
-        anchor("u1", "").trim_start().to_string() + anchor("u2", "").trim_start() + "u1.c - u2.a\n"
+        "{{ |region::group| {{ layout: schematic }} }}\n\
+         |row| {{ gap: 7; padding: 3 }} [\n\
+         |block#shim| {{ width: 33; height: 11 }}\n\
+         |region#r| [\n{}]\n]\n",
+        sided("u1") + "  |C#c1| \"1u\"\n  |gnd#g1|\n  u1.c - c1 - g1\n"
     );
     let nodes = laid(&src);
-    for id in ["u1", "u2", "a", "b", "c"] {
-        let (n, x, y) = placed(&nodes, id);
-        eprintln!(
-            "{id}: at ({x},{y}) bbox={:?} drawn={:?}",
-            n.bbox,
-            super::field::drawn(n)
+    for id in ["u1", "c1", "g1"] {
+        let (x, y) = at(&nodes, id);
+        assert!(
+            on_fine_grid(x) && on_fine_grid(y),
+            "'{id}' at {x} {y} is off the scene's lattice"
         );
     }
 }

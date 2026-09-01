@@ -533,13 +533,18 @@ fn a_nested_sheet_routes_its_own_interior_with_no_margin_at_all() {
 }
 
 #[test]
-fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
-    // The carry-over's other half, closed. A sheet's box now holds its parts'
-    // **ink** ([`super::field::drawn`]), so a part's stub tips can no longer
-    // poke out of the scope and eat the neighbouring gap from the outside: the
-    // old non-monotone "band" collapses into ROUTING.md's own rule — a wire
-    // needs a corridor, so the free space in front of a fixed port has to
-    // exceed `2 × clearance`, and nothing else moves the answer.
+fn a_wire_into_a_sheet_needs_a_corridor_and_that_corridor_is_the_whole_rule() {
+    // The carry-over's other half, closed. A sheet's box holds its parts'
+    // **ink** ([`super::field::drawn`]), so a part's stub tips cannot poke out
+    // of the scope and eat the neighbouring gap from the outside: the old
+    // non-monotone "band" collapses into ROUTING.md's own rule — a wire needs
+    // a corridor, so the free space in front of a fixed port has to exceed
+    // `2 × clearance`, and nothing else moves the answer.
+    //
+    // The corridor is **measured, not authored**: a scope's frame lands on the
+    // fine lattice [SPEC 16.1], so the flow gap it is handed rounds by up to
+    // half a pitch either way. That is the one thing between the author's
+    // `gap:` and the router's rule, and the rule itself is untouched.
     let sheet = |gap: f64, clearance: f64, pad: &str| {
         format!(
             "{{ direction: row; gap: {gap}; clearance: {clearance} }}\n\
@@ -547,25 +552,33 @@ fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
             anchor("u1", "")
         )
     };
-    let strays = |src: &str| {
-        crate::layout::layout(&program(src))
-            .expect("layout")
-            .strays
-            .len()
+    // The free space in front of the port, and whether the wire drew.
+    let corridor = |src: &str| {
+        let laid = crate::layout::layout(&program(src)).expect("layout");
+        let (a, ax, _) = placed(&laid.nodes, "a");
+        let (s, sx, _) = placed(&laid.nodes, "s");
+        (
+            sx + s.bbox.min_x - (ax + a.bbox.max_x),
+            laid.strays.is_empty(),
+        )
     };
-    // Monotone in `gap`, and the threshold is exactly the corridor's:
-    for (c, tight, wide) in [(16.0, 32.0, 33.0), (8.0, 16.0, 17.0)] {
-        assert_eq!(strays(&sheet(tight, c, "")), 1, "no corridor at 2×{c}");
-        assert_eq!(strays(&sheet(wide, c, "")), 0, "one past it draws");
-        assert_eq!(strays(&sheet(tight / 4.0, c, "")), 1, "and below it too");
+    for c in [16.0, 8.0] {
+        for gap in [12.0, 20.0, 28.0, 33.0, 36.0, 44.0, 60.0] {
+            let (free, drew) = corridor(&sheet(gap, c, ""));
+            assert_eq!(
+                drew,
+                free > 2.0 * c,
+                "clearance {c}, gap {gap}: {free} of corridor and drew {drew}"
+            );
+        }
     }
     // Interior padding buys nothing — it grows the sheet, and the flow moves
     // the neighbour out with it — but the scope's own gap is the honest lever.
     for pad in [" { padding: 30 }", " { padding: 120 }"] {
-        assert_eq!(
-            strays(&sheet(20.0, 16.0, pad)),
-            1,
-            "padding is not the corridor: {pad}"
+        let (free, drew) = corridor(&sheet(20.0, 16.0, pad));
+        assert!(
+            !drew && free < 32.0,
+            "padding is not the corridor: {pad} left {free}"
         );
     }
 }

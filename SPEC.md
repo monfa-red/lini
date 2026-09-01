@@ -3420,7 +3420,11 @@ part centre is always a wire line too (`gap: 120 80` states row and column
 apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
 them stand one coarse column apart. The finished sheet centres on the scope's
 own origin, and that shift is a whole number of **fine** pitches — so a part
-placed on the lattice is still on it once the sheet is squared up.
+placed on the lattice is still on it once the sheet is squared up. The scope's
+own origin then lands on that same lattice, wherever its parent seated it: the
+sheet's grid and the scene's are **one** grid, which is what lets the router
+round a wire to it ([ROUTING.md](ROUTING.md), Track quantum). A nested sheet
+therefore takes the flow's gap rounded to the nearest half pitch.
 
 **Ink never places.** A satellite's cell comes from the lattice — never from its
 symbol's size, never from the width of its ref or value. A long value overhangs
