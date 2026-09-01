@@ -1681,7 +1681,7 @@ pure auto-flow — `cell:` / `span:` apply to **box** children only (a text
 node has no block to carry them). A grid is positional, so an empty `""` cell is
 **kept** — it holds its track and keeps the cells after it aligned (in flow, an
 empty `""` is dropped). `cell:` is read on a grid and on a schematic
-([SPEC 16.1](#161-placement--anchors--satellites)), `span:` on a grid alone; where the
+([SPEC 16.1](#161-placement--the-lattice)), `span:` on a grid alone; where the
 container's layout is statically known to be neither, they are an **error**
 ([SPEC 17](#17-property-ledger--support)'s strict rule, [SPEC 21](#21-errors): `'cell' places a
 grid or schematic child — this box sits in a 'layout: flow'`).
@@ -3408,123 +3408,110 @@ reach links written in nested ordinary containers, but **placement never
 cascades** — a nested `|row|` or `|grid|` places its own children, exactly as
 in a drawing.
 
-### 16.1 Placement — anchors & satellites
+### 16.1 Placement — the lattice
+
+**The sheet is a grid.** A scope places on two pitches. The **fine** pitch is
+`pin-pitch` ([SPEC 10.5](#105-layout-constants-baked)) — every pin, stub tip and
+wire track lands on it. The **coarse** pitch is the scope's `gap`, which every
+part centre lands on: here `gap` is the column and row pitch, not the space
+between two tracks, and it rounds **up** to a whole number of fine pitches, so a
+part centre is always a wire line too (`gap: 120 80` states row and column
+apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
+them stand one coarse column apart.
+
+**Ink never places.** A satellite's cell comes from the lattice — never from its
+symbol's size, never from the width of its ref or value. A long value overhangs
+the column beside it, and `gap` is the lever. The one reading of a part's own
+ink is its **field origin**.
 
 **Anchors ride tracks.** Anchors take the scope's **track grid**: one row by
 default, in declaration order; `columns: N` wraps; `cell: c r` places
-explicitly. Track indices are **ordinal** — tracks spring into existence up
-to the largest referenced index and **empty tracks collapse entirely**, so
-sparse indices (10, 20, 30…) are safe ordering room and never inject
-invisible space. This is the engine's own track list; it does not alter the
-grid layout's laws ([SPEC 12](#12-flow-grid-stack--tree)). Track sizing reads each
-anchor's **cluster** — the anchor plus its seated satellites — so satellites
-consume space, never cells.
+explicitly. Track indices are **ordinal** — tracks spring into existence up to
+the largest referenced index and empty tracks collapse entirely, so sparse
+indices (10, 20, 30…) are safe ordering room and never inject invisible space.
+This is the engine's own track list; it does not alter the grid layout's laws
+([SPEC 12](#12-flow-grid-stack--tree)). A track sizes in **whole coarse cells**,
+to its anchors' bodies and the lanes their fields take — so satellites consume
+cells, never tracks.
 
-**Facing pins align across tracks.** An anchor seats where its cluster
-centres — except that a wire pairing one of its pins with a **facing** pin
-of an already-seated anchor in the same row (its left pins against an
-earlier column's right pins; columns mirror it with top against bottom)
-shifts it so the two landings share their row exactly, and the track sizes
-to the union of the shifted clusters. That wire draws dead straight, the
-way a sheet runs part-to-part nets — and two parts on one pin pitch align
-whole rails at once. Deterministic: anchors take alignment in track order,
-each through the first statement-order wire reaching a seated neighbour;
-everything else keeps the centring.
+**A chain is a walk.** A satellite chain — the run of satellites one wire holds
+— takes a ray, a lane, and a slot per member:
 
-**Satellites seat at pins.** A satellite chain reads its wire:
+- its **ray** is the growth direction. The **terminator's** own drawing decides
+  (a `|gnd|`'s connection point sits at its top, so its chain grows down; a
+  power flag's at its bottom, so up); with no such convention the chain runs
+  straight out along the pin's normal. A ray **anti-parallel** to that normal
+  yields to it, the terminator posing inverted as a sheet flips a ground above a
+  part. A pin's straight corridor belongs to its **first claimant** in statement
+  order; a later chain there turns onto the canonical ray — down off a side pin,
+  rightward off a top or bottom one.
+- its **lane** is the cross coordinate: a coarse line out from the anchor's ink
+  for a chain that turned off its pin, the pin's own fine line for one that grew
+  straight out and takes no lane at all.
+- its **slots** carry the members: member *k* centres on the *k*-th coarse line
+  along the ray. Centred, not hung — so a cap and a resistor off one bus share a
+  body row, their leads differing by their own lengths.
 
-- **one placed end** — the chain hangs off the wire's first leg (one seat out
-  along the pin, and as much farther as it needs to stand clear of the part it
-  hangs from — the seat measured on the **connection geometry** a wire arrives
-  at, a flag's symbol rather than the name beside it, which need only not reach
-  back over the part) and grows from there, **link by link and in that
-  order** — a later member never tucks into a hole before an earlier one —
-  in the direction of its **terminator's** connection geometry. Only a
-  `|label|` carries that convention — a `|gnd|` is drawn with its connection
-  point at its top, so the chain grows down; a power flag's sits at its
-  bottom, so up; a text label, and any chain a *part* terminates, runs along
-  the pin's outward normal. Two amendments keep the ray drawable: a
-  terminator ray **anti-parallel** to the pin's normal yields to the normal
-  (a gnd off a `side: top` pin stands inverted above the part, as a sheet
-  flips it), and a part-terminated chain on a pin that also carries a wire
-  to another placed part yields the **straight corridor** — that line
-  belongs to the through wire — turning down off a side pin, rightward off
-  a top or bottom one. The chain's **trunk** is the walk from the pin to its
-  terminator; every subtree hanging off a mid-trunk member is a **branch**,
-  grown from its attachment junction as a sub-chain along its *own*
-  terminator's ray (the trunk's when it states none) — stepping its lane
-  beside the trunk when the two rays share an axis, so two columns descend
-  side by side rather than interleaving into one. A **tap** — a
-  single symbol-label branch, the rail flag beside a junction — takes no
-  slot in any stack: it hangs off its attachment member along its own drawn
-  convention, stepping aside (out along the pin's normal) when that points
-  back into the trunk — **upright**, one gap out along both rays, so a flag
-  is never laid sideways and its lead is the router's one square corner;
-- **two placed ends on one anchor** — a **bridge** (`U2.EN - R5 -
-  U2.VIN`): the chain grows like a one-end chain off the **first-named**
-  pin — the member stands in that pin's own corridor, entry terminal
-  end-on — and the far wire is the router's, which merges it into the
-  second pin's net at a junction dot, the way a sheet taps a pull-up into
-  the line it feeds;
-- **two placed ends on two anchors** — a **span**: the members ride the
-  wire's **landing leg** — the straight run into the second end, on that
-  pin's row or column — and they stand **off that landing**, marching the
-  sheet's reading direction (rightward, downward) into it. The leg runs
-  along the axis that anchor's own satellites ladder their **lanes** on, so
-  a span's members **are** the next columns of that ladder and take its
-  **pitch**: the last-named one pitch past the ladder's outermost column,
-  each earlier a pitch before it, save where a member's own ink asks more —
-  then a seat gap clear of what it must clear, exactly as a column does. A
-  landing whose side holds no lane has no rhythm to join, and that seat gap
-  off the second end's **cluster** is the whole of it. The leg's surplus
-  lies where the wire comes **in**, a run of bare bus; a stretch too short
-  to hold the members centres them on the raw pin-to-pin line. The tracks
-  part far enough for the members *and* for what each cluster swallows;
-- **no placed end** — the parts fall back to the flow with a warning.
+The **trunk** is the walk from the pin to the terminator; a subtree hanging off
+a mid-trunk member is a **branch**, grown from its attachment as a sub-chain
+along its own terminator's ray. A **tap** — a single symbol-label branch, the
+rail flag beside a junction — takes no slot, hanging off its attachment member
+along its own drawn convention and stepping aside when that points back into the
+trunk.
 
-A chain that leaves its pin **sideways** takes a **lane** of its own — its own
-distance out along the pin before it turns onto the ray — so its lead is one
-square turn; one that grows straight out along its pin takes no lane and
-**stacks** outward instead. Lanes ladder: each column steps past the whole
-**ink** of the one before it — readout text included, both sides of its
-lane — so no two leads overtake each other and cross, and no column lands on
-another's text. That step is the **ladder's**, not the pair's: the greediest
-one any neighbouring pair asks is the **pitch** every column takes, so a
-side's lanes stand on one rhythm rather than wobbling with each part's value
-width. The pitch is a side's own, never the sheet's or even the part's: one
-block holding a long readout has no business parting the next block's columns
-to its width. A column whose own lane already stands farther out keeps it —
-the wall it clears, or a stack floor below — and the rhythm carries on from
-there. A column also stands
-past the reach of every **stack** it crosses — a chain growing straight out
-of a deeper pin on the same side — by a full seat gap, so the wire off the
-stack's far terminal (a bridge's return) has a corridor to climb; the
-stacks seat first, whatever the declaration order, being the inner
-geography. And every **wired** pin's row is a corridor of its own: a member
-seats clear of every wired row but its own pin's, so a column's body never
-lands where a through wire or a neighbouring trunk runs, and the wires cross
-its lead square instead — the decoupling cap stands below the bus pair,
-never woven into it. **The ladder is a side's, not a ray's**: every chain
-turning off one side of a part leaves along the one lane axis, so an up-chain
-and a down-chain off two *different* pins ladder against each other like any
-pair. Column order is the pins' own, read **along the ray**: a chain's leg
-crosses every lane inside its own, so the chain whose pin sits *earlier* along
-the ray steps out and the deeper one keeps the inner lane. A side holding
-**both** rays cannot read it that way — one pin's up-chain and its down-chain
-share a column, so the two ladders would demand opposite orders — and falls
-back to the **canonical** direction (downward, rightward), the bottom pin's
-column innermost both ways. Only a **pin's own** pair shares: the **first** chain of each ray off
-one pin takes the outermost lane its opposite number asked for — one lead,
-splitting once at the turn — and every later same-ray chain ladders out into
-its own column (two rails up, or two returns down, never stack one lane).
-Chains sharing one pin and ray keep statement order. A seated satellite
-registers as a router obstacle like any node. **`cell:` promotes a satellite
-to an anchor**; `translate:` nudges it from its seat (pin-relative — move
-the component and the nudge travels along, [SPEC 5](#5-the-box-model)).
+**Collision is the cells'.** A member's cell is one `gap` square on its lattice
+point. A lane is free when no cell of the chain meets one already committed; a
+taken lane steps out a coarse line and tries again. A chain's **lead** — the run
+from its pin out to its lane — reserves nothing, the lane order keeping it
+clear. So two things need no rule: an up-chain and a down-chain off one pin
+**share a lane**, their cells being disjoint, and no chain lands where a lead
+must cross.
+
+**Lane order is the pins' own**, read along the ray: the pin **deeper** along it
+keeps the inner lane and the shallower steps out, so a lead crosses an inner
+column only above where that column is live. Lanes are taken in that order,
+deepest first, ties on statement order. A side carrying **both** rays cannot
+read it two ways and falls back to the canonical direction, the deepest pin
+innermost either way.
+
+A **field origin** — the first slot line and the innermost lane line on one side
+of an anchor — is the first coarse line clear of that anchor's own drawn ink
+there, readouts included. Lanes and slots are the scope's **absolute** coarse
+lines, so two anchors' fields share their rows.
+
+**Rails.** Every downward chain's ground sinks to the scope's one **ground
+row**, a coarse row past the deepest slot any of them reached; every upward flag
+rises to its **flag row**. Rails are vertical only — a chain running out along a
+pin's row ends where it ends.
+
+**Facing pins align.** Two anchors in one track row stand centre to centre on a
+shared row line, except that a wire — or a span, whose members all ride one line
+— joining a **facing** pin pair (an earlier column's right pins against a later
+column's left pins; columns mirror it) aligns that pair instead, and the wire
+draws dead straight. The shift is a whole number of **fine** pitches, so
+alignment never breaks the lattice, and it is struck before the tracks size, so
+an aligned anchor never overruns its allotment. Deterministic: anchors take
+alignment in track order, each through the first statement-order wire reaching a
+placed neighbour.
+
+**Two placed ends.** A chain held at two *different* anchors is a **span**: its
+members ride the wire's **landing leg** — the straight run into the second end,
+on that pin's own line — on consecutive coarse cells, the last-named nearest
+that end; the region between the two tracks holds the earlier anchor's right
+lanes, then the span, then the later's left lanes. A chain whose ends are two
+terminals of **one** anchor is a **bridge** (`U2.EN - R5 - U2.VIN`): it grows off
+the first-named pin like any one-end chain, and the far wire is the router's,
+merged into the second pin's net at a junction dot. A chain with **no** placed
+end falls back to the flow with a warning ([SPEC 21](#21-errors)).
+
+A seated satellite registers as a router obstacle like any node. **`cell:`
+promotes a satellite to an anchor**; `translate:` nudges it from its seat
+(pin-relative — move the component and the nudge travels along,
+[SPEC 5](#5-the-box-model)).
 
 **Pose is rotation.** Every schematic part has authored connection geometry
 — pins on parts, one connection point on a label symbol. A satellite
-**auto-poses**: the seat pass picks the 90°-step pose that presents its
+**auto-poses**: the field pass picks the 90°-step pose that presents its
 terminal back up the chain's own growth ray (deterministic tie-break: the
 unrotated pose, then clockwise) — so a ground, which sets that ray from its
 own drawing, is never turned, and a part in the middle of the chain stands to
@@ -3577,21 +3564,22 @@ overriding (`|ic::component| { prefix: "IC" }` mints IC1…), declaration
 order, skipping authored names. A minted ref is **display-only, never an
 endpoint** — wiring `R1.p1` to a minted ref is an unknown endpoint
 ([SPEC 21](#21-errors)): don't care → free numbering; wire it → name it.
-Ref/value text places deterministically — above a component (the ref over the
+Ref/value text places by rule, and places nothing itself
+([SPEC 16.1](#161-placement--the-lattice)): above a component, the ref over the
 value, the pair clearing the **top rail** — stubs and numbers — where pins
-landed there), across a discrete's symbol: above and below an upright one,
-**beside** a turned one, whose own wire runs down the column those seats would
-take. A seated satellite's pair keeps out of the corridors: a column member's
-steps to its lane's **outward** side when the sheet's reading side faces back
-over the lane, and a corridor member's steps whole to the free side of its
-row when a live pin row crowds the other. `translate:` on the styled-label form nudges either.
+landed there. A seated part reads its side off the field it stands in — a
+member on a lane wears both readouts **outward**, away from its anchor (right
+aligned in a left field, left aligned in a right one); one riding a pin's row
+wears them above and below, centred. `translate:` on the styled-label form
+nudges either. A component's pin rail seats so its pins land on **fine** lattice
+lines, whatever their count.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins
 (`|J#J3| "JST S4B-ZR" { pins: 4 }`). A connector is **one column**, never the
 bilateral split: the generated pins are minted `side: left`, the header or
 terminal block standing at the sheet's edge with its pins facing the circuit.
-`rotate: 180` turns the column the other way ([16.1](#161-placement--anchors--satellites)),
+`rotate: 180` turns the column the other way ([16.1](#161-placement--the-lattice)),
 which is what a part on the *left* edge wants; authored `|pin|` children keep
 whatever side they state. `|opamp|` is the amplifier triangle —
 prefix U, pins `out`, `inp`, `inn`, its power pins present but hidden by
@@ -3622,7 +3610,7 @@ The smart label is the **value** (`|R#R18| "470m"`); `symbol:` picks the
 variant — one knob for every family, and it sets the pin ids where they are
 semantic (`d3.a`, `q1.b`, `q1.g` per variant, `bt1.plus`). Polarity in a
 wire is a pin path (`vm - |D|.k - x` — cathode first). Orientation is
-`rotate:` ([16.1](#161-placement--anchors--satellites)).
+`rotate:` ([16.1](#161-placement--the-lattice)).
 
 ### 16.4 Labels
 
@@ -3669,13 +3657,13 @@ does not ([SPEC 9](#9-links)).
 | Run | Text |
 |---|---|
 | horizontal | **above** |
-| vertical | **beside**, on the freer side — more clear space that way; ties break on the routing side rank (right → bottom → left → top) |
+| vertical | **beside**, **outward** — away from the anchor whose field the run stands in ([SPEC 16.1](#161-placement--the-lattice)); ties break on the routing side rank (right → bottom → left → top) |
 
 **`side: left \| right \| top \| bottom`** forces it — on the `|label|` for the
 minted run, on the **wire statement** for the two-ended form (`u7.vs -
 c24.p1 "VM" { side: bottom }`), one more owner of the `side` homonym
 ([SPEC 17](#17-property-ledger--support)). Text always stays **upright**: a run
-poses like any part ([16.1](#161-placement--anchors--satellites)) and rotation
+poses like any part ([16.1](#161-placement--the-lattice)) and rotation
 is read at lowering, never as a paint transform.
 
 ### 16.5 Wires
@@ -3748,7 +3736,7 @@ generated link defaults ([SPEC 17](#17-property-ledger--support)): a thinner
 wire, a tighter `clearance`, `corner-radius: 0`.
 
 **Opting into the engine is one decision.** `layout: schematic` carries the
-scope's own config — the track `gap` and that tighter `clearance` — wherever
+scope's own config — the lattice `gap` and that tighter `clearance` — wherever
 it is written: the sheet's baked constants ([SPEC 10.5](#105-layout-constants-baked))
 are tuned to it, so a scope routing at the diagram's default would stray the
 leads it seats. `|schematic|` is the template (`|block|` + the layout, plus
@@ -3762,11 +3750,11 @@ core types, restyled by scoped rules.
 `layout: schematic` resolves in the layout phase
 ([SPEC 19](#19-compile-pipeline)): desugar has already lowered components
 into rails and chrome, minted label wires and capsule declarations, and
-emitted the scoped look rules; the engine then **seats** satellites
-(pin-relative, auto-posed), computes **cluster** extents, sizes and fills
-the **tracks**, absolutizes satellites, and hands every wire — with its
-fixed ports — to the router. Junction dots are read off the routed geometry
-and emitted as `|junction|` chrome. The scope's links stay ordinary routed
+emitted the scoped look rules; the engine then assigns every satellite its
+**cell** (ray, lane, slot), **packs** the tracks in whole coarse cells,
+absolutizes the seats, sinks the **rails**, seats the **readouts**, and hands
+every wire — with its fixed ports — to the router. Junction dots are read off
+the routed geometry and emitted as `|junction|` chrome. The scope's links stay ordinary routed
 links and its children arrange in place — no subtree is consumed; only the
 generated chrome (rails, readouts, tags, junctions) is new.
 
@@ -3823,7 +3811,7 @@ text, and box-model properties are universal to every node — the tables that f
 | `padding` | ✓ | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet | ✓ |
 | `align` / `justify` | ✓ | ✓ per-column | — | ✓ᵇ | — | — | — | — |
 | `width` / `height` | ✓ (slack) | ✓ (slack) | ✓ a floor | ✓ (surplus distributed) | ✓ box size | ✓ box size | ✓ a floor | ✓ a floor |
-| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — | — | — | — | ✓ `columns` + ordinal `cell` ([SPEC 16.1](#161-placement--anchors--satellites)) |
+| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — | — | — | — | ✓ `columns` + ordinal `cell` ([SPEC 16.1](#161-placement--the-lattice)) |
 | container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 **✓ᵇ** — honoured on the participant / frame **boxes' own content** (they are ordinary
@@ -3922,8 +3910,8 @@ out of scope.
 | `layout` | any container | `flow`·`grid`·`stack`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`floorplan`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 12 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid-stack--tree) |
-| `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
-| `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--anchors--satellites)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid-stack--tree) |
+| `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--the-lattice)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
+| `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--the-lattice)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid-stack--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
@@ -3964,7 +3952,7 @@ out of scope.
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
 | `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split (`left` on a `\|J\|`'s generated pins) | [SPEC 16.2](#162-components--pins) |
-| `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, the freer side of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
+| `side` (homonym) | a `\|label\|` · a schematic **wire** | `left`·`right`·`top`·`bottom` | above a horizontal run, outward of a vertical one | which side of its trace a net name sits ([SPEC 16.4](#164-labels)) |
 
 ### Link properties
 
@@ -4114,7 +4102,7 @@ families:
 | floorplan | `lini-door-leaf` (a door's leaf, a slider's panels) · `lini-door-swing` (the quarter arc) · `lini-window-sill` · `lini-stair-tread` (a flight's risers) · `lini-stair-arrow` (its up arrow) ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) |
 | schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 | highlight | `lini-tok-{kind}` — a source **listing**'s token spans, not a figure's: `lini highlight` writes them and `lini highlight --css` paints them ([SPEC 20](#20-cli)) |
-| marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid-stack--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--anchors--satellites)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
+| marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid-stack--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--the-lattice)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
 The last family is the odd one out: its classes carry **structure, not paint**.
 They emit no CSS rule and there is nothing in them for host CSS to restyle —
