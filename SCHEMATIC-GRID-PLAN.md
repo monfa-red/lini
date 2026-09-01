@@ -536,6 +536,14 @@ Nothing calls it yet."
 
 The behaviour change. Output will be gridded but not yet packed, railed or re-readout — that is Tasks 7–9. Expect the samples to look different and, in places, worse than before this task; the visual gate is Task 11.
 
+> **Amended after Task 4.** Task 6 (spans) **merges into this task**. The
+> boundary was drawn on the guess that a span could keep the old seat pass's
+> placement for one commit; it cannot — `Field` records spans but seats none of
+> their members, so deferring them leaves `schematic_hero`'s `J1.p3 - F1 - Q1.s`
+> fuse at the origin and the tree neither green nor honest. Do Task 6's steps
+> here, and take its tests with it. Two commits are fine — the switchover, then
+> the spans — provided the second lands before the first is pushed.
+
 **Files:**
 - Modify: `src/layout/schematic/place.rs` — `arrange` uses `Field`, drops `Seats`
 - Modify: `src/layout/schematic/field.rs` — gains `absolutize`, `extent`, `drawn`, `edges`
