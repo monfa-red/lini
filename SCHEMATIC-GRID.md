@@ -115,8 +115,14 @@ its attachment junction.
 
 ### 2.3 Collision is set intersection
 
-A chain's cells form a set. A lane is free when its set does not meet the
-scope's occupancy; when it does, the lane steps out one coarse line and retries.
+A member's **cell** is a `gap`-sized rectangle centred on its lattice point —
+the cell, never the part's ink, which is §2.1. A chain's cells are its
+reservation; a lane is free when none of them meets a cell the field has already
+committed, and when one does the lane steps out a coarse line and retries. A
+chain's **lead** — the run from its pin out to its lane — reserves nothing: the
+lane order below already guarantees it crosses an inner column only above where
+that column is live.
+
 That one rule replaces stacks, corridors, wired-row keep-outs and the pitch
 rhythm, and two consequences fall out of it rather than being authored:
 
@@ -136,6 +142,13 @@ direction, the deepest pin innermost either way.
 **Field origin** — the first slot line, and the innermost lane line, on a side:
 the first coarse line clear of the anchor's own drawn ink on that side, its
 ref/value readouts included.
+
+Lanes and slots are **absolute** coarse lines of the scope, not offsets from
+their anchor, and the field origin is read off the anchor's *placed* ink. That
+is what makes two anchors' fields share rows: a chain hanging under one chip
+lands on the same lines as a chain hanging under its neighbour. It also fixes
+the pass order — a field decides its cell *counts* before the tracks size (§2.5
+needs them), and its absolute lines only once the anchors are placed.
 
 ### 2.4 Rails
 
@@ -163,6 +176,10 @@ columns mirror it), that pair aligns instead and the wire draws dead straight.
 The shift is always a whole number of pitches, so alignment never breaks the
 lattice. Anchors take alignment in track order, each through the first
 statement-order wire reaching a placed neighbour.
+
+The shift is struck **before** the tracks size, and the cells it consumes are
+charged to the track like any other content — so an aligned anchor never
+overruns the allotment its neighbour was placed against.
 
 A **span** (a chain held at two anchors) rides the landing leg — the straight
 run into the second-named end, on that pin's own line — its members on
