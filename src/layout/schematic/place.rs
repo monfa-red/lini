@@ -12,8 +12,9 @@
 
 use super::super::flex::Axis;
 use super::super::ir::{Bbox, PlacedNode};
-use super::super::{anchors, flex, grid, primitives};
-use super::seat::{Seats, edges, seat_gap};
+use super::super::{anchors, flex, grid};
+use super::field::{Field, edges};
+use super::lattice::{Ax, Lattice};
 use super::terminal::terminal;
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
@@ -159,15 +160,16 @@ fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 }
 
 /// Place a schematic scope's already-laid-out children [SPEC 16.1] and return
-/// the content bbox. **The pass order**, which is what makes a cluster
-/// possible at all:
+/// the content bbox. **The pass order**, which is what lets a field be struck
+/// before anything is placed:
 ///
-/// 1. classify (the role table), then **seat** every satellite pin-relative —
-///    off its anchor's own origin, so no anchor need be placed yet;
-/// 2. size the tracks from each anchor's **cluster** (itself plus its seats);
+/// 1. classify (the role table), then run the **field** pass — every satellite
+///    takes a ray, a lane and a slot in its anchor's own frame, so no anchor
+///    need be placed yet;
+/// 2. size the tracks from each anchor's **cluster** (its ink plus its cells);
 /// 3. place the anchors on the collapsed ordinal grid;
-/// 4. **absolutize** the seats — a pin-relative one rides its anchor, a
-///    two-ended chain reads the two now-placed pins;
+/// 4. **absolutize** the field — a seated satellite rides its anchor, a span
+///    reads the two now-placed landings;
 /// 5. flow the satellites no wire held (the caller warns), seat the `pin:`
 ///    overlays on the finished box, and take every `translate:` nudge last.
 pub(super) fn arrange(
@@ -180,12 +182,13 @@ pub(super) fn arrange(
     if children.is_empty() {
         return Ok(Bbox::empty());
     }
-    let (gap_y, gap_x) = primitives::gap(attrs, span)?;
+    let lat = Lattice::of(attrs, span)?;
+    let (gap_y, gap_x) = (lat.row, lat.col);
     let roles: Vec<Role> = children.iter().map(role).collect();
     let anchored: Vec<usize> = (0..children.len())
         .filter(|&i| roles[i] == Role::Anchor)
         .collect();
-    let seats = Seats::build(children, &roles, links, scope, seat_gap(attrs));
+    let field = Field::build(children, &roles, links, scope, lat);
 
     let slots = slots(children, &anchored, read_columns(attrs, span)?)?;
     let cols = collapse(slots.iter().map(|s| s.col));
@@ -196,7 +199,7 @@ pub(super) fn arrange(
     // an anchor's satellites consume space without consuming cells.
     let clusters: Vec<Bbox> = anchored
         .iter()
-        .map(|&i| seats.cluster(children, i))
+        .map(|&i| field.cluster(children, i))
         .collect();
     // Each anchor's origin offset from its cell **centre**: cluster centring
     // by default, overridden per axis where a wired facing pin pair aligns
@@ -220,16 +223,16 @@ pub(super) fn arrange(
         widths[c] = widths[c].max(ox + extent.max_x - col_lo[c]);
         heights[r] = heights[r].max(oy + extent.max_y - row_lo[r]);
     }
-    // A chain held at both ends seats **between** its anchors [SPEC 16.1], in
+    // A chain held at both ends rides **between** its anchors [SPEC 16.1], in
     // no cluster and no track: so it sizes the space between the two tracks it
-    // spans. Whatever the packed members still need is charged to the gaps
-    // lying between them — the chain's own extent, never a constant bump (a
-    // bump only moves the threshold at which the seats collide).
+    // spans. It asks for the coarse cells its members take on the landing leg,
+    // and one more, so the outermost of them still stands a cell clear of the
+    // pin the wire leaves; the shortfall is charged to the gaps in between.
     let (mut extra_x, mut extra_y) = (vec![0.0; cols.len()], vec![0.0; rows.len()]);
-    for demand in seats.demands(children) {
-        let anchor = |end: usize| {
-            let (child, at) = demand.ends[end];
-            let k = anchored.iter().position(|&i| i == child)?;
+    for chain in field.spans() {
+        let landing = |end: usize| {
+            let (child, t) = &chain.ends[end];
+            let k = anchored.iter().position(|i| i == child)?;
             let (c, r) = (index(&cols, slots[k].col), index(&rows, slots[k].row));
             // The landing's offset from its **cell centre** — the origin's
             // aligned offset, re-based off the track union's own extent.
@@ -237,34 +240,37 @@ pub(super) fn arrange(
                 offsets[k].0 - col_lo[c] - widths[c] / 2.0,
                 offsets[k].1 - row_lo[r] - heights[r] / 2.0,
             );
-            Some((slots[k], (off.0 + at.0, off.1 + at.1)))
+            Some((slots[k], (off.0 + t.at.0, off.1 + t.at.1)))
         };
-        let (Some((sa, oa)), Some((sb, ob))) = (anchor(0), anchor(1)) else {
+        let (Some((sa, oa)), Some((sb, ob))) = (landing(0), landing(1)) else {
             continue;
         };
         let (ca, cb) = (index(&cols, sa.col), index(&cols, sb.col));
         let (ra, rb) = (index(&rows, sa.row), index(&rows, sb.row));
-        // The leg's own line — what its ends' clusters really swallow — is
-        // settled on an axis only when the anchors share the track **across**
-        // it: the offset between the two landings is then one this pass has
-        // already placed. Hand it over; without it the demand falls back to
-        // the worst case over every line the leg could take.
-        charge(
-            &mut extra_x,
-            &widths,
-            gap_x,
-            (ca, oa.0),
-            (cb, ob.0),
-            demand.need(true, ca.cmp(&cb), (ra == rb).then_some(ob.1 - oa.1)),
-        );
-        charge(
-            &mut extra_y,
-            &heights,
-            gap_y,
-            (ra, oa.1),
-            (rb, ob.1),
-            demand.need(false, ra.cmp(&rb), (ca == cb).then_some(ob.0 - oa.0)),
-        );
+        let cells = f64::from(field.span_cells(chain) + 1);
+        // The leg runs along the landing pin's own normal, so only that axis
+        // owes the cells; a facing-less landing states no axis and both do.
+        let leg = chain.ends[1].1.facing.map(Ax::of);
+        if leg != Some(Ax::Y) {
+            charge(
+                &mut extra_x,
+                &widths,
+                gap_x,
+                (ca, oa.0),
+                (cb, ob.0),
+                cells * lat.col,
+            );
+        }
+        if leg != Some(Ax::X) {
+            charge(
+                &mut extra_y,
+                &heights,
+                gap_y,
+                (ra, oa.1),
+                (rb, ob.1),
+                cells * lat.row,
+            );
+        }
     }
     let col_off = grid::cumulative_gaps(&widths, |i| gap_x + extra_x[i]);
     let row_off = grid::cumulative_gaps(&heights, |i| gap_y + extra_y[i]);
@@ -288,17 +294,17 @@ pub(super) fn arrange(
         anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
     let mut body = Bbox::centered(total_w, total_h);
-    seats.absolutize(children);
+    field.absolutize(children);
     // Every anchor's ink is already in its cluster, and so in a track; a
     // spanning chain rides neither, so its parts join the box here.
-    if let Some(span) = seats.spanning_extent(children) {
+    if let Some(span) = field.spanning_extent(children) {
         body = body.union(span);
     }
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
     // falls back to the flow — one trailing row under the grid, declaration
     // order, at the scope's gap — and the caller reports it.
-    let adrift = seats.floating();
+    let adrift = field.floating();
     if !adrift.is_empty() {
         let mut row: Vec<PlacedNode> = adrift.iter().map(|&i| children[i].clone()).collect();
         let strip = flex::lay_out_flex(Axis::Row, &mut row, attrs, span, (None, None))?;
@@ -429,8 +435,8 @@ fn align(
     out
 }
 
-/// Charge one axis's gaps with what a spanning chain still lacks [SPEC 16.1]:
-/// the pin-to-pin distance the tracks currently offer is the two half tracks,
+/// Charge one axis's gaps with what a spanning chain's cells still lack
+/// [SPEC 16.1]: the pin-to-pin distance the tracks currently offer is the two half tracks,
 /// everything between them, their gaps (charges included, so a second chain
 /// asks only for what the first left short) and the two landings' own offsets
 /// from their cell centres. The shortfall spreads over the gaps in between —

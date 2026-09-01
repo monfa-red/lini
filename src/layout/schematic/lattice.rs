@@ -31,6 +31,14 @@ impl Ax {
         if side.is_vertical() { Ax::X } else { Ax::Y }
     }
 
+    /// The other axis — what runs *across* this one.
+    pub(super) fn other(self) -> Ax {
+        match self {
+            Ax::X => Ax::Y,
+            Ax::Y => Ax::X,
+        }
+    }
+
     /// `+1` when the side's normal points the increasing way, `-1` otherwise.
     /// Read off [`Side::normal`] rather than tabled again, so the sheet keeps
     /// one account of which way a side faces.
@@ -54,9 +62,6 @@ pub(super) struct Lattice {
 
 impl Lattice {
     /// Read the scope's lattice off its attrs.
-    // The orchestrator asks for this once it seats off the field rather than
-    // the seat pass; the arithmetic below is already the field's.
-    #[allow(dead_code)]
     pub(super) fn of(attrs: &AttrMap, span: Span) -> Result<Lattice, Error> {
         let (row, col) = primitives::gap(attrs, span)?;
         let pitch = PIN_PITCH;

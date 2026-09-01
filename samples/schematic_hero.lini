@@ -28,18 +28,19 @@
   |chassis::label| { symbol: chassis; }
 
   // The captioned block: a `|group|` that is its own schematic scope, so one
-  // node both frames the block and seats what is inside it [SPEC 16.6]. `gap:`
-  // is the scope's **track** gap — the room between two anchors, and the room
-  // a lead needs to get out of a crowded part.
-  |region::group| { layout: schematic; padding: 20; gap: 100; }
+  // node both frames the block and seats what is inside it [SPEC 16.6]. It
+  // states no `gap:` — the sheet's own coarse pitch is the lattice every part
+  // centre lands on [SPEC 16.1], and a block that overrode it would draw on a
+  // grid of its own.
+  |region::group| { layout: schematic; padding: 20; }
 }
 
 // The page is an ordinary container inside its frame [SPEC 15.8], so the blocks
-// take a grid: fixed tracks sized to the content area, stretched, tile the
-// sheet edge to edge and leave the bottom-right cell to the title block, which
-// is seated by type.
+// take a grid: auto tracks size to the blocks the lattice draws, stretched to
+// tile the sheet, leaving the bottom-right cell to the title block, which is
+// seated by type.
 |page| {
-  sheet: a3 landscape; layout: grid; columns: 725, 710, 545; rows: 460, 420, 460; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; padding: 60; layout: grid; columns: auto, auto, auto; rows: auto, auto, auto; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [

@@ -113,14 +113,6 @@ pub struct Frame {
 }
 
 impl Frame {
-    /// The frame that stacks **outward along `n`** — `u` is its perpendicular,
-    /// so both stay exact unit vectors for an axis direction and a seat's
-    /// arithmetic matches the axis-matched form byte for byte. The schematic's
-    /// satellites grow along a pin's outward normal through this.
-    pub fn outward(n: P) -> Frame {
-        Frame { u: (n.1, -n.0), n }
-    }
-
     /// The coordinate along the line.
     pub fn u(&self, p: P) -> f64 {
         p.0 * self.u.0 + p.1 * self.u.1

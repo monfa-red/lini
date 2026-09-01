@@ -1,0 +1,152 @@
+//! The field made **absolute** [SPEC 16.1] — the same cells, once the anchors
+//! are placed.
+//!
+//! A seated satellite rides its anchor: its cell is an offset in that anchor's
+//! own frame, so placing the anchor places it, and moving the anchor moves it.
+//! A **span** rides no field at all — its members take consecutive coarse cells
+//! along the landing leg, the last-named nearest the end they land on — so it
+//! is struck here, where both its ends exist, and nowhere earlier.
+//!
+//! A member stands on its cell **centred**: the lattice point carries the
+//! part's own body, so a cap and a resistor on one slot row share it whatever
+//! their leads measure.
+
+use super::super::lattice::Ax;
+use super::super::net;
+use super::super::terminal::Terminal;
+use super::{Field, Spanning, drawn};
+use crate::desugar::pose::Side;
+use crate::layout::ir::{Bbox, PlacedNode};
+
+impl Field {
+    /// One anchor's **cluster** [SPEC 16.1]: its own drawn ink and every cell
+    /// its field committed, in the anchor's own frame — what a track sizes
+    /// against. Cells, never the satellites' ink: a long value overhangs the
+    /// column beside it rather than parting the tracks.
+    pub(in crate::layout::schematic) fn cluster(
+        &self,
+        children: &[PlacedNode],
+        anchor: usize,
+    ) -> Bbox {
+        self.cells[anchor]
+            .iter()
+            .fold(drawn(&children[anchor]), |b, c| b.union(*c))
+    }
+
+    /// Land every seated satellite on its lattice point, now that its anchor
+    /// is placed [SPEC 16.1], and lay the spans along their landing legs.
+    pub(in crate::layout::schematic) fn absolutize(&self, children: &mut [PlacedNode]) {
+        for i in 0..children.len() {
+            let Some(seat) = self.seat(i) else { continue };
+            let (dx, dy) = self.point(seat);
+            let (ax, ay) = (children[seat.anchor].cx, children[seat.anchor].cy);
+            stand(&mut children[i], (ax + dx, ay + dy), Some(seat.side));
+        }
+        for span in &self.spans {
+            self.lay(children, span);
+        }
+    }
+
+    /// The coarse cells a span asks of the region between its two anchors
+    /// [SPEC 16.1] — one per member.
+    pub(in crate::layout::schematic) fn span_cells(&self, span: &Spanning) -> i32 {
+        span.members.len() as i32
+    }
+
+    /// The placed extent of everything riding a **landing leg** — the spanning
+    /// chains, which join no cluster and so no track. The caller unions it into
+    /// the scope's box, so the sheet still holds all its ink.
+    pub(in crate::layout::schematic) fn spanning_extent(
+        &self,
+        children: &[PlacedNode],
+    ) -> Option<Bbox> {
+        self.spans
+            .iter()
+            .flat_map(|s| &s.members)
+            .map(|&m| drawn(&children[m]).shifted(children[m].cx, children[m].cy))
+            .reduce(|a, b| a.union(b))
+    }
+
+    /// One span's members on the **landing leg** [SPEC 16.1]: the straight run
+    /// into the second-named end, on that pin's own line, its members on
+    /// consecutive coarse cells outward from that landing — the last-named
+    /// nearest it, so the wire order reads along the leg.
+    fn lay(&self, children: &mut [PlacedNode], span: &Spanning) {
+        let landing = |(child, t): &(usize, Terminal)| {
+            let n = &children[*child];
+            (n.cx + t.at.0, n.cy + t.at.1)
+        };
+        let (from, at) = (landing(&span.ends[0]), landing(&span.ends[1]));
+        // The leg runs along the landing pin's own normal; a pin with no
+        // facing states none, and the chord's longer axis stands in.
+        let ax = span.ends[1].1.facing.map_or_else(
+            || {
+                if (at.0 - from.0).abs() >= (at.1 - from.1).abs() {
+                    Ax::X
+                } else {
+                    Ax::Y
+                }
+            },
+            Ax::of,
+        );
+        let (along, across) = match ax {
+            Ax::X => (at.0, at.1),
+            Ax::Y => (at.1, at.0),
+        };
+        // Cells counted **from the landing**, not from the scope's own origin:
+        // a pin lands on a fine line, so the leg's own cells are the only ones
+        // the last-named member can be "nearest that end" of.
+        let step = self.lat.step(ax)
+            * if coordinate(from, ax) < along {
+                -1.0
+            } else {
+                1.0
+            };
+        let n = span.members.len() as f64;
+        for (k, &member) in span.members.iter().enumerate() {
+            let line = along + step * (n - k as f64);
+            let point = match ax {
+                Ax::X => (line, across),
+                Ax::Y => (across, line),
+            };
+            stand(&mut children[member], point, None);
+        }
+    }
+}
+
+/// Stand a part's **body** on a lattice point [SPEC 16.1], and step the name
+/// of a net run off the trace it rides ([`net::seat_text`]) — `outward` being
+/// the side away from the anchor whose field holds it, `None` where no field
+/// does.
+fn stand(node: &mut PlacedNode, at: (f64, f64), outward: Option<Side>) {
+    let (bx, by) = node.bbox.center();
+    node.cx = at.0 - bx;
+    node.cy = at.1 - by;
+    if net::is_run(node) {
+        let (dx, dy) = net::seat_text(node, outward);
+        for c in node.children.iter_mut() {
+            c.cx += dx;
+            c.cy += dy;
+        }
+        return;
+    }
+    // A part's ref/value pair is minted on the sheet's reading side (+x,
+    // [SPEC 16.2]); in an anchor's **left** field that side reaches back over
+    // the pin the part hangs from, closing the corridor its own lead needs.
+    // Mirror it outward — the field is the first pass that knows the side.
+    if outward == Some(Side::Left) {
+        for c in node.children.iter_mut() {
+            if c.type_chain.iter().any(|t| t == "ref" || t == "part-value") {
+                c.cx = -c.cx - (c.bbox.min_x + c.bbox.max_x);
+            }
+        }
+    }
+}
+
+/// A point's coordinate on one lattice axis.
+fn coordinate(at: (f64, f64), ax: Ax) -> f64 {
+    match ax {
+        Ax::X => at.0,
+        Ax::Y => at.1,
+    }
+}

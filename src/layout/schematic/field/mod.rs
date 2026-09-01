@@ -10,31 +10,32 @@
 //! its value.
 //!
 //! **Collision is the cells'.** A member's cell is one `gap` square on its
-//! lattice point; a lane is free when no cell of the chain meets one already
-//! committed, and a taken lane steps out a coarse line and tries again
-//! ([`allocate`]). That one test is the whole of it — an up-chain and a
-//! down-chain off one pin share a lane because their cells are disjoint, and
-//! no chain lands where a lead must cross because the crossed part is in the
-//! set. A lead reserves nothing; the **lane order** keeps it clear.
+//! lattice point — a **net run**'s the fine line it lands on, being a stretch
+//! of trace and not a body [SPEC 16.4]. A lane is free when no cell of the
+//! chain meets one already committed, and a taken lane steps out a coarse line
+//! and tries again ([`allocate`]). That one test is the whole of it — an
+//! up-chain and a down-chain off one pin share a lane because their cells are
+//! disjoint; a second chain claiming a pin's straight corridor steps beside it
+//! because they are not; and no chain lands where a lead must cross, because
+//! the crossed part is in the set. A lead reserves nothing; the **lane order**
+//! keeps it clear.
 //!
 //! The chains, the growth ray, the tap classifier and the limb split are all
 //! [`crate::desugar::schematic::chain`]'s, shared with the pose chooser, so a
 //! part is never posed for one ray and seated along another.
 
-// The field is built and its allocator tested before the pass that reads it;
-// `place` still runs the seat pass, and picks this up at the switchover.
-#![allow(dead_code)]
-
+mod absolute;
+mod read;
 mod walk;
 
 use super::lattice::{Ax, Lattice};
-use super::seat::{drawn, edges};
+use super::net;
 use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
 use crate::layout::ir::{Bbox, PlacedNode};
-use crate::resolve::ResolvedLink;
+use crate::resolve::{LinkKind, ResolvedLink};
 
 /// Where a satellite sits [SPEC 16.1], in cells, before the tracks size.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -73,6 +74,9 @@ pub(super) struct Field {
     cells: Vec<Vec<Bbox>>,
     /// Per anchor, its field origin on each side, by [`Side::index`].
     origins: Vec<[i32; 4]>,
+    /// Which children are **net runs** — a stretch of trace with a name over
+    /// it rather than a body [SPEC 16.4], and so a line to reserve, not a cell.
+    runs: Vec<bool>,
     lat: Lattice,
 }
 
@@ -91,6 +95,7 @@ impl Field {
             floating: Vec::new(),
             cells: vec![Vec::new(); children.len()],
             origins: children.iter().map(|c| origins(c, lat)).collect(),
+            runs: children.iter().map(net::is_run).collect(),
             lat,
         };
         if !satellite.contains(&true) {
@@ -123,11 +128,15 @@ impl Field {
     }
 
     /// How many coarse lanes `anchor`'s field takes on `side`.
+    // The packer's, which sizes a track in whole coarse cells.
+    #[allow(dead_code)]
     pub(super) fn lanes(&self, anchor: usize, side: Side) -> i32 {
         self.reach(anchor, side)
     }
 
     /// How many coarse slots deep `anchor`'s field runs along `ray`.
+    // The packer's too, and the rail pass's floor.
+    #[allow(dead_code)]
     pub(super) fn depth(&self, anchor: usize, ray: Side) -> i32 {
         self.reach(anchor, ray)
     }
@@ -144,7 +153,7 @@ impl Field {
 
     /// Seat one member, and commit its cell to its anchor's occupancy.
     fn take(&mut self, member: usize, seat: Seat) {
-        let cell = self.cell(seat);
+        let cell = self.cell(member, seat);
         self.cells[seat.anchor].push(cell);
         self.seats[member] = Some(seat);
     }
@@ -154,7 +163,7 @@ impl Field {
     fn ladder_at(&self, anchor: usize, ladder: Ladder, k: i32) -> (Option<i32>, f64) {
         match ladder {
             Ladder::Lanes(side) => (Some(k), self.coord(anchor, side, k)),
-            Ladder::Beside(side, base) => (None, base + f64::from(k) * self.step(side)),
+            Ladder::Beside(side, base) => (None, base + f64::from(k - 1) * self.step(side)),
         }
     }
 
@@ -194,11 +203,26 @@ impl Field {
         }
     }
 
-    /// A member's cell: one `gap` square on its lattice point [SPEC 16.1] —
-    /// the cell, never the part's ink.
-    fn cell(&self, seat: Seat) -> Bbox {
+    /// A member's cell [SPEC 16.1] — the cell, never the part's ink: one coarse
+    /// pitch along its ray, and one across it. A **net run** is the exception
+    /// [SPEC 16.4]: being a stretch of trace rather than a body, it reserves
+    /// the fine line it lands on and no more, so a rail of pins each naming a
+    /// net keeps every name on its own row instead of each pushing the next a
+    /// whole cell aside.
+    fn cell(&self, member: usize, seat: Seat) -> Bbox {
         let (x, y) = self.point(seat);
-        Bbox::centered(self.lat.col, self.lat.row).shifted(x, y)
+        let ray = Ax::of(seat.ray);
+        let along = self.lat.step(ray);
+        let across = if self.runs[member] {
+            self.lat.pitch
+        } else {
+            self.lat.step(ray.other())
+        };
+        let (w, h) = match ray {
+            Ax::X => (along, across),
+            Ax::Y => (across, along),
+        };
+        Bbox::centered(w, h).shifted(x, y)
     }
 
     /// How far out on `side` an anchor's field reaches, in coarse lines — the
@@ -243,16 +267,19 @@ impl Field {
 }
 
 /// How a run finds its line **across** its ray [SPEC 16.1]: the lane ladder
-/// out from the anchor's ink, or fine lines stepped **beside** the pin line a
-/// straight-grown chain kept. `k` counts lanes from 1 and beside-steps from
-/// 0 — step 0 being the line that chain itself keeps.
+/// out from the anchor's ink, or coarse steps **beside** the pin line a
+/// straight-grown chain kept. Both count from 1 — step 1 of a beside ladder is
+/// the pin's own line — so the one allocator walks either.
 #[derive(Clone, Copy)]
 enum Ladder {
     Lanes(Side),
     Beside(Side, f64),
 }
 
-/// The innermost lane whose cells meet nothing already committed [SPEC 16.1].
+/// The innermost step of a [`Ladder`] whose cells meet nothing already
+/// committed [SPEC 16.1] — a lane for a chain that turned off its pin, the
+/// pin's own line for one that grew straight out.
+///
 /// The lead reserves nothing: the lane order — the pin deeper along the ray
 /// keeping the inner lane — already crosses a column only above where that
 /// column is live. Overlap is [`Bbox::overlaps`]'s, which is strict, so
@@ -268,10 +295,57 @@ fn allocate(taken: &[Bbox], cells: impl Fn(i32) -> Vec<Bbox>) -> i32 {
         .expect("an unbounded lattice always has a free lane")
 }
 
+/// A part's **drawn** extent: its box unioned with every descendant, so the
+/// chrome that pokes outside counts. A ref or a value readout is a `pin:`
+/// overlay — out of the flow that sized the box, but ink on the sheet and an
+/// obstacle to the router all the same (the scene index carries it as the
+/// part's `overflow`). A field origin measures this, or a chain clears a part's
+/// box and starts on its readout.
+pub(super) fn drawn(node: &PlacedNode) -> Bbox {
+    Bbox::drawn_of(node)
+}
+
+/// The scope's wires as chain edges, one per hop, in statement order: the
+/// twin of [`crate::desugar::autopose`]'s reader on the resolved side, so the
+/// chains the pose chooser turned are the chains this pass seats.
+pub(super) fn edges(
+    children: &[PlacedNode],
+    links: &[&ResolvedLink],
+    scope: &str,
+) -> Vec<[End; 2]> {
+    // An endpoint dot-paths from the scene root; a child of this scope is
+    // everything after the scope's own prefix [SPEC 9].
+    let end = |path: &str| {
+        let local = crate::resolve::scene::within_scope(path, scope)?;
+        let (head, terminal) = match local.split_once('.') {
+            Some((head, rest)) => (head, Some(rest.to_string())),
+            None => (local, None),
+        };
+        let child = children
+            .iter()
+            .position(|c| c.id.as_deref() == Some(head))?;
+        Some(End { child, terminal })
+    };
+    let mut out = Vec::new();
+    for w in links.iter().filter(|w| w.kind == LinkKind::Wire) {
+        for hop in w.endpoints.windows(2) {
+            if let (Some(a), Some(b)) = (end(&hop[0].path), end(&hop[1].path)) {
+                out.push([a, b]);
+            }
+        }
+    }
+    out
+}
+
 /// One anchor's **field origins** [SPEC 16.1]: the first coarse line clear of
-/// its own drawn ink on each side, readouts included. Read in the anchor's own
-/// frame, which placing it never changes, so the ordinals a seat records
-/// outlive the tracks.
+/// its own drawn ink on each side, readouts included. A member stands
+/// **centred** on its line, so the line a field starts on is the first one
+/// whose whole cell is past the ink — measured from half a cell out, or a part
+/// whose edge falls just inside a coarse line prints its neighbour's column
+/// over its own pin numbers.
+///
+/// Read in the anchor's own frame, which placing it never changes, so the
+/// ordinals a seat records outlive the tracks.
 fn origins(node: &PlacedNode, lat: Lattice) -> [i32; 4] {
     let ink = drawn(node);
     Side::ALL.map(|s| {
@@ -281,7 +355,8 @@ fn origins(node: &PlacedNode, lat: Lattice) -> [i32; 4] {
             Side::Top => ink.min_y,
             Side::Bottom => ink.max_y,
         };
-        lat.beyond(Ax::of(s), edge, Ax::outward(s))
+        let (ax, out) = (Ax::of(s), Ax::outward(s));
+        lat.beyond(ax, edge + out * lat.step(ax) / 2.0, out)
     })
 }
 

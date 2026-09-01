@@ -2,7 +2,7 @@
 //! sheet, placement stops at a nested scope while the link scope reaches
 //! through it, and the whole pass is deterministic. The helpers every
 //! schematic suite shares live here — the tracks and roles are
-//! [`super::place_tests`], the seats [`super::seat_tests`], the router
+//! [`super::place_tests`], the cells [`super::field_tests`], the router
 //! [`super::route_tests`].
 
 use crate::layout::PlacedNode;
@@ -34,11 +34,11 @@ pub(super) fn at(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
 }
 
 /// A placed node's **drawn** extent in scene coordinates — the engine's one
-/// extent notion ([`super::seat::drawn`]), so a test measures the ink the
+/// extent notion ([`super::field::drawn`]), so a test measures the ink the
 /// tracks reserved and never the box inside it.
 pub(super) fn ink(nodes: &[PlacedNode], id: &str) -> crate::layout::ir::Bbox {
     let (n, x, y) = placed(nodes, id);
-    super::seat::drawn(n).shifted(x, y)
+    super::field::drawn(n).shifted(x, y)
 }
 
 /// The clear space between two placed nodes along x, in scene coordinates.

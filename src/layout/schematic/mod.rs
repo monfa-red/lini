@@ -27,7 +27,6 @@ mod lattice;
 mod net;
 mod place;
 mod ports;
-mod seat;
 mod tag;
 mod terminal;
 
@@ -135,10 +134,10 @@ fn arrange(
 }
 
 #[cfg(test)]
+mod field_tests;
+#[cfg(test)]
 mod place_tests;
 #[cfg(test)]
 mod route_tests;
-#[cfg(test)]
-mod seat_tests;
 #[cfg(test)]
 mod tests;

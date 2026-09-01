@@ -9,8 +9,8 @@
 //! [`crate::desugar::schematic::chain`]'s, shared with the pose chooser.
 
 use super::super::lattice::Ax;
-use super::super::seat::{growth, tag_facing, tap_flags};
 use super::super::terminal::{Terminal, terminal};
+use super::read::{growth, tag_facing, tap_flags};
 use super::{Field, Ladder, Seat, allocate, out};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
@@ -53,9 +53,11 @@ impl Field {
             first: self.line_of(h.anchor, h.ray, 1),
             members: pick(chain, |i| limbs[i].is_none()),
         };
-        // A chain that turned off its pin takes the innermost free lane; one
-        // that grew straight out keeps its pin's line and asks for none.
-        let k = if h.turns() { self.allot(h, &trunk) } else { 0 };
+        // One allocation for either ladder [SPEC 16.1]: a chain that turned off
+        // its pin takes the innermost free lane, and one that grew straight out
+        // asks for its pin's own line — stepping beside it only where a chain
+        // already claimed that corridor, which is the first claimant's.
+        let k = self.allot(h, &trunk);
         self.commit(h, &trunk, k);
 
         // A **tap** takes no slot [SPEC 16.1]: it stands on its attachment's,
@@ -126,33 +128,41 @@ impl Field {
     /// The innermost cross step a run's cells leave free [SPEC 16.1].
     fn allot(&self, h: &Held, run: &Run) -> i32 {
         allocate(&self.cells[h.anchor], |k| {
-            self.seats_of(h, run, k).map(|s| self.cell(s)).collect()
+            self.seats_of(h, run, k)
+                .map(|(m, s)| self.cell(m, s))
+                .collect()
         })
     }
 
     /// Record a run's seats and commit its cells to the anchor's occupancy.
     fn commit(&mut self, h: &Held, run: &Run, k: i32) {
-        let seats: Vec<Seat> = self.seats_of(h, run, k).collect();
-        for (&m, seat) in run.members.iter().zip(seats) {
-            self.take(m, seat);
+        let seats: Vec<(usize, Seat)> = self.seats_of(h, run, k).collect();
+        for (member, seat) in seats {
+            self.take(member, seat);
         }
     }
 
-    /// The seats a run's members take with its cross ladder at step `k`.
+    /// The seats a run's members take with its cross ladder at step `k`, each
+    /// beside the member that takes it.
     fn seats_of<'a>(
         &'a self,
         h: &'a Held,
         run: &'a Run,
         k: i32,
-    ) -> impl Iterator<Item = Seat> + 'a {
+    ) -> impl Iterator<Item = (usize, Seat)> + 'a {
         let (lane, pin_line) = self.ladder_at(h.anchor, run.ladder, k);
-        (0..run.members.len()).map(move |j| Seat {
-            anchor: h.anchor,
-            ray: run.ray,
-            side: h.side,
-            lane,
-            pin_line,
-            slot: self.ordinal(h.anchor, run.ray, run.first + j as i32 * out(run.ray)),
+        run.members.iter().enumerate().map(move |(j, &member)| {
+            (
+                member,
+                Seat {
+                    anchor: h.anchor,
+                    ray: run.ray,
+                    side: h.side,
+                    lane,
+                    pin_line,
+                    slot: self.ordinal(h.anchor, run.ray, run.first + j as i32 * out(run.ray)),
+                },
+            )
         })
     }
 

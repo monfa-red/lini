@@ -219,7 +219,7 @@ fn an_anonymous_parts_pins_still_count() {
     // centre, which is what a track holds [SPEC 16.1].
     let [u1, q, r] = [0, 1, 2].map(|i| {
         let c = &s.children[i];
-        super::seat::drawn(c).shifted(c.cx, c.cy).center().1
+        super::field::drawn(c).shifted(c.cx, c.cy).center().1
     });
     assert!(close(u1, q), "the 3-pin |Q| rides the track row: {u1} {q}");
     assert!(r > q, "the 2-pin |R| seats below: {r} vs {q}");

@@ -535,7 +535,7 @@ fn a_nested_sheet_routes_its_own_interior_with_no_margin_at_all() {
 #[test]
 fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
     // The carry-over's other half, closed. A sheet's box now holds its parts'
-    // **ink** ([`super::seat::drawn`]), so a part's stub tips can no longer
+    // **ink** ([`super::field::drawn`]), so a part's stub tips can no longer
     // poke out of the scope and eat the neighbouring gap from the outside: the
     // old non-monotone "band" collapses into ROUTING.md's own rule — a wire
     // needs a corridor, so the free space in front of a fixed port has to

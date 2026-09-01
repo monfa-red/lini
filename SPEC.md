@@ -3461,12 +3461,14 @@ along its own drawn convention and stepping aside when that points back into the
 trunk.
 
 **Collision is the cells'.** A member's cell is one `gap` square on its lattice
-point. A lane is free when no cell of the chain meets one already committed; a
-taken lane steps out a coarse line and tries again. A chain's **lead** — the run
-from its pin out to its lane — reserves nothing, the lane order keeping it
-clear. So two things need no rule: an up-chain and a down-chain off one pin
-**share a lane**, their cells being disjoint, and no chain lands where a lead
-must cross.
+point — a **net run**'s the fine line it lands on, since a run is a stretch of
+trace and not a body ([16.4](#164-labels)). A lane is free when no cell of the
+chain meets one already committed; a taken lane steps out a coarse line and
+tries again. A chain's **lead** — the run from its pin out to its lane —
+reserves nothing, the lane order keeping it clear. So three things need no rule:
+an up-chain and a down-chain off one pin **share a lane**, their cells being
+disjoint; a second chain claiming a pin's straight corridor steps beside it,
+theirs being the same cell; and no chain lands where a lead must cross.
 
 **Lane order is the pins' own**, read along the ray: the pin **deeper** along it
 keeps the inner lane and the shallower steps out, so a lead crosses an inner
@@ -3476,9 +3478,10 @@ read it two ways and falls back to the canonical direction, the deepest pin
 innermost either way.
 
 A **field origin** — the first slot line and the innermost lane line on one side
-of an anchor — is the first coarse line clear of that anchor's own drawn ink
-there, readouts included. Lanes and slots are the scope's **absolute** coarse
-lines, so two anchors' fields share their rows.
+of an anchor — is the first coarse line a whole **cell** stands clear of that
+anchor's own drawn ink on, readouts included: a member centres on its line, so a
+line merely past the ink would seat it half over the part. Lanes and slots are
+the scope's **absolute** coarse lines, so two anchors' fields share their rows.
 
 **Rails.** Every downward chain's ground sinks to the scope's one **ground
 row**, a coarse row past the deepest slot any of them reached; every upward flag
