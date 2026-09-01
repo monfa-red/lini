@@ -3475,9 +3475,10 @@ holds a part, it does not part it from the next.
 - its **lane** is the cross coordinate: a coarse line out from the anchor's ink
   for a chain that turned off its pin, the pin's own fine line for one that grew
   straight out and takes no lane at all.
-- its **slots** carry the members: member *k* centres on the *k*-th coarse line
-  along the ray. Centred, not hung — so a cap and a resistor off one bus share a
-  body row, their leads differing by their own lengths.
+- its **slots** carry the members: member *k* centres on the *k*-th line a
+  coarse pitch along the ray from the field origin. Centred, not hung — so a cap
+  and a resistor off one bus share a body row, their leads differing by their
+  own lengths.
 
 The **trunk** is the walk from the pin to the terminator; a subtree hanging off
 a mid-trunk member is a **branch**, grown from its attachment as a sub-chain
@@ -3515,25 +3516,41 @@ innermost either way. The chains that grew **straight** out take no lane and
 compete for none, so they stand first: they are the geography every lane then
 steps past.
 
-A **field origin** — the first slot line and the innermost lane line on one side
-of an anchor — is the first coarse line a whole **cell** stands clear of that
-anchor's own drawn ink on, readouts included: a member centres on its line, so a
-line merely past the ink would seat it half over the part. Lanes and slots are
-**absolute** coarse lines counted from an anchor that stands on one itself, so
-two anchors' fields share their rows — bar the alignment below, which carries an
-anchor and its whole field together.
+**A lane and a slot are two measurements, not one count read twice.** A lane
+carries a part's whole cell, so the innermost one is the first **coarse** line
+whose cell stands clear of the anchor's own drawn ink on that side, readouts
+included. A slot is the first **fine** line whose cell stands clear of what
+that chain's own **lead passes**: a chain that turned into a lane is beside the
+body already — that is what the lane is — and clears only the deepest pin the
+ray's laned chains leave from; one that grew straight out has its ray pointing
+through the body, and clears the ink. Both clear by half a cell, a member
+standing centred on its line, and then the one fine pitch two wired neighbours
+always keep. A slot is fine and a lane coarse because a lane is a *position* and
+a slot a *separation*: rounding a separation up to a coarse line buys a whole
+cell of bare wire for a shortfall of one unit.
 
-**Rails.** A chain growing **down** into a rail symbol (`gnd` · `earth` ·
-`chassis` · `power` — [16.4](#164-labels)) sinks its terminator to the scope's
-one **ground row**; one growing **up** raises it to the **flag row**. The row is
-the **ray**'s, never the symbol's, so an inverted ground above a part rides the
-flag row. Each row stands a coarse row past the deepest slot its ray's other
-members reached, and never short of a terminator already deeper — so a scope of
-one-member chains keeps the line it drew. Only a **terminator** moves — the
-trunk's, or a branch's grown along its own ray, never a tap, which ends nothing
-and stays beside the junction it hangs off: its chain keeps every slot above it,
-and the lead down to the rail is the router's ordinary wire. Rails are vertical
-only — a chain running out along a pin's row ends where it ends.
+A slot origin is the **track line's**, not the anchor's: every anchor riding the
+line across the ray — the same track row for an up or down ray, the same track
+column for a left or right one — shares one, the deepest requirement among them.
+That is what stands two anchors' fields on one row, bar the alignment below,
+which carries an anchor and its whole field together.
+
+**The ground row.** A chain growing **down** into a rail symbol (`gnd` · `earth`
+· `chassis` · `power` — [16.4](#164-labels)) sinks its terminator to the scope's
+one **ground row**. There is no upward twin: a block has one ground net and one
+line for it reads as that net, where three flags name three nets and aligning
+them says nothing. A chain terminating **up** stands on its own slot like any
+other member — and two single-member up-chains in one track row land on one line
+regardless, their slot origin being that row's. Which chains sink is the
+**ray**'s, never the symbol's, so a ground posed inverted above a part keeps its
+slot. The row stands a **fine** pitch clear of the deepest ink **staying** above
+it — what slot the grounds took says nothing, they being the things moved — and
+a scope whose every chain is one ground long keeps the line it drew. Only a
+**terminator** moves — the trunk's, or a branch's grown along its own ray, never
+a tap, which ends nothing and stays beside the junction it hangs off: its chain
+keeps every slot above it, and the lead down to the row is the router's ordinary
+wire. The row is vertical only — a chain running out along a pin's row ends
+where it ends.
 
 **Facing pins align.** Two anchors in one track row stand centre to centre on a
 shared row line, except that a wire — or a span, whose members all ride one line
@@ -3832,7 +3849,7 @@ core types, restyled by scoped rules.
 into rails and chrome, minted label wires and capsule declarations, and
 emitted the scoped look rules; the engine then assigns every satellite its
 **cell** (ray, lane, slot), **packs** the tracks in whole coarse cells,
-absolutizes the seats, sinks the **rails**, seats the **readouts**, and hands
+absolutizes the seats, sinks the **ground row**, seats the **readouts**, and hands
 every wire — with its fixed ports — to the router. Junction dots are read off
 the routed geometry and emitted as `|junction|` chrome. The scope's links stay
 ordinary routed links and its children arrange in place — no subtree is
