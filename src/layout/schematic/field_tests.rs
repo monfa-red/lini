@@ -7,7 +7,8 @@
 //! **placed sheet** — where a part actually landed.
 
 use super::tests::{
-    anchor, at, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with, tip,
+    anchor, at, body, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with,
+    tip,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::PIN_PITCH;
@@ -614,6 +615,85 @@ fn a_same_side_bridge_stands_in_its_first_pins_corridor() {
     assert!(rx < ux, "out along the shared left side: {rx} vs {ux}");
     let en_y = cell(&nodes, "en").1;
     assert!(close(ry, en_y), "riding EN's own row: {ry} vs {en_y}");
+}
+
+// ───────────────────────── the rails ─────────────────────────
+
+#[test]
+fn every_ground_in_a_scope_sinks_to_one_row() {
+    // The reference sheet's line: a one-member chain's ground and a
+    // three-member chain's stand on the same row [SPEC 16.1].
+    let src = scope(
+        "",
+        &(sided("u1")
+            + "  |C#c1| \"1u\"\n  |R#r1| \"1k\"\n  |LED#d1| \"red\"\n"
+            + "  |gnd#g1|\n  |gnd#g2|\n"
+            + "  u1.a - c1 - g1\n  u1.a - r1 - d1 - g2\n"),
+    );
+    let nodes = laid(&src);
+    assert!(
+        close(at(&nodes, "g1").1, at(&nodes, "g2").1),
+        "one ground row"
+    );
+    assert!(
+        at(&nodes, "g1").1 > at(&nodes, "d1").1,
+        "below the deepest member"
+    );
+}
+
+#[test]
+fn every_power_flag_rises_to_one_row() {
+    let src = FLAG.replace("vp", "v3")
+        + &scope(
+            "",
+            &(sided("u1")
+                + "  |R#r1| \"1k\"\n  |R#r2| \"2k\"\n  |L#l1| \"1u\"\n  |v3#f1|\n  |v3#f2|\n"
+                + "  u1.a - r1 - f1\n  u1.a - r2 - l1 - f2\n"),
+        );
+    let nodes = laid(&src);
+    assert!(
+        close(at(&nodes, "f1").1, at(&nodes, "f2").1),
+        "one flag row"
+    );
+}
+
+#[test]
+fn a_horizontal_chain_keeps_its_own_end() {
+    // [SPEC 16.1] rails are vertical only — a chain running out along a pin's
+    // row ends where it ends, as both reference sheets draw it.
+    let src = scope(
+        "",
+        &(sided("u1")
+            + "  |R#r1| \"1k\"\n  |gnd#g1| { rotate: 90 }\n  |C#c1| \"1u\"\n  |gnd#g2|\n"
+            + "  u1.a - r1 - g1\n  u1.c - c1 - g2\n"),
+    );
+    let nodes = laid(&src);
+    assert!(
+        !close(at(&nodes, "g1").1, at(&nodes, "g2").1),
+        "no rail across the axes"
+    );
+}
+
+#[test]
+fn a_tap_keeps_the_junction_it_taps() {
+    // A rail symbol hanging off a mid-chain junction takes no slot [SPEC 16.1]
+    // — it is the flag beside that junction, so the flag row is not its row.
+    let src = FLAG.to_owned()
+        + &scope(
+            "",
+            &(sided("u1")
+                + "  |L#l1| \"100u\"\n  |vp#t1|\n  |R#r1| \"4k7\"\n  |vp#f1|\n"
+                + "  u1.a - l1 - t1\n  l1.p2 - r1 - f1\n"),
+        );
+    let nodes = laid(&src);
+    assert!(
+        close(body(&nodes, "t1").1, body(&nodes, "l1").1),
+        "the tap stays on its attachment's row"
+    );
+    assert!(
+        body(&nodes, "f1").1 < body(&nodes, "l1").1,
+        "and only the terminator rose"
+    );
 }
 
 // ───────────────────────── the seat itself ─────────────────────────

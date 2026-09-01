@@ -28,6 +28,7 @@ mod net;
 mod pack;
 mod place;
 mod ports;
+mod rail;
 mod tag;
 mod terminal;
 

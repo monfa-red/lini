@@ -16,6 +16,7 @@ use super::super::{anchors, flex, grid};
 use super::field::Field;
 use super::lattice::{Ax, Lattice};
 use super::pack::pack;
+use super::rail;
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
@@ -179,10 +180,12 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 ///    lattice ([`pack`]);
 /// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;
-/// 4. flow the satellites no wire held (the caller warns), then centre the
+/// 4. strike the **rails** ([`rail`]) — the one row every ground sinks to and
+///    the one every flag rises to, which exist only in the scope's own frame;
+/// 5. flow the satellites no wire held (the caller warns), then centre the
 ///    sheet on the scope's origin a whole number of fine pitches at a time, so
 ///    the lattice the passes agreed on stays absolute;
-/// 5. seat the `pin:` overlays on the finished box, and take every
+/// 6. seat the `pin:` overlays on the finished box, and take every
 ///    `translate:` nudge last.
 pub(super) fn arrange(
     children: &mut [PlacedNode],
@@ -214,7 +217,11 @@ pub(super) fn arrange(
         anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;
     }
     field.absolutize(children);
-    let mut body = packed.body;
+    // The rails are the scope's, so they are struck here and not in the field:
+    // a row is one line across every anchor. It can stand a coarse row past
+    // what the fields hold, and the packing measured the box off those cells —
+    // so the sheet takes the cells the rails landed on.
+    let mut body = packed.body.union(rail::rails(children, &field, lat));
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
     // falls back to the flow — one trailing row under the grid, declaration

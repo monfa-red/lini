@@ -139,6 +139,9 @@ impl Field {
         for (member, seat) in seats {
             self.take(member, seat);
         }
+        if let Some(&last) = run.members.last() {
+            self.terminators[last] = true;
+        }
         self.cells[h.anchor].extend(stem);
     }
 

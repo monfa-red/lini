@@ -3490,9 +3490,15 @@ anchor's own drawn ink on, readouts included: a member centres on its line, so a
 line merely past the ink would seat it half over the part. Lanes and slots are
 the scope's **absolute** coarse lines, so two anchors' fields share their rows.
 
-**Rails.** Every downward chain's ground sinks to the scope's one **ground
-row**, a coarse row past the deepest slot any of them reached; every upward flag
-rises to its **flag row**. Rails are vertical only — a chain running out along a
+**Rails.** A chain growing **down** into a rail symbol (`gnd` · `earth` ·
+`chassis` · `power` — [16.4](#164-labels)) sinks its terminator to the scope's
+one **ground row**; one growing **up** raises it to the **flag row**. The row is
+the **ray**'s, never the symbol's, so an inverted ground above a part rides the
+flag row. Each row stands a coarse row past the deepest slot its ray's other
+members reached, and never short of a terminator already deeper — so a scope of
+one-member chains keeps the line it drew. Only the **terminator** moves: its
+chain keeps every slot above it, and the lead down to the rail is the router's
+ordinary wire. Rails are vertical only — a chain running out along a
 pin's row ends where it ends.
 
 **Facing pins align.** Two anchors in one track row stand centre to centre on a

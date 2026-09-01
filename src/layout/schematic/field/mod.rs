@@ -77,6 +77,8 @@ pub(super) struct Field {
     /// Which children are **net runs** — a stretch of trace with a name over
     /// it rather than a body [SPEC 16.4], and so a line to reserve, not a cell.
     runs: Vec<bool>,
+    /// Which children end a **run** — a trunk's terminator, or a branch's.
+    terminators: Vec<bool>,
     lat: Lattice,
 }
 
@@ -96,6 +98,7 @@ impl Field {
             cells: vec![Vec::new(); children.len()],
             origins: children.iter().map(|c| origins(c, lat)).collect(),
             runs: children.iter().map(net::is_run).collect(),
+            terminators: vec![false; children.len()],
             lat,
         };
         if !satellite.contains(&true) {
@@ -160,6 +163,16 @@ impl Field {
     /// The chains held at two anchors [SPEC 16.1], which ride no field.
     pub(super) fn spans(&self) -> &[Spanning] {
         &self.spans
+    }
+
+    /// Whether a member is the last of a **run** — the trunk out from its pin,
+    /// or a branch grown along its own ray — and so the terminator whose own
+    /// drawing set that ray. The rails read it [SPEC 16.1]: a **tap** ends
+    /// nothing, hanging beside the junction it taps rather than growing to it,
+    /// and a branch that marched *across* its trunk carries the trunk's ray on
+    /// its seat, so neither is a rail's to move.
+    pub(in crate::layout::schematic) fn terminates(&self, i: usize) -> bool {
+        self.terminators[i]
     }
 
     /// Seat one member, and commit its cell to its anchor's occupancy.
