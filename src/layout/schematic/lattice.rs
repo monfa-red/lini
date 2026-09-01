@@ -13,8 +13,8 @@
 use super::super::ir::PlacedNode;
 use super::super::primitives;
 use crate::desugar::pose::Side;
-use crate::error::Error;
-use crate::ledger::consts::PIN_PITCH;
+use crate::error::{Code, Error};
+use crate::ledger::consts::{PIN_PITCH, SCH_CLEARANCE};
 use crate::resolve::AttrMap;
 use crate::span::Span;
 
@@ -66,6 +66,20 @@ impl Lattice {
     pub(super) fn of(attrs: &AttrMap, span: Span) -> Result<Lattice, Error> {
         let (row, col) = primitives::gap(attrs, span)?;
         let pitch = PIN_PITCH;
+        // Two wired neighbouring pins stand one fine pitch apart, so a wider
+        // clearance is a sheet whose own rails cannot be routed [SPEC 16.1/21].
+        // Said once, at the scope that states the number, rather than as a
+        // stray per wire once every lead has failed to find a track.
+        let clearance = attrs.number("clearance").unwrap_or(SCH_CLEARANCE);
+        if clearance > pitch {
+            return Err(Error::at(
+                span,
+                format!(
+                    "'clearance' {clearance} is past the sheet's pin pitch {pitch} — two wired pins stand one pitch apart, so no wire could keep it"
+                ),
+            )
+            .code(Code::SCHEMATIC_TRACKS));
+        }
         // Up, and never below one fine pitch: a coarse line that is not also a
         // wire line is no use to the passes that read it.
         let coarse = |g: f64| (g / pitch).ceil().max(1.0) * pitch;
@@ -196,6 +210,17 @@ mod tests {
     #[test]
     fn a_coarse_pitch_never_falls_below_one_fine_one() {
         assert_eq!(lat(" { gap: 0 }").row, PIN_PITCH);
+    }
+
+    #[test]
+    fn a_clearance_wider_than_the_pin_pitch_errors() {
+        // [SPEC 16.1/21] two wired neighbouring pins stand one pin pitch
+        // apart, so a clearance past it is a sheet whose own rails cannot be
+        // routed — said once, at the scope, rather than as a stray per wire.
+        let e = crate::testutil::layout_err("|schematic#s| { clearance: 30 } [ |gnd#g| ]\n");
+        assert!(e.contains("clearance") && e.contains("pin pitch"), "{e}");
+        // …and the pitch itself is legal: the rails route at exactly it.
+        assert_eq!(lat(" { clearance: 20 }").pitch, PIN_PITCH);
     }
 
     #[test]

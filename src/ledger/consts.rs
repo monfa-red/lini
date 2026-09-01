@@ -110,8 +110,10 @@ pub(crate) const SHEET_MARGIN: f64 = 10.0;
 // ── The schematic chrome [SPEC 10.5/16] — sheet-space baked constants;
 // Phase 6's visual pass tunes them against the reference sheet.
 /// Pin centre-to-centre spacing — a pin row's height, so rows stacking at
-/// gap 0 land on exact pitch centres. Must stay ≥ the router's min pitch at
-/// the scope's clearance [SPEC 16.5].
+/// gap 0 land on exact pitch centres. It is the room two wired neighbouring
+/// pins leave a wire, so a scope whose `clearance` runs past it is an error
+/// rather than a sheet of strays ([`crate::layout::schematic`]'s lattice,
+/// [SPEC 16.1/21]).
 ///
 /// It is also the scope's **fine lattice** [SPEC 16.1] — every pin, stub tip
 /// and wire track lands on it, the coarse `gap` is a whole number of it, and a

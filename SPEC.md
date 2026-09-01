@@ -1426,7 +1426,7 @@ net-label-offset 4 (the clear space that name keeps off the trace, and off
   the run's two ends)
 pin-number offset 9 (across the lead)    readout offset 24 (beside a turned part's axis)
 readout gap 8 (part edge → its ref / value)    readout stack 4 (between the two)
-schematic clearance 10 (the scope's config — pin-pitch stays ≥ min pitch)
+schematic clearance 10 (the scope's config; past pin-pitch it errors, SPEC 16.1)
 schematic link stroke-width 1.5    corner-radius 0 (the scope's link default)
 ```
 
@@ -3418,7 +3418,10 @@ part centre lands on: here `gap` is the column and row pitch, not the space
 between two tracks, and it rounds **up** to a whole number of fine pitches, so a
 part centre is always a wire line too (`gap: 120 80` states row and column
 apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
-them stand one coarse column apart. The finished sheet centres on the scope's
+them stand one coarse column apart. Two wired neighbouring pins stand one
+**fine** pitch apart, so a scope whose `clearance` runs past that pitch is an
+error ([SPEC 21](#21-errors)) — said once, where the number is written, rather
+than as a stray for every lead that then finds no track. The finished sheet centres on the scope's
 own origin, and that shift is a whole number of **fine** pitches — so a part
 placed on the lattice is still on it once the sheet is squared up. The scope's
 own origin then lands on that same lattice, wherever its parent seated it: the
@@ -4656,6 +4659,7 @@ error.
 | Dot-path into a label | `a label is its own terminal — it has no pins` |
 | Unknown schematic `symbol:` | `unknown symbol 'gnb'; did you mean 'gnd'?` |
 | Bad `shape:` / `pins:` / `number:` | `'shape' takes plain, left, right, both, or round — not 'X'` · `'pins' takes a count ≥ 1` · `'number' takes an integer` |
+| `clearance` past the fine pitch | `'clearance' 30 is past the sheet's pin pitch 20 — two wired pins stand one pitch apart, so no wire could keep it` |
 | Satellite chain with no placed end | `'C7' has no placed end — its chain falls back to the flow` (warning) |
 
 **Routing** — a stray's reasons ([ROUTING.md](ROUTING.md), Impossible layouts / Fixed ports); each is a warning naming the link, `--strict` an error
