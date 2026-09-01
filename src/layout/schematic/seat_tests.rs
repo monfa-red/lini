@@ -2,12 +2,12 @@
 //! auto-posed to face it; chains on one pin stack; two placed ends distribute;
 //! no placed end flows with a warning; and every seat rides its anchor.
 
+use super::seat::LABEL_SEAT;
 use super::tests::{
     anchor, at, body, cell, close, ink, laid, placed, pose_of, scope, seat_warnings, sided,
     sided_with, tip, x_gap, y_gap,
 };
 use crate::layout::PlacedNode;
-use crate::ledger::consts::LABEL_SEAT;
 use crate::ledger::defaults::SCH_GAP;
 
 #[test]
@@ -324,7 +324,7 @@ fn a_span_reserves_only_what_its_leg_will_really_swallow() {
             "",
             &("  |J#j1| \"PH\" { pins: 2; cell: 1 1; rotate: 180 }\n".to_owned()
                 + "  |component#u2| { cell: 2 1 } [\n    |pin#s| { side: left }; |pin#gp| { side: bottom }\n  ]\n"
-                + "  |R#r1| \"1000000000kkkk\"\n  |gnd#gb|\n"
+                + "  |R#r1| \"1000000000kkkkkkkk\"\n  |gnd#gb|\n"
                 + "  |R#ra| \"1k\"\n  |R#rb| \"1k\"\n  |R#rc| \"1k\"\n"
                 + "  j1.p2 - r1 - u2.s\n"
                 + ground

@@ -112,6 +112,11 @@ pub(crate) const SHEET_MARGIN: f64 = 10.0;
 /// Pin centre-to-centre spacing — a pin row's height, so rows stacking at
 /// gap 0 land on exact pitch centres. Must stay ≥ the router's min pitch at
 /// the scope's clearance [SPEC 16.5].
+///
+/// It is also the scope's **fine lattice** [SPEC 16.1] — every pin, stub tip
+/// and wire track lands on it, the coarse `gap` is a whole number of it, and a
+/// schematic world hands it to the router as its track quantum
+/// (ROUTING.md §Vocabulary). One pitch, every grid on the sheet.
 pub(crate) const PIN_PITCH: f64 = 20.0;
 /// The stub — the short lead a pin extends outward; the wire lands on its tip.
 pub(crate) const PIN_STUB: f64 = 20.0;
@@ -133,17 +138,6 @@ pub(crate) const NET_LABEL_OFFSET: f64 = 4.0;
 /// stretch of wire under it. A longer name grows it, and `width:` raises the
 /// floor, through SPEC 5's ordinary width law.
 pub(crate) const NET_LABEL_RUN: f64 = 2.0 * PIN_PITCH;
-/// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
-/// stub tip and the satellite seated off it, and between stacked satellites.
-///
-/// It is a **routing corridor**, not just daylight: the lead between a pin
-/// and its satellite is an ordinary routed wire, and the channel model gives
-/// it a cell only where the two keep-outs do not overlap — so the seat must
-/// clear `2 × SCH_CLEARANCE`. SPEC 10.5's 10 leaves no channel at the
-/// schematic's own clearance 10 and every lead strays; one pin pitch does,
-/// which also puts satellites on the sheet grid. (The same reasoning
-/// widened the tree's `gap` past SPEC's plain 36.)
-pub(crate) const LABEL_SEAT: f64 = 25.0;
 /// The schematic scope's link `clearance` [SPEC 10.5/16.6] — tighter than the
 /// routing 16, so a sheet's short leads and pin pitch have room. Cascades
 /// from the scope's own block, so a user's `clearance:` still wins.

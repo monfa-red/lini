@@ -24,11 +24,12 @@ pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 pub(crate) const TREE_GAP_GEN: f64 = 64.0;
 pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 
-/// A schematic's default `gap` [SPEC 16.1] — the spacing between the scope's
-/// tracks. Wider than the generic `36`: a part's stubs, its seated satellites,
-/// and the wires running between two tracks all live in that space. Shared by
-/// the `|schematic|` template and the root `{ layout: schematic }` form.
-pub(crate) const SCH_GAP: f64 = 60.0;
+/// A schematic's default `gap` [SPEC 16.1] — the scope's **coarse lattice
+/// pitch**, five fine pitches. It is the column and row pitch every part
+/// centre lands on, not the space between two tracks: a discrete plus the lead
+/// each side of it, so a column of them reads as a column. Shared by the
+/// `|schematic|` template and the root `{ layout: schematic }` form.
+pub(crate) const SCH_GAP: f64 = 100.0;
 
 /// The `|mindmap|` depth ramp + wrap cap [SPEC 8] — one obvious table, retuned
 /// by eye. The root tier rides the `.lini-mindmap` bundle (the node *is* the

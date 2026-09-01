@@ -53,7 +53,7 @@ use super::terminal::{Terminal, connection_box, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
-use crate::ledger::consts::{DEFAULT_CLEARANCE, LABEL_SEAT};
+use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::resolve::{LinkKind, ResolvedLink};
 
 /// A satellite's seat off the anchor that holds its chain: an offset from
@@ -159,6 +159,11 @@ pub(super) struct Seats {
     /// The scope's seat gap ([`seat_gap`]) — every distance this pass leaves.
     seat: f64,
 }
+
+/// The seat floor. It left the ledger with the lattice [SPEC 16.1], which
+/// states the distance now, and stands here until the field pass replaces
+/// this module.
+pub(super) const LABEL_SEAT: f64 = 25.0;
 
 /// The scope's **seat gap** [SPEC 16.1/10.5]: the clear run a satellite is set
 /// off the pin it hangs from, and off the satellite before it.

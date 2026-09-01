@@ -1416,9 +1416,10 @@ plane-letter-gap 7   plane-letter 12
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-schematic track gap 60    pin-pitch 20    pin-stub 20    junction 4 (radius)    tag-point 8 (a flag's nose reservation; the nose draws at 45°)
-label-seat max(25, 2.5 × clearance) — a seat is a routing corridor, so it is
-  derived from the scope's own clearance, floored at one pin pitch
+schematic gap 100 (the coarse lattice — the part pitch, five fine ones; SPEC 16.1)
+pin-pitch 20 (the fine lattice: pins, stub tips and wire tracks — and the
+  schematic world's track quantum, ROUTING.md)
+pin-stub 20    junction 4 (radius)    tag-point 8 (a flag's nose reservation; the nose draws at 45°)
 net-label-run 40 (2 × pin-pitch — the floor on a plain net label's run of
   trace; a longer name grows it, `width:` raises the floor — SPEC 16.4)
 net-label-offset 4 (the clear space that name keeps off the trace, and off

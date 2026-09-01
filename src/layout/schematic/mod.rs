@@ -22,6 +22,7 @@ use crate::span::Span;
 
 mod hints;
 mod junction;
+mod lattice;
 mod net;
 mod place;
 mod ports;

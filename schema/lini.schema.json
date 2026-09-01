@@ -1149,7 +1149,7 @@
       ],
       "defaults": {
         "layout": "schematic",
-        "gap": "60",
+        "gap": "100",
         "clearance": "10",
         "fill": "--sheet"
       }
