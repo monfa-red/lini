@@ -7,9 +7,9 @@
 // the name that leaves the block, and the no-connect cross [SPEC 16].
 {
   // `density:` is px per millimetre — screen resolution alone, so the paper
-  // stays true-scale in print [SPEC 15.1]; 12 is what these two blocks need of
-  // an A5, the parts being drawn in sheet px [SPEC 16.6].
-  density: 12;
+  // stays true-scale in print [SPEC 15.1]; 7 is what these two blocks need of
+  // an A4, the parts being drawn in sheet px [SPEC 16.6].
+  density: 7;
 
   // The rails both blocks ride: power flags are one-line defines with
   // intrinsic text [SPEC 8/16.4], so a chain ending in one grows up out of
@@ -21,11 +21,11 @@
     "VM"
   ]
 
-  |region::group| { layout: schematic; padding: 20; }
+  |region::group| { layout: schematic; }
 }
 
 |page| {
-  sheet: a5 landscape; padding: 125; layout: grid; columns: 950, 1296; rows: 1100, 378; gap: 24; align: stretch; justify: stretch;
+  sheet: a4 landscape; layout: grid; padding: 0; columns: 790, 1020; rows: 700; gap: 10; align: stretch; justify: stretch;
 } [
 
   |region#boost| "5.5v Boost" { cell: 1 1; } [
