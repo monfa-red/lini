@@ -454,9 +454,11 @@ wire **carries its fixed ports**, so the checker still judges output alone.
 The laws are absolute. When geometry allows no legal route, the engine draws
 every link it can and **names the ones it couldn't**, each with its source
 span and reason; `--strict` makes that an error. The engine never draws a
-link through a node, oblique into a side, or squeezed below half-clearance
-pitch to paper over a crowded diagram — and it never moves the layout to
-help. The user's levers are the honest ones: widen `gap`, shrink
+link through a node, oblique into a side, squeezed below half-clearance
+pitch to paper over a crowded diagram, or **across itself** — a route whose
+two punches cross (an end run driven through a transparent ancestor over the
+other end's) is no route, and the search closes that entry — and it never
+moves the layout to help. The user's levers are the honest ones: widen `gap`, shrink
 `clearance`, reorder or re-side the links.
 
 An impossible link renders as a **stray**: a single straight segment between

@@ -297,6 +297,21 @@ fn solve(
                 break;
             }
             let (se, ge) = (&starts[route.start], &goals[route.goal]);
+            // A wire never crosses itself: two punches that meet — a start
+            // run driven through a transparent ancestor across the goal's —
+            // draw one wire over its own end, which no placement can undo.
+            // Closing the start's stub sends the search to another entry, or
+            // honestly out of this world.
+            if punches_cross(se, ge) {
+                let (a, b) = punch_span(se);
+                let chan = match se.axis {
+                    Axis::H => graph.cells[se.cell].h,
+                    Axis::V => graph.cells[se.cell].v,
+                };
+                deny.push((se.axis, chan, (a.min(b), a.max(b))));
+                last = Some(route);
+                continue;
+            }
             let ends =
                 [(se, &rep.a_rect, fan[0]), (ge, &rep.b_rect, fan[1])].map(|(e, r, fan)| EndInfo {
                     side: e.side,
@@ -332,6 +347,28 @@ fn solve(
         }
     }
     (None, fixed_blocked)
+}
+
+/// An entry's punch along its travel axis: port to tip.
+fn punch_span(e: &Entry) -> (f64, f64) {
+    match e.axis {
+        Axis::H => (e.port.0, e.tip.0),
+        Axis::V => (e.port.1, e.tip.1),
+    }
+}
+
+/// Whether two entries' punches (port → tip, each on its own axis) **cross**:
+/// perpendicular, each one's ordinate strictly inside the other's travel.
+/// Punches that merely meet — tip to tip at a corner, or a containment
+/// link's two collinear stubs joining end to end — are the wire's own
+/// shape and never cross.
+fn punches_cross(a: &Entry, b: &Entry) -> bool {
+    let inside = |v: f64, (p, q): (f64, f64)| p.min(q) < v && v < p.max(q);
+    match (a.axis, b.axis) {
+        (Axis::H, Axis::V) => inside(b.port.0, punch_span(a)) && inside(a.port.1, punch_span(b)),
+        (Axis::V, Axis::H) => inside(a.port.0, punch_span(b)) && inside(b.port.1, punch_span(a)),
+        _ => false,
+    }
 }
 
 /// Keep a bundle's won route: the landing sides (a fan group's shared port
