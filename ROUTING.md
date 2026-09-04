@@ -173,12 +173,13 @@ The rest of this document is the `orthogonal` contract.
 - **Run** — one straight piece of a route, lying in one channel of its axis.
   A run's **track** is its ordinate across the channel. A route is an
   alternating chain of runs.
-- **Track quantum** — a world's own grid step, where its scope states one (a
-  schematic's fine pitch, [SPEC 16.1](SPEC.md#161-placement--the-lattice)). It
-  is an **absolute** step, measured in scene coordinates, which is why such a
-  scope lands its own origin on it — the parts' grid and the wires' are one
-  grid. It rounds an interior run's *preference*, never its lawful range: no
-  law reads it, and a world without one is unchanged.
+- **Track quantum** — a world's own grid, where its scope states one (a
+  schematic's fine pitch, [SPEC 16.1](SPEC.md#161-placement--the-lattice)): a
+  step, and the scene point its lines count from — the scope's **own origin**,
+  wherever its parent seated it — so the parts' grid and the wires' are one
+  grid by construction and no scope moves to make them agree. It rounds an
+  interior run's *preference*, never its lawful range: no law reads it, and a
+  world without one is unchanged.
 - **Port** — the point where a link meets a side: the ordinate of its end
   run. Ports are not chosen ahead of routing; they fall out of placement.
 - **Bundle** — the links sharing one unordered endpoint pair and the same
@@ -285,7 +286,7 @@ Six steps. Each decides once; none revisits an earlier step's answer.
      both walls are keep-out edges (a bend between two nodes lands halfway
      between them), the keep-out wall when the other wall is the canvas edge
      (wires hug the diagram, not the margin). Where the run's world states a
-     **track quantum**, that preference rounds to the nearest multiple of it
+     **track quantum**, that preference rounds to the nearest line of it
      **the corridor holds** — a wall is no grid line, so a corridor carrying
      none keeps its anchor — and a bare run between two gridded parts bends
      on their grid rather than a hair off it;

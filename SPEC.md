@@ -3425,11 +3425,11 @@ error ([SPEC 21](#21-errors)) — said once, where the number is written, rather
 than as a stray for every lead that then finds no track. The finished sheet
 centres on the scope's own origin, and that shift is a whole number of **fine**
 pitches — so a part placed on the lattice is still on it once the sheet is
-squared up. The scope's
-own origin then lands on that same lattice, wherever its parent seated it: the
-sheet's grid and the scene's are **one** grid, which is what lets the router
-round a wire to it ([ROUTING.md](ROUTING.md), Track quantum). A nested sheet
-therefore stands within half a fine pitch of where its parent's flow put it.
+squared up. The lattice is the **scope's**, counted from its own origin: the
+router rounds a wire to that grid wherever the parent seated the scope
+([ROUTING.md](ROUTING.md), Track quantum), so a nested sheet stands exactly
+where its parent's flow or grid put it, and the parent's `gap` is honoured to
+the pixel.
 
 **Ink never places.** A satellite's cell comes from the lattice, never from the
 width of its ref or value: a long value overhangs the column beside it, and

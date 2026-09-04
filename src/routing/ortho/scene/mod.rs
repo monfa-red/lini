@@ -18,6 +18,7 @@
 //! count toward [`SceneIndex::bounds`] (ink the canvas must hold); they are
 //! never a keep-out, a blocker, or a label's dodge.
 
+use super::Quantum;
 use super::rect::Rect;
 use crate::layout::ir::PlacedNode;
 use parts::Parts;
@@ -46,8 +47,9 @@ pub struct SceneNode {
     /// header). Its subtree is invisible to every solidity question.
     chrome: bool,
     /// The track quantum this container's interior states, if any
-    /// (ROUTING.md §Vocabulary) — a schematic scope's fine pitch [SPEC 16.1].
-    quantum: Option<f64>,
+    /// (ROUTING.md §Vocabulary) — a schematic scope's fine pitch, counted
+    /// from the scope's own origin [SPEC 16.1].
+    quantum: Option<Quantum>,
     /// The enclosing scene node (`None` for a top-level node). Containment
     /// and worlds walk this chain — **structure, not paths** — so an
     /// anonymous container is as real a container as a named one.
@@ -66,7 +68,7 @@ pub struct SceneIndex {
     by_path: BTreeMap<String, usize>,
     /// The scene root's own track quantum — the root world is keyed `None`
     /// and has no scene node to read one off ([`SceneIndex::with_root_quantum`]).
-    root_quantum: Option<f64>,
+    root_quantum: Option<Quantum>,
     /// The sheet's fixed ports and terminal addresses ([`parts`]).
     parts: Parts,
 }
@@ -117,7 +119,10 @@ impl SceneIndex {
             overflow: Vec::new(),
             kind,
             chrome: crate::layout::drawing::chrome::is_chrome(&n.attrs),
-            quantum: crate::layout::schematic::quantum(&n.attrs),
+            quantum: crate::layout::schematic::quantum(&n.attrs).map(|step| Quantum {
+                step,
+                origin: (cx, cy),
+            }),
             parent,
             children: Vec::new(),
         });
@@ -301,13 +306,16 @@ impl SceneIndex {
 
     /// The root scene's own track quantum — the root world has no scene node
     /// to read it off, so the caller supplies it.
-    pub(crate) fn with_root_quantum(mut self, q: Option<f64>) -> Self {
-        self.root_quantum = q;
+    pub(crate) fn with_root_quantum(mut self, step: Option<f64>) -> Self {
+        self.root_quantum = step.map(|step| Quantum {
+            step,
+            origin: (0.0, 0.0),
+        });
         self
     }
 
     /// A world's track quantum (ROUTING.md §Vocabulary), if its scope states one.
-    pub(crate) fn quantum(&self, key: WorldKey) -> Option<f64> {
+    pub(crate) fn quantum(&self, key: WorldKey) -> Option<Quantum> {
         key.map_or(self.root_quantum, |i| self.nodes[i].quantum)
     }
 

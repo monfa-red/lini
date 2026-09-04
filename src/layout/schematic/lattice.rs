@@ -10,7 +10,6 @@
 //! centre is always a wire line too: a column of parts and the wires reaching
 //! them would otherwise drift apart by the remainder, one cell at a time.
 
-use super::super::ir::PlacedNode;
 use super::super::primitives;
 use crate::desugar::pose::Side;
 use crate::error::{Code, Error};
@@ -131,41 +130,12 @@ impl Lattice {
 /// the last bit, so anything larger than rounding noise is a real step out.
 pub(super) const EPS: f64 = 1e-9;
 
-/// A scope's **track quantum** (ROUTING.md §Vocabulary) — its fine pitch
-/// [SPEC 16.1] — or `None` for a node that is no schematic scope.
-///
-/// The router rounds an interior run's preference to it, and [`snap_scopes`]
-/// puts the scope's own origin on it: one reading, so the wires' grid and the
-/// parts' cannot be two grids.
+/// A scope's **track quantum** step (ROUTING.md §Vocabulary) — its fine pitch
+/// [SPEC 16.1] — or `None` for a node that is no schematic scope. The router
+/// counts that step from the scope's own origin, wherever its parent seated
+/// it, so the wires' grid and the parts' cannot be two grids.
 pub(crate) fn quantum(attrs: &AttrMap) -> Option<f64> {
     crate::resolve::is_schematic(attrs).then_some(PIN_PITCH)
-}
-
-/// Put every schematic scope's origin on the fine lattice [SPEC 16.1].
-///
-/// A scope lays its parts out on multiples of its pitch **in its own frame**,
-/// while the router rounds to multiples of the same quantum in the *scene*'s —
-/// so a scope its parent seated half a pitch off would hand its parts one grid
-/// and its wires another, and every bare run would jog by the remainder. The
-/// scope moves, never its contents: the sheet inside it is already square with
-/// itself, and it is only where the parent put the frame that is arbitrary.
-///
-/// The walk mirrors the router's own ([`crate::routing::ortho::scene`]): plain
-/// offsets down the tree, rotation left to the ancestor that authored it.
-pub(in crate::layout) fn snap_scopes(nodes: &mut [PlacedNode]) {
-    fn walk(nodes: &mut [PlacedNode], ox: f64, oy: f64) {
-        for n in nodes.iter_mut() {
-            if let Some(q) = quantum(&n.attrs) {
-                let snap = |v: f64| (v / q).round() * q;
-                n.cx = snap(ox + n.cx) - ox;
-                n.cy = snap(oy + n.cy) - oy;
-            }
-            // A scope nested in a scope is already on the grid — its parent
-            // seated it there — so the walk costs it nothing.
-            walk(&mut n.children, ox + n.cx, oy + n.cy);
-        }
-    }
-    walk(nodes, 0.0, 0.0);
 }
 
 #[cfg(test)]

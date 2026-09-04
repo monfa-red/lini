@@ -37,9 +37,6 @@ pub(super) use hints::seat_hints;
 pub(crate) use junction::junctions;
 /// The track quantum a schematic world hands the router [SPEC 16.1].
 pub(crate) use lattice::quantum;
-/// The pass that puts every scope's origin on that quantum, before a wire is
-/// asked for [SPEC 16.1].
-pub(super) use lattice::snap_scopes;
 /// The **net-label convention** [SPEC 16.4] — which side of its wire a net
 /// name takes and how far off it sits. Shared with the router's label pass,
 /// which places the two-ended spelling (`u7.vs - c24.p1 "VM"`) while

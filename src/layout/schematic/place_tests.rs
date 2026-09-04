@@ -3,7 +3,7 @@
 //! widest anchor — and which children ride a track at all.
 
 use super::tests::{
-    anchor, at, cell, close, laid, on_fine_grid, placed, pose_of, scope, seat, sided,
+    anchor, at, cell, close, laid, on_fine_grid, placed, pose_of, scope, seat, sided, x_gap,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::PIN_PITCH;
@@ -459,25 +459,38 @@ fn a_defines_own_gap_and_clearance_reach_the_scope_it_opens() {
 }
 
 #[test]
-fn a_nested_scope_stands_on_the_fine_lattice_the_router_rounds_to() {
+fn a_nested_scope_stands_exactly_where_its_parent_put_it() {
     // [SPEC 16.1] a scope's parts stand on multiples of its pitch in the
-    // scope's own frame, and the router rounds a run to multiples of the same
-    // quantum in the *scene*'s (ROUTING.md §Vocabulary) — so a frame the
-    // parent seated off the grid hands the two of them different grids, and
-    // every bare run jogs by the remainder.
-    let src = format!(
-        "{{ |region::group| {{ layout: schematic }} }}\n\
-         |row| {{ gap: 7; padding: 3 }} [\n\
-         |block#shim| {{ width: 33; height: 11 }}\n\
-         |region#r| [\n{}]\n]\n",
-        sided("u1") + "  |C#c1| \"1u\"\n  |gnd#g1|\n  u1.c - c1 - g1\n"
-    );
-    let nodes = laid(&src);
-    for id in ["u1", "c1", "g1"] {
-        let (x, y) = seat(&nodes, id);
+    // scope's **own** frame, and the router counts its track quantum from the
+    // scope's origin (ROUTING.md §Vocabulary) — so the scope never has to move
+    // onto the scene's grid, and the parent's `gap` is honoured to the pixel:
+    // a snap would have swallowed anything under half a pitch of it.
+    let sheet = |gap: u32| {
+        format!(
+            "{{ |region::group| {{ layout: schematic }} }}\n\
+             |row| {{ gap: {gap}; padding: 3 }} [\n\
+             |block#shim| {{ width: 33; height: 11 }}\n\
+             |region#r| [\n{}]\n]\n",
+            sided("u1") + "  |C#c1| \"1u\"\n  |gnd#g1|\n  u1.c - c1 - g1\n"
+        )
+    };
+    let (a, b) = (laid(&sheet(7)), laid(&sheet(11)));
+    for (nodes, gap) in [(&a, 7.0), (&b, 11.0)] {
+        let have = x_gap(nodes, "shim", "r");
         assert!(
-            on_fine_grid(x) && on_fine_grid(y),
-            "'{id}' at {x} {y} is off the scene's lattice"
+            close(have, gap),
+            "the row's gap stands to the pixel: {have} for {gap}"
+        );
+    }
+    // The scope's origin is off the scene's lattice, which is fine…
+    let origin = at(&b, "r").0;
+    assert!(!on_fine_grid(origin), "an off-grid seat stands: {origin}");
+    // …because every part inside is still on the scope's own lattice.
+    for id in ["u1", "c1", "g1"] {
+        let (x, y) = seat(&b, id);
+        assert!(
+            on_fine_grid(x - origin) && on_fine_grid(y),
+            "'{id}' at {x} {y} is off the scope's lattice (origin {origin})"
         );
     }
 }

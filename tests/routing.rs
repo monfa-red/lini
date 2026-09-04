@@ -1359,3 +1359,52 @@ fn a_schematic_worlds_interior_runs_land_on_its_track_quantum() {
         .collect();
     assert!(breaches.is_empty(), "{breaches:?}");
 }
+
+/// The quantum is the **scope's** grid, counted from the scope's own origin
+/// (ROUTING.md §Vocabulary, [SPEC 16.1]): a sheet its parent seated off the
+/// scene's lattice keeps its own, and its bare runs bend on the lines its
+/// parts stand on — never a hair off them.
+#[test]
+fn a_nested_worlds_runs_round_to_the_scopes_own_offset_lattice() {
+    const PITCH: f64 = 20.0;
+    // The same two parts and crossbar, inside a region a `gap: 7` row seats
+    // off the grid behind a shim.
+    let src = "{ |region::group| { layout: schematic; gap: 200 } }\n\
+               |row| { gap: 11; padding: 3 } [\n\
+               \x20 |block#shim| { width: 33; height: 11 }\n\
+               \x20 |region#s| [\n\
+               \x20   |component#u1| [ |pin#a| { side: right }; |pin#b| { side: right }; \
+               |pin#x| { side: right } ]\n\
+               \x20   |component#u2| \"WIDE PART NAME\" { cell: 2 1 } [ \
+               |pin#c| \"LONGNAME\" { side: left }; |pin#d| \"OTHERNAME\" { side: left } ]\n\
+               \x20   u1.a - u2.c\n\
+               \x20   u1.x - u2.d\n\
+               \x20 ]\n]\n";
+    let laid = route_sample(src, 10.0);
+    let jog = laid
+        .links
+        .iter()
+        .find(|l| l.seg_from == "s.u1.x" && l.seg_to == "s.u2.d")
+        .map(|l| l.path.as_slice())
+        .expect("the jog");
+    orthogonal(jog);
+    assert_eq!(jog.len(), 4, "across, over, across: {jog:?}");
+    let bar = jog[1].0;
+    // The scope's origin is where the row put it — off the scene's grid.
+    let (rx, _, _, _) = node_rect(&laid, "s").expect("the region");
+    let region = laid.nodes[0]
+        .children
+        .iter()
+        .find(|n| n.id.as_deref() == Some("s"))
+        .expect("the region node");
+    let origin = laid.nodes[0].cx + region.cx;
+    assert!(
+        (origin / PITCH).round() * PITCH != origin,
+        "the seat is on the scene's grid, so this proves nothing: {origin} (rect from {rx})"
+    );
+    let phase = (bar - origin) / PITCH;
+    assert!(
+        (phase - phase.round()).abs() < 1e-9,
+        "the crossbar is off the scope's own lattice: {bar} from origin {origin}"
+    );
+}

@@ -331,24 +331,13 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                     let raw = clipped.anchor();
                     let t = worlds[chain.world]
                         .quantum
-                        .and_then(|q| quantised(raw, q, clipped.walls))
+                        .and_then(|q| q.snap(run.axis, raw, clipped.walls))
                         .unwrap_or(raw);
                     (t, None)
                 }
             }
         })
         .collect()
-}
-
-/// The multiple of `q` nearest `at` that the corridor `walls` hold — `None`
-/// when it holds none. The clamp is onto a **grid line**, never onto a wall:
-/// a corridor too narrow (or too badly placed) to carry a line of the grid
-/// has nothing to say about it, and pinning the run to the keep-out edge
-/// instead would trade the anchor's clear air for a hug the grid never asked
-/// for.
-fn quantised(at: f64, q: f64, walls: (f64, f64)) -> Option<f64> {
-    let (lo, hi) = ((walls.0 / q).ceil() * q, (walls.1 / q).floor() * q);
-    (lo <= hi).then(|| ((at / q).round() * q).max(lo).min(hi))
 }
 
 /// A fan forks at as few points as it can (ROUTING.md Special nodes): a

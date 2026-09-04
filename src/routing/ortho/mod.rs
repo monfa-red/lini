@@ -40,9 +40,45 @@ use world::{build_worlds, world_ladder};
 pub(crate) struct World {
     pub key: scene::WorldKey,
     pub graph: ChannelGraph,
-    /// The grid step this world's scope states, if any (ROUTING.md
-    /// §Vocabulary) — placement rounds an interior run's preference to it.
-    pub quantum: Option<f64>,
+    /// The grid this world's scope states, if any (ROUTING.md §Vocabulary)
+    /// — placement rounds an interior run's preference onto it.
+    pub quantum: Option<Quantum>,
+}
+
+/// A world's **track quantum** (ROUTING.md §Vocabulary): the scope's own
+/// grid — its step, and the scene point its lines count from. A schematic
+/// lays its parts on multiples of the pitch in its own frame [SPEC 16.1], so
+/// the lines the router rounds to are `origin + k·step`, wherever the parent
+/// seated the scope: the parts' grid and the wires' are one grid by
+/// construction, and no scope has to move to make them agree.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Quantum {
+    pub step: f64,
+    pub origin: (f64, f64),
+}
+
+impl Quantum {
+    /// The grid line nearest `at` that the corridor `walls` hold, for a run
+    /// on `axis` — `None` when it holds none. The clamp is onto a **grid
+    /// line**, never onto a wall: a corridor too narrow (or too badly placed)
+    /// to carry a line of the grid has nothing to say about it, and pinning
+    /// the run to the keep-out edge instead would trade the anchor's clear
+    /// air for a hug the grid never asked for.
+    pub fn snap(self, axis: Axis, at: f64, walls: (f64, f64)) -> Option<f64> {
+        // A run's ordinate lies across its axis: a vertical run is placed in
+        // x, a horizontal one in y.
+        let phase = match axis {
+            Axis::V => self.origin.0,
+            Axis::H => self.origin.1,
+        };
+        let q = self.step;
+        let line = |k: f64| phase + k * q;
+        let (lo, hi) = (
+            ((walls.0 - phase) / q).ceil(),
+            ((walls.1 - phase) / q).floor(),
+        );
+        (lo <= hi).then(|| line(((at - phase) / q).round().max(lo).min(hi)))
+    }
 }
 
 /// One end of a chain: the side it lands on, the endpoint's body, the lawful

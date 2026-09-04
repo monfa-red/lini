@@ -57,8 +57,8 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // [SPEC 11/15]: the router's request pass skips drawing/sequence scopes,
     // so the full route sees exactly those.
     if crate::resolve::is_drawing(&program.scene.attrs) {
-        let (mut top_nodes, bbox) = drawing::layout_root(program)?;
-        let routed = route(program, &mut top_nodes)?;
+        let (top_nodes, bbox) = drawing::layout_root(program)?;
+        let routed = route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
 
@@ -67,8 +67,8 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // links route like any diagram's, so the routing pass runs as usual;
     // intercepted here because the generic per-child layout would flow them.
     if crate::resolve::is_stack(&program.scene.attrs) {
-        let (mut top_nodes, bbox) = datum::layout_root(program)?;
-        let routed = route(program, &mut top_nodes)?;
+        let (top_nodes, bbox) = datum::layout_root(program)?;
+        let routed = route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
 
@@ -78,8 +78,8 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // intercepted before the generic per-child layout, which would fold a
     // topic's branches into its own box.
     if tree::is_tree(&program.scene.attrs) {
-        let (mut top_nodes, bbox) = tree::layout_root(program)?;
-        let routed = route(program, &mut top_nodes)?;
+        let (top_nodes, bbox) = tree::layout_root(program)?;
+        let routed = route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
 
@@ -88,8 +88,8 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // like any links — intercepted before the generic per-child layout, which
     // would flow-arrange the parts instead.
     if schematic::is_schematic(&program.scene.attrs) {
-        let (mut top_nodes, bbox) = schematic::layout_root(program)?;
-        let routed = route(program, &mut top_nodes)?;
+        let (top_nodes, bbox) = schematic::layout_root(program)?;
+        let routed = route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
 
@@ -115,7 +115,7 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
         // Nested ordinary scopes route their own wires [SPEC 11/13]; the
         // request pass skips the sequence's own messages, which the engine
         // lowered above — extend the routed set with them.
-        let mut routed = route(program, &mut top_nodes)?;
+        let mut routed = route(program, &top_nodes)?;
         routed.links.extend(links);
         return finish(program, top_nodes, bbox, routed);
     }
@@ -131,7 +131,7 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     )?;
 
     // Route links once the nodes are placed.
-    let routed = route(program, &mut top_nodes)?;
+    let routed = route(program, &top_nodes)?;
     // Lower the sheet's projection construction links [SPEC 15.8]: after the
     // views have placed (and `align: origin` lined them up), each ties two
     // resolved anchors with one straight `|projection|` chrome line, in sheet
@@ -140,17 +140,11 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     finish(program, top_nodes, bbox, routed)
 }
 
-/// Route the finished layout, every schematic scope first put on its own fine
-/// lattice ([`schematic::snap_scopes`], [SPEC 16.1]).
-///
-/// The snap is placement's last word, not the router's: a scope's parts stand
-/// on multiples of its pitch in the scope's frame, and the router rounds a run
-/// to multiples of the same quantum in the *scene*'s (ROUTING.md §Vocabulary) —
-/// so the frame the parent seated the scope in has to agree with the scene's
-/// grid, or every bare run jogs by the remainder. Layout still never moves for
-/// a link: this runs before a wire is asked for.
-fn route(program: &Program, nodes: &mut [PlacedNode]) -> Result<routing::Routing, Error> {
-    schematic::snap_scopes(nodes);
+/// Route the finished layout. Placement's last word stands as placed: a
+/// schematic scope's wires round to the scope's own lattice, counted from
+/// wherever its parent seated it (ROUTING.md §Vocabulary, [SPEC 16.1]), so
+/// nothing moves for a link.
+fn route(program: &Program, nodes: &[PlacedNode]) -> Result<routing::Routing, Error> {
     routing::route(program, nodes)
 }
 
