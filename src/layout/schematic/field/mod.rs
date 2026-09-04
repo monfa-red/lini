@@ -413,15 +413,17 @@ struct Ladder {
 /// for ever, and a wire is one pitch wide, so ink half a pitch off its line
 /// is what stops it.
 fn allocate(cells: &[Bbox], paint: &[Bbox], claim: impl Fn(i32) -> Claim) -> i32 {
+    (1..)
+        .find(|&k| free(cells, paint, &claim(k)))
+        .expect("an unbounded lattice always has a free lane")
+}
+
+/// Whether a claim meets nothing committed: no cell a cell, no wire the paint.
+fn free(cells: &[Bbox], paint: &[Bbox], claim: &Claim) -> bool {
     let clear = |taken: &[Bbox], asked: &[Bbox]| {
         asked.iter().all(|c| !taken.iter().any(|t| t.overlaps(*c)))
     };
-    (1..)
-        .find(|&k| {
-            let asked = claim(k);
-            clear(cells, &asked.cells) && clear(paint, &asked.wires)
-        })
-        .expect("an unbounded lattice always has a free lane")
+    clear(cells, &claim.cells) && clear(paint, &claim.wires)
 }
 
 /// A part's **drawn** extent: its box unioned with every descendant, so the

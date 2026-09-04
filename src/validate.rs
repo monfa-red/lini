@@ -439,7 +439,11 @@ impl<'a> Ctx<'a> {
                 // — `cell:` places on a grid *and* on a schematic's own ordinal
                 // track grid [SPEC 16.1], where it also promotes a satellite to
                 // an anchor; `span:` stays grid-only, schematic tracks have no
-                // spans.
+                // spans — bar a `|space|`, whose span is rail slots, wherever
+                // its component sits [SPEC 16.2].
+                if d.name == "span" && chain.iter().any(|c| c == "space") {
+                    return;
+                }
                 if let Some(parent) = parent_layout
                     && !prop.layout_owners().any(|l| l == *parent)
                 {

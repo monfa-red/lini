@@ -13,7 +13,7 @@ use super::super::net;
 use super::super::place::Slot;
 use super::super::terminal::{Terminal, ident, terminal};
 use super::read::{growth, tag_facing, tap_flags};
-use super::{Claim, Field, LANED, Ladder, STRAIGHT, Seat, allocate, ink_edge};
+use super::{Claim, Field, LANED, Ladder, STRAIGHT, Seat, allocate, free, ink_edge};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
 use crate::desugar::schematic::{SchKind, sch_kind};
@@ -48,14 +48,27 @@ impl Field {
             h.base = base;
         }
         for h in &held {
-            self.grow(children, h);
+            // A flag rides its pin's outermost lane [SPEC 16.1]: the other
+            // chains off that pin have grown, so their lanes are struck.
+            let far = h.flag.then(|| self.outermost(h, &held)).flatten();
+            self.grow(children, h, far);
         }
+    }
+
+    /// The outermost lane the **other** chains off `h`'s pin took — the far
+    /// end of the run its pin feeds — or `None` where none turned.
+    fn outermost(&self, h: &Held, held: &[Held]) -> Option<f64> {
+        let out = Ax::outward(h.side);
+        held.iter()
+            .filter(|t| t.anchor == h.anchor && t.turns() && !t.flag && t.same_pin(h))
+            .filter_map(|t| self.seats[t.chain.members[0]].map(|s| s.cross))
+            .reduce(|a, b| if b * out > a * out { b } else { a })
     }
 
     /// Seat one held chain [SPEC 16.1]: its trunk on a lane of its own, each
     /// tap beside the member it hangs off, and every multi-member branch as a
     /// sub-chain from its junction — all against the one occupancy.
-    fn grow(&mut self, children: &[PlacedNode], h: &Held) {
+    fn grow(&mut self, children: &[PlacedNode], h: &Held, far: Option<f64>) {
         let chain = &h.chain;
         let tap = tap_flags(children, chain);
         let limbs = limbs(chain);
@@ -95,8 +108,14 @@ impl Field {
         // One allocation for either ladder [SPEC 16.1]: a chain that turned off
         // its pin takes the innermost free lane, and one that grew straight out
         // asks for its pin's own line — stepping beside it only where a chain
-        // already claimed that corridor, which is the first claimant's.
-        let k = self.allot(h, &trunk);
+        // already claimed that corridor, which is the first claimant's. A flag
+        // asks first for the outermost lane its pin's other chains took, so
+        // the rail closes over the whole run rather than ending between two
+        // of its columns.
+        let k = far
+            .map(|cross| self.step_at(&trunk, cross))
+            .filter(|&k| k >= 1 && self.fits(h, &trunk, k))
+            .unwrap_or_else(|| self.allot(h, &trunk));
         self.commit(h, &trunk, k);
 
         // A **tap** takes no slot [SPEC 16.1]: it stands on its attachment's,
@@ -317,6 +336,21 @@ impl Field {
         self.lat.past(ink + out * (back + self.lat.pitch), out)
     }
 
+    /// Whether a run at cross step `k` meets nothing already committed.
+    fn fits(&self, h: &Held, run: &Run, k: i32) -> bool {
+        free(
+            &self.cells[h.anchor],
+            &self.paint[h.anchor],
+            &self.claim(h, run, k),
+        )
+    }
+
+    /// The cross step of a run's ladder that stands on `cross`.
+    fn step_at(&self, run: &Run, cross: f64) -> i32 {
+        let out = Ax::outward(run.ladder.side);
+        ((cross - run.ladder.base) * out / self.lat.pitch).round() as i32 + 1
+    }
+
     /// The innermost cross step a run's cells and wire leave free [SPEC 16.1].
     fn allot(&self, h: &Held, run: &Run) -> i32 {
         allocate(&self.cells[h.anchor], &self.paint[h.anchor], |k| {
@@ -470,6 +504,10 @@ struct Held {
     /// The innermost line its side's lanes start on ([`Field::base`]), struck
     /// once every chain on that side is known.
     base: f64,
+    /// A **flag**: a turned chain of one symbol label — a power flag, a bare
+    /// ground — which rides its pin's outermost lane rather than one of its
+    /// own [SPEC 16.1].
+    flag: bool,
 }
 
 impl Held {
@@ -487,6 +525,10 @@ impl Held {
             ladders.push(key);
             ladders.len() - 1
         });
+        let flag = ray != side
+            && matches!(chain.members[..], [m] if
+                sch_kind(&children[m].type_chain) == Some(SchKind::Label)
+                    && ident(&children[m].attrs, "symbol").is_some());
         Held {
             anchor: pin_end.child,
             depth: dot(pin.at, ray.normal()),
@@ -497,7 +539,15 @@ impl Held {
             ray,
             group,
             base: 0.0,
+            flag,
         }
+    }
+
+    /// Whether two chains leave by one pin — read in fine lines, since two
+    /// stub tips agree to a bit or two and not to the bit.
+    fn same_pin(&self, other: &Held) -> bool {
+        let rung = |v: f64| (v / EPS).round() as i64;
+        (rung(self.pin.at.0), rung(self.pin.at.1)) == (rung(other.pin.at.0), rung(other.pin.at.1))
     }
 
     /// Whether the chain **turned** off its pin, and so takes a lane. One
@@ -597,7 +647,16 @@ fn order(held: &mut Vec<Held>, ladders: usize) {
         }
     }
     let mut by: Vec<usize> = (0..held.len()).collect();
-    by.sort_by_key(|&i| (held[i].phase(), held[i].group, rank[i], !held[i].turns()));
+    // …and a flag after every other chain off its pin, whose lanes it reads.
+    by.sort_by_key(|&i| {
+        (
+            held[i].phase(),
+            held[i].group,
+            rank[i],
+            !held[i].turns(),
+            held[i].flag,
+        )
+    });
     let mut taken: Vec<Option<Held>> = std::mem::take(held).into_iter().map(Some).collect();
     held.extend(
         by.iter()

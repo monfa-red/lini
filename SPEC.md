@@ -839,7 +839,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|schematic\|` | `\|block\|` | `layout: schematic` | A circuit sheet's scope ([SPEC 16](#16-schematic)). |
 | `\|component\|` | `\|block\|` | `fill: --component-fill; stroke: --component-stroke; stroke-width: 1.5; radius: 0; padding: 8; prefix: "U"` | The generic pin-bearing part — IC, module, relay; ref prefix U ([SPEC 16.2](#162-components--pins)). |
 | `\|pin\|` | `\|block\|` | name inside, `number:` outside, stub outward — no `side:` default (the bilateral split, [SPEC 16.2](#162-components--pins)) | A component **terminal** — the wire lands on its stub tip. |
-| `\|space\|` | `\|block\|` | `width: 20; height: 20` — one rail slot | An **empty slot** between a component's pins ([SPEC 16.2](#162-components--pins)). |
+| `\|space\|` | `\|block\|` | `width: 20; height: 20` — one rail slot, `span: N` for N | An **empty slot** between a component's pins ([SPEC 16.2](#162-components--pins)). |
 | `\|label\|` | `\|block\|` | `shape: plain; font-size: 11; color: --label-ink` | The **net tag** — text, a symbol (`gnd`, `power`, …), or both; its own terminal ([SPEC 16.4](#164-labels)). |
 | `\|junction\|` | `\|oval\|` | `fill: --wire; stroke: none` — generated chrome | The connection **dot** where ≥ 3 wire ends meet ([SPEC 16.5](#165-wires)). |
 | `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them `side: left` (one column) | The **connector** ([SPEC 16.2](#162-components--pins)). |
@@ -3534,7 +3534,11 @@ grew **straight** out take no lane and compete for none, so they stand first:
 they are the geography every lane then steps past — except a part-led one
 sharing its pin with a turned chain, which grows after that pin's lanes and
 past them, the junction on its own lead ahead of its first member. A chain led
-by a bare net run is exempt, being that very trace named.
+by a bare net run is exempt, being that very trace named. Chains off **one**
+pin take their lanes in their parts' declaration order — bar a **flag**, a
+turned chain of one symbol label, which rides the outermost lane the pin's
+other chains took where its cell fits there, so the rail closes over the whole
+run it feeds rather than ending between two of its columns.
 
 **A field starts where its cells clear the ink.** The innermost **lane** on a
 side is the first line whose cells stand clear of the anchor's own drawn ink
@@ -3639,8 +3643,9 @@ pin's `translate:` slides it along its side — a cross-axis component is an
 error (a pin lives on its side). A **`|space|`** among the pins is one empty
 rail slot — a fine pitch of air, the gap a datasheet draws between pin groups —
 on the rail of the pin written **before** it (a leading one, of the pin after
-it), or of its own `side:`; it is no pin, so the split never counts it, though
-the odd-slot rule below does. A single-pin component is legal
+it), or of its own `side:`; **`span: N`** makes it N slots. It is no pin, so
+the split never counts it, though the odd-slot rule below does. A single-pin
+component is legal
 (a test point, a mounting pad); an unwired part needs no id at all. `|pin|`
 the type and `pin:` the out-of-flow property ([SPEC 5](#5-the-box-model)) are
 one word in two roles — never ambiguous: a type lives in bars, a property
@@ -4050,7 +4055,7 @@ out of scope.
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `row` (flow) · `column` (a closed shape's or a `\|topic\|`'s card content, chart, tree) | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix (`gap` 36 in a flow, 12 in card content) | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid-stack--tree) |
 | `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--the-lattice)) | track list · a schematic's is the **wrap count**, an integer ≥ 1 | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid-stack--tree) |
-| `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--the-lattice)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid-stack--tree) |
+| `cell` · `span` | grid box child; `cell` also a schematic's — ordinal ([SPEC 16.1](#161-placement--the-lattice)); `span` also a `\|space\|`'s slots ([SPEC 16.2](#162-components--pins)) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid-stack--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |

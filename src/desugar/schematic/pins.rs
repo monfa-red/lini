@@ -128,10 +128,31 @@ pub(in crate::desugar) fn assemble_component(
         }
     }
     let mut rails: [Vec<Child>; 4] = Default::default();
+    // How many slots each rail holds — a pin one, a space its `span:`.
+    let mut counts = [0usize; 4];
     for (mut slot, landed) in slots.into_iter().zip(landed_at) {
         // A space among no pins at all has no rail to stand on.
         let Some(landed) = landed else { continue };
-        if !is_space(&slot) {
+        if is_space(&slot) {
+            // `span: N` is N slots [SPEC 16.2]: the one size along its rail
+            // this space authors against the rule every space wears.
+            let span = pin_decl(cx, &slot, "span")
+                .and_then(|d| match d.single() {
+                    Some(Value::Number(n)) if *n >= 1.0 => Some(*n as usize),
+                    _ => None,
+                })
+                .unwrap_or(1);
+            if span > 1 {
+                let along = if landed.is_vertical() {
+                    "height"
+                } else {
+                    "width"
+                };
+                set_own(&mut slot, n(along, span as f64 * consts::PIN_PITCH));
+            }
+            counts[landed.index()] += span;
+        } else {
+            counts[landed.index()] += 1;
             // A turned pin says where it **landed**: the lowered tree is what
             // the engine reads a forced side back off [SPEC 16.7], so a
             // `side:` left saying `top` would contradict its own rail and
@@ -151,14 +172,14 @@ pub(in crate::desugar) fn assemble_component(
         }
     }
     let [left, right, top, bottom] = rails;
-    let rail = |dir: &str, align: &str, kids: Vec<Child>| -> Result<Child, Error> {
+    let rail = |dir: &str, align: &str, kids: Vec<Child>, slots: usize| -> Result<Child, Error> {
         let mut style = vec![n("gap", 0.0), id("align", align)];
-        // A rail stacks its pins on exact pitch centres, so an **even** count
-        // straddles the rail's own middle and puts every one of them half a
-        // pitch off the part's centre — a pin no lattice can hold, and no
-        // placement can put back [SPEC 16.2]. The rail reserves the odd slot
-        // it is short of, at its far end.
-        if kids.len().is_multiple_of(2) {
+        // A rail stacks its pins on exact pitch centres, so an **even** slot
+        // count straddles the rail's own middle and puts every one of them
+        // half a pitch off the part's centre — a pin no lattice can hold, and
+        // no placement can put back [SPEC 16.2]. The rail reserves the odd
+        // slot it is short of, at its far end.
+        if slots.is_multiple_of(2) {
             style.push(match dir {
                 "column" => quad("padding", 0.0, 0.0, consts::PIN_PITCH, 0.0),
                 _ => quad("padding", 0.0, consts::PIN_PITCH, 0.0, 0.0),
@@ -173,10 +194,10 @@ pub(in crate::desugar) fn assemble_component(
     };
     let mut middle = Vec::new();
     if !left.is_empty() {
-        middle.push(rail("column", "start", left)?);
+        middle.push(rail("column", "start", left, counts[Side::Left.index()])?);
     }
     if !right.is_empty() {
-        middle.push(rail("column", "end", right)?);
+        middle.push(rail("column", "end", right, counts[Side::Right.index()])?);
     }
     // …and where a part carries side pins and only **one** horizontal rail,
     // that rail alone would push the middle band off the body's centre by half
@@ -195,7 +216,7 @@ pub(in crate::desugar) fn assemble_component(
         )
     };
     if !top.is_empty() {
-        children.push(rail("row", "start", top)?);
+        children.push(rail("row", "start", top, counts[Side::Top.index()])?);
     } else if twin {
         children.push(empty()?);
     }
@@ -213,7 +234,7 @@ pub(in crate::desugar) fn assemble_component(
         )?),
     }
     if !bottom.is_empty() {
-        children.push(rail("row", "end", bottom)?);
+        children.push(rail("row", "end", bottom, counts[Side::Bottom.index()])?);
     } else if twin {
         children.push(empty()?);
     }

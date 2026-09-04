@@ -202,10 +202,10 @@ fn a_rail_spaces_its_pins_at_the_pitch_whichever_side_it_runs_along() {
 #[test]
 fn a_space_is_one_empty_slot_on_its_rail_and_keeps_the_lattice() {
     // [SPEC 16.2] a `|space|` is one empty slot on the rail of the pin before
-    // it — a whole fine pitch — and it counts toward the odd-slot rule, so
-    // every pin still lands on a fine line.
+    // it — a whole fine pitch, `span: N` for N — and its slots count toward
+    // the odd-slot rule, so every pin still lands on a fine line.
     let whole = |v: f64| close((v / PIN_PITCH).round() * PIN_PITCH, v);
-    let part = "  |component#u1| [\n    |pin#a| { side: left }; |space|; |space|; |pin#b| { side: left }; |pin#c| { side: left }\n  ]\n";
+    let part = "  |component#u1| [\n    |pin#a| { side: left }; |space| { span: 2 }; |pin#b| { side: left }; |pin#c| { side: left }\n  ]\n";
     let nodes = laid(&scope("", part));
     let (_, _, cy) = placed(&nodes, "u1");
     let y = |id: &str| placed(&nodes, id).2;

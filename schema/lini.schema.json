@@ -2621,6 +2621,10 @@
         {
           "kind": "layout",
           "name": "grid"
+        },
+        {
+          "kind": "type",
+          "name": "space"
         }
       ],
       "shape": "one",

@@ -523,7 +523,7 @@ pub static PROPERTIES: &[Property] = &[
     .hard(),
     row(
         "span",
-        &[Layout("grid")],
+        &[Layout("grid"), Type("space")],
         One(Kind::Number),
         DefaultRef::None,
         No,

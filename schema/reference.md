@@ -184,7 +184,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `columns` | grid (layout), schematic (layout) | `list:track` | `bundles` | — | — |
 | `rows` | grid (layout) | `list:track` | `none` | — | — |
 | `cell` | grid (layout), schematic (layout) | `one:number` | `none` | — | hard-gate |
-| `span` | grid (layout) | `one:number` | `none` | — | hard-gate |
+| `span` | grid (layout), \|space\| | `one:number` | `none` | — | hard-gate |
 | `data` | series (role) | `list:number` | `none` | — | — |
 | `fn` | series (role) | `list:any` | `none` | — | — |
 | `labels` | series (role) | `list:string` | `none` | — | — |

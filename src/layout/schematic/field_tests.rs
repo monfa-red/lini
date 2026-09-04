@@ -191,6 +191,28 @@ fn an_up_chain_and_a_down_chain_off_one_pin_share_a_column() {
 }
 
 #[test]
+fn a_flag_rides_the_outermost_lane_its_pin_feeds() {
+    // [SPEC 16.1] a lone power flag off a pin carrying two cap chains stands
+    // over the far cap, not on an inner lane its small cell happens to fit,
+    // so the rail closes over the whole bank. Declared first, it would take
+    // lane one by declaration order alone.
+    let src = FLAG.replace("vp", "v3")
+        + &scope(
+            "",
+            &(sided("u1")
+                + "  |v3#f1|\n  |C#c1| \"1u\"\n  |C#c2| \"1u\"\n"
+                + "  u1.a - f1\n  u1.a - c1 - |gnd|\n  u1.a - c2 - |gnd|\n"),
+        );
+    let nodes = laid(&src);
+    let (f, c1, c2) = (seat(&nodes, "f1"), at(&nodes, "c1"), at(&nodes, "c2"));
+    assert!(
+        c2.0 < c1.0,
+        "c2 is the far lane on a left side: {c1:?} {c2:?}"
+    );
+    assert!(close(f.0, c2.0), "the flag stands over it: {f:?} vs {c2:?}");
+}
+
+#[test]
 fn a_satellite_seats_by_its_connection_geometry_not_its_drawn_box() {
     // [SPEC 16.1] a power flag draws its name **beside** its symbol, so its
     // box centre stands half a name off its own connection point. The lattice

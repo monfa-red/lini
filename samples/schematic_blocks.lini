@@ -31,13 +31,13 @@
   |region#boost| "5.5v Boost" { cell: 1 1; } [
     |component#U6| "TPS61023DRLR" [
       |pin#VIN| { side: left; number: 3; }
-      // A `|space|` is one empty slot on the rail of the pin before it
-      // [SPEC 16.2]: the switch node stands clear of the input above and the
-      // enable below, the way the datasheet groups them, so the inductor's
-      // readouts and the enable's name each keep a row of their own.
+      // A `|space|` is one empty slot on the rail of the pin before it, and
+      // `span: N` makes it N [SPEC 16.2]: the switch node stands clear of the
+      // input above and the enable below, the way the datasheet groups them,
+      // so the inductor's readouts and the enable's name each keep a row.
       |space|
       |pin#SW| { side: left; number: 5; }
-      |space|
+      |space| { span: 2; }
       |pin#EN| { side: left; number: 4; }
       |pin#GND| { side: bottom; number: 1; }
       |pin#VOUT| { side: right; number: 6; }
@@ -45,11 +45,14 @@
     ]
     |C#C11| "10u"
     |L#L2| "1uH"
+    // Chains off one pin take their lanes in their parts' declaration order
+    // [SPEC 16.1]: the divider is declared ahead of the output bank, so it
+    // stands nearest the chip and FB taps it under no cap's lead.
+    |R#R15| "240k"
+    |R#R16| "30k"
     |C#C12| "10u"
     |C#C13| "10u"
     |C#C14| "10u"
-    |R#R15| "240k"
-    |R#R16| "30k"
 
     // The input node: the flag and the bulk cap split off one trunk at a
     // T-junction — a pin's up-chain and down-chain share one column
