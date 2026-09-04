@@ -3486,25 +3486,31 @@ rail flag beside a junction — takes no slot, hanging off its attachment member
 along its own drawn convention and stepping aside when that points back into the
 trunk.
 
-**A cell is its content's, and nothing steps by `gap`.** A member's cell holds
-what that member draws, and the whole placement is that one measure: a **part**
-takes the **coarse** cell across its ray — it wears a ref and a value beside its
-body by rule, that cell is the room they need, and that room is the one thing
-`gap` states — and along its ray it takes its own symbol's length and a fine
-pitch of air. A **label**, being its own terminal and no part
-([16.4](#164-labels)), takes only the whole **fine** pitches its own drawing
-covers, either way. So a no-connect cross grown out of one pin leaves the pins
-either side their own rows, a net run takes exactly the line it lands on, and
-two bare returns off one connector stand a fine pitch apart where two resistors
-stand a whole column. A chain's cells run from its own **pin's** line out to its
+**A cell is its content's, and nothing steps by `gap`.** A member's cell is the
+fine **bands** — a pitch centred on each fine line — its drawing reaches into
+from its seat point, so it lies where the drawing lies: a ground's hangs below
+its connection point, a flag's reaches further on its name's side. A **part**
+adds the rows its ref and value take across its ray, where the readout rule
+stands them ([16.2](#162-components--pins)) — a corridor part whose pair stepped
+whole to one side leaves the other side's row to the next pin — except that a
+pair standing **beside** its body takes the **coarse** cell centred on the
+part's axis: text width never places, that room is the one thing `gap` states,
+and it is the one rhythm a column of parts keeps. Along its ray a part takes its
+symbol's length and a fine pitch of air; a **label**, being its own terminal and
+no part ([16.4](#164-labels)), takes only what it draws, either way. So a
+no-connect cross grown out of one pin leaves the pins either side their own
+rows, a net run takes exactly the line it lands on, and two bare returns off one
+connector stand a fine pitch apart where two resistors stand a whole column. A chain's cells run from its own **pin's** line out to its
 outermost member, which is the column it really draws: a wire's width (one
 fine pitch) from the pin's line to the first cell, the cells from there.
 
 Every line the field picks is then found by **stepping one fine line at a time
 until the cells clear**, and never by a pitch stated in advance: a lane is free
-when no cell of the chain meets one already committed, and a taken lane steps
-out a fine line and tries again; a member stands on the first fine line past the
-one before it. That is why two stacked discretes still stand a coarse pitch
+when no cell of the chain meets one already committed and its wire — one pitch
+wide, down its line to its last member — runs through no ink a seated member
+paints, and a taken lane steps out a fine line and tries again; a member stands
+on the first fine line past the one before it. So a value overhanging its
+coarse cell pushes no part, only the wire that would otherwise cross it. That is why two stacked discretes still stand a coarse pitch
 apart — their cells say so, and a wire between two bodies any closer has no
 track — while a ground ends a chain a step under the part above it.
 A chain's **lead** — the

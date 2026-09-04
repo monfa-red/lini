@@ -2,25 +2,28 @@
 //! single anchor is placed.
 //!
 //! A chain is a **walk**: it takes a *ray* (the direction it grows), a *lane*
-//! (its line across that ray — a coarse line out from the anchor's ink where
-//! it turned off its pin, the pin's own fine line where it grew straight out)
-//! and a *slot* per member (the k-th coarse line along the ray from the field
-//! origin). A satellite's cell comes from the lattice, never from the width of
-//! its value: the only ink this pass reads is the field origin, and how far a
-//! label's own symbol reaches across the line it stands on ([`Field::across`])
-//! — both quantised straight back onto the lattice [SPEC 16.1].
+//! (its line across that ray — a line out from the anchor's ink where it
+//! turned off its pin, the pin's own fine line where it grew straight out)
+//! and a *slot* per member (the fine line along the ray it stands on). A
+//! satellite's cell is **its content's**, where it draws it ([`Drawing`]):
+//! the fine bands its body reaches into from its seat point, and for a part
+//! the rows its ref / value pair takes across the ray — the pair's width
+//! alone never placing, that being the coarse cell `gap` states. So a cell
+//! is asymmetric wherever the drawing is: a ground's cell hangs below its
+//! connection point, a corridor part's pair stepped whole to one side leaves
+//! the other side's row free.
 //!
-//! **Collision is the cells'.** A member's cell is one `gap` pitch along its
-//! ray, and across it the pitch of the line it stands on: a **part** takes the
-//! coarse cell wherever it stands, a **label** on a pin's own line takes that
-//! fine line ([`Body`]). A lane is free when no cell of the chain meets one
-//! already committed, and a taken lane steps out a coarse line and tries again
-//! ([`allocate`]). That one test is the whole of it — an
-//! up-chain and a down-chain off one pin share a lane because their cells are
-//! disjoint; a second chain claiming a pin's straight corridor steps beside it
-//! because they are not; and no chain lands where a lead must cross, because
-//! the crossed part is in the set. A lead reserves nothing; the **lane order**
-//! keeps it clear.
+//! **Collision is the cells', and the wires' against the paint.** A lane is
+//! free when no cell of the chain meets one already committed, and its wire
+//! — the run down the lane to its last member — meets no ink a committed
+//! member paints, its readouts included; a taken lane steps out a fine line
+//! and tries again ([`allocate`]). That is the whole of it — an up-chain and
+//! a down-chain off one pin share a lane because their cells are disjoint; a
+//! second chain claiming a pin's straight corridor steps beside it because
+//! they are not; no chain lands where a lead must cross, because the crossed
+//! part is in the set; and a value overhanging its coarse cell pushes no
+//! part, only the one wire that would otherwise run through it. A lead
+//! reserves nothing; the **lane order** keeps it clear.
 //!
 //! The chains, the growth ray, the tap classifier and the limb split are all
 //! [`crate::desugar::schematic::chain`]'s, shared with the pose chooser, so a
@@ -32,8 +35,9 @@ mod walk;
 
 use super::lattice::{Ax, Lattice};
 use super::place::Slot;
-use super::terminal::{Terminal, terminal};
-use crate::desugar::pose::Side;
+use super::readout::{self, Pair, Readout};
+use super::terminal::{Terminal, seat_point, terminal};
+use crate::desugar::pose::{Pose, Side};
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
 use crate::desugar::schematic::{Role, SchKind, sch_kind};
 use crate::layout::ir::{Bbox, PlacedNode};
@@ -49,7 +53,7 @@ pub(super) const LANED: usize = 1;
 /// found by stepping one out at a time until the cell clears, so neither is an
 /// ordinal of anything.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct Seat {
+pub(in crate::layout::schematic) struct Seat {
     /// The anchor whose field holds it.
     pub anchor: usize,
     /// The direction its chain grows.
@@ -75,20 +79,23 @@ pub(super) struct Field {
     seats: Vec<Option<Seat>>,
     spans: Vec<Spanning>,
     floating: Vec<usize>,
-    /// Per anchor, the cells its field has committed — the whole of collision.
+    /// Per anchor, the cells its field has committed — what keeps parts apart.
     cells: Vec<Vec<Bbox>>,
+    /// Per anchor, the ink its seated members paint — what keeps wires off.
+    paint: Vec<Vec<Bbox>>,
     /// Per anchor, where its field's **first** slot stands along each ray, by
     /// [`Side::index`] and then by whether the chain turned — the one line the
     /// track row shares, and the only one that is a rule rather than a search
     /// [SPEC 16.1].
     slots: Vec<[[f64; 2]; 4]>,
-    /// Per child, the box its own drawing takes — what its cell holds.
-    boxes: Vec<Bbox>,
+    /// Per child, what it draws in its seat's frame — what its cell holds.
+    drawings: Vec<Drawing>,
     /// Per child, everything it draws, readouts included — what a field origin
     /// and a lane's base stand clear of.
     inks: Vec<Bbox>,
-    /// Per child, what its cell has to hold **across** its ray.
-    bodies: Vec<Body>,
+    /// Per child, the rows its own pins take on each side — what a corridor
+    /// member's pair crowds against ([`readout::arrangement`]).
+    rows: Vec<[Vec<f64>; 4]>,
     lat: Lattice,
 }
 
@@ -107,10 +114,14 @@ impl Field {
             spans: Vec::new(),
             floating: Vec::new(),
             cells: vec![Vec::new(); children.len()],
+            paint: vec![Vec::new(); children.len()],
             slots: vec![[[0.0; 2]; 4]; children.len()],
-            boxes: children.iter().map(|c| c.bbox).collect(),
+            drawings: children.iter().map(Drawing::of).collect(),
             inks: children.iter().map(drawn).collect(),
-            bodies: children.iter().map(Body::of).collect(),
+            rows: children
+                .iter()
+                .map(|c| Side::ALL.map(|side| readout::pin_rows(c, side)))
+                .collect(),
             lat,
         };
         if !satellite.contains(&true) {
@@ -173,10 +184,12 @@ impl Field {
         &self.spans
     }
 
-    /// Seat one member, and commit its cell to its anchor's occupancy.
+    /// Seat one member, and commit its cell and its paint to its anchor's
+    /// occupancy.
     fn take(&mut self, member: usize, seat: Seat) {
-        let cell = self.cell(member, seat);
+        let (cell, paint) = self.holds(member, seat);
         self.cells[seat.anchor].push(cell);
+        self.paint[seat.anchor].push(paint);
         self.seats[member] = Some(seat);
     }
 
@@ -188,21 +201,20 @@ impl Field {
     }
 
     /// The seat one step `across` from this one — where a tap hangs, and where
-    /// a branch crossing the trunk marches. The step is the two drawings' own:
-    /// half of what stands here, half of what stands there, and out to the
-    /// first fine line past it.
+    /// a branch crossing the trunk marches: past the edge of what stands here,
+    /// by what the member's own cell reaches back, and out to the first fine
+    /// line past that.
     fn stepped(&self, at: (usize, Seat), member: usize, across: Side) -> Seat {
         let out = Ax::outward(across);
-        let half = |i: usize| self.across(i, at.1.ray) / 2.0;
+        let edge = ink_edge(&self.cell(at.0, at.1), across);
+        let back = self.spread(member, at.1, across.opposite());
         Seat {
-            cross: self
-                .lat
-                .past(at.1.cross + out * (half(at.0) + half(member)), out),
+            cross: self.lat.past(edge + out * back, out),
             ..at.1
         }
     }
 
-    /// Where a seat's cell centres, in its anchor's own frame.
+    /// Where a seat's point is, in its anchor's own frame.
     fn point(&self, seat: Seat) -> (f64, f64) {
         match Ax::of(seat.ray) {
             Ax::X => (seat.along, seat.cross),
@@ -210,70 +222,92 @@ impl Field {
         }
     }
 
-    /// A member's **cell** [SPEC 16.1] — what its own drawing takes, and no
-    /// pitch stated in advance: across its ray by [`Field::across`], along it
-    /// by [`Field::along`].
+    /// A member's **cell** at `seat` [SPEC 16.1].
     fn cell(&self, member: usize, seat: Seat) -> Bbox {
-        let (x, y) = self.point(seat);
-        let (along, across) = (self.along(member, seat.ray), self.across(member, seat.ray));
-        let (w, h) = match Ax::of(seat.ray) {
-            Ax::X => (along, across),
-            Ax::Y => (across, along),
-        };
-        Bbox::centered(w, h).shifted(x, y)
+        self.holds(member, seat).0
     }
 
-    /// How wide a member's cell stands **across** its ray [SPEC 16.1] — the
-    /// one split SPEC 16.4 opens with. A **part** takes the coarse cell: it
-    /// wears a ref and a value beside its body, and that cell is the room they
-    /// need, which is the one thing `gap` states. A **label** is its own
-    /// terminal and no part, so it takes the whole fine pitches its own symbol
-    /// draws across the line — a no-connect cross grown off one pin leaves the
-    /// pins either side their rows, a net run takes exactly the line it lands
-    /// on, and two bare grounds off one connector stand a fine pitch apart
-    /// rather than a column.
-    fn across(&self, member: usize, ray: Side) -> f64 {
-        let ax = Ax::of(ray).other();
-        match self.bodies[member] {
-            Body::Tag => self
-                .lat
-                .pitch
-                .max(self.lat.pitches(spans(self.boxes[member], ax))),
-            Body::Part => self.lat.step(ax),
+    /// What a member at `seat` holds [SPEC 16.1], in its anchor's frame: its
+    /// **cell** — the fine bands its own drawing reaches into from its seat
+    /// point: its body, and for a part the rows its readout pair takes
+    /// **across** the ray where the pair stands ([`readout::arrangement`])
+    /// and the pitch of air its length keeps along it; a label takes only
+    /// what it draws, either way — and its **paint**, the ink it really puts
+    /// down there, readouts included, which no wire may run through.
+    fn holds(&self, member: usize, seat: Seat) -> (Bbox, Bbox) {
+        let d = &self.drawings[member];
+        let ax = Ax::of(seat.ray);
+        let mut ink = d.body;
+        let mut paint = d.body;
+        if let Some(kind) = d.kind.filter(|&k| k != SchKind::Label) {
+            let pair = readout::arrangement(
+                kind,
+                d.pose,
+                Some(seat),
+                &self.rows[seat.anchor][seat.side.index()],
+            );
+            for r in &d.readouts {
+                let (cx, cy) = pair.map_or((r.cx, r.cy), |p| readout::seated(p, d.axis, r));
+                let mut b = r.bbox.shifted(cx - d.seat.0, cy - d.seat.1);
+                paint = paint.union(b);
+                // Text width never places [SPEC 16.1]: a pair standing beside
+                // a part across its ray takes the coarse cell, centred on the
+                // part's own axis — the room `gap` states, and the one rhythm
+                // a column of parts keeps whatever their values' widths.
+                if let (Some(Pair::Beside(_)), Ax::Y) = (pair, ax) {
+                    let (axis, half) = (d.axis - d.seat.0, self.lat.step(Ax::X) / 2.0);
+                    (b.min_x, b.max_x) = (axis - half, axis + half);
+                }
+                ink = union_across(ink, b, ax);
+            }
+            ink = extend_along(ink, ax, self.lat.pitch / 2.0);
         }
+        let (x0, x1) = self.lat.bands(ink.min_x, ink.max_x);
+        let (y0, y1) = self.lat.bands(ink.min_y, ink.max_y);
+        let (x, y) = self.point(seat);
+        let cell = Bbox {
+            min_x: x0 + x,
+            min_y: y0 + y,
+            max_x: x1 + x,
+            max_y: y1 + y,
+        };
+        (cell, paint.shifted(x, y))
     }
 
-    /// How deep a member's cell stands **along** its ray [SPEC 16.1]: what its
-    /// own drawing reaches that way, and the one fine pitch two wired
-    /// neighbours keep. Along the ray there is no readout to hold — a part
-    /// wears its pair beside its body — so this is the symbol's own length,
-    /// which is why a ground ends a chain a fine step under the part above it
-    /// and two stacked discretes still stand a coarse pitch apart.
-    fn along(&self, member: usize, ray: Side) -> f64 {
-        self.lat
-            .pitches(self.reaches(member, Ax::of(ray)) + self.lat.pitch)
+    /// How far a member's cell at `seat` reaches from its seat point toward
+    /// `side` — `0` where the whole cell lies the other way.
+    fn spread(&self, member: usize, seat: Seat, side: Side) -> f64 {
+        let (x, y) = self.point(seat);
+        let cell = self.cell(member, seat);
+        let at = match Ax::of(side) {
+            Ax::X => x,
+            Ax::Y => y,
+        };
+        ((ink_edge(&cell, side) - at) * Ax::outward(side)).max(0.0)
     }
 
-    /// How far a member's own drawing reaches on one axis.
-    fn reaches(&self, member: usize, ax: Ax) -> f64 {
-        spans(self.boxes[member], ax)
+    /// How far a member's own **body** reaches from its seat point toward
+    /// `side` — what the stepping along a ray reads, a pair being beside a
+    /// part by rule and never in its way.
+    fn reaches(&self, member: usize, side: Side) -> f64 {
+        (ink_edge(&self.drawings[member].body, side) * Ax::outward(side)).max(0.0)
     }
 
-    /// Where the member after `prev` stands along `ray`: half of each drawing,
-    /// the one fine pitch of air any two of them keep, and out to the first
-    /// fine line past that.
+    /// Where the member after `prev` stands along `ray`: past what the one
+    /// before reaches, the one fine pitch of air any two of them keep, what
+    /// this one reaches back, and out to the first fine line past that.
     fn after(&self, prev: (usize, f64), member: usize, ray: Side) -> f64 {
         let out = Ax::outward(ray);
-        let ax = Ax::of(ray);
-        let apart = (self.reaches(prev.0, ax) + self.reaches(member, ax)) / 2.0 + self.lat.pitch;
+        let apart =
+            self.reaches(prev.0, ray) + self.lat.pitch + self.reaches(member, ray.opposite());
         self.lat.past(prev.1 + out * apart, out)
     }
 
     /// Where a run's **first** member stands, past whatever its lead had to
-    /// clear: half its own drawing, and the same fine pitch of air.
+    /// clear: what it reaches back toward that, and the same fine pitch of air.
     pub(super) fn past_ink(&self, member: usize, ray: Side, ink: f64) -> f64 {
         let out = Ax::outward(ray);
-        let apart = self.reaches(member, Ax::of(ray)) / 2.0 + self.lat.pitch;
+        let apart = self.reaches(member, ray.opposite()) + self.lat.pitch;
         self.lat.past(ink + out * apart, out)
     }
 
@@ -293,29 +327,67 @@ impl Field {
     }
 }
 
-/// What a member's cell has to hold **across** its ray [SPEC 16.1] — the one
-/// split SPEC 16.4 opens with: components have pins, and a label is its own
-/// terminal.
-#[derive(Clone, Copy)]
-enum Body {
-    /// A **part** — a component, a discrete, an amplifier. It wears a
-    /// reference designator **beside** its body by rule, so across its ray it
-    /// takes the coarse cell: that room is the pair's, and it is the one thing
-    /// `gap` states.
-    Part,
-    /// A **label**: a terminal, not a part, so it asks only for the fine
-    /// pitches its own drawing takes across the line it stands on — one line
-    /// for a net run, which is the trace it names, and a symbol's own reach
-    /// for a ground or a flag, which has no rule setting its name aside.
-    Tag,
+/// What one child draws, in its **seat's** frame [SPEC 16.1] — the seat point
+/// being the centre of its connection geometry ([`seat_point`]), which is the
+/// point the lattice holds it by, so a flag's name and a ground's symbol both
+/// hang off it the way the sheet draws them.
+struct Drawing {
+    kind: Option<SchKind>,
+    pose: Pose,
+    /// The body's box, relative to the seat point.
+    body: Bbox,
+    /// The seat point, in the child's own frame.
+    seat: (f64, f64),
+    /// The child's own centre line — the axis a beside pair stands off.
+    axis: f64,
+    /// A part's ref and value readouts, as desugar minted them.
+    readouts: Vec<Readout>,
 }
 
-impl Body {
-    fn of(node: &PlacedNode) -> Body {
-        match sch_kind(&node.type_chain) {
-            Some(SchKind::Label) => Body::Tag,
-            _ => Body::Part,
+impl Drawing {
+    fn of(node: &PlacedNode) -> Drawing {
+        let seat = seat_point(node);
+        Drawing {
+            kind: sch_kind(&node.type_chain),
+            pose: Pose::of_chain(&node.type_chain),
+            body: node.bbox.shifted(-seat.0, -seat.1),
+            seat,
+            axis: node.bbox.center().0,
+            readouts: node.children.iter().filter_map(Readout::of).collect(),
         }
+    }
+}
+
+/// What a chain asks for at one lane step: the cells its members and stem
+/// take, and the wires it draws.
+#[derive(Default)]
+pub(super) struct Claim {
+    pub cells: Vec<Bbox>,
+    pub wires: Vec<Bbox>,
+}
+
+/// `ink` widened to hold `b` **across** `ax` only — the readouts' rows, never
+/// their reach along the ray.
+fn union_across(ink: Bbox, b: Bbox, ax: Ax) -> Bbox {
+    match ax {
+        Ax::X => Bbox {
+            min_y: ink.min_y.min(b.min_y),
+            max_y: ink.max_y.max(b.max_y),
+            ..ink
+        },
+        Ax::Y => Bbox {
+            min_x: ink.min_x.min(b.min_x),
+            max_x: ink.max_x.max(b.max_x),
+            ..ink
+        },
+    }
+}
+
+/// `ink` grown by `air` either end **along** `ax`.
+fn extend_along(ink: Bbox, ax: Ax, air: f64) -> Bbox {
+    match ax {
+        Ax::X => ink.expand(0.0, air, 0.0, air),
+        Ax::Y => ink.expand(air, 0.0, air, 0.0),
     }
 }
 
@@ -330,21 +402,24 @@ struct Ladder {
     base: f64,
 }
 
-/// The innermost step of a [`Ladder`] whose cells meet nothing already
-/// committed [SPEC 16.1] — a lane for a chain that turned off its pin, the
-/// pin's own line for one that grew straight out.
+/// The innermost step of a [`Ladder`] whose cells meet no cell already
+/// committed, and whose wires meet no paint [SPEC 16.1] — a lane for a chain
+/// that turned off its pin, the pin's own line for one that grew straight out.
 ///
 /// The lead reserves nothing: the lane order — the pin deeper along the ray
 /// keeping the inner lane — already crosses a column only above where that
 /// column is live. Overlap is [`Bbox::overlaps`]'s, which is strict, so
 /// adjacent cells are legal neighbours rather than a lane marching outward
-/// for ever.
-fn allocate(taken: &[Bbox], cells: impl Fn(i32) -> Vec<Bbox>) -> i32 {
+/// for ever, and a wire is one pitch wide, so ink half a pitch off its line
+/// is what stops it.
+fn allocate(cells: &[Bbox], paint: &[Bbox], claim: impl Fn(i32) -> Claim) -> i32 {
+    let clear = |taken: &[Bbox], asked: &[Bbox]| {
+        asked.iter().all(|c| !taken.iter().any(|t| t.overlaps(*c)))
+    };
     (1..)
         .find(|&k| {
-            cells(k)
-                .iter()
-                .all(|c| !taken.iter().any(|t| t.overlaps(*c)))
+            let asked = claim(k);
+            clear(cells, &asked.cells) && clear(paint, &asked.wires)
         })
         .expect("an unbounded lattice always has a free lane")
 }
@@ -400,14 +475,6 @@ pub(super) fn edges(
 ///
 /// Read in the anchor's own frame, which placing it never changes, so the
 /// ordinals a seat records outlive the tracks.
-/// How far a box spans on one axis.
-fn spans(b: Bbox, ax: Ax) -> f64 {
-    match ax {
-        Ax::X => b.w(),
-        Ax::Y => b.h(),
-    }
-}
-
 /// How far a box reaches on one side, in its own frame.
 pub(super) fn ink_edge(ink: &Bbox, side: Side) -> f64 {
     match side {
@@ -440,10 +507,18 @@ mod tests {
             .collect()
     }
 
+    /// The same column asked for as a claim with no wires.
+    fn cells(cells: Vec<Bbox>) -> Claim {
+        Claim {
+            cells,
+            wires: Vec::new(),
+        }
+    }
+
     #[test]
     fn the_innermost_free_lane_wins() {
         assert_eq!(
-            allocate(&[], |k| column(k, 2)),
+            allocate(&[], &[], |k| cells(column(k, 2))),
             1,
             "an empty field takes lane 1"
         );
@@ -452,7 +527,7 @@ mod tests {
     #[test]
     fn an_occupied_lane_steps_out_one_and_retries() {
         let taken = column(1, 2);
-        assert_eq!(allocate(&taken, |k| column(k, 2)), 2);
+        assert_eq!(allocate(&taken, &[], |k| cells(column(k, 2))), 2);
     }
 
     #[test]
@@ -468,7 +543,11 @@ mod tests {
                 })
                 .collect::<Vec<_>>()
         };
-        assert_eq!(allocate(&down, up), 1, "one lane, two rays");
+        assert_eq!(
+            allocate(&down, &[], |k| cells(up(k))),
+            1,
+            "one lane, two rays"
+        );
     }
 
     #[test]
@@ -483,6 +562,23 @@ mod tests {
                 })
                 .collect::<Vec<_>>()
         };
-        assert_eq!(allocate(&taken, deep), 1, "below what lane 1 holds");
+        assert_eq!(
+            allocate(&taken, &[], |k| cells(deep(k))),
+            1,
+            "below what lane 1 holds"
+        );
+    }
+
+    #[test]
+    fn a_wire_steps_off_paint_its_cells_would_have_cleared() {
+        // [SPEC 16.1] a value overhanging its coarse cell pushes no cell, but
+        // the wire of the next lane may not run through it: lane 1's cells
+        // are clear, its wire is not, so lane 2 it is.
+        let paint = [Bbox::centered(70.0, 20.0).shifted(-60.0, 100.0)];
+        let wire = |k: i32| Claim {
+            cells: column(k, 1),
+            wires: vec![Bbox::centered(20.0, 200.0).shifted(-100.0 * k as f64, 100.0)],
+        };
+        assert_eq!(allocate(&[], &paint, wire), 2);
     }
 }

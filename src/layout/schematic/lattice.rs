@@ -119,10 +119,19 @@ impl Lattice {
         (v / self.pitch).round() * self.pitch
     }
 
-    /// `w` in whole **fine** pitches — the lattice a body of that width takes
-    /// up across the line it stands on [SPEC 16.1]. `0` for no body at all.
-    pub(super) fn pitches(self, w: f64) -> f64 {
-        (w / self.pitch - EPS).ceil().max(0.0) * self.pitch
+    /// The **cell** an ink interval takes on one axis [SPEC 16.1]: every fine
+    /// line whose band — the pitch centred on it — the ink reaches into, as
+    /// the interval those bands cover. A wire on a line inside it would run
+    /// closer to the ink than half a pitch, which is what the cell is for;
+    /// ink stopping exactly on a band's edge leaves that line free.
+    pub(super) fn bands(self, lo: f64, hi: f64) -> (f64, f64) {
+        let half = self.pitch / 2.0;
+        let first = self.fine_beyond(lo + EPS - half, 1.0);
+        let last = self.fine_beyond(hi - EPS + half, -1.0).max(first);
+        (
+            f64::from(first) * self.pitch - half,
+            f64::from(last) * self.pitch + half,
+        )
     }
 }
 
@@ -203,6 +212,43 @@ mod tests {
         };
         assert_eq!(l.snap(53.0), 60.0);
         assert_eq!(l.snap(-53.0), -60.0);
+    }
+
+    #[test]
+    fn a_cell_is_the_bands_of_the_lines_its_ink_reaches_into() {
+        // [SPEC 16.1] a line is dead where ink comes within half a pitch of
+        // it; on the band's very edge it is still free.
+        let l = Lattice {
+            pitch: 20.0,
+            row: 100.0,
+            col: 100.0,
+        };
+        assert_eq!(l.bands(-6.0, 6.0), (-10.0, 10.0), "one line's own band");
+        assert_eq!(
+            l.bands(14.0, 26.0),
+            (10.0, 30.0),
+            "a readout row above a body"
+        );
+        assert_eq!(
+            l.bands(-11.0, 11.0),
+            (-30.0, 30.0),
+            "a pixel into the next bands"
+        );
+        assert_eq!(
+            l.bands(10.0, 30.0),
+            (10.0, 30.0),
+            "edges leave their lines free"
+        );
+        assert_eq!(
+            l.bands(0.0, 0.0),
+            (-10.0, 10.0),
+            "a point still holds its line"
+        );
+        assert_eq!(
+            l.bands(30.0 - 1e-10, 40.0),
+            (30.0, 50.0),
+            "noise never eats a band"
+        );
     }
 
     #[test]

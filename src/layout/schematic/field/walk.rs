@@ -13,7 +13,7 @@ use super::super::net;
 use super::super::place::Slot;
 use super::super::terminal::{Terminal, ident, terminal};
 use super::read::{growth, tag_facing, tap_flags};
-use super::{Field, LANED, Ladder, STRAIGHT, Seat, allocate, ink_edge};
+use super::{Claim, Field, LANED, Ladder, STRAIGHT, Seat, allocate, ink_edge};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
 use crate::desugar::schematic::{SchKind, sch_kind};
@@ -293,19 +293,35 @@ impl Field {
     /// that if they count from one line.
     fn base(&self, anchor: usize, side: Side, held: &[Held]) -> f64 {
         let out = Ax::outward(side);
-        let widest = held
+        let back = held
             .iter()
             .filter(|h| h.anchor == anchor && h.side == side && h.turns())
-            .flat_map(|h| h.chain.members.iter().map(|&m| self.across(m, h.ray)))
+            .flat_map(|h| {
+                // What each member's cell reaches back toward the anchor
+                // from its lane — read at the lane's own seat, wherever
+                // along the ray it lands.
+                let seat = Seat {
+                    anchor,
+                    ray: h.ray,
+                    side,
+                    cross: 0.0,
+                    along: 0.0,
+                };
+                h.chain
+                    .members
+                    .iter()
+                    .map(move |&m| self.spread(m, seat, side.opposite()))
+            })
             .fold(0.0f64, f64::max);
         let ink = ink_edge(&self.inks[anchor], side);
-        self.lat
-            .past(ink + out * (widest / 2.0 + self.lat.pitch), out)
+        self.lat.past(ink + out * (back + self.lat.pitch), out)
     }
 
-    /// The innermost cross step a run's cells leave free [SPEC 16.1].
+    /// The innermost cross step a run's cells and wire leave free [SPEC 16.1].
     fn allot(&self, h: &Held, run: &Run) -> i32 {
-        allocate(&self.cells[h.anchor], |k| self.claim(h, run, k))
+        allocate(&self.cells[h.anchor], &self.paint[h.anchor], |k| {
+            self.claim(h, run, k)
+        })
     }
 
     /// Record a run's seats and commit its cells to the anchor's occupancy.
@@ -318,13 +334,32 @@ impl Field {
         self.cells[h.anchor].extend(stem);
     }
 
-    /// Everything a run at cross step `k` would occupy: its members' cells,
-    /// and the **stem** below.
-    fn claim(&self, h: &Held, run: &Run, k: i32) -> Vec<Bbox> {
-        self.seats_of(h, run, k)
-            .map(|(m, s)| self.cell(m, s))
-            .chain(self.stem(h, run, k))
-            .collect()
+    /// Everything a run at cross step `k` would occupy: its members' cells
+    /// and the **stem** below, and the wire it draws down its line.
+    fn claim(&self, h: &Held, run: &Run, k: i32) -> Claim {
+        Claim {
+            cells: self
+                .seats_of(h, run, k)
+                .map(|(m, s)| self.cell(m, s))
+                .chain(self.stem(h, run, k))
+                .collect(),
+            wires: self.wire(h, run, k).into_iter().collect(),
+        }
+    }
+
+    /// The wire a run draws at cross step `k` [SPEC 16.1]: one pitch wide
+    /// down its own line, from the pin's line to its last member's seat —
+    /// the one thing that may not run through ink, a part's cell being free
+    /// to overhang its value into the next column. `None` for a branch, whose
+    /// junction is on the trunk's own wire.
+    fn wire(&self, h: &Held, run: &Run, k: i32) -> Option<Bbox> {
+        let (px, py) = run.origin?;
+        let (_, last) = self.seats_of(h, run, k).last()?;
+        let half = self.lat.pitch / 2.0;
+        Some(match Ax::of(run.ray) {
+            Ax::X => Bbox::from_points(&[(px, last.cross - half), (last.along, last.cross + half)]),
+            Ax::Y => Bbox::from_points(&[(last.cross - half, py), (last.cross + half, last.along)]),
+        })
     }
 
     /// The column a trunk actually draws, from its own pin's line out to its
@@ -372,9 +407,9 @@ impl Field {
         let out = Ax::outward(h.ray);
         h.shared
             .iter()
-            .filter_map(|&(member, ray)| {
+            .filter_map(|&(member, _)| {
                 let seat = self.seats[member]?;
-                Some(seat.cross + out * self.across(member, ray) / 2.0)
+                Some(ink_edge(&self.cell(member, seat), h.ray))
             })
             .reduce(|a, b| if b * out > a * out { b } else { a })
     }
@@ -812,7 +847,32 @@ mod tests {
         // stand at the same depth along the ray and statement order is the
         // whole tie-break. That depth is measured on stub tips, which agree to
         // a bit or two and not to the bit once the pins' names differ in
-        // width — so the order is read in fine lines, never in raw px.
+        // width — so the order is read in fine lines, never in raw px. A cap
+        // lying along its row reaches into the next row's band with its
+        // plates alone, so the second one has to step.
+        let src = "{ layout: schematic }\n|component#u1| [\n  \
+                   |pin#NRE| \"RE\" { side: left }\n  \
+                   |pin#DE| { side: left }\n  \
+                   |pin#VCC| { side: right }\n]\n\
+                   |C#c1| \"1n\"\n|C#c2| \"2n\"\nu1.DE - c1\nu1.NRE - c2\n";
+        let (kids, f) = field(src);
+        let u1 = kids
+            .iter()
+            .position(|c| c.id.as_deref() == Some("u1"))
+            .expect("u1");
+        let line = |pin| terminal(&kids[u1], Some(pin)).at.1;
+        let (c1, c2) = (seat(&kids, &f, "c1"), seat(&kids, &f, "c2"));
+        assert!(!turned(c1) && !turned(c2), "both grew straight out");
+        assert_eq!(c1.cross, line("DE"), "the first stated keeps its line");
+        assert_ne!(c2.cross, line("NRE"), "and the second steps beside it");
+    }
+
+    #[test]
+    fn a_corridor_pair_stepped_off_a_row_leaves_that_row_to_its_pin() {
+        // [SPEC 16.1/16.2] a resistor on DE straddles its pins' rows with its
+        // pair, and the anchor's pins crowd one way — NRE above — so both
+        // lines step below. Its cell is what it draws: NRE's row is free, and
+        // the resistor on NRE keeps its own line, its pair stepping above.
         let src = "{ layout: schematic }\n|component#u1| [\n  \
                    |pin#NRE| \"RE\" { side: left }\n  \
                    |pin#DE| { side: left }\n  \
@@ -825,9 +885,8 @@ mod tests {
             .expect("u1");
         let line = |pin| terminal(&kids[u1], Some(pin)).at.1;
         let (r1, r2) = (seat(&kids, &f, "r1"), seat(&kids, &f, "r2"));
-        assert!(!turned(r1) && !turned(r2), "both grew straight out");
-        assert_eq!(r1.cross, line("DE"), "the first stated keeps its line");
-        assert_ne!(r2.cross, line("NRE"), "and the second steps beside it");
+        assert_eq!(r1.cross, line("DE"), "the first keeps its line");
+        assert_eq!(r2.cross, line("NRE"), "and so does the second");
     }
 
     #[test]
@@ -949,12 +1008,13 @@ mod tests {
         );
         // The chain turned off a left pin, so its slots clear that pin and not
         // the whole part — and its ground ends it a step under the resistor,
-        // the field reaching exactly to the ground's own cell edge.
+        // the field reaching exactly to the ground's own cell edge: the bands
+        // its symbol hangs into below its connection point, and nothing above.
         let g = seat(&kids, &f, "g1");
         let ink = ink(&kids, "g1");
         assert_eq!(
             f.extent(u1, Side::Bottom),
-            g.along + f.lat.pitches(ink.h() + f.lat.pitch) / 2.0,
+            g.along + f.lat.bands(0.0, ink.h()).1,
             "the ground's cell edge"
         );
         assert_eq!(f.extent(u1, Side::Right), 0.0, "nothing on the other side");
