@@ -11,11 +11,12 @@
 use super::super::lattice::{Ax, EPS};
 use super::super::net;
 use super::super::place::Slot;
-use super::super::terminal::{Terminal, terminal};
+use super::super::terminal::{Terminal, ident, terminal};
 use super::read::{growth, tag_facing, tap_flags};
 use super::{Field, LANED, Ladder, STRAIGHT, Seat, allocate, ink_edge};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
+use crate::desugar::schematic::{SchKind, sch_kind};
 use crate::layout::geom::dot;
 use crate::layout::ir::{Bbox, PlacedNode};
 
@@ -67,6 +68,17 @@ impl Field {
         // of the series resistor. Its column then begins where those lanes'
         // cells end, the run in to there being one lead shared three ways.
         let (start, origin) = match self.shared_edge(h) {
+            // A no-connect cross is a mark on the pin, not a member
+            // [SPEC 16.4]: it stands on the first fine line at least a fine
+            // pitch past the stub tip, and shares no slot row.
+            None if h.is_mark(children) => {
+                let out = Ax::outward(h.ray);
+                let tip = match Ax::of(h.ray) {
+                    Ax::X => h.pin.at.0,
+                    Ax::Y => h.pin.at.1,
+                };
+                (self.lat.past(tip + out * self.lat.pitch, out), h.pin.at)
+            }
             None => (self.origin(h.anchor, h.ray, turned), h.pin.at),
             Some(edge) => {
                 let out = Ax::outward(h.ray);
@@ -242,7 +254,7 @@ impl Field {
             // that turned into a lane; the anchor's ink, for one whose ray
             // points through the body.
             let mut want: Vec<(usize, usize, f64)> = Vec::new();
-            for h in held.iter().filter(|h| h.ray == ray) {
+            for h in held.iter().filter(|h| h.ray == ray && !h.is_mark(children)) {
                 let Some(track) = tracks[h.anchor] else {
                     continue;
                 };
@@ -458,6 +470,15 @@ impl Held {
     /// nothing.
     fn turns(&self) -> bool {
         self.ray != self.side
+    }
+
+    /// Whether the chain is one no-connect cross grown straight off its pin
+    /// [SPEC 16.4] — a mark on the pin, seated by its own rule.
+    fn is_mark(&self, children: &[PlacedNode]) -> bool {
+        !self.turns()
+            && matches!(self.chain.members[..], [m] if
+                sch_kind(&children[m].type_chain) == Some(SchKind::Label)
+                    && ident(&children[m].attrs, "symbol").as_deref() == Some("nc"))
     }
 
     /// When the chain grows [SPEC 16.1]: straight chains first, as the

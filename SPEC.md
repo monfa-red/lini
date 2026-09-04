@@ -3779,6 +3779,11 @@ statement naming the pin carries it, on the hop that touches the pin, its
 `side:` riding along. A shaped tag (a marked op) draws a body and is seated as
 ever, and a declared `|label|` is the author's node and stays a run.
 
+**A no-connect cross is a mark, not a member.** `|nc|` says a pin is open on
+purpose, so it stands as close as the lattice allows — its connection point on
+the first fine line at least one fine pitch past the stub tip — and shares no
+slot row with the names and parts beside it ([16.1](#161-placement--the-lattice)).
+
 **Net text stands off its wire, never on it.** The name sits a constant
 `net-label-offset` clear of the centreline — a schematic wire is never cut
 ([16.5](#165-wires)). Which side:
