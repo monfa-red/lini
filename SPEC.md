@@ -3498,7 +3498,8 @@ covers, either way. So a no-connect cross grown out of one pin leaves the pins
 either side their own rows, a net run takes exactly the line it lands on, and
 two bare returns off one connector stand a fine pitch apart where two resistors
 stand a whole column. A chain's cells run from its own **pin's** line out to its
-outermost member, which is the column it really draws.
+outermost member, which is the column it really draws — a **wire's** width
+(one fine pitch) from the pin's line to the first cell, the cells from there.
 
 Every line the field picks is then found by **stepping one fine line at a time
 until the cells clear**, and never by a pitch stated in advance: a lane is free
@@ -3515,14 +3516,25 @@ rays point *at* each other take a lane each, both claiming the band between
 them; a second chain claiming a pin's straight corridor steps beside it, theirs
 being the same cell; and no chain lands where a lead must cross.
 
-**Lane order is the pins' own**, read along the ray: the pin **deeper** along it
-keeps the inner lane and the shallower steps out, so a lead crosses an inner
-column only above where that column is live. Lanes are taken in that order,
-deepest first, ties on statement order. A side carrying **both** rays cannot
-read it two ways and falls back to the canonical direction, the deepest pin
-innermost either way. The chains that grew **straight** out take no lane and
-compete for none, so they stand first: they are the geography every lane then
-steps past.
+**Lane order is the pins' own.** A pin's column is **live** above its row
+where a chain climbs off it and below where one drops, and a lead crosses every
+inner column that is live toward its own pin — so the lanes go innermost first
+to the pin whose column the fewest of the side's other leads would have to
+cross, a pin's up-chain and down-chain allotted together (they leave on one
+lead and share a column), ties to the pin deeper along the canonical direction
+(down, right), then statement order. On a side growing one way that is depth
+along the ray: the deeper pin keeps the inner lane and a lead crosses an inner
+column only above where it is live. A side carrying **both** rays crosses only
+where an upper pin's return must drop past a lower pin's rail — the one
+crossing no order avoids — and there on the rail's lead, never its body. The
+chains that grew **straight** out take no lane and compete for none, so they
+stand first: they are the geography every lane then steps past — bar one led
+by a **part** that shares its pin with a chain that turned, which grows right
+after that pin's lanes and clears them: its lead is theirs too, and the
+junction where they leave sits on the bare wire before its first member (the
+pull-down hangs off the gate's own trace, ahead of the series resistor). A
+chain led by a bare net run is exempt, being that very trace named: the lane
+steps past it and the trunk runs on through the run to the junction.
 
 **A field starts where its cells clear the ink.** The innermost **lane** on a
 side is the first line whose cells stand clear of the anchor's own drawn ink
@@ -3530,8 +3542,10 @@ there, readouts included — so a part's cell edge lands on the body and no
 further out, and a chain carrying nothing but a ground symbol starts a fine
 pitch off it. The first **slot** clears what that chain's own **lead passes**:
 a chain that turned into a lane is beside the body already — that is what the
-lane is — and clears only the pin it hangs off; one that grew straight out has
-its ray pointing through the body, and clears the ink. Every one of these is a
+lane is — and clears the **deepest wired pin** of its side along the ray, so a
+lead crossing its column from any row of that side meets bare wire and never a
+body; one that grew straight out has its ray pointing through the body, and
+clears the ink. Every one of these is a
 *separation*, measured in ink and quantised to the **fine** grid: rounding a
 separation up to a coarse line buys a whole cell of bare wire for a shortfall of
 one unit.

@@ -159,23 +159,15 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .collect()
 }
 
-/// Every schematic part a scope placed, as `(written type, id, x, y)` with the
-/// point the lattice holds it by ([`seat_of`]) **in that scope's own frame** —
-/// what [SPEC 16.1]'s invariant is stated in. Since a scope's own origin lands
-/// on the fine lattice too, the scene's reading and the scope's agree, and
-/// either judges the invariant.
+/// Every schematic part a scope placed, as `(id, x, y)` with the point the
+/// lattice holds it by ([`seat_of`]) **in that scope's own frame** — what
+/// [SPEC 16.1]'s invariant is stated in.
 ///
 /// A part's own anatomy — pins, rails, readouts — is its business, so the walk
 /// stops at the outermost schematic type it meets.
 pub(super) struct ScopePart {
-    pub ty: String,
     pub id: String,
     pub at: (f64, f64),
-    /// Where a wire lands on it, in the same frame — the router's own reading
-    /// ([`super::part_ports`]), so the test judges the points wires really
-    /// arrive at and not the pin chrome around them. A symbol-bodied part
-    /// presents its glyph's connection points, which need not be on the pitch.
-    pub ports: Vec<(f64, f64)>,
 }
 
 pub(super) fn scope_parts(nodes: &[PlacedNode]) -> Vec<ScopePart> {
@@ -198,20 +190,11 @@ pub(super) fn scope_parts(nodes: &[PlacedNode]) -> Vec<ScopePart> {
                 crate::desugar::schematic::schematic_type(&n.type_chain),
             ) {
                 (Some((sx, sy)), Some(ty)) => out.push(ScopePart {
-                    ty: ty.to_string(),
                     id: n.id.clone().unwrap_or_else(|| format!("|{ty}|")),
                     at: {
                         let (px, py) = seat_of(n, (x, y));
                         (px - sx, py - sy)
                     },
-                    ports: super::part_ports(n)
-                        .map(|p| {
-                            p.ports
-                                .iter()
-                                .map(|&(_, _, (px, py))| (x + px - sx, y + py - sy))
-                                .collect()
-                        })
-                        .unwrap_or_default(),
                 }),
                 _ => walk(&n.children, x, y, scope, out),
             }

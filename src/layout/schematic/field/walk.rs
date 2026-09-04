@@ -9,6 +9,7 @@
 //! [`crate::desugar::schematic::chain`]'s, shared with the pose chooser.
 
 use super::super::lattice::{Ax, EPS};
+use super::super::net;
 use super::super::place::Slot;
 use super::super::terminal::{Terminal, terminal};
 use super::read::{growth, tag_facing, tap_flags};
@@ -35,8 +36,9 @@ impl Field {
             .into_iter()
             .map(|(chain, pin)| Held::of(children, chain, pin, wires, &mut ladders))
             .collect();
+        share_pins(children, &mut held);
         order(&mut held, ladders.len());
-        self.strike_origins(tracks, &held);
+        self.strike_origins(children, wires, tracks, &held);
         let bases: Vec<f64> = held
             .iter()
             .map(|h| self.base(h.anchor, h.side, &held))
@@ -57,13 +59,27 @@ impl Field {
         let tap = tap_flags(children, chain);
         let limbs = limbs(chain);
         let turned = h.turns();
-        let trunk = self.run(
-            h,
-            h.ray,
-            self.origin(h.anchor, h.ray, turned),
-            pick(chain, |i| limbs[i].is_none()),
-            Some(h.pin.at),
-        );
+        let members = pick(chain, |i| limbs[i].is_none());
+        // A straight chain sharing its pin with chains that turned starts
+        // past the lanes they took [SPEC 16.1]: its lead is theirs too, and
+        // the junction where they leave it lies on the bare wire before its
+        // first member — the pull-down hangs off the gate's own trace, ahead
+        // of the series resistor. Its column then begins where those lanes'
+        // cells end, the run in to there being one lead shared three ways.
+        let (start, origin) = match self.shared_edge(h) {
+            None => (self.origin(h.anchor, h.ray, turned), h.pin.at),
+            Some(edge) => {
+                let out = Ax::outward(h.ray);
+                let deeper = |a: f64, b: f64| if b * out > a * out { b } else { a };
+                let line = self.past_ink(members[0], h.ray, edge);
+                let origin = match Ax::of(h.ray) {
+                    Ax::X => (edge, h.pin.at.1),
+                    Ax::Y => (h.pin.at.0, edge),
+                };
+                (deeper(self.origin(h.anchor, h.ray, turned), line), origin)
+            }
+        };
+        let trunk = self.run(h, h.ray, start, members, Some(origin));
         // One allocation for either ladder [SPEC 16.1]: a chain that turned off
         // its pin takes the innermost free lane, and one that grew straight out
         // asks for its pin's own line — stepping beside it only where a chain
@@ -196,21 +212,42 @@ impl Field {
     /// requirement among them, which is what stands two anchors' fields on one
     /// row. It is the one line in the field that is a rule rather than a
     /// search, and the alignment is what it buys.
-    fn strike_origins(&mut self, tracks: &[Option<Slot>], held: &[Held]) {
+    fn strike_origins(
+        &mut self,
+        children: &[PlacedNode],
+        wires: &[[End; 2]],
+        tracks: &[Option<Slot>],
+        held: &[Held],
+    ) {
+        // The deepest **wired** pin of one side along `ray` — every wire
+        // leaving that side runs out along its pin's row, so a column
+        // climbing past those rows crosses bare wire only once its first
+        // member clears the deepest of them.
+        let deepest = |anchor: usize, side: Side, ray: Side| {
+            wires
+                .iter()
+                .flatten()
+                .filter(|e| e.child == anchor)
+                .map(|e| terminal(&children[anchor], e.terminal.as_deref()))
+                .filter(|t| t.facing == Some(side))
+                .map(|t| dot(t.at, ray.normal()))
+                .fold(f64::NEG_INFINITY, f64::max)
+        };
         for ray in Side::ALL {
             let (ax, out) = (Ax::of(ray), Ax::outward(ray));
             let deeper = |a: f64, b: f64| if b * out > a * out { b } else { a };
             // What one chain asks of the line its first member stands on: half
             // of that member's own drawing past whatever its lead passes —
-            // the deepest pin, for a lead that turned into a lane; the
-            // anchor's ink, for one whose ray points through the body.
+            // the deepest wired pin of its side along this ray, for a lead
+            // that turned into a lane; the anchor's ink, for one whose ray
+            // points through the body.
             let mut want: Vec<(usize, usize, f64)> = Vec::new();
             for h in held.iter().filter(|h| h.ray == ray) {
                 let Some(track) = tracks[h.anchor] else {
                     continue;
                 };
                 let passes = if h.turns() {
-                    h.depth * out
+                    deepest(h.anchor, h.side, ray).max(h.depth) * out
                 } else {
                     ink_edge(&self.inks[h.anchor], ray)
                 };
@@ -293,11 +330,41 @@ impl Field {
     fn stem(&self, h: &Held, run: &Run, k: i32) -> Option<Bbox> {
         let (px, py) = run.origin?;
         let (member, seat) = self.seats_of(h, run, k).next()?;
-        let pin = match Ax::of(run.ray) {
-            Ax::X => (px, seat.cross),
-            Ax::Y => (seat.cross, py),
+        let cell = self.cell(member, seat);
+        let half = self.lat.pitch / 2.0;
+        // The edge of the cell the column arrives at.
+        let near = |at: f64, lo: f64, hi: f64| {
+            if (at - lo).abs() <= (at - hi).abs() {
+                lo
+            } else {
+                hi
+            }
         };
-        Some(self.cell(member, seat).union(Bbox::from_points(&[pin])))
+        Some(match Ax::of(run.ray) {
+            Ax::X => Bbox::from_points(&[
+                (px, seat.cross - half),
+                (near(px, cell.min_x, cell.max_x), seat.cross + half),
+            ]),
+            Ax::Y => Bbox::from_points(&[
+                (seat.cross - half, py),
+                (seat.cross + half, near(py, cell.min_y, cell.max_y)),
+            ]),
+        })
+    }
+
+    /// Where the lanes of the chains sharing a straight chain's pin end,
+    /// along its ray [SPEC 16.1] — the outer edge of their first cells, as
+    /// far out as the deepest reaches — or `None` for a chain sharing its pin
+    /// with none. Those chains grew first, so their seats are struck.
+    fn shared_edge(&self, h: &Held) -> Option<f64> {
+        let out = Ax::outward(h.ray);
+        h.shared
+            .iter()
+            .filter_map(|&(member, ray)| {
+                let seat = self.seats[member]?;
+                Some(seat.cross + out * self.across(member, ray) / 2.0)
+            })
+            .reduce(|a, b| if b * out > a * out { b } else { a })
     }
 
     /// The seats a run's members take with its cross ladder at step `k`.
@@ -347,10 +414,12 @@ struct Held {
     ray: Side,
     /// Which (anchor, side) ladder it competes in.
     group: usize,
-    /// How far along the ray its pin already sits — the lane order's key —
-    /// and the same depth read along the canonical direction of that axis.
+    /// How far along the ray its pin already sits — the lane order's key.
     depth: f64,
-    canon: f64,
+    /// For a chain that grew **straight** out: the first member and ray of
+    /// every chain that turned off the same pin ([`share_pins`]) — the lanes
+    /// its own first slot has to clear. Empty for every other chain.
+    shared: Vec<(usize, Side)>,
     /// The innermost line its side's lanes start on ([`Field::base`]), struck
     /// once every chain on that side is known.
     base: f64,
@@ -374,7 +443,7 @@ impl Held {
         Held {
             anchor: pin_end.child,
             depth: dot(pin.at, ray.normal()),
-            canon: dot(pin.at, canonical(ray).normal()),
+            shared: Vec::new(),
             chain,
             pin,
             side,
@@ -389,6 +458,40 @@ impl Held {
     /// nothing.
     fn turns(&self) -> bool {
         self.ray != self.side
+    }
+
+    /// When the chain grows [SPEC 16.1]: straight chains first, as the
+    /// geography every lane steps past — bar one sharing its pin with a
+    /// lane, which grows with that pin's lanes ([`order`]).
+    fn phase(&self) -> u8 {
+        u8::from(self.turns() || !self.shared.is_empty())
+    }
+}
+
+/// Mark every straight chain led by a **part** with the turned chains leaving
+/// its own pin [SPEC 16.1]. A chain led by a bare net run is exempt: the run
+/// *is* the trace named, so a lane sharing its pin steps past it and the
+/// trunk runs on through the run to the junction, exactly as the ray rule
+/// exempts it. The pin is the terminal's landing point, compared in whole
+/// [`EPS`] steps as depths are.
+fn share_pins(children: &[PlacedNode], held: &mut [Held]) {
+    let rung = |v: f64| (v / EPS).round() as i64;
+    let at = |h: &Held| (h.anchor, rung(h.pin.at.0), rung(h.pin.at.1));
+    let turned: Vec<((usize, i64, i64), usize, Side)> = held
+        .iter()
+        .filter(|h| h.turns())
+        .map(|h| (at(h), h.chain.members[0], h.ray))
+        .collect();
+    for h in held
+        .iter_mut()
+        .filter(|h| !h.turns() && !net::is_run(&children[h.chain.members[0]]))
+    {
+        let key = at(h);
+        h.shared = turned
+            .iter()
+            .filter(|(k, _, _)| *k == key)
+            .map(|&(_, m, ray)| (m, ray))
+            .collect();
     }
 }
 
@@ -408,12 +511,58 @@ struct Run {
 
 /// The **allocation order** [SPEC 16.1]. Chains that grew straight out along
 /// their pins take no lane and compete for none, so they commit first: they
-/// are the inner geography every lane then steps past. The rest go deepest
-/// pin first, read along the ray — so a lead crosses an inner column only
-/// above where that column is live — except on a side carrying **both** rays,
-/// which cannot read depth two ways and falls back to the canonical direction,
-/// the deepest pin innermost either way. A stable sort, so the chains' own
-/// statement order breaks every tie.
+/// are the inner geography every lane then steps past. The lanes go next,
+/// **pin by pin** — a pin's up-chain and down-chain leave on one lead and
+/// share a column, so they are allotted together — innermost first to the
+/// pin whose column the fewest of the side's other leads would have to
+/// cross ([`rank_pins`]); a part-led straight chain sharing its pin grows
+/// right after that pin's lanes, past them, and is geography to every pin
+/// ranked outside it like any straight chain. A stable sort, so the chains'
+/// own statement order breaks every tie.
+fn order(held: &mut Vec<Held>, ladders: usize) {
+    let mut rank = vec![0usize; held.len()];
+    for group in 0..ladders {
+        let idx: Vec<usize> = (0..held.len())
+            .filter(|&i| held[i].turns() && held[i].group == group)
+            .collect();
+        for (i, r) in rank_pins(held, &idx) {
+            rank[i] = r;
+        }
+    }
+    // A straight chain sharing its pin grows right after that pin's lanes:
+    // it takes their rank, and stands after them within it.
+    for i in 0..held.len() {
+        if let Some(&(member, _)) = held[i].shared.first()
+            && let Some(t) = held
+                .iter()
+                .position(|t| t.turns() && t.chain.members[0] == member)
+        {
+            rank[i] = rank[t];
+        }
+    }
+    let mut by: Vec<usize> = (0..held.len()).collect();
+    by.sort_by_key(|&i| (held[i].phase(), held[i].group, rank[i], !held[i].turns()));
+    let mut taken: Vec<Option<Held>> = std::mem::take(held).into_iter().map(Some).collect();
+    held.extend(
+        by.iter()
+            .map(|&i| taken[i].take().expect("each chain once")),
+    );
+}
+
+/// The lane rank of every pin on one side [SPEC 16.1], innermost first.
+///
+/// A pin's column is **live** above its row where a chain climbs off it and
+/// below where one drops, and a lead crosses every inner column that is
+/// live toward its own pin. So the lanes go innermost first to the pin whose
+/// column the fewest of the others' leads would cross — counted over the
+/// pins still to be placed, since only those lie outside it. On a side whose
+/// chains all grow one way that is depth along the ray: the deepest pin keeps
+/// the inner lane, and a lead crosses an inner column only above where it is
+/// live. A side carrying both rays crosses only where an upper pin's return
+/// must drop past a lower pin's rail, and there on the rail's lead alone,
+/// since a slot clears the deepest pin its side leaves from. Ties fall to the
+/// pin deeper along the canonical direction of the axis — down, or right —
+/// then to statement order.
 ///
 /// Depth compares in whole [`EPS`] steps, never bit for bit: the pins of one
 /// rail stand at one depth, but the stub tips that measure it carry that depth
@@ -421,29 +570,44 @@ struct Run {
 /// neighbour's shifts the last of them. Quantised, one depth reads as one
 /// depth and the statement order decides, which is what the tie-break says;
 /// raw, a name's width silently outranks it.
-fn order(held: &mut [Held], ladders: usize) {
-    let mut ray_of: Vec<Option<Side>> = vec![None; ladders];
-    let mut mixed = vec![false; ladders];
-    for h in held.iter().filter(|h| h.turns()) {
-        match ray_of[h.group] {
-            None => ray_of[h.group] = Some(h.ray),
-            Some(r) => mixed[h.group] |= r != h.ray,
+fn rank_pins(held: &[Held], idx: &[usize]) -> Vec<(usize, usize)> {
+    let rung = |v: f64| (v / EPS).round() as i64;
+    let key = |i: usize| (rung(held[i].pin.at.0), rung(held[i].pin.at.1));
+    // The side's pins, in statement order, each with the chains it holds.
+    let mut pins: Vec<((i64, i64), Vec<usize>)> = Vec::new();
+    for &i in idx {
+        match pins.iter_mut().find(|(k, _)| *k == key(i)) {
+            Some((_, chains)) => chains.push(i),
+            None => pins.push((key(i), vec![i])),
         }
     }
-    let rung = |v: f64| (v / EPS).round() as i64;
-    held.sort_by(|a, b| {
-        a.turns()
-            .cmp(&b.turns())
-            .then(a.group.cmp(&b.group))
-            .then_with(|| {
-                let (x, y) = if mixed[a.group] {
-                    (a.canon, b.canon)
-                } else {
-                    (a.depth, b.depth)
-                };
-                rung(y).cmp(&rung(x))
+    // Whether pin `q`'s column is live toward pin `p`: one of q's chains
+    // grows the way p lies.
+    let toward = |q: &[usize], p: &[usize]| {
+        let (qa, pa) = (held[q[0]].pin.at, held[p[0]].pin.at);
+        q.iter()
+            .any(|&c| dot((pa.0 - qa.0, pa.1 - qa.1), held[c].ray.normal()) > EPS)
+    };
+    let mut out = Vec::with_capacity(idx.len());
+    let mut remaining: Vec<usize> = (0..pins.len()).collect();
+    while !remaining.is_empty() {
+        let pick = *remaining
+            .iter()
+            .min_by_key(|&&q| {
+                let crossed = remaining
+                    .iter()
+                    .filter(|&&p| p != q && toward(&pins[q].1, &pins[p].1))
+                    .count();
+                let first = pins[q].1[0];
+                let deep = dot(held[first].pin.at, canonical(held[first].ray).normal());
+                (crossed, std::cmp::Reverse(rung(deep)), q)
             })
-    });
+            .expect("a pin remains");
+        remaining.retain(|&q| q != pick);
+        let r = out.len();
+        out.extend(pins[pick].1.iter().map(|&i| (i, r)));
+    }
+    out
 }
 
 /// The canonical direction of a ray's own axis — down, or right.

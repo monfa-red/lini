@@ -529,10 +529,11 @@ fn a_multi_member_side_branch_grows_its_own_column() {
 #[test]
 fn a_two_by_two_divider_takes_two_columns() {
     // [SPEC 16.1] each pin's up-and-down pair shares one column (their cells
-    // are disjoint); two pins make two columns, ordered canonically. The
-    // per-ray depth orders point opposite ways, so ordering columns along each
-    // ray was a contradiction no ladder could satisfy — every chain ended in
-    // one smeared column.
+    // are disjoint), and the pair is allotted together — so two pins make two
+    // columns, whichever lead has to cross the other's column. Both pins'
+    // columns are live toward each other, so the crossing count ties and the
+    // canonical direction (down) puts the lower pin's pair inside. Ranking
+    // each chain on its own ray split every pair over three columns instead.
     let sheet =
         "{\n  |vp::label| { symbol: power } [ \"V+\" ]\n  |sch::group| { layout: schematic }\n}\n";
     let nodes = laid(
@@ -559,6 +560,139 @@ fn a_two_by_two_divider_takes_two_columns() {
         "two pins, two columns one coarse pitch apart: {} vs {}",
         x("r9"),
         x("r11")
+    );
+}
+
+#[test]
+fn a_mixed_side_puts_the_least_crossed_pins_column_inside() {
+    // [SPEC 16.1] the RS-485 transceiver's right side: VCC (top) climbs to a
+    // rail and drops to a decoupling cap, A (middle) climbs through a
+    // pull-up, B (bottom) drops through a pull-down. B's column is live only
+    // below B, so no lead crosses it: it takes the inner lane, and A's rail —
+    // live only above A, crossed by nothing once B is placed — shares that
+    // lane with it. VCC's pair is crossed whichever way and steps outside,
+    // where its lead meets A's column on the rail's bare lead, never on the
+    // resistor.
+    let sheet = "{ |v3::label| { symbol: power } [ \"3V3\" ] }\n";
+    let part = "  |component#u5| [\n    |pin#vcc| { side: right }; |pin#a| { side: right }; |pin#b| { side: right }; |pin#l| { side: left }\n  ]\n";
+    let nodes = laid(
+        &(sheet.to_owned()
+            + &scope(
+                "",
+                &(part.to_owned()
+                    + "  |C#c8| \"100n\"\n  |R#r12| \"680R\"\n  |R#r13| \"680R\"\n"
+                    + "  u5.vcc - |v3|\n  u5.vcc - c8 - |gnd|\n  u5.a - r12 - |v3|\n  u5.b - r13 - |gnd|\n"),
+            )),
+    );
+    let x = |id: &str| at(&nodes, id).0;
+    assert!(
+        close(x("r12"), x("r13")),
+        "A's rail and B's return share the inner lane: {} vs {}",
+        x("r12"),
+        x("r13")
+    );
+    assert!(
+        x("c8") > x("r12"),
+        "VCC's cap steps outside: {} vs {}",
+        x("c8"),
+        x("r12")
+    );
+    // …and the rail's body clears VCC's row by the pitch a lead needs
+    // [SPEC 16.1]: the slot clears the deepest wired pin of the side.
+    let vcc = landing(&nodes, "u5", "vcc").1;
+    let r12 = ink(&nodes, "r12");
+    assert!(
+        r12.max_y <= vcc - PIN_PITCH,
+        "the pull-up ends a pitch above VCC's row: {} vs {vcc}",
+        r12.max_y
+    );
+}
+
+#[test]
+fn a_slot_clears_the_deepest_wired_pin_of_its_side() {
+    // [SPEC 16.1] a flag climbing off the lower of two left pins passes the
+    // upper pin's row, and that row carries a wire to another part: the flag
+    // stands clear of it, so the wire runs straight through under the flag's
+    // column rather than ending on the flag's own port.
+    let src = format!(
+        "{}{}",
+        FLAG,
+        scope(
+            "",
+            &("  |component#u1| [\n    |pin#s| { side: left }; |pin#d| { side: left }; |pin#z| { side: right }\n  ]\n"
+                .to_owned()
+                + "  |component#j1| { cell: 2 1 } [ |pin#p3| { side: left } ]\n"
+                + "  |vp#f1|\n  j1.p3 - u1.s\n  u1.d - f1\n"),
+        )
+    );
+    let nodes = laid(&src);
+    let s_row = landing(&nodes, "u1", "s").1;
+    let flag = ink(&nodes, "f1");
+    assert!(
+        flag.max_y <= s_row - PIN_PITCH,
+        "the flag stands a pitch clear of the wired row above its pin: {} vs {s_row}",
+        flag.max_y
+    );
+}
+
+#[test]
+fn a_part_led_straight_chain_starts_past_the_lane_sharing_its_pin() {
+    // [SPEC 16.1] the fan driver's gate: a series resistor runs straight out
+    // and a pull-down drops off the same pin. The pull-down's lane sits
+    // between the body and the resistor, so the junction lies on the gate's
+    // own trace ahead of the resistor — and the resistor's cell clears it.
+    let src = scope(
+        "",
+        &("  |component#u1| [\n    |pin#g| { side: left }; |pin#d| { side: right }; |pin#s| { side: bottom }\n  ]\n"
+            .to_owned()
+            + "  |R#r14| \"100R\"\n  |R#r15| \"100k\"\n  |label#pwm| \"PWM\"\n  u1.g - r14 - pwm\n  u1.g - r15 - |gnd|\n"),
+    );
+    let nodes = laid(&src);
+    let (g, r14, r15) = (at(&nodes, "u1"), ink(&nodes, "r14"), at(&nodes, "r15"));
+    assert!(
+        r15.0 > r14.max_x,
+        "the pull-down hangs between the body and the resistor: {} vs {}",
+        r15.0,
+        r14.max_x
+    );
+    assert!(
+        r15.0 < g.0,
+        "…and off the gate's side: {} vs {}",
+        r15.0,
+        g.0
+    );
+    assert!(
+        r14.max_x <= r15.0 - SCH_GAP / 2.0,
+        "the resistor's cell clears the lane: {} vs {}",
+        r14.max_x,
+        r15.0
+    );
+}
+
+#[test]
+fn a_bare_run_keeps_its_place_and_the_lane_steps_past_it() {
+    // [SPEC 16.1] a chain led by a bare net run is the trace itself: the sense
+    // pin's name lies flat beside the body and its shunt's lane steps past the
+    // run to tap it at the far end, exactly as before a part-led chain
+    // learned to yield.
+    let src = scope(
+        "",
+        &("  |component#u8| [\n    |pin#bra| { side: right }; |pin#l| { side: left }; |pin#z| { side: bottom }\n  ]\n"
+            .to_owned()
+            + "  |R#r20| \"470m\"\n  u8.bra - \"RS_A\"\n  u8.bra - r20 - |gnd|\n"),
+    );
+    let nodes = laid(&src);
+    let run = nodes
+        .iter()
+        .flat_map(|n| n.children.iter())
+        .find(|c| c.type_chain.iter().any(|t| t == "net-run"))
+        .map(|c| ink(&nodes, c.id.as_deref().unwrap()))
+        .expect("the run");
+    let r20 = at(&nodes, "r20");
+    assert!(
+        run.min_x < r20.0 && run.max_x <= r20.0,
+        "the run sits inside the lane: {run:?} vs {}",
+        r20.0
     );
 }
 
