@@ -754,12 +754,24 @@ mod tests {
             .iter()
             .position(|c| c.id.as_deref() == Some("u1"))
             .expect("u1");
-        // The lane holds a part, so it stands a whole cell out; the ground
-        // under it holds a symbol and asks for far less.
-        assert_eq!(f.extent(u1, Side::Left), 120.0, "one column out");
+        // The lane holds a part, so it stands a whole cell out and its cell
+        // reaches half a cell past it; the ground under it holds a symbol and
+        // asks for far less.
+        assert_eq!(
+            f.extent(u1, Side::Left),
+            170.0,
+            "one column out, to its edge"
+        );
         // The chain turned off a left pin, so its slots clear that pin and not
-        // the whole part — and its ground ends it a step under the resistor.
-        assert_eq!(f.extent(u1, Side::Bottom), 100.0, "the ground's own line");
+        // the whole part — and its ground ends it a step under the resistor,
+        // the field reaching exactly to the ground's own cell edge.
+        let g = seat(&kids, &f, "g1");
+        let ink = ink(&kids, "g1");
+        assert_eq!(
+            f.extent(u1, Side::Bottom),
+            g.along + f.lat.pitches(ink.h() + f.lat.pitch) / 2.0,
+            "the ground's cell edge"
+        );
         assert_eq!(f.extent(u1, Side::Right), 0.0, "nothing on the other side");
     }
 }

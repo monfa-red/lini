@@ -54,7 +54,7 @@ pub(super) fn pack(
     let body = origins
         .iter()
         .zip(anchored)
-        .map(|(&(x, y), &i)| extent(field, &children[i], i, lat).shifted(x, y))
+        .map(|(&(x, y), &i)| extent(field, &children[i], i).shifted(x, y))
         .reduce(Bbox::union)
         .unwrap_or_else(Bbox::empty);
     Packing { origins, body }
@@ -63,14 +63,9 @@ pub(super) fn pack(
 /// One anchor's whole extent [SPEC 16.1]: its own drawn ink, and the **cells**
 /// its field holds — never its satellites' ink, so a long value overhangs the
 /// sheet's edge rather than growing it.
-fn extent(field: &Field, node: &PlacedNode, anchor: usize, lat: Lattice) -> Bbox {
+fn extent(field: &Field, node: &PlacedNode, anchor: usize) -> Bbox {
     let ink = drawn(node);
-    // A cell is centred on its line, so a field reaching that far out stands
-    // half a cell further still.
-    let out = |side: Side| match field.extent(anchor, side) {
-        d if d <= 0.0 => 0.0,
-        d => d + lat.step(Ax::of(side)) / 2.0,
-    };
+    let out = |side: Side| field.extent(anchor, side).max(0.0);
     ink.union(Bbox::from_points(&[
         (-out(Side::Left), -out(Side::Top)),
         (out(Side::Right), out(Side::Bottom)),

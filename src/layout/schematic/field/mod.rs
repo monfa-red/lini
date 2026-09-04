@@ -143,9 +143,10 @@ impl Field {
     }
 
     /// How far out on `side` an anchor's field reaches from the anchor's **own
-    /// origin**, as a distance to the outermost cell centre — the lanes a
-    /// track must hold there, and the slots a ray runs deep [SPEC 16.1]. `0.0`
-    /// where no chain went that way.
+    /// origin**, as a distance to the outermost cell **edge** — what the sheet
+    /// really draws there, since a cell is its content's [SPEC 16.1]: a column
+    /// of parts reaches half a coarse cell past its lane, a lone ground the few
+    /// fine pitches its symbol takes. `0.0` where no chain went that way.
     ///
     /// A distance and no longer a count of cells: a lane is a coarse line and
     /// a slot a fine one, so the two no longer share a unit.
@@ -153,13 +154,13 @@ impl Field {
         self.reach(anchor, side)
     }
 
-    /// The first line out on `side` that an anchor's field leaves **free**, as
-    /// a distance from the anchor's own origin [SPEC 16.1] — where the next
-    /// thing on that side may stand, and with nothing there, the one clear
+    /// The first coarse line out on `side` whose whole cell an anchor's field
+    /// leaves **free**, as a distance from the anchor's own origin [SPEC 16.1]
+    /// — where the next part may stand, and with nothing there, the one clear
     /// column two neighbouring anchors keep. Their own ink is the packer's to
     /// read; this answers only what the field holds.
     pub(in crate::layout::schematic) fn free(&self, anchor: usize, side: Side) -> f64 {
-        self.reach(anchor, side) + self.lat.step(Ax::of(side))
+        self.reach(anchor, side) + self.lat.step(Ax::of(side)) / 2.0
     }
 
     /// Satellites no wire held — the flow fallback [SPEC 16.1].
@@ -277,15 +278,11 @@ impl Field {
     }
 
     /// How far out on `side` an anchor's field reaches, as a distance from the
-    /// anchor's own origin to the outermost cell centre.
+    /// anchor's own origin to the outermost cell edge.
     fn reach(&self, anchor: usize, side: Side) -> f64 {
-        let (ax, sign) = (Ax::of(side), Ax::outward(side));
         self.cells[anchor]
             .iter()
-            .map(|c| {
-                let (x, y) = c.center();
-                (if ax == Ax::X { x } else { y }) * sign
-            })
+            .map(|c| ink_edge(c, side) * Ax::outward(side))
             .fold(0.0f64, f64::max)
     }
 
