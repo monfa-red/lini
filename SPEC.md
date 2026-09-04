@@ -843,7 +843,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|junction\|` | `\|oval\|` | `fill: --wire; stroke: none` — generated chrome | The connection **dot** where ≥ 3 wire ends meet ([SPEC 16.5](#165-wires)). |
 | `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them `side: left` (one column) | The **connector** ([SPEC 16.2](#162-components--pins)). |
 | `\|opamp\|` | `\|component\|` | `prefix: "U"` — pins `out` `inp` `inn`; power pins hidden | The amplifier triangle ([SPEC 16.2](#162-components--pins)). |
-| the **discretes** — `\|R\|` `\|C\|` `\|L\|` `\|D\|` `\|LED\|` `\|Q\|` `\|Y\|` `\|F\|` `\|FB\|` `\|SW\|` `\|BT\|` `\|V\|` `\|I\|` | `\|block\|` | symbol-bodied, generated pins, `symbol:` variants | The two/three-terminal parts; the type is the ref family ([SPEC 16.3](#163-discretes)). |
+| the **discretes** — `\|R\|` `\|C\|` `\|L\|` `\|D\|` `\|LED\|` `\|Q\|` `\|Y\|` `\|F\|` `\|FB\|` `\|SW\|` `\|BT\|` `\|V\|` `\|I\|` `\|M\|` `\|BZ\|` `\|TP\|` | `\|block\|` | symbol-bodied, generated pins, `symbol:` variants | The one/two/three-terminal parts; the type is the ref family ([SPEC 16.3](#163-discretes)). |
 | `\|gnd\|` / `\|nc\|` | `\|label\|` | `symbol: gnd` / `symbol: nc` | Built-in ground / no-connect defines ([SPEC 16.4](#164-labels)). |
 | `\|floorplan\|` | `\|drawing\|` | `layout: floorplan` | An architectural **floor plan** — the drawing engine in a dialect, so `\|drawing\|`-scoped rules dress it too ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
 | `\|wall\|` | `\|sketch\|` | `fill: --stroke-dark; stroke: none` — `draw:` traces the **centreline**; `thickness:` inherited (200 mm) | A **wall run** — offset to a solid (poché) outline at lowering; openings ride its `[ ]` ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)). |
@@ -3683,13 +3683,13 @@ default.
 
 ### 16.3 Discretes
 
-Two- and three-terminal parts drawn as symbols (IEC), each with **generated
-pins** — so `c24.p1` works with zero authoring — and its ref family as its
-type name:
+One-, two- and three-terminal parts drawn as symbols (IEC), each with
+**generated pins** — so `c24.p1` works with zero authoring — and its ref
+family as its type name:
 
 | Type | Mints | Pins | `symbol:` variants |
 |---|---|---|---|
-| `\|R\|` | R1… | p1 p2 | — |
+| `\|R\|` | R1… | p1 p2 / p1 p2 w | `pot` (the wiper is `w`) · `ntc` |
 | `\|C\|` | C1… | p1 p2 | `polarized` |
 | `\|L\|` | L1… | p1 p2 | — |
 | `\|D\|` | D1… | a k | `zener` · `tvs` · `schottky` |
@@ -3701,6 +3701,9 @@ type name:
 | `\|SW\|` | SW1… | p1 p2 | `toggle` *(default)* · `push` |
 | `\|BT\|` | BT1… | plus minus | `cell` *(default)* · `battery` |
 | `\|V\|` / `\|I\|` | V1… / I1… | plus minus | `dc` *(default)* · `ac` |
+| `\|M\|` | M1… | p1 p2 | — |
+| `\|BZ\|` | BZ1… | p1 p2 | — |
+| `\|TP\|` | TP1… | p1 | — |
 
 The smart label is the **value** (`|R#R18| "470m"`); `symbol:` picks the
 variant — one knob for every family, and it sets the pin ids where they are

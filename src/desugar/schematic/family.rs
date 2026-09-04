@@ -291,7 +291,7 @@ fn variants(ty: &str) -> &'static [Variant] {
         ($($n:literal $g:literal $p:expr),+ $(,)?) => { &[$(Variant { name: $n, glyph: $g, pins: $p }),+] };
     }
     match ty {
-        "R" => v!("plain" "sch-r" P12),
+        "R" => v!("plain" "sch-r" P12, "pot" "sch-r-pot" &["p1", "p2", "w"], "ntc" "sch-r-ntc" P12),
         "C" => v!("plain" "sch-c" P12, "polarized" "sch-c-polarized" P12),
         "L" => v!("plain" "sch-l" P12),
         "D" => v!(
@@ -316,6 +316,9 @@ fn variants(ty: &str) -> &'static [Variant] {
         }
         "V" => v!("dc" "sch-v-dc" &["plus", "minus"], "ac" "sch-v-ac" &["plus", "minus"]),
         "I" => v!("dc" "sch-i" &["plus", "minus"], "ac" "sch-i-ac" &["plus", "minus"]),
+        "M" => v!("plain" "sch-m" P12),
+        "BZ" => v!("plain" "sch-bz" P12),
+        "TP" => v!("plain" "sch-tp" &["p1"]),
         _ => &[],
     }
 }
