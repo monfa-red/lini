@@ -37,6 +37,17 @@ use crate::syntax::ast::{
 };
 use std::collections::HashSet;
 
+/// **A name on a wired pin rides the wire** [SPEC 16.4]. A plain text label
+/// wire on a pin that already carries a wire (`U8.BRA - "RS_A"` beside
+/// `U8.BRA - R20 - |gnd|`) mints no run: a sheet writes the net name beside
+/// the trace that is already there, so the text becomes that wire's own
+/// net-name label ([`Absorbed`]) — exactly the two-ended spelling
+/// `U8.BRA - R20 "RS_A"` — and the one-ended statement is consumed. The
+/// **first** other statement naming the pin carries it, and only the hop that
+/// touches the pin, which is why the caller attaches it once the landings have
+/// cut the chains ([`attach`]). A shaped tag (a marked op) draws a body and is
+/// seated as ever; a declared `|label|` is the author's node and stays a run.
+///
 /// Mint every label wire in one schematic scope's raw `links`, and gate the
 /// scope's markers. Returns the minted `|label|` declarations, ids stamped, in
 /// statement order — the caller seats them among the scope's children (before
@@ -48,15 +59,30 @@ use std::collections::HashSet;
 pub(super) fn mint(
     cx: &Lower,
     children: &mut [Child],
-    links: &mut [Link],
+    links: &mut Vec<Link>,
     declared: &HashSet<String>,
-) -> Result<Vec<Node>, Error> {
+    own_at: &mut usize,
+) -> Result<(Vec<Node>, Vec<Absorbed>), Error> {
     let mut mint = super::mint::Mint::new("label", declared);
     let mut out = Vec::new();
+    let mut absorbed = Vec::new();
+    // Which one-ended statements name a pin some other statement wires — read
+    // before anything is rewritten, over the scope's statements as written.
+    let wired: Vec<bool> = (0..links.len())
+        .map(|i| {
+            let w = &links[i];
+            w.chain.len() == 1
+                && links
+                    .iter()
+                    .enumerate()
+                    .any(|(j, o)| j != i && o.chain.len() > 1 && names_endpoint(o, &w.chain[0]))
+        })
+        .collect();
+    let mut consumed = vec![false; links.len()];
     // The minted tag is a plain `|label|`, so that is the chain its authored
     // `shape:` — an element rule's — is read off.
     let label = [String::from("label")];
-    for w in links.iter_mut() {
+    for (i, w) in links.iter_mut().enumerate() {
         let Some(op) = w.op().wire() else { continue };
         // The one-ended form, with its net text: mint the tag and wire to it.
         // Textless, it is no label wire — resolve still owns that diagnosis.
@@ -65,6 +91,15 @@ pub(super) fn mint(
         {
             let shape = tag_shape(cx, &label, &[], op, w.span, AS_A_TAG)?;
             let side = take_side(w);
+            if shape.is_none() && wired[i] {
+                absorbed.push(Absorbed {
+                    at: w.chain[0].endpoints[0].path.clone(),
+                    text,
+                    side,
+                });
+                consumed[i] = true;
+                continue;
+            }
             let id = mint.next_id();
             let span = text.span;
             out.push(tag(&id, text, shape, side));
@@ -83,7 +118,53 @@ pub(super) fn mint(
         }
         gate(cx, children, w)?;
     }
-    Ok(out)
+    // A consumed statement leaves the list, and the scope's own-statement
+    // boundary moves with whatever left ahead of it.
+    *own_at -= consumed[..*own_at].iter().filter(|c| **c).count();
+    let mut keep = consumed.iter().map(|c| !c);
+    links.retain(|_| keep.next().unwrap_or(true));
+    Ok((out, absorbed))
+}
+
+/// A net name a wired pin's own wire carries [SPEC 16.4/16.5]: the pin path
+/// the one-ended statement named, its text, and the `side:` it stated.
+pub(super) struct Absorbed {
+    pub at: Vec<String>,
+    pub text: TextNode,
+    pub side: Option<Decl>,
+}
+
+/// Whether a statement wires the one endpoint of `group` — the same path, as
+/// written, in any of its groups.
+fn names_endpoint(w: &Link, group: &EndpointGroup) -> bool {
+    group.endpoints.iter().any(|ep| {
+        w.chain
+            .iter()
+            .flat_map(|g| g.endpoints.iter())
+            .any(|o| o.path == ep.path)
+    })
+}
+
+/// Write every absorbed name beside the wire that carries it [SPEC 16.4]: the
+/// **first** statement naming the pin, and — the landings having cut its
+/// chain into hops — only the hop that touches the pin, as its net-name label
+/// (`U8.BRA - R20.p1 "RS_A"`), the `side:` riding along.
+pub(super) fn attach(links: &mut [Link], absorbed: Vec<Absorbed>) {
+    for a in absorbed {
+        let Some(hop) = links.iter_mut().find(|w| {
+            w.chain.len() > 1
+                && w.chain
+                    .iter()
+                    .flat_map(|g| g.endpoints.iter())
+                    .any(|ep| ep.path == a.at)
+        }) else {
+            continue;
+        };
+        hop.labels.push(LabelItem::Text(a.text));
+        if let Some(side) = a.side {
+            hop.style.push(side);
+        }
+    }
 }
 
 /// The marker gate over a wire that mints nothing [SPEC 16.5]. A marked hop is

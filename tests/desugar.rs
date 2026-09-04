@@ -1523,6 +1523,57 @@ fn an_authored_shape_outranks_the_markers() {
 }
 
 #[test]
+fn a_name_on_a_wired_pin_rides_that_wire() {
+    // [SPEC 16.4] a text label wire on a pin another statement wires mints no
+    // run: the name becomes that wire's own net-name label — on the hop that
+    // touches the pin, once the landings have cut the chain — and the
+    // one-ended statement is consumed. Its `side:` rides along.
+    let out = desugar_source(&sheet(
+        "|R#r1| \"1k\"\nu7.a - r1 - |gnd|\nu7.a - \"NET\" { side: bottom }",
+    ))
+    .unwrap();
+    assert!(!out.contains("lini-label-"), "no run is minted: {out}");
+    let hop = out
+        .lines()
+        .find(|l| l.contains("u7.a - r1.p1"))
+        .expect("the pin's own hop");
+    assert!(
+        hop.contains("\"NET\"") && hop.contains("side: bottom"),
+        "{hop}"
+    );
+    assert!(
+        !out.lines()
+            .any(|l| l.contains("r1.p2") && l.contains("NET")),
+        "the far hop carries no name: {out}"
+    );
+    // The first statement naming the pin carries it, whichever side of the
+    // label wire it was written on.
+    let out = desugar_source(&sheet("u7.a - \"NET\"\nu7.a - u7.b\nu7.a - u7.c")).unwrap();
+    assert!(
+        out.contains("u7.a - u7.b")
+            && out
+                .lines()
+                .any(|l| l.contains("u7.a - u7.b") && l.contains("NET")),
+        "{out}"
+    );
+    assert!(
+        !out.lines().any(|l| l.contains("u7.c") && l.contains("NET")),
+        "{out}"
+    );
+    // A pin nothing else wires keeps its run; a marked tag keeps its body.
+    let out = desugar_source(&sheet("u7.a - \"NET\"")).unwrap();
+    assert!(out.contains("u7.a - lini-label-1"), "{out}");
+    let out = desugar_source(&sheet("u7.a - u7.b\nu7.a -> \"NET\"")).unwrap();
+    assert!(
+        out.contains("u7.a - lini-label-1"),
+        "a shaped tag is seated: {out}"
+    );
+    // A declared plain label is the author's node and stays a run.
+    let out = desugar_source(&sheet("|label#n| \"NET\"\nu7.a - u7.b\nu7.a - n")).unwrap();
+    assert!(out.contains("u7.a - n"), "{out}");
+}
+
+#[test]
 fn a_label_wires_side_rides_onto_the_tag_it_mints() {
     // A one-ended label wire has no node of its own to carry `side:` — the
     // block is the *link's* tail [SPEC 9] — so the mint moves it onto the tag,

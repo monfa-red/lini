@@ -120,9 +120,17 @@ fn a_plain_net_runs_lead_never_counts_but_a_terminals_does() {
     // [SPEC 16.5]: a plain run's box **is** a stretch of the trace it names
     // [SPEC 16.4], so the wire drawn to it is the wire being named — not a
     // second conductor leaving the point, and no dot.
-    let src = sheet(&(anchor("u1", "") + &anchor("u2", "") + "u1.c - u2.a\nu1.c - \"NET\"\n"));
+    // A **declared** run: the text form on a wired pin is absorbed as the
+    // wire's own net name instead [SPEC 16.4] and draws no lead at all.
+    let src = sheet(
+        &(anchor("u1", "") + &anchor("u2", "") + "|label#net| \"NET\"\nu1.c - u2.a\nu1.c - net\n"),
+    );
     let laid = routed(&src);
     assert!(laid.links.len() >= 2, "both wires drew");
+    assert!(dots(&laid).is_empty(), "{:?}", dots(&laid));
+    let src = sheet(&(anchor("u1", "") + &anchor("u2", "") + "u1.c - u2.a\nu1.c - \"NET\"\n"));
+    let laid = routed(&src);
+    assert_eq!(laid.links.len(), 1, "the name rides the one wire");
     assert!(dots(&laid).is_empty(), "{:?}", dots(&laid));
     // A **terminal** is not a name: a ground is a real end of a real branch, so
     // a pin forking to one and to a part meets three conductors and is dotted.
@@ -130,7 +138,9 @@ fn a_plain_net_runs_lead_never_counts_but_a_terminals_does() {
     assert_eq!(dots(&routed(&src)).len(), 1, "a ground's lead conducts");
     // …and a run excluded from a meet of two real ones leaves it standing.
     let src = sheet(
-        &(anchor("u1", "") + &anchor("u2", "") + "u1.c - u2.a\nu1.c - u2.b\nu1.c - \"NET\"\n"),
+        &(anchor("u1", "")
+            + &anchor("u2", "")
+            + "|label#net| \"NET\"\nu1.c - u2.a\nu1.c - u2.b\nu1.c - net\n"),
     );
     assert_eq!(dots(&routed(&src)).len(), 1);
 }

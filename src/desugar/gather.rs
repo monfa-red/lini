@@ -76,12 +76,17 @@ impl Scope {
             kids.push(Child::Box(node));
             generated.push(minted);
         }
-        // Step 2 — the label wires mint their tags.
+        // Step 2 — the label wires mint their tags; a name on a pin another
+        // statement wires mints none and waits for that statement's hops.
+        let mut absorbed = Vec::new();
+        let mut own_at = own_at;
         if nest.schematic {
-            for node in labelwire::mint(cx, &mut kids, &mut links, &taken)? {
+            let (nodes, names) = labelwire::mint(cx, &mut kids, &mut links, &taken, &mut own_at)?;
+            for node in nodes {
                 kids.push(Child::Box(node));
                 generated.push(true);
             }
+            absorbed = names;
         }
         // Statement order, which for span-seated declarations is span order —
         // the order `lini desugar` prints them in. Every generated declaration
@@ -116,7 +121,6 @@ impl Scope {
         // Step 3 — with every part and wire of the scope in hand, its
         // **landings** resolve [SPEC 16.5]: a pinless wire takes a pin, a chain
         // threading a two-pin part states its two hops.
-        let mut own_at = own_at;
         if nest.schematic {
             (links, own_at) = schematic::arity::land(
                 cx,
@@ -125,6 +129,8 @@ impl Scope {
                 &mut schematic::arity::Wired::default(),
                 own_at,
             )?;
+            // Step 4 — the absorbed names ride the hops that touch their pins.
+            labelwire::attach(&mut links, absorbed);
         }
         Ok(Scope {
             kids,

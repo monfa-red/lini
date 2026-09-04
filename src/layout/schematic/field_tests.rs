@@ -671,15 +671,16 @@ fn a_part_led_straight_chain_starts_past_the_lane_sharing_its_pin() {
 
 #[test]
 fn a_bare_run_keeps_its_place_and_the_lane_steps_past_it() {
-    // [SPEC 16.1] a chain led by a bare net run is the trace itself: the sense
-    // pin's name lies flat beside the body and its shunt's lane steps past the
-    // run to tap it at the far end, exactly as before a part-led chain
-    // learned to yield.
+    // [SPEC 16.1] a chain led by a **declared** bare net run is the trace
+    // itself: the sense pin's name lies flat beside the body and its shunt's
+    // lane steps past the run to tap it at the far end, exactly as before a
+    // part-led chain learned to yield. (The text form on a wired pin is
+    // absorbed as the wire's name instead — SPEC 16.4, tested in desugar.)
     let src = scope(
         "",
         &("  |component#u8| [\n    |pin#bra| { side: right }; |pin#l| { side: left }; |pin#z| { side: bottom }\n  ]\n"
             .to_owned()
-            + "  |R#r20| \"470m\"\n  u8.bra - \"RS_A\"\n  u8.bra - r20 - |gnd|\n"),
+            + "  |R#r20| \"470m\"\n  |label#rs| \"RS_A\"\n  u8.bra - rs\n  u8.bra - r20 - |gnd|\n"),
     );
     let nodes = laid(&src);
     let run = nodes

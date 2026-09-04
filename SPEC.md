@@ -3768,6 +3768,17 @@ raises it. Being a run and not a body, it is no obstacle: its frame is that
 landing line alone, and its text obstructs nothing, exactly as a link label
 does not ([SPEC 9](#9-links)).
 
+**A name on a wired pin rides the wire.** A run stands only where the pin has
+nothing else: a text label wire (`U8.BRA - "RS_A"`) on a pin that another
+statement already wires (`U8.BRA - R20 - |gnd|`) mints no run at all — a sheet
+writes the net name beside the trace that is already there — so the text
+becomes that wire's own **net-name label**, exactly the two-ended spelling
+`U8.BRA - R20 "RS_A"` ([16.5](#165-wires)), and the one-ended statement is
+consumed (`lini desugar` prints the two-ended form). The **first** other
+statement naming the pin carries it, on the hop that touches the pin, its
+`side:` riding along. A shaped tag (a marked op) draws a body and is seated as
+ever, and a declared `|label|` is the author's node and stays a run.
+
 **Net text stands off its wire, never on it.** The name sits a constant
 `net-label-offset` clear of the centreline — a schematic wire is never cut
 ([16.5](#165-wires)). Which side:
@@ -3825,7 +3836,9 @@ forks. Crossings stay clean and dotless. The wire laws:
   **end marker sets the label's `shape:`** (`-` plain, `->` right, `-<`
   left, `-<>` both, `-*` round) exactly as an operator's line sets
   `stroke-style` ([SPEC 9](#9-links)); an explicit `shape:` wins. A capsule
-  terminator (`- |gnd|`) is the symbol form of the same statement.
+  terminator (`- |gnd|`) is the symbol form of the same statement. A
+  **plain** one on a pin another statement wires mints nothing: its text
+  becomes that wire's net-name label ([16.4](#164-labels)).
 - **Markers shape labels, nothing else**: an op's marker is legal only on a
   wire ending in a text-form label — a marked part-to-part wire, or a
   marker at a symbol-form label, errors. The op's **line** stays free
