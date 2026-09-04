@@ -31,8 +31,8 @@
   |region#boost| "5.5v Boost" { cell: 1 1; } [
     |component#U6| "TPS61023DRLR" [
       |pin#VIN| { side: left; number: 3; }
-      |pin#EN| { side: left; number: 4; }
       |pin#SW| { side: left; number: 5; }
+      |pin#EN| { side: left; number: 4; }
       |pin#GND| { side: bottom; number: 1; }
       |pin#VOUT| { side: right; number: 6; }
       |pin#FB| { side: right; number: 2; }
