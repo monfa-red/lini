@@ -1377,6 +1377,33 @@
         "I"
       ],
       "defaults": {}
+    },
+    {
+      "name": "M",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "M"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "BZ",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "BZ"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "TP",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "TP"
+      ],
+      "defaults": {}
     }
   ],
   "sceneDefaults": {

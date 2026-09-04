@@ -395,9 +395,10 @@ fn an_ansi_symbol_standard_knob() {
 
 #[test]
 fn the_deferred_part_types() {
-    // Logic gates, transformer (`T`), relay (`K`), motor (`M`), speaker (`LS`),
-    // potentiometer (`RV`) — none is a type yet.
-    for ty in ["T", "K", "M", "LS", "RV"] {
+    // Logic gates, transformer (`T`), relay (`K`), speaker (`LS`) — none is a
+    // type yet; nor is a potentiometer of its own (`RV`), which is an `|R|`
+    // variant [SPEC 16.3].
+    for ty in ["T", "K", "LS", "RV"] {
         let src = format!("|schematic#s| [\n|{ty}#p1| \"x\"\n]\n");
         assert_eq!(
             refusal(&src),

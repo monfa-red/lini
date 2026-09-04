@@ -162,13 +162,16 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("BT", "block"),
     ("V", "block"),
     ("I", "block"),
+    ("M", "block"),
+    ("BZ", "block"),
+    ("TP", "block"),
 ];
 
-/// The discrete two/three-terminal part types [SPEC 16.3] — the type name is
+/// The discrete one/two/three-terminal part types [SPEC 16.3] — the type name is
 /// the ref family. One list; the symbol/pin tables in
 /// [`crate::desugar::schematic`] and the validation role key off it.
 pub const DISCRETES: &[&str] = &[
-    "R", "C", "L", "D", "LED", "Q", "Y", "F", "FB", "SW", "BT", "V", "I",
+    "R", "C", "L", "D", "LED", "Q", "Y", "F", "FB", "SW", "BT", "V", "I", "M", "BZ", "TP",
 ];
 
 /// The wall **openings** [SPEC 15.11] — the two types that ride a `|wall|`'s

@@ -59,7 +59,7 @@
     // channel pins on its right, and a half turn re-sides them at the fuse
     // — read at lowering, every text upright [SPEC 16.1] — so the 24 V path
     // runs straight through instead of orbiting the body.
-    |Q#Q1| "AOD4185" { symbol: pfet-circled; cell: 2 1; rotate: 180; }
+    |Q#Q1| "AOD4185" { symbol: pfet; cell: 2 1; rotate: 180; }
     // `pins: N` gives a connector one column of pins, facing left; the terminal
     // block sits at the sheet's edge, so it is turned to face its circuit —
     // `rotate: 180` re-sides the whole column [SPEC 16.1/16.2].
@@ -258,7 +258,7 @@
   ]
 
   |region#fan| "Fan drive" { cell: 2 3; } [
-    |Q#Q2| "IRLZ44N" { symbol: nfet-circled; }
+    |Q#Q2| "IRLZ44N" { symbol: nfet; }
     |J#J4| "Molex 5045" { pins: 3; }
     |R#R14| "100R"
     |R#R15| "100k"

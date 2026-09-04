@@ -105,6 +105,9 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `BT` | `block` | `BT` |
 | `V` | `block` | `V` |
 | `I` | `block` | `I` |
+| `M` | `block` | `M` |
+| `BZ` | `block` | `BZ` |
+| `TP` | `block` | `TP` |
 
 ## Layout engines
 
