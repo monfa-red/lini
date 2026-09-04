@@ -270,7 +270,11 @@ Six steps. Each decides once; none revisits an earlier step's answer.
    committed load leaves fewer than *k* tracks at minimum pitch is **closed**
    — so is a side without *k* free port slots at minimum pitch — and the
    search detours around it; capacity is never exceeded, only priced. The
-   winning route commits its runs (channel, span, *k*) and its two sides. No
+   winning route commits its runs (channel, span, *k*) and its two sides — a
+   run booked at the ordinate it will draw on as far as that is known: a
+   fixed port's end run at that port, every other run at its corridor's
+   anchor, so a wire pinned to one row is never charged to a corridor two
+   rows off that it never enters. No
    route in any world: every member of the bundle is a stray.
 
 5. **Placement.** Per channel, independently: runs whose spans come within

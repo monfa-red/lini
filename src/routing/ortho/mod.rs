@@ -425,7 +425,13 @@ fn commit_bundle(
         ));
     }
     let chain = chains[m0].as_ref().expect("chain built");
+    // An end run pinned to a fixed port is booked **at that port** — read
+    // through placement's own preference reader, so the ledger and the
+    // drawing cannot disagree; every other run is booked at its corridor's
+    // anchor, the one estimate a free run has before its ladder settles.
+    let prefs = place::chain_prefs(chain, worlds);
     for (ri, run) in chain.runs.iter().enumerate() {
+        let pinned = prefs[ri].1.filter(|w| w.0 == w.1).map(|w| w.0);
         ledger.commit_run(
             w,
             run.axis,
@@ -433,6 +439,7 @@ fn commit_bundle(
             run.span,
             k_eff,
             &worlds[w].graph,
+            pinned,
             cluster::fan_of(chain, ri),
         );
     }

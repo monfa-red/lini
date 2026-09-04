@@ -272,7 +272,7 @@ pub(super) fn collect(
 /// the two side centres' midpoint clamped into the shared window; an end
 /// run prefers its own side's centre inside its window; an interior run
 /// prefers its channel's anchor.
-fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
+pub(super) fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
     let last = chain.runs.len() - 1;
     chain
         .runs

@@ -520,7 +520,7 @@ mod tests {
         let cap = ledger
             .read(&[])
             .tracks_left(0, Axis::V, vchan, (0.0, 100.0), &g);
-        ledger.commit_run(0, Axis::V, vchan, (0.0, 100.0), cap + 8, &g, None);
+        ledger.commit_run(0, Axis::V, vchan, (0.0, 100.0), cap + 8, &g, None, None);
         // Forced onto the facing sides, the jog has nowhere to run.
         assert_eq!(
             route(&g, a, b, &ledger, 1, (Some(Side::Right), Some(Side::Left))),
@@ -537,14 +537,14 @@ mod tests {
                 .expect("middle V-channel");
         // One committed rail across the corridor, sparing the low road.
         let mut one = Ledger::new(C);
-        one.commit_run(0, Axis::V, vchan, (10.0, 70.0), 1, &g, None);
+        one.commit_run(0, Axis::V, vchan, (10.0, 70.0), 1, &g, None, None);
         let r = route(&g, a, b, &one, 1, (None, None)).expect("route");
         assert_eq!(r.cells.len(), 1, "one crossing beats any detour: {r:?}");
         assert_eq!(r.cost, 104.0 + cross_cost(C));
         // Eight committed rails: crossing costs 8× — the U-detour under
         // their span end is now cheaper.
         let mut eight = Ledger::new(C);
-        eight.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None);
+        eight.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None, None);
         let r = route(&g, a, b, &eight, 1, (None, None)).expect("route");
         assert!(
             r.cells.len() > 1,
@@ -573,7 +573,7 @@ mod tests {
         let cap = full
             .read(&[])
             .tracks_left(0, Axis::H, row, (48.0, 152.0), &g);
-        full.commit_run(0, Axis::H, row, (48.0, 152.0), cap + 8, &g, None);
+        full.commit_run(0, Axis::H, row, (48.0, 152.0), cap + 8, &g, None, None);
         let detour = route(&g, a, b, &full, 1, (None, None)).expect("route");
         assert!(
             detour.cells.len() > direct.cells.len(),
@@ -606,7 +606,7 @@ mod tests {
             g.v.iter()
                 .position(|c| c.rect == Rect::new(48.0, 0.0, 152.0, 100.0))
                 .expect("middle V-channel");
-        ledger.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None);
+        ledger.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g, None, None);
         let first = route(&g, a, b, &ledger, 1, (None, None));
         for _ in 0..100 {
             assert_eq!(route(&g, a, b, &ledger, 1, (None, None)), first);

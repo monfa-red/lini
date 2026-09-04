@@ -84,10 +84,16 @@ impl Ledger {
         span: (f64, f64),
         k: usize,
         graph: &ChannelGraph,
+        ord: Option<f64>,
         fan: Option<usize>,
     ) {
         let span = (span.0.min(span.1), span.0.max(span.1));
-        let ord = graph.corridor(axis, chan, span.0, span.1).anchor();
+        // Where the run will lie: the ordinate the caller knows for certain
+        // (a fixed port's), else the corridor's anchor — the same anchor
+        // placement prefers for an interior run. Booked at the anchor
+        // regardless, an end run pinned to a port two rows away is charged
+        // to a corridor it never enters and closes it to the wire that does.
+        let ord = ord.unwrap_or_else(|| graph.corridor(axis, chan, span.0, span.1).anchor());
         self.runs
             .entry((world, axis.index(), chan))
             .or_default()
@@ -324,8 +330,8 @@ mod tests {
         let chan = gap_chan(&g);
         let mut ledger = Ledger::new(8.0);
         // Two k=2 runs overlapping in span: peak load 4.
-        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 2, &g, None);
-        ledger.commit_run(0, Axis::V, chan, (40.0, 80.0), 2, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 2, &g, None, None);
+        ledger.commit_run(0, Axis::V, chan, (40.0, 80.0), 2, &g, None, None);
         assert_eq!(
             ledger
                 .read(&[])
@@ -333,7 +339,7 @@ mod tests {
             3
         );
         // A run far below the query span adds nothing there.
-        ledger.commit_run(0, Axis::V, chan, (90.0, 100.0), 3, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (90.0, 100.0), 3, &g, None, None);
         assert_eq!(
             ledger
                 .read(&[])
@@ -353,12 +359,12 @@ mod tests {
         let mut ledger = Ledger::new(8.0);
         // Two siblings' leads, the second running further before it splits:
         // one line over the union of their spans.
-        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, Some(3));
-        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, Some(3));
+        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, None, Some(3));
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, None, Some(3));
         let all = ledger.read(&[]);
         assert_eq!(all.tracks_left(0, Axis::V, chan, (20.0, 80.0), &g), 6);
         // A stranger's untagged run beside them stacks as ever.
-        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (20.0, 60.0), 1, &g, None, None);
         assert_eq!(
             ledger
                 .read(&[])
@@ -379,9 +385,9 @@ mod tests {
         let g = gap_graph();
         let chan = gap_chan(&g);
         let mut ledger = Ledger::new(8.0);
-        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (20.0, 50.0), 1, &g, None, None);
         // Gap of 2 < min pitch 4: the two runs need distinct tracks.
-        ledger.commit_run(0, Axis::V, chan, (52.0, 80.0), 1, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (52.0, 80.0), 1, &g, None, None);
         assert_eq!(
             ledger
                 .read(&[])
@@ -391,8 +397,8 @@ mod tests {
         // Gap of exactly 2×min-pitch: the reaches touch, ends retire before
         // starts, so the two runs never stack — they may share a track.
         let mut spaced = Ledger::new(8.0);
-        spaced.commit_run(0, Axis::V, chan, (20.0, 46.0), 1, &g, None);
-        spaced.commit_run(0, Axis::V, chan, (54.0, 80.0), 1, &g, None);
+        spaced.commit_run(0, Axis::V, chan, (20.0, 46.0), 1, &g, None, None);
+        spaced.commit_run(0, Axis::V, chan, (54.0, 80.0), 1, &g, None, None);
         assert_eq!(
             spaced
                 .read(&[])
@@ -408,7 +414,7 @@ mod tests {
         let mut ledger = Ledger::new(8.0);
         // A 4-rail bundle riding the gap channel, estimated at its anchor
         // (both walls are keep-outs → the midline, x = 92).
-        ledger.commit_run(0, Axis::V, chan, (30.0, 70.0), 4, &g, None);
+        ledger.commit_run(0, Axis::V, chan, (30.0, 70.0), 4, &g, None, None);
         // H travel across the gap whose ordinate window the span covers:
         // certain, all 4 charged.
         assert_eq!(
