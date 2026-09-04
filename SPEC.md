@@ -3701,9 +3701,10 @@ side it does not use, exactly as an even pin rail reserves the slot it is short
 of ([16.2](#162-components--pins)). A part's cell is centred on its lattice
 point, and so is the pair naming it, so a lead off that centre would hang both
 to one side of the wire they belong to.
-A **three**-terminal symbol cannot: its two same-side pins straddle the line,
-and whatever rides one of them ([16.1](#161-placement--the-lattice)'s span) is
-off the lattice by that much.
+A **three**-terminal symbol's two same-side pins straddle that line by a whole
+**fine** pitch each, so they are lattice lines too, and whatever rides one of
+them ([16.1](#161-placement--the-lattice)'s span, a facing pin aligned to it)
+lands on the grid exactly as it would on a component's rail.
 
 A symbol's **pin-to-pin length** is no whole number of fine pitches, and at the
 default `gap` it cannot be: two parts stacked one coarse pitch apart leave

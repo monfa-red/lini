@@ -1159,15 +1159,10 @@ fn a_readout_never_moves_a_part() {
 /// A part is judged at the point the lattice holds it by [SPEC 16.1] — an
 /// anchor's own origin, a satellite's connection geometry.
 ///
-/// **The one exemption**, and it belongs to the drawing rather than to
-/// placement: a symbol-bodied three-terminal part (`|Q|`, `|opamp|`) presents
-/// its glyph's own connection points, and those sit off the pin pitch — a
-/// `sch-opamp` input is 8 glyph units off the body's centre line, a FET's
-/// channel pins 8 off theirs. The part itself still lands on the lattice; what
-/// cannot is whatever is seated on *its* pin line, such as a span member
-/// riding the leg into a FET's source. So a part off the lattice must stand on
-/// a landing of one of those two families, and the test names the family it
-/// found rather than widening the tolerance until it passes.
+/// A three-terminal symbol's same-side pins stand a whole fine pitch either
+/// side of its centre line [SPEC 16.3], so nothing a sample seats — a span
+/// member riding the leg into a FET's source, a connector aligned to its
+/// drain — has an excuse to leave the grid.
 #[test]
 fn every_sample_lands_on_the_lattice() {
     for path in [
@@ -1184,22 +1179,7 @@ fn every_sample_lands_on_the_lattice() {
                 if on_fine_grid(v) {
                     continue;
                 }
-                let stands_on = parts
-                    .iter()
-                    .filter(|o| !std::ptr::eq(*o, p))
-                    .find(|o| {
-                        o.ports
-                            .iter()
-                            .any(|&(px, py)| close(if axis == "x" { px } else { py }, v))
-                    })
-                    .map_or("nothing at all", |o| o.ty.as_str());
-                assert!(
-                    matches!(stands_on, "Q" | "opamp"),
-                    "{path}: '{}' is off the lattice in {axis} at {v}, and what \
-                     it stands on is {stands_on} — the exemption is the \
-                     three-terminal symbol glyphs' alone",
-                    p.id
-                );
+                panic!("{path}: '{}' is off the lattice in {axis} at {v}", p.id);
             }
         }
     }
