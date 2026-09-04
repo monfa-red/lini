@@ -86,6 +86,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `schematic` | `block` | `schematic` |
 | `component` | `block` | `component` |
 | `pin` | `block` | `pin` |
+| `space` | `block` | `space` |
 | `label` | `block` | `label` |
 | `junction` | `oval` | `junction` |
 | `J` | `block` | `component` → `J` |
@@ -233,7 +234,6 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `swing` | \|door\| | `one:ident` | `engine` | — | — |
 | `steps` | \|stairs\| | `one:number` | `none` | — | — |
 | `number` | \|pin\| | `one:number` | `none` | — | — |
-| `skip` | \|pin\| | `one:number` | `none` | — | — |
 | `prefix` | \|component\|, discrete (role) | `one:string` | `bundles` | — | — |
 | `shape` | \|label\| | `one:ident` | `bundles` | — | — |
 | `pins` | \|J\| | `one:number` | `none` | — | — |

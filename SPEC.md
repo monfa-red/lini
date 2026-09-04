@@ -839,6 +839,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|schematic\|` | `\|block\|` | `layout: schematic` | A circuit sheet's scope ([SPEC 16](#16-schematic)). |
 | `\|component\|` | `\|block\|` | `fill: --component-fill; stroke: --component-stroke; stroke-width: 1.5; radius: 0; padding: 8; prefix: "U"` | The generic pin-bearing part — IC, module, relay; ref prefix U ([SPEC 16.2](#162-components--pins)). |
 | `\|pin\|` | `\|block\|` | name inside, `number:` outside, stub outward — no `side:` default (the bilateral split, [SPEC 16.2](#162-components--pins)) | A component **terminal** — the wire lands on its stub tip. |
+| `\|space\|` | `\|block\|` | `width: 20; height: 20` — one rail slot | An **empty slot** between a component's pins ([SPEC 16.2](#162-components--pins)). |
 | `\|label\|` | `\|block\|` | `shape: plain; font-size: 11; color: --label-ink` | The **net tag** — text, a symbol (`gnd`, `power`, …), or both; its own terminal ([SPEC 16.4](#164-labels)). |
 | `\|junction\|` | `\|oval\|` | `fill: --wire; stroke: none` — generated chrome | The connection **dot** where ≥ 3 wire ends meet ([SPEC 16.5](#165-wires)). |
 | `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them `side: left` (one column) | The **connector** ([SPEC 16.2](#162-components--pins)). |
@@ -3635,9 +3636,11 @@ beside the **stub** — the short lead the pin extends outward; the wire lands
 on the stub tip, departing outward along the pin's side. Pin anatomy — stub,
 name, number — folds into the **component's own** routing obstacle, and a
 pin's `translate:` slides it along its side — a cross-axis component is an
-error (a pin lives on its side). **`skip: N`** leaves N empty slots on the rail
-ahead of the pin, whole fine pitches; the slots count toward the rail's
-odd-slot rule below like pins. A single-pin component is legal
+error (a pin lives on its side). A **`|space|`** among the pins is one empty
+rail slot — a fine pitch of air, the gap a datasheet draws between pin groups —
+on the rail of the pin written **before** it (a leading one, of the pin after
+it), or of its own `side:`; it is no pin, so the split never counts it, though
+the odd-slot rule below does. A single-pin component is legal
 (a test point, a mounting pad); an unwired part needs no id at all. `|pin|`
 the type and `pin:` the out-of-flow property ([SPEC 5](#5-the-box-model)) are
 one word in two roles — never ambiguous: a type lives in bars, a property
@@ -4084,7 +4087,6 @@ out of scope.
 | `swing` | `\|door\|` | `left` · `right` | `left` | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
 | `steps` | `\|stairs\|` | integer ≥ 2 | — **required** | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
 | `number` | `\|pin\|` | integer | — | [SPEC 16.2](#162-components--pins) |
-| `skip` | `\|pin\|` | integer ≥ 0 (empty rail slots ahead of the pin, in fine pitches) | — | [SPEC 16.2](#162-components--pins) |
 | `prefix` | `\|component\|` lineage, the discretes | quoted string | the type name (`\|component\|`: `"U"`) | [SPEC 16.2](#162-components--pins) |
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
@@ -4237,7 +4239,7 @@ families:
 | tree | `lini-level-N` · `lini-hue-{name}` (the mindmap walk) |
 | drawing | `lini-dim-line` (dimension / leader linework) · `lini-ext-line` (`--lini-stroke-light`) · `lini-dim-text` (annotation text at the drawing's link size, [SPEC 10.5](#105-layout-constants-baked), and the link-label weight — no annotation leaf inlines either) · `lini-dim` (the restyled `(-)` tier's compound, on dimension-owned chrome only) · `lini-frame-cell` / `lini-frame-plate` (GD&T) · `lini-plane-end` / `-shaft` / `-arrow` · `lini-drafting-glyph` · `lini-datum-frame` · `lini-halo` |
 | floorplan | `lini-door-leaf` (a door's leaf, a slider's panels) · `lini-door-swing` (the quarter arc) · `lini-window-sill` · `lini-stair-tread` (a flight's risers) · `lini-stair-arrow` (its up arrow) ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) |
-| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-pin-skip` (an empty rail slot a pin's `skip:` keeps, [SPEC 16.2](#162-components--pins)) · `lini-ref` · `lini-part-value` |
+| schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 | highlight | `lini-tok-{kind}` — a source **listing**'s token spans, not a figure's: `lini highlight` writes them and `lini highlight --css` paints them ([SPEC 20](#20-cli)) |
 | marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid-stack--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--the-lattice)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 

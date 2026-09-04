@@ -536,6 +536,12 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             n("gap", 0.0),
         ],
+        // An empty rail slot between two pins [SPEC 16.2]: one pitch square,
+        // whichever way its rail runs.
+        "space" => vec![
+            n("width", consts::PIN_PITCH),
+            n("height", consts::PIN_PITCH),
+        ],
         // The net tag [SPEC 16.4]: teal ink, small text; `shape:` picks the
         // outline (`plain` draws none).
         "label" => vec![

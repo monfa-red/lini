@@ -700,6 +700,42 @@ fn a_component_splits_pins_bilaterally_into_anonymous_rails() {
 }
 
 #[test]
+fn a_space_rides_the_rail_of_the_pin_written_before_it() {
+    // [SPEC 16.2] a `|space|` is one empty slot on the rail of the pin before
+    // it — between a left pin and a right one it trails the left rail — a
+    // leading one takes the pin after it, and `side:` says otherwise. It is
+    // no pin: the bilateral split still counts three autos, two left.
+    let out = desugar_source(
+        "|component#U7| \"IC\" [\n  |space|\n  |pin#a|\n  |space|\n  |pin#b| { side: right }\n  |space| { side: right }\n  |pin#c|\n  |pin#d|\n]\n",
+    )
+    .unwrap();
+    let rail = |align: &str| {
+        let body = out.split(&format!("align: {align}")).nth(1).expect(align);
+        let body = &body[..body.find("align:").unwrap_or(body.len())];
+        body.lines()
+            .filter_map(|l| {
+                if l.contains(".lini-space.") {
+                    Some("_".to_string())
+                } else if l.contains(".lini-pin.") {
+                    l.split("|block#")
+                        .nth(1)
+                        .map(|r| r.split('|').next().unwrap_or_default().to_string())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(rail("start"), ["_", "a", "_", "c"], "{out}");
+    assert_eq!(rail("end"), ["b", "_", "d"], "{out}");
+    // The slot is a rule, never an inline size.
+    assert!(
+        out.contains(".lini-space { width: 20; height: 20; }"),
+        "{out}"
+    );
+}
+
+#[test]
 fn a_connector_generates_numbered_nameless_pins() {
     let out = desugar_source("|J#J3| \"header\" { pins: 3 }\n").unwrap();
     for p in ["|block#p1|", "|block#p2|", "|block#p3|"] {

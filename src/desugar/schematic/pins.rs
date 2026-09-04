@@ -1,5 +1,6 @@
 //! Components and pins [SPEC 16.2]: `|J|`'s generated `pins: N`, the
-//! bilateral split into anonymous side rails under the part's pose, each
+//! bilateral split into anonymous side rails under the part's pose — the
+//! `|space|`s between pins riding the rail of the pin before them — each
 //! pin's `translate:` slide along its side, and the per-pin chrome (stub,
 //! displayed name, number readout).
 
@@ -79,57 +80,70 @@ pub(in crate::desugar) fn assemble_component(
     if !style.iter().any(|d| d.name == "gap") {
         style.push(n("gap", 0.0));
     }
-    let mut pins: Vec<Node> = Vec::new();
+    // The rail children in declaration order: pins, and the `|space|`s
+    // between them [SPEC 16.2].
+    let mut slots: Vec<Node> = Vec::new();
     let mut rest: Vec<Child> = Vec::new();
     for c in std::mem::take(children) {
         match c {
-            Child::Box(b) if b.classes.iter().any(|k| k == "lini-pin") => pins.push(b),
+            Child::Box(b)
+                if b.classes
+                    .iter()
+                    .any(|k| k == "lini-pin" || k == "lini-space") =>
+            {
+                slots.push(b)
+            }
             other => rest.push(other),
         }
     }
-    // The split [SPEC 16.2]: autos only; explicit sides keep theirs.
-    let authored: Vec<Option<Side>> = pins
+    let is_space = |b: &Node| b.classes.iter().any(|k| k == "lini-space");
+    // The split [SPEC 16.2]: autos only; explicit sides keep theirs, and a
+    // space is no pin, so it never counts.
+    let authored: Vec<Option<Side>> = slots
         .iter()
+        .filter(|b| !is_space(b))
         .map(|p| authored_side(cx, &lowered_chain(p), &p.style))
         .collect();
-    let sided = pin_sides(&authored, pose);
+    let mut sided = pin_sides(&authored, pose).into_iter();
+    // Where each slot lands. A space takes its own `side:`, else the rail
+    // of the pin written before it — reading down the list is reading down
+    // the rail — and only a leading one the rail of the pin after it.
+    let mut landed_at: Vec<Option<Side>> = slots
+        .iter()
+        .map(|b| {
+            if is_space(b) {
+                authored_side(cx, &lowered_chain(b), &b.style).map(|s| pose.side(s))
+            } else {
+                sided.next().map(|(_, _, landed)| landed)
+            }
+        })
+        .collect();
+    for i in 0..landed_at.len() {
+        if landed_at[i].is_none() {
+            landed_at[i] = landed_at[..i]
+                .iter()
+                .rev()
+                .chain(landed_at[i + 1..].iter())
+                .find_map(|s| *s);
+        }
+    }
     let mut rails: [Vec<Child>; 4] = Default::default();
-    for (mut pin, (authored, side, landed)) in pins.into_iter().zip(sided) {
-        // A turned pin says where it **landed**: the lowered tree is what the
-        // engine reads a forced side back off [SPEC 16.7], so a `side:` left
-        // saying `top` would contradict its own rail and stub.
-        if authored.is_some() && landed != side {
-            set_own(&mut pin, id("side", landed.as_str()));
+    for (mut slot, landed) in slots.into_iter().zip(landed_at) {
+        // A space among no pins at all has no rail to stand on.
+        let Some(landed) = landed else { continue };
+        if !is_space(&slot) {
+            // A turned pin says where it **landed**: the lowered tree is what
+            // the engine reads a forced side back off [SPEC 16.7], so a
+            // `side:` left saying `top` would contradict its own rail and
+            // stub.
+            let authored = authored_side(cx, &lowered_chain(&slot), &slot.style);
+            if authored.is_some_and(|s| s != landed) {
+                set_own(&mut slot, id("side", landed.as_str()));
+            }
+            slide_pin(cx, &mut slot, landed, pose)?;
+            dress_pin(cx, &mut slot, landed, named)?;
         }
-        slide_pin(cx, &mut pin, landed, pose)?;
-        dress_pin(cx, &mut pin, landed, named)?;
-        // `skip: N` leaves N empty slots on the rail ahead of the pin
-        // [SPEC 16.2]: one pitch-square spacer per slot, a rail child like a
-        // pin, so the rail's slot count — and the odd-slot rule below —
-        // reads them as the slots they are.
-        let skips = pin_decl(cx, &pin, "skip")
-            .and_then(|d| match d.single() {
-                Some(Value::Number(n)) => Some(n.max(0.0) as usize),
-                _ => None,
-            })
-            .unwrap_or(0);
-        for _ in 0..skips {
-            let mut slot = bare_node(
-                "block",
-                vec!["lini-pin-skip".to_string()],
-                vec![
-                    n("width", consts::PIN_PITCH),
-                    n("height", consts::PIN_PITCH),
-                ],
-                Vec::new(),
-            );
-            // Printed where it stands: a body prints in span order, and a
-            // slot ahead of its pin shares the pin's span, so the lowered form
-            // keeps the rail's order and compiles the same [SPEC 19].
-            slot.span = pin.span;
-            rails[landed.index()].push(lowered(cx, &slot)?);
-        }
-        rails[landed.index()].push(Child::Box(pin));
+        rails[landed.index()].push(Child::Box(slot));
     }
     for side in Side::ALL {
         if pose.flips(side) {

@@ -200,12 +200,12 @@ fn a_rail_spaces_its_pins_at_the_pitch_whichever_side_it_runs_along() {
 }
 
 #[test]
-fn a_pins_skip_leaves_empty_slots_ahead_of_it_and_keeps_the_lattice() {
-    // [SPEC 16.2] `skip: N` is N empty slots on the rail before the pin —
-    // whole fine pitches — and the slots count toward the odd-slot rule, so
+fn a_space_is_one_empty_slot_on_its_rail_and_keeps_the_lattice() {
+    // [SPEC 16.2] a `|space|` is one empty slot on the rail of the pin before
+    // it — a whole fine pitch — and it counts toward the odd-slot rule, so
     // every pin still lands on a fine line.
     let whole = |v: f64| close((v / PIN_PITCH).round() * PIN_PITCH, v);
-    let part = "  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left; skip: 2 }; |pin#c| { side: left }\n  ]\n";
+    let part = "  |component#u1| [\n    |pin#a| { side: left }; |space|; |space|; |pin#b| { side: left }; |pin#c| { side: left }\n  ]\n";
     let nodes = laid(&scope("", part));
     let (_, _, cy) = placed(&nodes, "u1");
     let y = |id: &str| placed(&nodes, id).2;
@@ -215,7 +215,10 @@ fn a_pins_skip_leaves_empty_slots_ahead_of_it_and_keeps_the_lattice() {
         y("a"),
         y("b")
     );
-    assert!(close(y("c") - y("b"), PIN_PITCH), "no skip between b and c");
+    assert!(
+        close(y("c") - y("b"), PIN_PITCH),
+        "no space between b and c"
+    );
     for id in ["a", "b", "c"] {
         assert!(
             whole(y(id) - cy),

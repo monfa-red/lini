@@ -143,6 +143,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("schematic", "block"),
     ("component", "block"),
     ("pin", "block"),
+    ("space", "block"),
     ("label", "block"),
     ("junction", "oval"),
     ("J", "component"),

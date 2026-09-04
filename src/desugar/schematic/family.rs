@@ -52,7 +52,7 @@ pub(crate) fn sch_kind<S: AsRef<str>>(chain: &[S]) -> Option<SchKind> {
 /// terminal and the generated junction dot. Every other schematic type carries
 /// `component`, `label` or a discrete in its chain, so [`sch_kind`] already
 /// names it — `|J|`, `|opamp|`, `|gnd|` and `|nc|` included.
-const BARE_TYPES: &[&str] = &["pin", "junction"];
+const BARE_TYPES: &[&str] = &["pin", "space", "junction"];
 
 /// The schematic type a chain wears, as the **author** spelled it — the
 /// out-of-scope gate's subject [SPEC 21]. `None` outside the family; the

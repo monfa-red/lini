@@ -172,7 +172,7 @@ input_file: samples/schematic_blocks.lini
                   </g>
                 </g>
               </g>
-              <g class="lini-node lini-pin-skip lini-block" transform="translate(0,-20)">
+              <g class="lini-node lini-space lini-block" transform="translate(0,-20)">
                 <rect x="-10" y="-10" width="20" height="20" rx="0" ry="0"/>
               </g>
               <g class="lini-node lini-pin lini-block" data-id="SW" transform="translate(-1.585,0)">
@@ -191,7 +191,7 @@ input_file: samples/schematic_blocks.lini
                   </g>
                 </g>
               </g>
-              <g class="lini-node lini-pin-skip lini-block" transform="translate(0,20)">
+              <g class="lini-node lini-space lini-block" transform="translate(0,20)">
                 <rect x="-10" y="-10" width="20" height="20" rx="0" ry="0"/>
               </g>
               <g class="lini-node lini-pin lini-block" data-id="EN" transform="translate(-2.916,40)">
