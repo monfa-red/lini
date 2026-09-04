@@ -373,8 +373,10 @@ them:
     share one ordinate — placement's preference alone decides which, so both
     take their corridor's anchor and the fan forks at one point (a T, the
     schematic's junction dot); where a sibling's own port pins its branch,
-    the free branches take that split instead — the nearest of them — rather
-    than opening one beside it. Nothing in Law 3 prefers an earlier or later
+    the free branches take that split instead — the nearest of them that
+    their own corridor holds — rather than opening one beside it (a split
+    behind a keep-out wall is no place a branch can bend, and a branch that
+    preferred it would only be pinned to that wall). Nothing in Law 3 prefers an earlier or later
     fork: a monotone route costs the same length and turns wherever it bends,
     so Law 4's fixed preference settles it.
   - **Peeling, when they travel together.** Branches heading the *same* way

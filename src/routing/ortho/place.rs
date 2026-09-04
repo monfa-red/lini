@@ -35,8 +35,10 @@ use super::ladder::ladder;
 use super::order;
 use super::{Chain, Run, World};
 
-/// A run's ordinate preference and its hard port window, if any.
-type Pref = (f64, Option<(f64, f64)>);
+/// A run's ordinate preference, its hard port window (if any), and the range
+/// it may lawfully take: the window for an end run, the corridor its corners
+/// pin it to for an interior one.
+type Pref = (f64, Option<(f64, f64)>, (f64, f64));
 
 /// Assign every `Run::ord` in every chain — the one pass, probed and
 /// refined **to a fixed point**. A run's span tips are its corners — the
@@ -287,11 +289,11 @@ pub(super) fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                     "a straight run needs overlapping windows (the search jogs otherwise)"
                 );
                 let mid = (a.centre() + b.centre()) / 2.0;
-                (mid.max(shared.0).min(shared.1), Some(shared))
+                (mid.max(shared.0).min(shared.1), Some(shared), shared)
             } else if ri == 0 {
-                (a.centre(), Some(a.window))
+                (a.centre(), Some(a.window), a.window)
             } else if ri == last {
-                (b.centre(), Some(b.window))
+                (b.centre(), Some(b.window), b.window)
             } else {
                 let (lo, hi) = (run.span.0.min(run.span.1), run.span.0.max(run.span.1));
                 let corridor = worlds[chain.world]
@@ -322,7 +324,11 @@ pub(super) fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                         Side::Left | Side::Top => ac.min(bc),
                         Side::Right | Side::Bottom => ac.max(bc),
                     };
-                    (t.max(clipped.walls.0).min(clipped.walls.1), None)
+                    (
+                        t.max(clipped.walls.0).min(clipped.walls.1),
+                        None,
+                        clipped.walls,
+                    )
                 } else {
                     // Where the world states a track quantum (ROUTING.md
                     // §Vocabulary), the anchor rounds to it: a bare run
@@ -333,7 +339,7 @@ pub(super) fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                         .quantum
                         .and_then(|q| q.snap(run.axis, raw, clipped.walls))
                         .unwrap_or(raw);
-                    (t, None)
+                    (t, None, clipped.walls)
                 }
             }
         })
@@ -347,7 +353,10 @@ pub(super) fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
 /// split and a turn beside it. Law 3 is indifferent to where a monotone
 /// route bends, which is why the preference gets to decide; only a split
 /// inside the run's own travel is a candidate, since a farther one would
-/// fold the route back on itself and cost real length.
+/// fold the route back on itself and cost real length — and only one the
+/// run's corridor holds: a split behind a keep-out wall is not a place the
+/// run can bend, and preferring it would only pin the run to that wall
+/// (the buck's feedback return hugging the inductor it comes down beside).
 fn share_forks(chains: &[Option<Chain>], prefs: &mut [Vec<Pref>]) {
     let mut splits: Vec<(usize, Axis, f64, usize)> = Vec::new();
     for (ci, chain) in chains.iter().enumerate() {
@@ -377,11 +386,16 @@ fn share_forks(chains: &[Option<Chain>], prefs: &mut [Vec<Pref>]) {
                 a.0.min(a.1).min(b.0).min(b.1),
                 a.0.max(a.1).max(b.0).max(b.1),
             );
-            let at = prefs[ci][ri].0;
+            let (at, _, range) = prefs[ci][ri];
             let near = splits
                 .iter()
                 .filter(|(f, ax, ord, _)| {
-                    *f == fan && *ax == run.axis && *ord >= travel.0 && *ord <= travel.1
+                    *f == fan
+                        && *ax == run.axis
+                        && *ord >= travel.0
+                        && *ord <= travel.1
+                        && *ord >= range.0
+                        && *ord <= range.1
                 })
                 .min_by(|x, y| {
                     (x.2 - at)

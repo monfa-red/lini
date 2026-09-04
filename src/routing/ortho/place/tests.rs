@@ -348,6 +348,77 @@ fn a_free_branch_forks_where_its_sibling_already_does() {
 }
 
 #[test]
+fn a_free_branch_ignores_a_split_its_corridor_cannot_hold() {
+    // ROUTING.md Special nodes: the shared split has to lie inside the free
+    // branch's own corridor. Here the pinned sibling drops at x = 130, over
+    // c, while the free branch's jog rides the corridor **left** of c, whose
+    // walls end at x = 112: the split is behind a keep-out wall, so the jog
+    // keeps its own anchor rather than hugging that wall.
+    let a = Rect::new(20.0, 20.0, 40.0, 80.0);
+    let b = Rect::new(160.0, 20.0, 180.0, 80.0);
+    let c = Rect::new(120.0, 30.0, 140.0, 150.0);
+    let w = world(
+        Rect::new(0.0, 0.0, 200.0, 160.0),
+        &[a.inflate(C), b.inflate(C), c.inflate(C)],
+    );
+    let hchan = h_chan(&w, 80.0, 50.0);
+    let left = w
+        .graph
+        .v
+        .iter()
+        .position(|v| v.rect.x0 >= 48.0 && v.rect.x1 <= 112.0 && v.rect.y0 <= 50.0)
+        .expect("the V channel left of c");
+    let over = w
+        .graph
+        .v
+        .iter()
+        .position(|v| v.rect.x0 <= 130.0 && v.rect.x1 >= 130.0 && v.rect.y0 <= 22.0)
+        .expect("the V channel over c");
+    let h = |chan, span| Run {
+        axis: Axis::H,
+        chan,
+        span,
+        ord: None,
+    };
+    let v = |chan, span| Run {
+        axis: Axis::V,
+        chan,
+        span,
+        ord: None,
+    };
+    let top = h_chan(&w, 130.0, 15.0);
+    let mut zig = Chain {
+        link: 0,
+        world: 0,
+        runs: vec![
+            h(hchan, (40.0, 80.0)),
+            v(left, (50.0, 15.0)),
+            h(top, (80.0, 160.0)),
+        ],
+        ends: [end(Side::Right, a), end(Side::Left, b)],
+    };
+    let mut drop = Chain {
+        link: 1,
+        world: 0,
+        runs: vec![h(hchan, (40.0, 130.0)), v(over, (50.0, 30.0))],
+        ends: [end(Side::Right, a), end(Side::Top, c)],
+    };
+    zig.ends[0].fan = Some(0);
+    drop.ends[0].fan = Some(0);
+    let mut chains = vec![Some(zig), Some(drop)];
+    place(&[w], &mut chains, C);
+    let jog = chains[0].as_ref().unwrap().runs[1].ord.unwrap();
+    assert!(
+        jog < 112.0 - 1e-9,
+        "the jog stays inside its own corridor, not on the wall at 112: {jog}"
+    );
+    assert!(
+        (jog - 80.0).abs() < 1e-9,
+        "…on the corridor's own anchor, the midline of (48, 112): {jog}"
+    );
+}
+
+#[test]
 fn a_same_side_u_turns_at_the_outer_side_line_not_the_void() {
     // Both ends leave the same way, so the turn has no reason to travel
     // past the outermost of the two side lines — the anchor would centre
