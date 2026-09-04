@@ -3425,11 +3425,10 @@ error ([SPEC 21](#21-errors)) — said once, where the number is written, rather
 than as a stray for every lead that then finds no track. The finished sheet
 centres on the scope's own origin, and that shift is a whole number of **fine**
 pitches — so a part placed on the lattice is still on it once the sheet is
-squared up. The lattice is the **scope's**, counted from its own origin: the
-router rounds a wire to that grid wherever the parent seated the scope
-([ROUTING.md](ROUTING.md), Track quantum), so a nested sheet stands exactly
-where its parent's flow or grid put it, and the parent's `gap` is honoured to
-the pixel.
+squared up. The lattice is the **scope's**, counted from its own origin, and
+the router rounds a wire to it wherever the parent seated the scope
+([ROUTING.md](ROUTING.md), Track quantum) — a nested sheet stands exactly where
+its parent put it.
 
 **Ink never places.** A satellite's cell comes from the lattice, never from the
 width of its ref or value: a long value overhangs the column beside it, and
@@ -3498,8 +3497,8 @@ covers, either way. So a no-connect cross grown out of one pin leaves the pins
 either side their own rows, a net run takes exactly the line it lands on, and
 two bare returns off one connector stand a fine pitch apart where two resistors
 stand a whole column. A chain's cells run from its own **pin's** line out to its
-outermost member, which is the column it really draws — a **wire's** width
-(one fine pitch) from the pin's line to the first cell, the cells from there.
+outermost member, which is the column it really draws: a wire's width (one
+fine pitch) from the pin's line to the first cell, the cells from there.
 
 Every line the field picks is then found by **stepping one fine line at a time
 until the cells clear**, and never by a pitch stated in advance: a lane is free
@@ -3518,23 +3517,17 @@ being the same cell; and no chain lands where a lead must cross.
 
 **Lane order is the pins' own.** A pin's column is **live** above its row
 where a chain climbs off it and below where one drops, and a lead crosses every
-inner column that is live toward its own pin — so the lanes go innermost first
-to the pin whose column the fewest of the side's other leads would have to
-cross, a pin's up-chain and down-chain allotted together (they leave on one
-lead and share a column), ties to the pin deeper along the canonical direction
-(down, right), then statement order. On a side growing one way that is depth
-along the ray: the deeper pin keeps the inner lane and a lead crosses an inner
-column only above where it is live. A side carrying **both** rays crosses only
-where an upper pin's return must drop past a lower pin's rail — the one
-crossing no order avoids — and there on the rail's lead, never its body. The
-chains that grew **straight** out take no lane and compete for none, so they
-stand first: they are the geography every lane then steps past — bar one led
-by a **part** that shares its pin with a chain that turned, which grows right
-after that pin's lanes and clears them: its lead is theirs too, and the
-junction where they leave sits on the bare wire before its first member (the
-pull-down hangs off the gate's own trace, ahead of the series resistor). A
-chain led by a bare net run is exempt, being that very trace named: the lane
-steps past it and the trunk runs on through the run to the junction.
+inner column live toward its pin — so the lanes go innermost first to the pin
+whose column the fewest other leads of the side would cross, a pin's up- and
+down-chain allotted together, ties to the pin deeper along the canonical
+direction (down, right), then statement order. On a one-way side that is depth
+along the ray; a side carrying both rays crosses only where an upper pin's
+return must drop past a lower pin's rail, on the rail's lead. The chains that
+grew **straight** out take no lane and compete for none, so they stand first:
+they are the geography every lane then steps past — except a part-led one
+sharing its pin with a turned chain, which grows after that pin's lanes and
+past them, the junction on its own lead ahead of its first member. A chain led
+by a bare net run is exempt, being that very trace named.
 
 **A field starts where its cells clear the ink.** The innermost **lane** on a
 side is the first line whose cells stand clear of the anchor's own drawn ink
@@ -3543,9 +3536,9 @@ further out, and a chain carrying nothing but a ground symbol starts a fine
 pitch off it. The first **slot** clears what that chain's own **lead passes**:
 a chain that turned into a lane is beside the body already — that is what the
 lane is — and clears the **deepest wired pin** of its side along the ray, so a
-lead crossing its column from any row of that side meets bare wire and never a
-body; one that grew straight out has its ray pointing through the body, and
-clears the ink. Every one of these is a
+lead crossing its column meets bare wire, never a body; one that grew straight
+out has its ray pointing through the body, and clears the ink. Every one of
+these is a
 *separation*, measured in ink and quantised to the **fine** grid: rounding a
 separation up to a coarse line buys a whole cell of bare wire for a shortfall of
 one unit.
@@ -3636,10 +3629,8 @@ beside the **stub** — the short lead the pin extends outward; the wire lands
 on the stub tip, departing outward along the pin's side. Pin anatomy — stub,
 name, number — folds into the **component's own** routing obstacle, and a
 pin's `translate:` slides it along its side — a cross-axis component is an
-error (a pin lives on its side). **`skip: N`** leaves N empty **slots** on the
-rail ahead of the pin — whole fine pitches, never pixels — so a rail can hold
-air where a sheet wants it (a switch node clear of the pins beside it), the
-rest of the rail stepping down by that much; the slots count toward the rail's
+error (a pin lives on its side). **`skip: N`** leaves N empty slots on the rail
+ahead of the pin, whole fine pitches; the slots count toward the rail's
 odd-slot rule below like pins. A single-pin component is legal
 (a test point, a mounting pad); an unwired part needs no id at all. `|pin|`
 the type and `pin:` the out-of-flow property ([SPEC 5](#5-the-box-model)) are
@@ -3775,21 +3766,16 @@ raises it. Being a run and not a body, it is no obstacle: its frame is that
 landing line alone, and its text obstructs nothing, exactly as a link label
 does not ([SPEC 9](#9-links)).
 
-**A name on a wired pin rides the wire.** A run stands only where the pin has
-nothing else: a text label wire (`U8.BRA - "RS_A"`) on a pin that another
-statement already wires (`U8.BRA - R20 - |gnd|`) mints no run at all — a sheet
-writes the net name beside the trace that is already there — so the text
-becomes that wire's own **net-name label**, exactly the two-ended spelling
-`U8.BRA - R20 "RS_A"` ([16.5](#165-wires)), and the one-ended statement is
-consumed (`lini desugar` prints the two-ended form). The **first** other
-statement naming the pin carries it, on the hop that touches the pin, its
-`side:` riding along. A shaped tag (a marked op) draws a body and is seated as
-ever, and a declared `|label|` is the author's node and stays a run.
+**A name on a wired pin rides the wire.** A text label wire (`U8.BRA -
+"RS_A"`) on a pin another statement wires (`U8.BRA - R20 - |gnd|`) mints no
+run: its text becomes that wire's net-name label — the two-ended spelling
+`U8.BRA - R20 "RS_A"` ([16.5](#165-wires)) — on the hop touching the pin of the
+**first** other statement naming it, its `side:` riding along. A shaped tag
+still draws its body; a declared `|label|` stays a run.
 
-**A no-connect cross is a mark, not a member.** `|nc|` says a pin is open on
-purpose, so it stands as close as the lattice allows — its connection point on
-the first fine line at least one fine pitch past the stub tip — and shares no
-slot row with the names and parts beside it ([16.1](#161-placement--the-lattice)).
+**A no-connect cross is a mark, not a member.** `|nc|` stands with its
+connection point on the first fine line at least one fine pitch past the stub
+tip, and shares no slot row ([16.1](#161-placement--the-lattice)).
 
 **Net text stands off its wire, never on it.** The name sits a constant
 `net-label-offset` clear of the centreline — a schematic wire is never cut
