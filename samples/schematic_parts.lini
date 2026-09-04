@@ -32,9 +32,7 @@
 |Q#Q2| "BC857" { cell: 3 3; symbol: pnp; }
 |Q#Q3| "2N7002" { cell: 4 3; symbol: nfet; }
 |Q#Q4| "DMP2" { cell: 5 3; symbol: pfet; }
-|Q#Q5| "BSS138" { cell: 6 3; symbol: nfet-circled; }
-|Q#Q6| "AO3401" { cell: 7 3; symbol: pfet-circled; }
-|opamp#U1| "TLV9061" { cell: 8 3; }
+|opamp#U1| "TLV9061" { cell: 6 3; }
 
 |head| "Sources & switches" { cell: 1 4; }
 |V#V1| "5V" { cell: 2 4; }
