@@ -233,6 +233,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `swing` | \|door\| | `one:ident` | `engine` | — | — |
 | `steps` | \|stairs\| | `one:number` | `none` | — | — |
 | `number` | \|pin\| | `one:number` | `none` | — | — |
+| `skip` | \|pin\| | `one:number` | `none` | — | — |
 | `prefix` | \|component\|, discrete (role) | `one:string` | `bundles` | — | — |
 | `shape` | \|label\| | `one:ident` | `bundles` | — | — |
 | `pins` | \|J\| | `one:number` | `none` | — | — |

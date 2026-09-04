@@ -31,8 +31,11 @@
   |region#boost| "5.5v Boost" { cell: 1 1; } [
     |component#U6| "TPS61023DRLR" [
       |pin#VIN| { side: left; number: 3; }
-      |pin#SW| { side: left; number: 5; }
-      |pin#EN| { side: left; number: 4; }
+      // `skip:` leaves empty slots on the rail ahead of a pin [SPEC 16.2]: the
+      // switch node stands clear of the input above it and the enable below,
+      // so the inductor's return and the enable's name each keep a row of air.
+      |pin#SW| { side: left; number: 5; skip: 1; }
+      |pin#EN| { side: left; number: 4; skip: 1; }
       |pin#GND| { side: bottom; number: 1; }
       |pin#VOUT| { side: right; number: 6; }
       |pin#FB| { side: right; number: 2; }

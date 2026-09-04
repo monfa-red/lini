@@ -569,20 +569,24 @@ impl<'a> Ctx<'a> {
                     );
                 }
             }
-            // A connector's generated pin count and a pin's number [SPEC 16.2]
-            // — counts, judged here like any other value shape.
-            "pins" | "number" => {
+            // A connector's generated pin count, a pin's number and its skip
+            // [SPEC 16.2] — counts, judged here like any other value shape.
+            "pins" | "number" | "skip" => {
                 let count = match d.single() {
                     Some(Value::Number(n)) => Some(*n),
                     _ => None,
                 };
-                let pins = d.name == "pins";
-                let ok = count.is_some_and(|n| n.fract() == 0.0 && (!pins || n >= 1.0));
+                let floor = match d.name.as_str() {
+                    "pins" => 1.0,
+                    "skip" => 0.0,
+                    _ => f64::NEG_INFINITY,
+                };
+                let ok = count.is_some_and(|n| n.fract() == 0.0 && n >= floor);
                 if !ok {
-                    let msg = if pins {
-                        "'pins' takes a count ≥ 1"
-                    } else {
-                        "'number' takes an integer"
+                    let msg = match d.name.as_str() {
+                        "pins" => "'pins' takes a count ≥ 1",
+                        "skip" => "'skip' takes a count of slots ≥ 0",
+                        _ => "'number' takes an integer",
                     };
                     out.push(Diagnostic::error(d.span, msg).code(Code::MALFORMED_VALUE));
                 }

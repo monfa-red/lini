@@ -901,6 +901,15 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // The empty slots a pin keeps ahead of itself on its rail, in fine
+    // pitches [SPEC 16.2].
+    row(
+        "skip",
+        &[Type("pin")],
+        One(Kind::Number),
+        DefaultRef::None,
+        No,
+    ),
     // The minted display ref's prefix [SPEC 16.2] — `|component|` lineage
     // (incl. `|J|` / `|opamp|`) and the discretes; defaults to the type name.
     row(

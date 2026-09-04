@@ -103,6 +103,32 @@ pub(in crate::desugar) fn assemble_component(
         }
         slide_pin(cx, &mut pin, landed, pose)?;
         dress_pin(cx, &mut pin, landed, named)?;
+        // `skip: N` leaves N empty slots on the rail ahead of the pin
+        // [SPEC 16.2]: one pitch-square spacer per slot, a rail child like a
+        // pin, so the rail's slot count — and the odd-slot rule below —
+        // reads them as the slots they are.
+        let skips = pin_decl(cx, &pin, "skip")
+            .and_then(|d| match d.single() {
+                Some(Value::Number(n)) => Some(n.max(0.0) as usize),
+                _ => None,
+            })
+            .unwrap_or(0);
+        for _ in 0..skips {
+            let mut slot = bare_node(
+                "block",
+                vec!["lini-pin-skip".to_string()],
+                vec![
+                    n("width", consts::PIN_PITCH),
+                    n("height", consts::PIN_PITCH),
+                ],
+                Vec::new(),
+            );
+            // Printed where it stands: a body prints in span order, and a
+            // slot ahead of its pin shares the pin's span, so the lowered form
+            // keeps the rail's order and compiles the same [SPEC 19].
+            slot.span = pin.span;
+            rails[landed.index()].push(lowered(cx, &slot)?);
+        }
         rails[landed.index()].push(Child::Box(pin));
     }
     for side in Side::ALL {

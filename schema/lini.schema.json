@@ -3680,6 +3680,25 @@
       "example": "|schematic| [\n  |component#u1| \"IC\" [\n    |pin#en| { number: 3; }\n  ]\n]"
     },
     {
+      "name": "skip",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "pin"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|schematic| [\n  |component#u1| \"IC\" [\n    |pin#a|\n    |pin#b| { skip: 1; }\n  ]\n]"
+    },
+    {
       "name": "prefix",
       "owners": [
         {

@@ -200,6 +200,32 @@ fn a_rail_spaces_its_pins_at_the_pitch_whichever_side_it_runs_along() {
 }
 
 #[test]
+fn a_pins_skip_leaves_empty_slots_ahead_of_it_and_keeps_the_lattice() {
+    // [SPEC 16.2] `skip: N` is N empty slots on the rail before the pin —
+    // whole fine pitches — and the slots count toward the odd-slot rule, so
+    // every pin still lands on a fine line.
+    let whole = |v: f64| close((v / PIN_PITCH).round() * PIN_PITCH, v);
+    let part = "  |component#u1| [\n    |pin#a| { side: left }; |pin#b| { side: left; skip: 2 }; |pin#c| { side: left }\n  ]\n";
+    let nodes = laid(&scope("", part));
+    let (_, _, cy) = placed(&nodes, "u1");
+    let y = |id: &str| placed(&nodes, id).2;
+    assert!(
+        close(y("b") - y("a"), 3.0 * PIN_PITCH),
+        "two empty slots between a and b: {} vs {}",
+        y("a"),
+        y("b")
+    );
+    assert!(close(y("c") - y("b"), PIN_PITCH), "no skip between b and c");
+    for id in ["a", "b", "c"] {
+        assert!(
+            whole(y(id) - cy),
+            "'{id}' is off the lattice by {}",
+            y(id) - cy
+        );
+    }
+}
+
+#[test]
 fn a_components_pins_stand_a_whole_pitch_from_its_centre() {
     // [SPEC 16.2] the rails seat so every pin lands on a **fine** lattice line,
     // whatever their count: an even rail straddles its own middle, and a part

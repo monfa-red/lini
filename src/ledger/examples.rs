@@ -366,6 +366,10 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "|schematic| [\n  |component#u1| \"IC\" [\n    |pin#en| { number: 3; }\n  ]\n]",
     ),
     (
+        "skip",
+        "|schematic| [\n  |component#u1| \"IC\" [\n    |pin#a|\n    |pin#b| { skip: 1; }\n  ]\n]",
+    ),
+    (
         "prefix",
         "|schematic| [\n  |component| \"driver\" { prefix: \"IC\"; }\n]",
     ),
