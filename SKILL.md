@@ -91,7 +91,7 @@ a link takes the same tail on a different head: `a -> b "label" .cls { } [ ]`.
   top-level `,` makes a point, and the math library — `sqrt exp ln log abs sin
   cos tan min max clamp floor round pow`. Stylesheet bindings (`w = 120;`
   `wave(a, f) = (u * 320, a * sin(2 * pi * f * u));`) read bare anywhere a value
-  goes, in `draw:`/`pattern:` arguments included.
+  goes — `stroke-width: w`, `move(w, 0)`, `pattern: grid(1, 3, 0, pitch)`.
 - **Parametric geometry**: a `points:` value may be one expression in the ambient
   clock `u` (0 → 1), sampled `samples:` times — `|line| { points: (u * 320, 24 *
   sin(2 * pi * 3 * u)); samples: 64 }`, or `points: wave(18, 2)` from a
@@ -177,7 +177,7 @@ Templates (all overridable; extend with `|name::base| { … }`):
 | `\|caption\|` · `\|footnote\|` · `\|sheet-caption\|` | small muted title pinned above the top-left corner (a group/table **label becomes one**) · at the bottom centre · inside the top-left corner (a schematic scope's label lowers to it) |
 | `\|badge\|` | small accent pill pinned over the top-right corner |
 | `\|row\|` / `\|column\|` / `\|grid\|` / `\|stack\|` | frameless layout wrappers |
-| `\|icon\|` / `\|sign\|` | Phosphor icon: **`symbol: bell` names the glyph**; the label names it only when the node has no other text (`\|icon\| "user"` renders an *unnamed* glyph). `\|sign\|` is the 64px standalone preset (`fit: contain`). **Icons paint with `fill` (body) + `stroke` (line)** — `color:` does nothing. An icon's `[ ]` text rides *on* the symbol as a badge and grows the square: `\|icon\| { symbol: bell } [ "3" ]` |
+| `\|icon\|` / `\|sign\|` | Phosphor icon: **`symbol: bell` or the label names the glyph — never both** (`\|icon\| "user"` *is* the user glyph, unnamed on the page; a captioned icon is a box wrapping one: `\|box#cdn\| "CDN" [ \|icon\| { symbol: cloud } ]`). `\|sign\|` is the 64px standalone preset (`fit: contain`). **Icons paint with `fill` (body) + `stroke` (line)** — `color:` does nothing. An icon's `[ ]` text rides *on* the symbol as a badge and grows the square: `\|icon\| { symbol: bell } [ "3" ]` |
 | `\|table\|` | ruled grid; first row auto-becomes the header band; cells via bare strings |
 | `\|entity\|` | ER card: label = centred title, rows = `"field" "type"` (3 columns for a key gutter) |
 | `\|note\|` | folded-corner callout card (works in every layout) |
@@ -434,9 +434,10 @@ plate.pin.2 <- "THRU"                          // leader to the 2nd pattern copy
   sides, the four corners vertical-word-first (`:top-right`), or an authored
   `:segment`/station. Pattern copies index `plate.pin.2`; `mirror:` copies are
   not addressable.
-- Ops: `(-)` linear (binary, chains share a row: `a (-) b (-) c`; `project:
-  horizontal | vertical | aligned` picks the axis when two point anchors are
-  diagonal) · `(o)` round (unary: ⌀ for round features, R for named arcs) · `(<)`
+- Ops: `(-)` linear (binary, chains share a row: `a (-) b (-) c`; a side or edge
+  anchor sets the axis, two **point** anchors — a corner, a hole — read the
+  *aligned* diagonal, so add `project: horizontal | vertical` to read one axis
+  and stack it on a `side:`) · `(o)` round (unary: ⌀ for round features, R for named arcs) · `(<)`
   angle · leaders `<- "text"` (arrow) / `*- "text"` (dot on a face) / `>- "A"`
   (datum triangle) — or node-first to a placed annotation: `b1 -* housing:boss`
   (a `|balloon#b1| "1"`), `plate.pin <- bore` (a `|note#bore|`) · `a:left ||
@@ -489,13 +490,17 @@ plate.pin.2 <- "THRU"                          // leader to the 2nd pattern copy
   `unit:` the physical size of one drawing unit (`mm` default here, also
   `cm`/`m`/`in`/`px`), and root `density:` the pixels per mm (default 4) — the
   engine's px-per-unit is their product, never authored. Magnitude is `scale:`'s
-  job: a 5 m beam on A4 is `scale: 0.02`.
-- Sheets: `|page| { sheet: a4 }` + `|title-block| { title: "…"; drawing-number:
-  "…"; revision: "A"; sheet-number: "1/1"; date: "…"; author: "…"; } [ |image|
-  { src: "logo.svg"; cell: 3 3; width: 12; height: 12 } ]` (authored cells seat
-  after the generated fields); multi-view rows share axes with `align: origin`,
-  and an unmarked `-` between anchors in **different views** (`side.screw:head -
-  end.od:top`) is the projection construction line — the one legal cross-view link.
+  job: a 5 m beam on A4 is `scale: 0.02`. `density:` lives on the root; `unit:`
+  and `scale:` on the drawing / stack scope (the root itself when it is one).
+- Sheets: the root stays flow; views are `|drawing|` children of a `|page|`:
+  `|page| { sheet: a4; align: origin } [ |drawing#side| "Title" { scale: 2 } [ … ]
+  side.a (-) side.b   |title-block| { title: "…"; drawing-number: "…"; revision:
+  "A"; sheet-number: "1/1"; date: "…"; author: "…"; } [ |image| { src: "logo.svg";
+  cell: 3 3; width: 12; height: 12 } ] ]` (authored cells seat after the
+  generated fields; dimensions sit in the view or on the page). Multi-view rows
+  share axes with `align: origin`, and an unmarked `-` between anchors in
+  **different views** (`side.screw:head - end.od:top`) is the projection
+  construction line — the one legal cross-view link.
 - Deep machinery, a line each: `thread: neck 1.25` dresses an ISO thread on a
   revolved profile — a bare leader on that segment composes `M8×1.25`;
   `break: -40 40` cuts a long part's boring middle (the view compresses, dims
