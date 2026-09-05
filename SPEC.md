@@ -1412,7 +1412,7 @@ dim-arrow 12 × 4      datum-triangle 11   note-offset 14   note-landing 8
 hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
 center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 12
 plane-overhang 6 (then the 10 thick end, standing in it)   plane-arrow-shaft 13
-plane-letter-gap 7   plane-letter 12
+plane-letter-gap 7   plane-letter 12   title-field width 96 (a title-block field's floor)
 ```
 
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:

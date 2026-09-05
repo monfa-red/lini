@@ -594,14 +594,14 @@ input_file: samples/drawing_section.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(693.569,501.5)">
-        <rect x="-105.931" y="-52" width="211.862" height="104" rx="0" ry="0"/>
-        <rect class="lini-gutter" x="13.463" y="-17.5" width="1" height="69.5" fill="#444"/>
-        <rect class="lini-gutter" x="61.695" y="-17.5" width="1" height="69.5" fill="#444"/>
-        <rect class="lini-gutter" x="-105.931" y="-18" width="211.862" height="1" fill="#444"/>
-        <rect class="lini-gutter" x="-105.931" y="17" width="211.862" height="1" fill="#444"/>
+      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(642.803,501.5)">
+        <rect x="-156.697" y="-52" width="313.394" height="104" rx="0" ry="0"/>
+        <rect class="lini-gutter" x="-37.303" y="-17.5" width="1" height="69.5" fill="#444"/>
+        <rect class="lini-gutter" x="59.697" y="-17.5" width="1" height="69.5" fill="#444"/>
+        <rect class="lini-gutter" x="-156.697" y="-18" width="313.394" height="1" fill="#444"/>
+        <rect class="lini-gutter" x="-156.697" y="17" width="313.394" height="1" fill="#444"/>
         <g class="lini-node lini-cell lini-block" transform="translate(0,-35)">
-          <rect x="-105.931" y="-17" width="211.862" height="34" rx="0" ry="0"/>
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-11.238" y="-6" width="22.476" height="12" rx="0" ry="0"/>
             <g class="lini-text">
@@ -623,7 +623,7 @@ input_file: samples/drawing_section.lini
             <use href="#lini-g1600-341" transform="translate(29.645 13.012) scale(0.014 -0.014)"/>
           </g>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-46.234,0)">
+        <g class="lini-node lini-cell lini-block" transform="translate(-97,0)">
           <rect x="-59.697" y="-17" width="119.394" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-23.034" y="-6" width="46.068" height="12" rx="0" ry="0"/>
@@ -652,8 +652,8 @@ input_file: samples/drawing_section.lini
             <use href="#lini-g1600-1653" transform="translate(47.369 13.012) scale(0.014 -0.014)"/>
           </g>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(38.079,0)">
-          <rect x="-23.616" y="-17" width="47.232" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(11.697,0)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-9.96" y="-6" width="19.92" height="12" rx="0" ry="0"/>
             <g class="lini-text">
@@ -666,8 +666,8 @@ input_file: samples/drawing_section.lini
             <use href="#lini-g1600-27" transform="translate(-4.417 13.012) scale(0.014 -0.014)"/>
           </g>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(84.313,0)">
-          <rect x="-21.618" y="-17" width="43.236" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(108.697,0)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-15.618" y="-6" width="31.236" height="12" rx="0" ry="0"/>
             <g class="lini-text">
@@ -684,8 +684,8 @@ input_file: samples/drawing_section.lini
             <use href="#lini-g1600-1653" transform="translate(2.338 13.012) scale(0.014 -0.014)"/>
           </g>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-46.234,35)">
-          <rect x="-59.697" y="-17" width="119.394" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(-97,35)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-12.942" y="-6" width="25.884" height="12" rx="0" ry="0"/>
             <g class="lini-text">
@@ -708,8 +708,8 @@ input_file: samples/drawing_section.lini
             <use href="#lini-g1600-1652" transform="translate(30.793 13.012) scale(0.014 -0.014)"/>
           </g>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(38.079,35)">
-          <rect x="-23.616" y="-17" width="47.232" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(11.697,35)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-17.616" y="-6" width="35.232" height="12" rx="0" ry="0"/>
             <g class="lini-text">

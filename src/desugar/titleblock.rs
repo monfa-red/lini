@@ -90,6 +90,15 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
             groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],
             span,
         },
+        // A field is at least a word wide [SPEC 15.8]: the block then reads as
+        // a block, its short fields as wide as its long ones' captions.
+        Decl {
+            name: "width".into(),
+            groups: vec![vec![Value::Number(
+                crate::ledger::consts::TITLE_FIELD_WIDTH,
+            )]],
+            span,
+        },
         // The caption labels the value, so the two read as one stacked pair —
         // the block's own `|block|` gap of 20 would set them adrift, the
         // caption riding the cell's top edge and the value its bottom.

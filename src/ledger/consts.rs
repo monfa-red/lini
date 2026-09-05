@@ -80,6 +80,10 @@ pub(crate) const CAPTION_FONT_AT_ROOT: f64 = 12.0;
 /// …and a schematic block's title 16 [SPEC 16.6] — above the body text a
 /// sheet sets its net names and readouts in, as a sheet titles a block.
 pub(crate) const SHEET_CAPTION_FONT_AT_ROOT: f64 = 16.0;
+/// A title-block field's width floor [SPEC 15.8] — sheet px, so the block
+/// reads as a block rather than a strip of its own text, and the short
+/// fields (a revision letter, a sheet count) stand as wide as a word.
+pub(crate) const TITLE_FIELD_WIDTH: f64 = 96.0;
 /// The default ISO 5457 sheet — A4 portrait, mm [SPEC 15.8].
 pub(crate) const A4: (f64, f64) = (210.0, 297.0);
 
