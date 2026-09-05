@@ -228,7 +228,7 @@
           <title>app: Jun: 58</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: var(--lini-red); stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: var(--lini-red); stroke-width: 1.5; stroke-dasharray: 6,4.75" transform="translate(0,0)">
           <line x1="-151.426" y1="-51.98" x2="163" y2="-51.98"/>
         </g>
         <text class="lini-text" x="-136.656" y="-58.58" dy="0.358em" style="fill: var(--lini-red); font-size: 11px; font-weight: normal">Goal</text>
