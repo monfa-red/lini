@@ -136,6 +136,20 @@ fn an_icon_has_no_id_label_child() {
 }
 
 #[test]
+fn a_schematic_scopes_label_lowers_to_a_sheet_caption() {
+    // [SPEC 16.6] a container whose body is a schematic titles itself inside
+    // its frame: the label becomes a `|sheet-caption|`, a `|caption|` define,
+    // so `|region| |caption| { … }` still styles it.
+    let out = desugar_source("|group#g| \"Boost\" { layout: schematic } [ |gnd#x| ]\n").unwrap();
+    assert!(
+        out.contains("|block| .lini-sheet-caption.lini-caption.lini-block"),
+        "{out}"
+    );
+    let plain = desugar_source("|group#g| \"Boost\" [ |box#x| ]\n").unwrap();
+    assert!(!plain.contains("sheet-caption"), "{plain}");
+}
+
+#[test]
 fn desugar_is_idempotent() {
     let src = "|group#g| [\n  |caption| \"T\"\n  |box#a|\n]\nx -> y \"w\"\n";
     let once = desugar_source(src).unwrap();

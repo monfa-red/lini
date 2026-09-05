@@ -799,6 +799,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 8; padding: 20` | Dashed frame for a caption + children. |
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -20; color: --caption-color; font-size: 12∕15 of inherited ([SPEC 6](#6-paint-stroke--text)); font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
 | `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 19; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
+| `\|sheet-caption\|` | `\|caption\|` | `translate: 10 10` | A caption seated **inside** its frame's top-left corner — what a schematic scope's label lowers to ([SPEC 16.6](#166-look)). |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
@@ -3896,8 +3897,9 @@ are tuned to it, so a scope routing at the diagram's default would stray the
 leads it seats. `|schematic|` is the template (`|block|` + the layout, plus
 the sheet wash); a root `{ layout: schematic }` works like every root engine;
 and `|region::group| { layout: schematic }` is a captioned block that seats
-its own parts, keeping its own paint. Groups, pages, and title blocks are the
-core types, restyled by scoped rules.
+its own parts, keeping its own paint — its label a `|sheet-caption|`
+([SPEC 8](#8-templates)), inside the frame as a sheet titles a block. Groups,
+pages, and title blocks are the core types, restyled by scoped rules.
 
 ### 16.7 Lowering
 

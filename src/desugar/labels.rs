@@ -17,6 +17,9 @@ pub(super) struct Smart {
     is_icon: bool,
     is_entity: bool,
     is_drawing: bool,
+    /// A container whose body is a schematic scope [SPEC 16.6] — its caption
+    /// sits inside the frame, as a sheet titles a block.
+    is_schematic: bool,
     is_container: bool,
     /// Geometry-only shapes (line/poly/path/image) hold no text.
     text_capable: bool,
@@ -32,6 +35,7 @@ impl Smart {
         chain: &[String],
         is_entity: bool,
         is_drawing: bool,
+        is_schematic: bool,
         sch: Option<schematic::SchKind>,
         pose: Pose,
     ) -> Smart {
@@ -39,6 +43,7 @@ impl Smart {
             is_icon: kind == NodeKind::Icon,
             is_entity,
             is_drawing,
+            is_schematic,
             is_container: chain.iter().any(|n| n == "group"),
             text_capable: !matches!(
                 kind,
@@ -96,8 +101,14 @@ pub(super) fn lower_smart(
         } else if what.is_container {
             // A container's label is a `|caption|` child [SPEC 3/8], lowered
             // through the normal node path so it gains its `.lini-caption`
-            // chain and its centred text child.
-            let caption = lower_node(cx, &synth::labelled("caption", label.clone()), Nest::NONE)?;
+            // chain and its centred text child — a schematic scope's the
+            // `|sheet-caption|` seated inside its frame [SPEC 16.6].
+            let ty = if what.is_schematic {
+                "sheet-caption"
+            } else {
+                "caption"
+            };
+            let caption = lower_node(cx, &synth::labelled(ty, label.clone()), Nest::NONE)?;
             children.insert(0, Child::Box(caption));
         } else if what.text_capable {
             children.insert(0, Child::Text(label.clone()));

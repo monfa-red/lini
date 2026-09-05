@@ -34,13 +34,10 @@
   // states no `gap:` — the sheet's own coarse pitch is the lattice every part
   // centre lands on [SPEC 16.1], and a block that overrode it would draw on a
   // grid of its own.
+  // …and its caption sits **inside** the frame it names, as a sheet titles
+  // a block [SPEC 16.6] — a diagram's would stand above the corner, in the
+  // gutter a tiled page has no room for.
   |region::group| { layout: schematic; }
-
-  // A caption is pinned just **above** its group's top-left corner by default
-  // [SPEC 17]; on a tiled sheet that puts every block's name in the gutter
-  // between blocks. `translate:` moves it back inside the frame it names —
-  // still top-left, one line in [SPEC 5].
-  |region| |caption| { translate: 10 10; }
 }
 
 // The page is an ordinary container inside its frame [SPEC 15.8], so the blocks

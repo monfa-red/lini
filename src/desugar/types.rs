@@ -19,6 +19,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("group", "block"),
     ("caption", "block"),
     ("footnote", "caption"),
+    ("sheet-caption", "caption"),
     ("badge", "block"),
     ("row", "block"),
     ("column", "block"),

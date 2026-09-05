@@ -647,3 +647,44 @@ fn a_schematic_scope_honours_its_size_floor() {
     assert!(w >= 600.0, "width floor: {w}");
     assert!(h >= 400.0, "height floor: {h}");
 }
+
+// ───────────────────────── sheet captions ─────────────────────────
+
+/// A schematic scope's caption sits **inside** its frame [SPEC 16.6]: the
+/// label lowers to a `|sheet-caption|`, seated a small step in from the drawn
+/// box's top-left corner — the same box whether the scope stands alone or a
+/// grid stretches it, so a tiled page's block names never fall in the gutter.
+#[test]
+fn a_schematic_scopes_caption_sits_inside_its_frame_stretched_or_not() {
+    let region = "|region::group| { layout: schematic; }\n";
+    let block = "|region#r| \"Boost\" [\n  |gnd#g|\n  |R#r1| \"1k\"\n  r1 - g\n]\n";
+    let inside = |src: &str| {
+        let nodes = laid(src);
+        let (r, rx, ry) = placed(&nodes, "r");
+        let cap = r
+            .children
+            .iter()
+            .find(|c| c.type_chain.iter().any(|t| t == "sheet-caption"))
+            .expect("the label lowers to a sheet caption");
+        assert!(
+            cap.type_chain.iter().any(|t| t == "caption"),
+            "…which is a caption"
+        );
+        let frame = r.bbox.shifted(rx, ry);
+        let cap_box = cap.bbox.shifted(rx + cap.cx, ry + cap.cy);
+        assert!(
+            cap_box.min_x > frame.min_x && cap_box.min_y > frame.min_y,
+            "inside the frame's top-left corner: {cap_box:?} in {frame:?}"
+        );
+        (cap_box.min_x - frame.min_x, cap_box.min_y - frame.min_y)
+    };
+    let alone = inside(&format!("{{ {region} }}\n{block}"));
+    // The same block stretched to a wide, tall grid cell keeps the same inset.
+    let stretched = inside(&format!(
+        "{{ {region} }}\n|grid| {{ columns: 600; rows: 500; align: stretch; justify: stretch; }} [\n{block}]\n"
+    ));
+    assert!(
+        close(alone.0, stretched.0) && close(alone.1, stretched.1),
+        "one seat, stretched or not: {alone:?} vs {stretched:?}"
+    );
+}

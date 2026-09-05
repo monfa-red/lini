@@ -185,8 +185,8 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 /// 5. flow the satellites no wire held (the caller warns), then centre the
 ///    sheet on the scope's origin a whole number of fine pitches at a time, so
 ///    the lattice the passes agreed on stays absolute;
-/// 6. seat the `pin:` overlays on the finished box, and take every
-///    `translate:` nudge last.
+/// 6. take every satellite's own `translate:` nudge last. The `pin:` overlays
+///    are the caller's, seated on the box it sizes around this.
 pub(super) fn arrange(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
@@ -266,16 +266,10 @@ pub(super) fn arrange(
         2.0 * body.min_y.abs().max(body.max_y),
     );
 
-    // `pin:` in a schematic scope is the drawing precedent [SPEC 5/15.8]: an
-    // out-of-flow overlay flush on the scope's finished content box — sheet
-    // chrome (a note, a legend), never a part on the grid. It never grows the
-    // scope, so it seats against the body the tracks produced.
-    anchors::place_pinned(children, body)?;
-
     // A satellite's own `translate:` nudges it off its seat, last — after the
     // flow fallback, which rewrites the node a floating one landed in. The
-    // anchors took theirs above and the pinned overlays theirs in
-    // `place_pinned`, so every child is nudged exactly once.
+    // anchors took theirs above and the pinned overlays take theirs where
+    // they seat, so every child is nudged exactly once.
     for i in 0..children.len() {
         if roles[i] == Role::Satellite {
             anchors::nudge(&mut children[i], anchors::SHEET_SPACE)?;

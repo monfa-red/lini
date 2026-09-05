@@ -263,6 +263,18 @@
       }
     },
     {
+      "name": "sheet-caption",
+      "primitive": "block",
+      "base": "caption",
+      "chain": [
+        "caption",
+        "sheet-caption"
+      ],
+      "defaults": {
+        "translate": "10 10"
+      }
+    },
+    {
       "name": "badge",
       "primitive": "block",
       "base": "block",

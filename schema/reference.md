@@ -15,6 +15,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `group` | `block` | `group` |
 | `caption` | `block` | `caption` |
 | `footnote` | `block` | `caption` → `footnote` |
+| `sheet-caption` | `block` | `caption` → `sheet-caption` |
 | `badge` | `block` | `badge` |
 | `row` | `block` | `row` |
 | `column` | `block` | `column` |

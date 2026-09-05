@@ -150,6 +150,7 @@ Templates (all overridable; extend with `|name::base| { … }`):
 | `\|group\|` | dashed light frame for a captioned region |
 | `\|caption\|` | small muted title pinned above the top-left corner (a group/table **label becomes one**) |
 | `\|footnote\|` | muted caption at the bottom centre |
+| `\|sheet-caption\|` | a caption inside the top-left corner — a schematic scope's label lowers to it |
 | `\|badge\|` | small accent pill pinned over the top-right corner |
 | `\|row\|` / `\|column\|` / `\|grid\|` | frameless layout wrappers |
 | `\|icon\|` / `\|sign\|` | Phosphor icon (label names the symbol: `\|icon\| "heart"`); `\|sign\|` is the 64px standalone preset. **Icons paint with `fill` (body) + `stroke` (line)** — `color:` does nothing on the glyph. An icon's `[ ]` text rides *on* the symbol as a badge and grows the square: `\|icon\| "bell" [ "3" ]` |

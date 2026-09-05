@@ -257,6 +257,12 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             ),
             var("color", "footer-color"),
         ],
+        // A schematic scope's caption [SPEC 16.6]: inside the frame it names,
+        // one small step in from the top-left corner — a sheet titles its
+        // blocks within them, where a tiled page leaves no gutter to hold a
+        // name. The caption's seat and look ride the chain; only the nudge
+        // differs.
+        "sheet-caption" => vec![pair("translate", 10.0, 10.0)],
         "badge" => vec![
             decl(
                 "pin",

@@ -673,7 +673,15 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
         cx,
         node,
         label,
-        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, pose),
+        &labels::Smart::read(
+            kind,
+            &info.chain,
+            is_entity,
+            is_drawing,
+            is_schematic,
+            sch,
+            pose,
+        ),
         &mut style,
         &mut children,
     )?;

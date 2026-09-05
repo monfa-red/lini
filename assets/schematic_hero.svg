@@ -249,7 +249,7 @@
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">24V</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-372.056,-233.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-372.056,-233.5)">
           <rect x="-27.444" y="-6" width="54.888" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">24 V entry</text>
         </g>
@@ -518,7 +518,7 @@
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-361.346,-233.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-361.346,-233.5)">
           <rect x="-23.154" y="-6" width="46.308" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">5 V buck</text>
         </g>
@@ -728,7 +728,7 @@
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">3V3</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-272.192,-233.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-272.192,-233.5)">
           <rect x="-22.308" y="-6" width="44.616" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">3.3 V rail</text>
         </g>
@@ -1146,7 +1146,7 @@
           <rect x="-32.38" y="-5.5" width="64.76" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="-9.5" dy="0.358em">FAN_TACH</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-779.116,-223.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-779.116,-223.5)">
           <rect x="-27.384" y="-6" width="54.768" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">MCU core</text>
         </g>
@@ -1275,7 +1275,7 @@
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-262.49,-223.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-262.49,-223.5)">
           <rect x="-32.01" y="-6" width="64.02" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">Rail monitor</text>
         </g>
@@ -1546,7 +1546,7 @@
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-379.79,-238.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-379.79,-238.5)">
           <rect x="-19.71" y="-6" width="39.42" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">RS-485</text>
         </g>
@@ -1729,7 +1729,7 @@
           </g>
           <text class="lini-text" x="10.75" y="0" dy="0.358em">3V3</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-359.906,-238.5)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-359.906,-238.5)">
           <rect x="-24.594" y="-6" width="49.188" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0" dy="0.358em">Fan drive</text>
         </g>

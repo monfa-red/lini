@@ -15,7 +15,7 @@
 //! resolve, for this family and every other.
 
 use super::ir::{Bbox, PlacedNode};
-use super::{Ctx, child_path, layout_inst, prim, primitives};
+use super::{Ctx, anchors, child_path, layout_inst, prim, primitives};
 use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst};
 use crate::span::Span;
@@ -65,7 +65,7 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    let (children, body) = arrange(
+    let (mut children, body) = arrange(
         &inst.attrs,
         &inst.children,
         path,
@@ -77,6 +77,12 @@ pub(super) fn layout_node(
     // the one sizing mechanism, the same a `|drawing|` node runs through. A
     // schematic's interior is sheet-space, so it sizes at scale 1 [SPEC 16.6].
     let bbox = primitives::closed_bbox(inst, body, 1.0)?;
+    // `pin:` in a schematic scope is the drawing precedent [SPEC 5/15.8]: an
+    // out-of-flow overlay flush on the scope's **drawn** box — sheet chrome
+    // (a caption, a note), never a part on the grid — the box every container
+    // answers a pin from, so a cell its grid stretches re-seats it on the very
+    // same corner.
+    anchors::place_pinned(&mut children, bbox.inflate(-inst.attrs.half_stroke()))?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -84,7 +90,7 @@ pub(super) fn layout_node(
 /// schematic scope. Its wires are ordinary routed links — the caller routes
 /// them after, like any scene.
 pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
-    let (children, body) = arrange(
+    let (mut children, body) = arrange(
         &program.scene.attrs,
         &program.scene.nodes,
         "",
@@ -92,6 +98,9 @@ pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), 
         Span::empty(),
         None,
     )?;
+    // The root has no frame: its overlays seat on the placed sheet itself, as
+    // a root stack's do.
+    anchors::place_pinned(&mut children, body)?;
     let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
     Ok((
         children,
