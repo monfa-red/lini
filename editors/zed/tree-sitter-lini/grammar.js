@@ -21,6 +21,7 @@ module.exports = grammar({
         $.assignment,
         $.call,
         $.group,
+        $.var_decl,
         $.css_var,
         $.class,
         $.side,
@@ -70,6 +71,10 @@ module.exports = grammar({
 
     // A `key:` property head — an ident immediately followed by `:`.
     property: ($) => seq(field("name", alias($._ident, $.property)), token.immediate(":")),
+
+    // A `--name:` variable declaration head (SPEC 10.1) — the var immediately
+    // followed by `:`; a bare `--name` elsewhere is a reference.
+    var_decl: ($) => seq($.css_var, token.immediate(":")),
 
     assign_op: (_) => "=",
     // A binding's parameter list: `scale(n) = …`. Shares the parenthesised

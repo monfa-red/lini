@@ -1,9 +1,10 @@
 {
   "name": "lini",
   "displayName": "Lini",
-  "description": "Syntax highlighting for Lini \u2014 a text-to-diagram language for diagrams, charts, and technical drawings that compiles to SVG",
-  "version": "0.1.0",
+  "description": "Syntax highlighting for Lini — a text-to-diagram language for diagrams, charts, and technical drawings that compiles to SVG",
+  "version": "0.2.0",
   "publisher": "monfa-red",
+  "icon": "icon.png",
   "license": "MIT",
   "repository": {
     "type": "git",

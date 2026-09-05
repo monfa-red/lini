@@ -34,6 +34,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "var_decl"
+        },
+        {
+          "type": "SYMBOL",
           "name": "css_var"
         },
         {
@@ -272,6 +276,22 @@
             "named": true,
             "value": "property"
           }
+        },
+        {
+          "type": "IMMEDIATE_TOKEN",
+          "content": {
+            "type": "STRING",
+            "value": ":"
+          }
+        }
+      ]
+    },
+    "var_decl": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "css_var"
         },
         {
           "type": "IMMEDIATE_TOKEN",
