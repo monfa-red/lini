@@ -149,7 +149,7 @@ input_file: samples/schematic_blocks.lini
     <g class="lini-node lini-page lini-block" transform="translate(0,0)">
       <rect x="-987" y="-697.95" width="1974" height="1395.9" rx="0" ry="0"/>
       <g class="lini-node lini-region lini-group lini-block" data-id="boost" transform="translate(-505,0)">
-        <rect x="-390" y="-214" width="780" height="428" rx="8" ry="8"/>
+        <rect x="-390" y="-234" width="780" height="468" rx="8" ry="8"/>
         <g class="lini-node lini-component lini-block" data-id="U6" transform="translate(-140,-40)">
           <rect x="-44.993" y="-98" width="89.986" height="196" rx="0" ry="0"/>
           <g class="lini-node lini-row lini-block" transform="translate(0,-80)">
@@ -564,7 +564,7 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-340.424,-196)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-340.424,-216)">
           <rect x="-39.576" y="-8" width="79.152" height="16" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lini-g1600-1657" transform="translate(-39.576 5.728) scale(0.016 -0.016)"/>
@@ -580,7 +580,7 @@ input_file: samples/schematic_blocks.lini
         </g>
       </g>
       <g class="lini-node lini-region lini-group lini-block" data-id="stepper" transform="translate(405,0)">
-        <rect x="-490" y="-254" width="980" height="508" rx="8" ry="8"/>
+        <rect x="-490" y="-274" width="980" height="548" rx="8" ry="8"/>
         <g class="lini-node lini-component lini-block" data-id="U8" transform="translate(-80,-40)">
           <rect x="-76.793" y="-138" width="153.586" height="276" rx="0" ry="0"/>
           <g class="lini-node lini-row lini-block" transform="translate(0,-120)">
@@ -1337,7 +1337,7 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-424.496,-236)">
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-424.496,-256)">
           <rect x="-55.504" y="-8" width="111.008" height="16" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lini-g1600-126" transform="translate(-55.504 5.728) scale(0.016 -0.016)"/>

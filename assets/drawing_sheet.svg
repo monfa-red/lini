@@ -183,21 +183,21 @@
         </g>
         <text class="lini-text lini-dim-text" x="0" y="61.5" dy="0.358em">7</text>
       </g>
-      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(265.925,203.5)">
-        <rect x="-113.575" y="-52" width="227.15" height="104" rx="0" ry="0"/>
-        <rect class="lini-gutter" x="21.107" y="-17.5" width="1" height="69.5" fill="var(--lini-stroke)"/>
-        <rect class="lini-gutter" x="69.339" y="-17.5" width="1" height="69.5" fill="var(--lini-stroke)"/>
-        <rect class="lini-gutter" x="-113.575" y="-18" width="227.15" height="1" fill="var(--lini-stroke)"/>
-        <rect class="lini-gutter" x="-113.575" y="17" width="227.15" height="1" fill="var(--lini-stroke)"/>
+      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(215.159,203.5)">
+        <rect x="-164.341" y="-52" width="328.682" height="104" rx="0" ry="0"/>
+        <rect class="lini-gutter" x="-29.659" y="-17.5" width="1" height="69.5" fill="var(--lini-stroke)"/>
+        <rect class="lini-gutter" x="67.341" y="-17.5" width="1" height="69.5" fill="var(--lini-stroke)"/>
+        <rect class="lini-gutter" x="-164.341" y="-18" width="328.682" height="1" fill="var(--lini-stroke)"/>
+        <rect class="lini-gutter" x="-164.341" y="17" width="328.682" height="1" fill="var(--lini-stroke)"/>
         <g class="lini-node lini-cell lini-block" transform="translate(0,-35)">
-          <rect x="-113.575" y="-17" width="227.15" height="34" rx="0" ry="0"/>
+          <rect x="-64.282" y="-17" width="128.564" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-11.238" y="-6" width="22.476" height="12" rx="0" ry="0"/>
             <text class="lini-text" x="0" y="0" dy="0.358em">Title</text>
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">Socket cap screw</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-46.234,0)">
+        <g class="lini-node lini-cell lini-block" transform="translate(-97,0)">
           <rect x="-67.341" y="-17" width="134.682" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-23.034" y="-6" width="46.068" height="12" rx="0" ry="0"/>
@@ -205,39 +205,39 @@
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">DIN 912 — M8 × 40</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(45.723,0)">
-          <rect x="-23.616" y="-17" width="47.232" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(19.341,0)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-9.96" y="-6" width="19.92" height="12" rx="0" ry="0"/>
             <text class="lini-text" x="0" y="0" dy="0.358em">Rev</text>
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">A</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(91.957,0)">
-          <rect x="-21.618" y="-17" width="43.236" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(116.341,0)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-15.618" y="-6" width="31.236" height="12" rx="0" ry="0"/>
             <text class="lini-text" x="0" y="0" dy="0.358em">Sheet</text>
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">1/1</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-46.234,35)">
-          <rect x="-67.341" y="-17" width="134.682" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(-97,35)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-12.942" y="-6" width="25.884" height="12" rx="0" ry="0"/>
             <text class="lini-text" x="0" y="0" dy="0.358em">Date</text>
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">2026-07-08</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(45.723,35)">
-          <rect x="-23.616" y="-17" width="47.232" height="34" rx="0" ry="0"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(19.341,35)">
+          <rect x="-48" y="-17" width="96" height="34" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-9)">
             <rect x="-17.616" y="-6" width="35.232" height="12" rx="0" ry="0"/>
             <text class="lini-text" x="0" y="0" dy="0.358em">Drawn</text>
           </g>
           <text class="lini-text" x="0" y="8" dy="0.358em">AM</text>
         </g>
-        <g class="lini-node lini-image" transform="translate(91.957,35)">
+        <g class="lini-node lini-image" transform="translate(116.341,35)">
           <svg x="-6" y="-6" width="12" height="12" viewBox="0 0 48 48">
   <defs>
     <linearGradient id="lini-af3ac64a7-g" x1="0" y1="0" x2="1" y2="1">

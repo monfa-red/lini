@@ -21,7 +21,7 @@
     "VM"
   ]
 
-  |region::group| { layout: schematic; padding: 40 20; }
+  |region::group| { layout: schematic; padding: 60 20; }
 }
 
 |page| {

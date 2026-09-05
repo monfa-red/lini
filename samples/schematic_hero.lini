@@ -11,7 +11,7 @@
   // stays true-scale in print [SPEC 15.1] and the number says how much circuit
   // an A3 holds: the parts are drawn in sheet px [SPEC 16.6], so 10 fits these
   // seven blocks on the sheet edge to edge.
-  density: 5.8;
+  density: 5.5;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -48,7 +48,7 @@
 // frame's corner [SPEC 15.8]. `padding:` clears the frame, which is inset
 // 10 mm from the trimmed edge, so no block draws over it.
 |page| {
-  sheet: a3 landscape; layout: grid; columns: 820, 790, 610; rows: 500, 480, 510; padding: 0; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; layout: grid; columns: 680, 790, 610; rows: 460, 440, 500; padding: 0; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [
@@ -65,8 +65,6 @@
     |D#D1| "SMAJ24A" { symbol: tvs; }
     |R#R1| "100k"
     |C#C1| "470u" { symbol: polarized; }
-    |R#R2| "4k7"
-    |LED#D2| "red"
 
     // Reverse-polarity protection. `cell:` places an anchor on the scope's own
     // track grid, so the terminal block leads and the FET follows [SPEC 16.1];
@@ -78,7 +76,6 @@
     J1.p1 - |gnd|
     // Everything the fused rail carries hangs under the one straight bus: the
     // indicator sits **after** the fuse, so a lit LED says the fuse is good.
-    Q1.s - R2 - D2 - |gnd|
     // Cathode first — polarity in a wire is a pin path [SPEC 16.3].
     Q1.s - D1.k - |gnd|
     Q1.g - R1 - |gnd|
@@ -175,7 +172,6 @@
     |C#C7| "100n"
     |SW#SW1| "RST" { symbol: push; }
     |R#R8| "1k"
-    |LED#D6| "amber"
 
     U3.VDD - |v3|
     U3.VDD - C6 - |gnd|
@@ -183,7 +179,7 @@
     U3.VSS - |gnd|
     U3.NRST - C7 - |gnd|
     U3.NRST - SW1 - |gnd|
-    U3.PA5 - R8 - D6 - |gnd|
+    U3.PA5 - R8 - |gnd|
     // The header's own pinout, as ARM numbers it: the rail on pin 1 and the
     // return on pin 4, so the two signals sit between them and the flags stand
     // clear of the wires crossing to the MCU.

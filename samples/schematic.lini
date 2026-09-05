@@ -16,7 +16,7 @@
 }
 
 // ── anchors ──
-|component#u1| "AMS1117-3.3" [
+|component#U1| "AMS1117-3.3" [
   |pin#vin| { side: left; number: 3; }
   |pin#gnd| { side: bottom; number: 1; }
   |pin#vout| { side: right; number: 2; }
@@ -25,35 +25,35 @@
 // connector is a header, not a bilateral part — so the header already faces
 // back at the regulator; `rotate: 180` would turn the whole column the other
 // way, and is read at lowering (the rail reverses, every text stays upright).
-|J#j1| "JST XH" { pins: 4; }
+|J#J1| "JST XH" { pins: 4; }
 
 // ── satellites ──
-|C#c1| "22u"
-|gnd#g1|
+|C#C1| "22u"
+|gnd#G1|
 
 // ── wires ──
-u1.vin - |v5|
+U1.vin - |v5|
 // a chain **passes through** the cap: it enters on p1 and leaves by p2, so the
 // output rail, the decoupling cap and its ground are one series statement,
 // hanging off the wire that leaves `vout`
-u1.vout - c1 - g1
+U1.vout - C1 - G1
 // a net name is the wire's own label, placed along the route — a sheet writes
 // it just **beside** the trace and never cuts one open [SPEC 16.4/16.5]
-u1.vout - j1.p3 "3V3"
+U1.vout - J1.p3 "3V3"
 // the capsule form — a label declared where it is wired
-u1.gnd - |gnd|
+U1.gnd - |gnd|
 // a label wire — the one-ended statement mints the net tag it points at, and
 // the op's end marker **shapes** it: bare `-` leaves it `plain`, so the tag is
 // a **run** — the wire travels its length and the name rides over the trace,
 // the sheet's own convention. A marker makes it a drawn tag instead, which is
 // how a global label terminates its net.
-j1.p1 -> "NSTDBY"
+J1.p1 -> "NSTDBY"
 // `-<` points the other way, `-<>` draws both ends, `-*` rounds it — the same
 // statement, four outlines. A plain run takes `side:` to pick which side of
 // the trace its name sits on, and `width:` to lengthen the run under it.
-j1.p2 -< "SLEEP"
+J1.p2 -< "SLEEP"
 // a plain run, one-ended: the wire runs its own length and the name rides
 // over it — no tag drawn, no trace cut. `side:` picks which side of the trace
 // the name sits on and `width:` lengthens the run beneath it; both are left at
 // their defaults here, which on stacked pins is what keeps a name unambiguous.
-j1.p4 - "SENSE"
+J1.p4 - "SENSE"
