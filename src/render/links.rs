@@ -192,7 +192,7 @@ pub fn render_link(
     }
 
     for t in &w.texts {
-        render_link_text(out, t, ruleset, vars, opts, sink);
+        render_link_text(out, t, w.decl_span, ruleset, vars, opts, sink);
     }
 
     out.push_str("    </g>\n");
@@ -546,6 +546,7 @@ fn label_mask(w: &RoutedLink, cuts: &[Rect]) -> Option<(String, String)> {
 fn render_link_text(
     out: &mut String,
     t: &RoutedText,
+    span: crate::span::Span,
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
@@ -574,6 +575,7 @@ fn render_link_text(
         &classes,
         &t.content,
         t.position,
+        span,
         &t.attrs,
         &style_attr,
         ruleset,

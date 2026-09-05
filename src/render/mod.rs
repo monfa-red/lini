@@ -24,7 +24,9 @@ pub(crate) use paints::lower as lower_paints;
 use rules::RuleSet;
 use values::{escape_xml, num};
 
-pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
+/// The SVG document, and the warnings its emission raised — the runs a
+/// `--static` export had to leave as `<text>` [SPEC 18].
+pub fn render(laid_out: &LaidOut, opts: &Options) -> (String, Vec<crate::error::Diagnostic>) {
     let vb = &laid_out.viewbox;
 
     use std::fmt::Write;
@@ -187,7 +189,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
 
     out.push_str(&body);
     out.push_str("</svg>\n");
-    out
+    (out, sink.into_gaps())
 }
 
 /// The number of rich tooltip cards (max `tip-N` index + 1) — the renderer emits one
@@ -359,6 +361,7 @@ fn render_text(
         &classes,
         label,
         (n.cx, n.cy),
+        n.span,
         &n.attrs,
         &style,
         ruleset,

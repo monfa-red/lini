@@ -174,6 +174,36 @@ fn text_transform_bakes_into_the_measured_content() {
     assert!(lower.contains(">Ab Cd<"), "{lower}");
 }
 
+/// A `--static` export outlines only what the bundled face can draw
+/// [SPEC 18]: a run holding any other character stays a live `<text>` —
+/// never a row of `.notdef` boxes — and the export warns, naming the
+/// characters, under a stable output code; a plain export is silent.
+#[test]
+fn static_leaves_uncovered_runs_as_text_and_warns() {
+    let src = "|box#a| \"Grüße\"\n|box#b| \"你好\"\na -> b \"→\"\n";
+    let baked = Options {
+        static_mode: true,
+        ..Default::default()
+    };
+    let (svg, diags) = lini::compile_str_checked(src, &baked).expect("compile");
+    assert!(svg.contains(">你好<") && svg.contains(">→<"), "{svg}");
+    assert!(!svg.contains(">Grüße<"), "a covered run outlines: {svg}");
+    let codes: Vec<String> = diags.iter().map(|d| d.code.to_string()).collect();
+    assert_eq!(codes, ["O001", "O001"], "{diags:?}");
+    assert!(
+        diags[0].message.contains("'你', '好'"),
+        "{}",
+        diags[0].message
+    );
+    assert_eq!(diags[0].span.start, src.find("\"你好\"").unwrap());
+
+    let (_, live) = lini::compile_str_checked(src, &Options::default()).expect("compile");
+    assert!(
+        live.is_empty(),
+        "a live export draws them by name: {live:?}"
+    );
+}
+
 #[test]
 fn global_font_family_weight_color_override_their_var() {
     // SPEC §10: a global font-family / font-weight / color states on `.lini`,

@@ -75,3 +75,5 @@ Y019 face-anchor
 T000 route
 T001 impossible-link
 T002 law-breach
+O000 output
+O001 static-glyph-coverage

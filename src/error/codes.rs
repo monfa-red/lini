@@ -1,5 +1,5 @@
 //! Stable diagnostic codes [ROADMAP 3.8, decision 7]: a **phase letter** —
-//! `L`ex · `P`arse · `R`esolve · `V`alidate · la`Y`out · rou`T`e — then a
+//! `L`ex · `P`arse · `R`esolve · `V`alidate · la`Y`out · rou`T`e · `O`utput — then a
 //! 3-digit number, e.g. `V001`. A code is **stable once assigned** (the
 //! ROADMAP §2 promise); the message may still improve.
 //!
@@ -22,6 +22,8 @@ pub enum Phase {
     Validate,
     Layout,
     Route,
+    /// Emission [SPEC 18] — what the SVG itself could not carry faithfully.
+    Output,
     /// Unclassified — the sentinel a fresh `Error`/`Diagnostic` carries until a
     /// phase boundary stamps it. Renders `E`; a diagnostic should never escape
     /// to a user wearing it.
@@ -37,6 +39,7 @@ impl Phase {
             Phase::Validate => 'V',
             Phase::Layout => 'Y',
             Phase::Route => 'T',
+            Phase::Output => 'O',
             Phase::Internal => 'E',
         }
     }
@@ -97,6 +100,7 @@ impl Code {
             Phase::Validate => Code::VALIDATE,
             Phase::Layout => Code::LAYOUT,
             Phase::Route => Code::ROUTE,
+            Phase::Output => Code::OUTPUT,
             Phase::Internal => Code::UNSPECIFIED,
         }
     }
@@ -214,4 +218,8 @@ catalog! {
     Route 0 ROUTE "route";
     Route 1 IMPOSSIBLE_LINK "impossible-link";
     Route 2 LAW_BREACH "law-breach";
+
+    // ── Output [SPEC 18] ──
+    Output 0 OUTPUT "output";
+    Output 1 STATIC_GLYPH "static-glyph-coverage";
 }

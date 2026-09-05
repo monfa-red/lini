@@ -321,7 +321,7 @@ lini theme     [NAME]
 |---|---|
 | `-o, --output FILE` | Output path (default: stdout). |
 | `--format svg\|html` | Raw SVG (default), or a minimal HTML page. |
-| `--static` | Inline `var()` references and outline text to paths — resvg, librsvg, raster, email. |
+| `--static` | Inline `var()` references and outline text to paths — resvg, librsvg, raster, email. Text outside the bundled Latin charset stays `<text>` and warns. |
 | `--embed-font` | Embed the used font weights as base64 `@font-face` — browser-only. |
 | `--theme NAME\|FILE` | A built-in theme, a CSS file, or a `light/dark` pair. |
 | `--check` | The full compile, nothing written — same errors, warnings, exit code. |

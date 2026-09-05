@@ -16,9 +16,13 @@ use crate::resolve::{AttrMap, ResolvedValue};
 
 pub use metrics::CHARSET;
 
+/// The advance-table entry for a glyph the face lacks — distinct from a
+/// zero-width control glyph's honest 0, so coverage and width never conflate.
+pub const NONE: u16 = u16::MAX;
+
 /// Vertical + advance metrics for one family × weight, in font units. The
-/// advance table indexes across [`CHARSET`] in order; 0 marks a glyph the
-/// face does not cover (lookups fall back).
+/// advance table indexes across [`CHARSET`] in order; [`NONE`] marks a glyph
+/// the face does not cover (lookups fall back).
 pub struct Face {
     pub upem: u16,
     /// Extracted with the tables [ROADMAP 3.7]; unread until something needs
@@ -161,22 +165,41 @@ impl Font {
     /// One glyph's advance, in em. Falls through: the face's table, the
     /// substitute twin's, then the fixed fallback [SPEC 5].
     pub fn advance_em(&self, ch: char) -> f64 {
+        match self.covered_advance(ch) {
+            Some(units) => units as f64 / self.face().upem as f64,
+            None => fallback_advance_em(ch),
+        }
+    }
+
+    /// The advance this face (or the substitute twin's entry) carries for
+    /// `ch`, in font units — `None` is a glyph the bundled face cannot draw,
+    /// the one coverage question measurement and `--static` outlining share.
+    fn covered_advance(&self, ch: char) -> Option<u16> {
         let face = self.face();
         let lookup = |c: char| {
             charset_index(c)
                 .map(|i| face.advances[i])
-                .filter(|&a| a != 0)
+                .filter(|&a| a != NONE)
         };
-        let sub = || {
+        lookup(ch).or_else(|| {
             SUBSTITUTES
                 .iter()
                 .find(|&&(from, _)| from == ch)
                 .and_then(|&(_, to)| lookup(to))
-        };
-        match lookup(ch).or_else(sub) {
-            Some(units) => units as f64 / face.upem as f64,
-            None => fallback_advance_em(ch),
+        })
+    }
+
+    /// The characters of `text` this face has no glyph for [SPEC 18] — each
+    /// once, in first-seen order; a line break is structure, not a glyph.
+    /// Empty means the run outlines faithfully.
+    pub fn uncovered(&self, text: &str) -> Vec<char> {
+        let mut gaps = Vec::new();
+        for ch in text.chars().filter(|&c| c != '\n') {
+            if self.covered_advance(ch).is_none() && !gaps.contains(&ch) {
+                gaps.push(ch);
+            }
         }
+        gaps
     }
 
     /// Cap height in em — the optical centring anchor [SPEC 5].
@@ -271,14 +294,33 @@ mod tests {
     use super::*;
 
     /// The mono invariant [SPEC 5]: every covered glyph advances exactly
-    /// 0.6 em, at every weight — the flat historic estimate stays exact.
+    /// 0.6 em, at every weight — the flat historic estimate stays exact —
+    /// except the zero-width controls, which are honestly 0.
     #[test]
     fn mono_advances_are_uniformly_point_six_em() {
         for face in metrics::MONO {
             for &adv in face.advances {
-                assert!(adv == 0 || (adv as f64 / face.upem as f64 - 0.6).abs() < 1e-12);
+                assert!(
+                    adv == NONE || adv == 0 || (adv as f64 / face.upem as f64 - 0.6).abs() < 1e-12
+                );
             }
         }
+    }
+
+    /// A zero-width control glyph the face carries measures 0, where a
+    /// glyph it lacks falls back to the flat estimate — the `NONE` sentinel
+    /// is what keeps a soft hyphen from measuring as a letter.
+    #[test]
+    fn zero_width_glyphs_measure_zero_and_count_as_covered() {
+        let prop = Font::default();
+        assert_eq!(prop.advance_em('\u{ad}'), 0.0);
+        assert_eq!(prop.advance_em('\u{200b}'), 0.0);
+        assert!(prop.uncovered("a\u{ad}b\u{200b}").is_empty());
+        assert!((prop.advance_em('你') - 1.0).abs() < 1e-12);
+        // The mono face carries none of them, so there they are gaps.
+        let mono = Font::MONO_REGULAR;
+        assert!((mono.advance_em('\u{ad}') - 0.6).abs() < 1e-12);
+        assert_eq!(mono.uncovered("a\u{ad}\nb"), vec!['\u{ad}']);
     }
 
     #[test]

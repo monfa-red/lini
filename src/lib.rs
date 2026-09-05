@@ -163,29 +163,31 @@ pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
 /// Validate and compile to SVG, collecting validation and routing warnings in
 /// the same result. Any error-level validation diagnostic rejects the compile.
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
-    let (laid_out, diags) = analyze(src, opts)?;
-    Ok((finish_svg(&laid_out, opts), diags))
-}
-
-/// Every pass but the render — validate, resolve, lay out, route — with each
-/// pass's warnings. A compile renders the result; a check drops it; the JSON
-/// form serialises the diagnostics. One pipeline, so the three never disagree
-/// on what a file is worth [SPEC 20].
-fn analyze(src: &str, opts: &Options) -> Result<(layout::LaidOut, Vec<Diagnostic>), Error> {
     let (program, mut diags) = validated_resolve_pipeline(src, opts)?;
-    let (laid_out, later_diags) = analyze_program(&program)?;
+    let (svg, later_diags) = compile_program(&program, opts)?;
     diags.extend(later_diags);
-    Ok((laid_out, diags))
+    Ok((svg, diags))
 }
 
-fn analyze_program(
+/// Every pass after resolve — lay out, route, render — with each pass's
+/// warnings. A compile keeps the document; a check drops it; the JSON form
+/// serialises the diagnostics. One pipeline, so the three never disagree on
+/// what a file is worth [SPEC 20].
+fn compile_program(
     program: &resolve::Program,
-) -> Result<(layout::LaidOut, Vec<Diagnostic>), Error> {
+    opts: &Options,
+) -> Result<(String, Vec<Diagnostic>), Error> {
     let mut laid_out = layout_stage(program)?;
     render::lower_paints(&mut laid_out);
     let mut diags = error::stamp_phase(layout::layout_hints(&laid_out, program), Phase::Layout);
     diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
-    Ok((laid_out, diags))
+    let (svg, output_diags) = render::render(&laid_out, opts);
+    diags.extend(error::stamp_phase(output_diags, Phase::Output));
+    let svg = match opts.format {
+        OutputFormat::Svg => svg,
+        OutputFormat::Html => wrap_html(&svg),
+    };
+    Ok((svg, diags))
 }
 
 /// The full diagnostic set for a source, as one serde-free JSON document
@@ -219,7 +221,7 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, O
     // Validation errors stop the compile [SPEC 20] — mirror that: only lay out
     // a clean validation, so layout never runs on a rejected file.
     if !levels.contains(&Level::Error) {
-        match resolve_pipeline(src, opts).and_then(|program| analyze_program(&program)) {
+        match resolve_pipeline(src, opts).and_then(|program| compile_program(&program, opts)) {
             Ok((_, diags)) => {
                 items.extend(diags.iter().map(|d| d.to_json(src)));
                 levels.extend(diags.iter().map(|d| d.level));
@@ -233,14 +235,6 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, O
 
     let worst = levels.into_iter().reduce(Level::graver);
     (error::diagnostics_document(items, filename), worst)
-}
-
-fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
-    let svg = render::render(laid_out, opts);
-    match opts.format {
-        OutputFormat::Svg => svg,
-        OutputFormat::Html => wrap_html(&svg),
-    }
 }
 
 /// Lex and parse only — verifies syntactic correctness without running
@@ -260,14 +254,14 @@ pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
 }
 
 /// The full compile without its artefact: every pass and every warning a
-/// compile would report, the SVG never rendered. The CLI's `--check` flag
-/// goes through here, so a file it accepts is a file a compile accepts.
+/// compile would report. The CLI's `--check` flag goes through here, so a
+/// file it accepts is a file a compile accepts.
 pub fn check(src: &str) -> Result<Vec<Diagnostic>, Error> {
     check_with(src, &Options::default())
 }
 
 pub fn check_with(src: &str, opts: &Options) -> Result<Vec<Diagnostic>, Error> {
-    analyze(src, opts).map(|(_, diags)| diags)
+    compile_str_checked(src, opts).map(|(_, diags)| diags)
 }
 
 /// Lex, parse, resolve, lay out, route, then validate the routing against the

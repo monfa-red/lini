@@ -18,6 +18,7 @@ use crate::font::{Font, Kind};
 use crate::layout::approx_width;
 use crate::ledger::consts::TEXT_LEADING;
 use crate::resolve::{AttrMap, ResolvedValue};
+use crate::span::Span;
 use std::fmt::Write;
 
 /// The effective rendered font and size of a text leaf, resolved through the
@@ -117,7 +118,10 @@ fn block_layout(
 /// string (a node and a link diff against different rule defaults, so each
 /// builds its own); everything geometric is shared. `attrs` are the
 /// node/label's resolved attrs, read for the measurement font,
-/// `letter-spacing`, `line-spacing`, `font-size`, and `rotate`.
+/// `letter-spacing`, `line-spacing`, `font-size`, and `rotate`. `span` is
+/// the authored statement the run belongs to, for the one diagnostic this
+/// path raises: a `--static` run the bundled face cannot outline stays a
+/// `<text>` and is reported through the sink [SPEC 18].
 #[allow(clippy::too_many_arguments)] // the text chokepoint: geometry + cascade + sinks
 pub(crate) fn emit(
     out: &mut String,
@@ -125,6 +129,7 @@ pub(crate) fn emit(
     classes: &[String],
     content: &str,
     pos: (f64, f64),
+    span: Span,
     attrs: &AttrMap,
     style: &str,
     ruleset: &RuleSet,
@@ -134,8 +139,12 @@ pub(crate) fn emit(
     let (font, size) = effective_font(attrs, classes, ruleset, sink);
     #[cfg(feature = "font")]
     if opts.static_mode {
-        sink.register(font, content, true);
-        return emit_outlined(out, indent, classes, content, pos, attrs, style, font, size);
+        let missing = font.uncovered(content);
+        if missing.is_empty() {
+            sink.register(font, content, true);
+            return emit_outlined(out, indent, classes, content, pos, attrs, style, font, size);
+        }
+        sink.gap(span, content, &missing);
     }
     if opts.embed_font {
         sink.register(font, content, false);

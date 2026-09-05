@@ -4206,8 +4206,13 @@ names, so an installed or hosted copy engages. **`--embed-font`** inlines a base
 **browser-only by design**: resvg and librsvg ignore `@font-face`.
 **`--static`** ([SPEC 10.6](#106---static)) outlines text to paths — glyphs
 deduplicated through `<defs>` / `<use>`, italic as synthetic oblique: faithful
-in every renderer. Layout never varies by mode — measurement always reads the
-compiled-in metrics tables ([SPEC 5](#5-the-box-model)).
+in every renderer for the **bundled charset** (Latin-1, Latin Extended-A, general
+punctuation). A run holding any other character — CJK, Arabic, an arrow, an emoji —
+stays a `<text>` drawn by the viewer's fonts, and the export **warns**, naming the
+characters ([SPEC 21](#21-errors)); the same holds for a `font-family` override, whose
+name is emitted but whose glyphs are not bundled ([SPEC 6](#6-paint-stroke--text)).
+Layout never varies by mode — measurement always reads the compiled-in metrics
+tables ([SPEC 5](#5-the-box-model)), a character outside them at a flat estimate.
 
 **Embedded assets.** A local `|image|` ([SPEC 7](#7-nodes)) emits its resolved form:
 an SVG asset nests as a child `<svg>` mapped into the node box (`fit:` sets its
@@ -4466,7 +4471,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 `--strict` promotes warnings to errors; `--no-warn` silences them ([SPEC 20](#20-cli)).
 
 Every diagnostic carries a **stable code** — a phase letter (`L`ex · `P`arse · `R`esolve ·
-`V`alidate · la`Y`out · rou`T`e) then a 3-digit number, e.g. `V001`. Codes are stable once
+`V`alidate · la`Y`out · rou`T`e · `O`utput) then a 3-digit number, e.g. `V001`. Codes are stable once
 assigned; the message may still improve. **The implementation's diagnostic
 registry is the authority for code assignment** — this section's tables and
 their ordering carry no codes. The human form above stays code-free; `lini --json`
@@ -4789,6 +4794,12 @@ error.
 | Crowded fixed ports | `fixed ports closer than the minimum pitch on one side` |
 | Conflicted fan | `fan ends carry two different fixed ports` |
 | Pinned self-loop | `self-loop with both ends forced onto one side` |
+
+**Output** ([SPEC 18](#18-svg-output))
+
+| Condition | Message |
+|---|---|
+| `--static` cannot outline a run | `no bundled glyph for '你', '好' in "你好" — under --static this text stays <text>, drawn by the viewer's fonts` (warning) |
 
 
 ---

@@ -40,6 +40,9 @@ const FAMILIES: [(&str, &str, &str, bool); 2] = [
     ("Google_Sans", "GoogleSans", "PROP", false),
 ];
 
+/// The table entry for a glyph the face lacks — `crate::font::NONE`'s twin.
+const NONE: u16 = u16::MAX;
+
 /// Shipped payload ceiling — trim charset first, weights second [PLAN M5].
 const BUDGET: usize = 600 * 1024;
 
@@ -63,9 +66,10 @@ pub fn extract_fonts() -> ExitCode {
          //!\n\
          //! Per-glyph advance tables and vertical metrics for the two bundled\n\
          //! families × weights 400/500/600/700, in font units [SPEC 5]. Always\n\
-         //! compiled in: layout must never vary by build flags. An advance of 0\n\
-         //! marks a glyph the face does not cover (the runtime falls back).\n\n\
-         use super::Face;\n\n",
+         //! compiled in: layout must never vary by build flags. `NONE` marks a\n\
+         //! glyph the face does not cover (the runtime falls back); a zero-width\n\
+         //! control glyph is a real 0.\n\n\
+         use super::{Face, NONE};\n\n",
     );
     metrics.push_str(
         "/// The subset charset, as inclusive codepoint ranges — the advance\n\
@@ -97,7 +101,8 @@ pub fn extract_fonts() -> ExitCode {
                 .capital_height()
                 .expect("raw face carries a cap height");
 
-            // Advances, in font units; 0 = not covered by this face.
+            // Advances, in font units; `NONE` = not covered by this face (a
+            // zero-width control glyph is a real 0).
             let mut advances: Vec<u16> = Vec::new();
             let mut mappings: Vec<(u32, u16)> = Vec::new();
             for ch in charset_chars() {
@@ -107,7 +112,7 @@ pub fn extract_fonts() -> ExitCode {
                         advances.push(adv);
                         mappings.push((ch as u32, gid.0));
                     }
-                    None => advances.push(0),
+                    None => advances.push(NONE),
                 }
             }
             let glyph_ids: Vec<u16> = mappings.iter().map(|&(_, g)| g).collect();
@@ -118,7 +123,7 @@ pub fn extract_fonts() -> ExitCode {
                 let expect = (upem as f64 * 0.6).round() as u16;
                 for (ch, &adv) in charset_chars().zip(&advances) {
                     assert!(
-                        adv == 0 || adv == expect,
+                        adv == NONE || adv == 0 || adv == expect,
                         "{stem}-{weight_name}: U+{:04X} '{ch}' advances {adv}, expected {expect} (0.6 em)",
                         ch as u32,
                     );
@@ -135,7 +140,16 @@ pub fn extract_fonts() -> ExitCode {
                  advances: &[\n"
             ));
             for chunk in advances.chunks(12) {
-                let row: Vec<String> = chunk.iter().map(u16::to_string).collect();
+                let row: Vec<String> = chunk
+                    .iter()
+                    .map(|&a| {
+                        if a == NONE {
+                            "NONE".into()
+                        } else {
+                            a.to_string()
+                        }
+                    })
+                    .collect();
                 metrics.push_str(&format!("        {},\n", row.join(", ")));
             }
             metrics.push_str("    ],\n};\n");

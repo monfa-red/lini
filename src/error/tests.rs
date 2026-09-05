@@ -38,6 +38,7 @@ fn every_phase_has_a_generic() {
         Phase::Validate,
         Phase::Layout,
         Phase::Route,
+        Phase::Output,
     ] {
         let g = Code::generic(phase);
         assert_eq!(g.num, 0);

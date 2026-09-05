@@ -12,8 +12,10 @@
 
 #![cfg_attr(not(feature = "font"), allow(unused_variables, dead_code))]
 
+use crate::error::{Code, Diagnostic};
 use crate::font::{Font, Kind};
 use crate::layout::LaidOut;
+use crate::span::Span;
 
 /// The Lini-scoped `@font-face` family names [SPEC 18].
 pub fn scoped_name(kind: Kind) -> &'static str {
@@ -48,6 +50,9 @@ pub struct FontSink {
     pub root_size: f64,
     #[cfg(feature = "font")]
     used: std::cell::RefCell<std::collections::BTreeSet<(u8, u16, u16)>>,
+    /// The runs `--static` left as `<text>` because the bundled face has no
+    /// glyph for some of their characters [SPEC 18] — each a warning.
+    gaps: std::cell::RefCell<Vec<Diagnostic>>,
 }
 
 impl FontSink {
@@ -57,7 +62,33 @@ impl FontSink {
             root_size: laid.sheet.root_font_size,
             #[cfg(feature = "font")]
             used: Default::default(),
+            gaps: Default::default(),
         }
+    }
+
+    /// Note a run outlining would have drawn as `.notdef` boxes: it stays
+    /// live `<text>` for the viewer's fonts, and the export says so.
+    pub fn gap(&self, span: Span, content: &str, missing: &[char]) {
+        let mut list: Vec<String> = missing.iter().take(4).map(|c| format!("'{c}'")).collect();
+        if missing.len() > 4 {
+            list.push("…".into());
+        }
+        self.gaps.borrow_mut().push(
+            Diagnostic::warn(
+                span,
+                format!(
+                    "no bundled glyph for {} in \"{}\" — under --static this text stays <text>, drawn by the viewer's fonts",
+                    list.join(", "),
+                    content.replace('\n', "\\n"),
+                ),
+            )
+            .code(Code::STATIC_GLYPH),
+        );
+    }
+
+    /// The gaps the body's emission recorded, in emission order.
+    pub fn into_gaps(self) -> Vec<Diagnostic> {
+        self.gaps.into_inner()
     }
 }
 
@@ -277,6 +308,28 @@ mod enabled {
                         .outline_glyph(ttf_parser::GlyphId(gid), &mut d)
                         .expect("outline");
                     assert!(d.0.starts_with('M'), "{}", d.0);
+                }
+            }
+        }
+
+        /// `Font::uncovered` reads the metrics table; outlining reads the
+        /// subset face's cmap. They were extracted together and must stay
+        /// one answer: a run the table calls covered never outlines `.notdef`,
+        /// and a run it calls uncovered is never one the face could draw.
+        #[test]
+        fn coverage_agrees_with_every_subset_face() {
+            let charset: Vec<char> = crate::font::CHARSET
+                .iter()
+                .flat_map(|&(a, b)| (a..=b).filter_map(char::from_u32))
+                .collect();
+            for kind in [Kind::Mono, Kind::Prop] {
+                for w in [400u16, 500, 600, 700] {
+                    let f = font_of(kind_tag(kind), w);
+                    for &ch in &charset {
+                        let covered = f.uncovered(&ch.to_string()).is_empty();
+                        assert_eq!(covered, glyph_id(f, ch) != 0, "{kind:?} {w} {ch:?}");
+                    }
+                    assert_eq!(f.uncovered("你好 x 你"), vec!['你', '好']);
                 }
             }
         }
