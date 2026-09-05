@@ -123,6 +123,7 @@ fn block_layout(
 /// path raises: a `--static` run the bundled face cannot outline stays a
 /// `<text>` and is reported through the sink [SPEC 18].
 #[allow(clippy::too_many_arguments)] // the text chokepoint: geometry + cascade + sinks
+#[cfg_attr(not(feature = "font"), allow(unused_variables))] // `span` feeds the outliner's gap report
 pub(crate) fn emit(
     out: &mut String,
     indent: &str,

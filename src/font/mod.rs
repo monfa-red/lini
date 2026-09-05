@@ -191,7 +191,9 @@ impl Font {
 
     /// The characters of `text` this face has no glyph for [SPEC 18] — each
     /// once, in first-seen order; a line break is structure, not a glyph.
-    /// Empty means the run outlines faithfully.
+    /// Empty means the run outlines faithfully. Read by the `--static`
+    /// outliner, which exists only with the `font` feature.
+    #[cfg_attr(not(feature = "font"), allow(dead_code))]
     pub fn uncovered(&self, text: &str) -> Vec<char> {
         let mut gaps = Vec::new();
         for ch in text.chars().filter(|&c| c != '\n') {
