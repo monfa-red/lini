@@ -41,7 +41,10 @@
       |pin#EN| { side: left; number: 4; }
       |pin#GND| { side: bottom; number: 1; }
       |pin#VOUT| { side: right; number: 6; }
-      |space| { span: 4; }
+      // …and FB stands five slots under VOUT: the room the feedback divider
+      // needs to straddle FB's row, its upper resistor above and the tapped
+      // one below, so the tap comes home dead straight [SPEC 16.1].
+      |space| { span: 5; }
       |pin#FB| { side: right; number: 2; }
     ]
     |C#C11| "10u"
@@ -76,7 +79,8 @@
     // The feedback divider: naming `R16.p1` in **both** statements makes
     // the midpoint a junction — explicit pins reserve first, whatever the
     // statement order [SPEC 16.5] — so FB taps between the resistors, not
-    // at the rail.
+    // at the rail; a bridge tapped mid-way straddles the tapping pin's row
+    // [SPEC 16.1], which puts R16 on the output bank's row.
     U6.VOUT - R15 - R16.p1 - |gnd|
     U6.FB - R16.p1
   ]

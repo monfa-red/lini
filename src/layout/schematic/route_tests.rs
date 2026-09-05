@@ -746,6 +746,54 @@ fn a_shaped_tag_still_terminates_its_wire() {
     );
 }
 
+/// A one-side **bridge** straddles its second pin's row [SPEC 16.1]: the
+/// divider's upper resistor stands above FB's row on the chain's own origin,
+/// the tapped one past it, and FB's wire comes home dead straight to the
+/// junction on the leg between them. Without the room for that, the chain
+/// clears FB's row like any lead.
+#[test]
+fn a_bridge_straddles_its_second_pins_row_where_its_members_fit_above_it() {
+    let divider = |span: u32| {
+        sheet(&format!(
+            "|component#u6| [\n  |pin#vin| {{ side: left }}\n  |pin#vout| {{ side: right }}\n  \
+             |space| {{ span: {span} }}\n  |pin#fb| {{ side: right }}\n]\n\
+             |R#r15| \"240k\"\n|R#r16| \"30k\"\n|C#c12| \"10u\"\n\
+             u6.vout - c12 - |gnd|\nu6.vout - r15 - r16.p1 - |gnd|\nu6.fb - r16.p1\n"
+        ))
+    };
+    let laid = routed(&divider(5));
+    let fb = stub_tip(&laid.nodes, "u6", "fb").1;
+    let (r15, r16, c12) = (
+        placed(&laid.nodes, "r15").2,
+        placed(&laid.nodes, "r16").2,
+        placed(&laid.nodes, "c12").2,
+    );
+    assert!(
+        r15 < fb && fb < r16,
+        "the divider straddles FB's row: {r15} < {fb} < {r16}"
+    );
+    assert!(
+        close(r16, c12),
+        "the tapped resistor rides the caps' row: {r16} vs {c12}"
+    );
+    // FB's wire runs its row to the divider's column and there joins the
+    // junction leg — the implicit fan's one drawn lead down to the port.
+    let tap = wire(&laid, "u6.fb", "r16.p1");
+    let (home, leg) = tap.split_at(tap.len() - 1);
+    assert!(
+        home.iter().all(|p| close(p.1, fb)) && close(leg[0].0, home[home.len() - 1].0),
+        "FB's wire comes home dead straight along its row: {tap:?}"
+    );
+    // One slot short of the room, the chain clears the row instead.
+    let laid = routed(&divider(4));
+    let fb = stub_tip(&laid.nodes, "u6", "fb").1;
+    let r15 = placed(&laid.nodes, "r15").2;
+    assert!(
+        r15 > fb,
+        "no room above FB's row, so R15 clears it: {r15} vs {fb}"
+    );
+}
+
 /// Two distinct fixed ports on one side of one body are a lawful pair
 /// (ROUTING.md Fixed ports): the wire runs out one clearance, along the
 /// side, and back in — never a "fixed port blocked" stray. Tying two

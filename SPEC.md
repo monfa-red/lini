@@ -3589,11 +3589,17 @@ lanes, then the span, then the later's left lanes. A chain whose ends are two
 terminals of **one** anchor is a **bridge** (`U2.EN - R5 - U2.VIN`): it grows off
 the first-named pin like any one-end chain, whichever sides the two pins take,
 and the far wire is the router's, merged into the second pin's net at a junction
-dot. Pins on **one** side make that wire's way home the *second* pin's own row, a
-fine pitch off the member's — which is why the member's ref and value step clear
-of that row rather than straddling it ([16.2](#162-components--pins)): left on
-it they wall the return off, and a wire that must land on a port and cannot tee
-into its net can then only orbit the member's body. A chain distributes between
+dot. Pins on **one** side make that wire's way home the *second* pin's own row.
+A chain it taps mid-way — the far wire landing on a later member's entry pin —
+**straddles** that row where the members before the junction fit above it: they
+take the chain's own origin, since a wire ending on the chain is no lead it must
+clear, the tapped member stands past the row, and the tap comes home dead
+straight to the junction leg (the feedback divider, tapped between its two
+resistors); with no such room the chain clears the row like any lead. A member
+lying **along** the row instead steps its ref and value clear of it rather than
+straddling ([16.2](#162-components--pins)): left on it they wall the return off,
+and a wire that must land on a port and cannot tee into its net can then only
+orbit the member's body. A chain distributes between
 **two** ends and no more, so a **third** placed end is named and dropped; a chain
 with **no** placed end falls back to the flow. Both warn ([SPEC 21](#21-errors)).
 

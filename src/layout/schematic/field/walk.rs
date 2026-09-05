@@ -51,7 +51,7 @@ impl Field {
             // A flag rides its pin's outermost lane [SPEC 16.1]: the other
             // chains off that pin have grown, so their lanes are struck.
             let far = h.flag.then(|| self.outermost(h, &held)).flatten();
-            self.grow(children, h, far);
+            self.grow(children, wires, h, far);
         }
     }
 
@@ -68,7 +68,7 @@ impl Field {
     /// Seat one held chain [SPEC 16.1]: its trunk on a lane of its own, each
     /// tap beside the member it hangs off, and every multi-member branch as a
     /// sub-chain from its junction — all against the one occupancy.
-    fn grow(&mut self, children: &[PlacedNode], h: &Held, far: Option<f64>) {
+    fn grow(&mut self, children: &[PlacedNode], wires: &[[End; 2]], h: &Held, far: Option<f64>) {
         let chain = &h.chain;
         let tap = tap_flags(children, chain);
         let limbs = limbs(chain);
@@ -92,7 +92,19 @@ impl Field {
                 };
                 (self.lat.past(tip + out * self.lat.pitch, out), h.pin.at)
             }
-            None => (self.origin(h.anchor, h.ray, turned), h.pin.at),
+            None => match self.straddle(children, wires, h, &members) {
+                // A one-side bridge straddles its second pin's row
+                // [SPEC 16.1]: its own origin, and the tapped member past
+                // the row the far wire comes home on.
+                Some((start, floor)) => {
+                    let trunk = self.run(h, h.ray, start, members, Some(h.pin.at), Some(floor));
+                    let k = self.allot(h, &trunk);
+                    self.commit(h, &trunk, k);
+                    self.limbs(children, h, &tap, &limbs);
+                    return;
+                }
+                None => (self.origin(h.anchor, h.ray, turned), h.pin.at),
+            },
             Some(edge) => {
                 let out = Ax::outward(h.ray);
                 let deeper = |a: f64, b: f64| if b * out > a * out { b } else { a };
@@ -104,7 +116,7 @@ impl Field {
                 (deeper(self.origin(h.anchor, h.ray, turned), line), origin)
             }
         };
-        let trunk = self.run(h, h.ray, start, members, Some(origin));
+        let trunk = self.run(h, h.ray, start, members, Some(origin), None);
         // One allocation for either ladder [SPEC 16.1]: a chain that turned off
         // its pin takes the innermost free lane, and one that grew straight out
         // asks for its pin's own line — stepping beside it only where a chain
@@ -117,7 +129,12 @@ impl Field {
             .filter(|&k| k >= 1 && self.fits(h, &trunk, k))
             .unwrap_or_else(|| self.allot(h, &trunk));
         self.commit(h, &trunk, k);
+        self.limbs(children, h, &tap, &limbs);
+    }
 
+    /// Seat a chain's taps and branches once its trunk stands [SPEC 16.1].
+    fn limbs(&mut self, children: &[PlacedNode], h: &Held, tap: &[bool], limbs: &[Option<usize>]) {
+        let chain = &h.chain;
         // A **tap** takes no slot [SPEC 16.1]: it stands on its attachment's,
         // one step across, the way its own drawing points.
         for (i, &member) in chain.members.iter().enumerate() {
@@ -166,10 +183,78 @@ impl Field {
             // carries it sideways until it stands clear — with its slots
             // carrying on from the junction.
             let first = self.after((attach.0, attach.1.along), members[0], ray);
-            let branch = self.run(h, ray, first, members, None);
+            let branch = self.run(h, ray, first, members, None, None);
             let k = self.allot(h, &branch);
             self.commit(h, &branch, k);
         }
+    }
+
+    /// A one-side **bridge**'s straddle [SPEC 16.1]: where a turned chain's
+    /// second placed end is a pin of the same side landing on a trunk
+    /// member's *inbound* terminal, the far wire comes home along that pin's
+    /// row and meets the junction leg — so the members before the tapped one
+    /// stand above that row, on the chain's **own** origin (the row is no
+    /// lead they must clear, ending on them as it does), and the tapped
+    /// member stands past it. Where those members do not fit above the row,
+    /// the chain clears it like any lead: `None`.
+    ///
+    /// Returns the trunk's start line and the tapped member's floor.
+    fn straddle(
+        &self,
+        children: &[PlacedNode],
+        wires: &[[End; 2]],
+        h: &Held,
+        members: &[usize],
+    ) -> Option<(f64, (usize, f64))> {
+        if !h.turns() {
+            return None;
+        }
+        let chain = &h.chain;
+        let out = Ax::outward(h.ray);
+        let rung = |v: f64| (v / EPS).round() as i64;
+        let same = |a: (f64, f64), b: (f64, f64)| (rung(a.0), rung(a.1)) == (rung(b.0), rung(b.1));
+        // The second end: another terminal of the holding part, on the pin's
+        // own side and deeper along the ray.
+        let (second, pin2) = chain.anchors.iter().find_map(|e| {
+            let t = terminal(&children[h.anchor], e.terminal.as_deref());
+            (e.child == h.anchor && !same(t.at, h.pin.at) && t.facing == Some(h.side))
+                .then_some((e, t))
+        })?;
+        // Its row, as a depth along the ray and as the line it lies on.
+        let depth = dot(pin2.at, h.ray.normal());
+        if depth - h.depth <= EPS {
+            return None;
+        }
+        let row = depth * out;
+        // …landing on a trunk member's inbound terminal, past the first.
+        let landing = wires.iter().find_map(|[a, b]| {
+            if a == second {
+                Some(b)
+            } else if b == second {
+                Some(a)
+            } else {
+                None
+            }
+        })?;
+        let i = chain.members.iter().position(|&m| m == landing.child)?;
+        if chain.inbound[i] != landing.terminal {
+            return None;
+        }
+        let t = members
+            .iter()
+            .position(|&m| m == landing.child)
+            .filter(|&t| t > 0)?;
+        // The chain's own origin: past the deepest wired pin whose lead it
+        // really crosses — every one but the second end's.
+        let passes = deepest_wired(children, wires, h.anchor, h.side, h.ray, Some(pin2.at))
+            .max(h.depth)
+            * out;
+        let start = self.past_ink(members[0], h.ray, passes);
+        let before = self.run(h, h.ray, start, members[..t].to_vec(), None, None);
+        let last = (members[t - 1], before.lines[t - 1]);
+        let fits =
+            (last.1 + out * self.reaches(last.0, h.ray) + out * self.lat.pitch - row) * out <= EPS;
+        fits.then(|| (start, (t, self.past_ink(members[t], h.ray, row))))
     }
 
     /// One run laid out along its ray [SPEC 16.1]: its first member on `start`
@@ -186,14 +271,23 @@ impl Field {
         start: f64,
         members: Vec<usize>,
         origin: Option<(f64, f64)>,
+        floor: Option<(usize, f64)>,
     ) -> Run {
+        let out = Ax::outward(ray);
         let mut lines = Vec::with_capacity(members.len());
         let mut prev: Option<(usize, f64)> = None;
-        for &m in &members {
-            let at = match prev {
+        for (i, &m) in members.iter().enumerate() {
+            let mut at = match prev {
                 None => start,
                 Some(p) => self.after(p, m, ray),
             };
+            // A member floored past a row it must straddle ([`Field::straddle`]).
+            if let Some((t, line)) = floor
+                && t == i
+                && (line - at) * out > 0.0
+            {
+                at = line;
+            }
             lines.push(at);
             prev = Some((m, at));
         }
@@ -243,20 +337,6 @@ impl Field {
         tracks: &[Option<Slot>],
         held: &[Held],
     ) {
-        // The deepest **wired** pin of one side along `ray` — every wire
-        // leaving that side runs out along its pin's row, so a column
-        // climbing past those rows crosses bare wire only once its first
-        // member clears the deepest of them.
-        let deepest = |anchor: usize, side: Side, ray: Side| {
-            wires
-                .iter()
-                .flatten()
-                .filter(|e| e.child == anchor)
-                .map(|e| terminal(&children[anchor], e.terminal.as_deref()))
-                .filter(|t| t.facing == Some(side))
-                .map(|t| dot(t.at, ray.normal()))
-                .fold(f64::NEG_INFINITY, f64::max)
-        };
         for ray in Side::ALL {
             let (ax, out) = (Ax::of(ray), Ax::outward(ray));
             let deeper = |a: f64, b: f64| if b * out > a * out { b } else { a };
@@ -271,7 +351,7 @@ impl Field {
                     continue;
                 };
                 let passes = if h.turns() {
-                    deepest(h.anchor, h.side, ray).max(h.depth) * out
+                    deepest_wired(children, wires, h.anchor, h.side, ray, None).max(h.depth) * out
                 } else {
                     ink_edge(&self.inks[h.anchor], ray)
                 };
@@ -716,6 +796,31 @@ fn rank_pins(held: &[Held], idx: &[usize]) -> Vec<(usize, usize)> {
         out.extend(pins[pick].1.iter().map(|&i| (i, r)));
     }
     out
+}
+
+/// The deepest **wired** pin of one side along `ray`, as a depth along it —
+/// every wire leaving that side runs out along its pin's row, so
+/// a column climbing past those rows crosses bare wire only once its first
+/// member clears the deepest of them. `skip` leaves one pin out: a bridge's
+/// second end, whose wire ends on the chain ([`Field::straddle`]).
+fn deepest_wired(
+    children: &[PlacedNode],
+    wires: &[[End; 2]],
+    anchor: usize,
+    side: Side,
+    ray: Side,
+    skip: Option<(f64, f64)>,
+) -> f64 {
+    let rung = |v: f64| (v / EPS).round() as i64;
+    wires
+        .iter()
+        .flatten()
+        .filter(|e| e.child == anchor)
+        .map(|e| terminal(&children[anchor], e.terminal.as_deref()))
+        .filter(|t| t.facing == Some(side))
+        .filter(|t| skip.is_none_or(|p| (rung(p.0), rung(p.1)) != (rung(t.at.0), rung(t.at.1))))
+        .map(|t| dot(t.at, ray.normal()))
+        .fold(f64::NEG_INFINITY, f64::max)
 }
 
 /// The canonical direction of a ray's own axis — down, or right.
