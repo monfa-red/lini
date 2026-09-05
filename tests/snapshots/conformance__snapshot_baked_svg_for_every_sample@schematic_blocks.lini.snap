@@ -1767,13 +1767,13 @@ input_file: samples/schematic_blocks.lini
     </g>
     <g class="lini-link lini-schematic-wire" data-from="stepper.U8.NSTDBY" data-to="stepper.U8.EN">
       <path d="M 416.043 -120 L 426.043 -120 L 426.043 -100 L 416.043 -100"/>
-      <g class="lini-link-label" style="fill: #0e6a6a; font-weight: 500">
-        <use href="#lini-g1400-88" transform="translate(430.043 -106.062) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-126" transform="translate(437.809 -106.062) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-132" transform="translate(443.914 -106.062) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-34" transform="translate(449.744 -106.062) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-27" transform="translate(457.455 -106.062) scale(0.011 -0.011)"/>
-        <use href="#lini-g1400-163" transform="translate(464.055 -106.062) scale(0.011 -0.011)"/>
+      <g class="lini-link-label" style="fill: #0e6a6a; font-weight: 500" transform="rotate(270 435.543 -110)">
+        <use href="#lini-g1400-88" transform="translate(415.3195 -106.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-126" transform="translate(423.0855 -106.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-132" transform="translate(429.1905 -106.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-34" transform="translate(435.0205 -106.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-27" transform="translate(442.7315 -106.062) scale(0.011 -0.011)"/>
+        <use href="#lini-g1400-163" transform="translate(449.3315 -106.062) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="stepper.U8.EN" data-to="stepper.U8.STEPPER">

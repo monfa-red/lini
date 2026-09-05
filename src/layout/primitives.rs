@@ -88,18 +88,30 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
 /// declared dims are drawing units × the node's own `scale:`; content (text,
 /// laid-out children), padding, and stroke stay sheet-space [SPEC 15.1].
 pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, scale: f64) -> Result<Bbox, Error> {
-    let pad = padding(&inst.attrs, inst.span)?;
+    box_around(&inst.attrs, inst.span, content, scale)
+}
+
+/// The same law over a node's attrs alone — for a pass that re-boxes a
+/// placed node around content it has just re-laid (a schematic run whose
+/// name turned with it, [`super::schematic`]).
+pub(super) fn box_around(
+    attrs: &AttrMap,
+    span: Span,
+    content: Bbox,
+    scale: f64,
+) -> Result<Bbox, Error> {
+    let pad = padding(attrs, span)?;
     let w = floor_dim(
-        inst.attrs.number("width").map(|v| v * scale),
+        attrs.number("width").map(|v| v * scale),
         content.w(),
         pad.left + pad.right,
     );
     let h = floor_dim(
-        inst.attrs.number("height").map(|v| v * scale),
+        attrs.number("height").map(|v| v * scale),
         content.h(),
         pad.top + pad.bottom,
     );
-    Ok(Bbox::centered(w, h).inflate(stroke_half(inst)))
+    Ok(Bbox::centered(w, h).inflate(attrs.half_stroke()))
 }
 
 fn scaled_points(mut points: Vec<(f64, f64)>, scale: f64) -> Vec<(f64, f64)> {

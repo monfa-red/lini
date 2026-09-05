@@ -42,7 +42,8 @@ pub(crate) use lattice::quantum;
 /// which places the two-ended spelling (`u7.vs - c24.p1 "VM"`) while
 /// [`net::seat_text`] places the minted run.
 pub(crate) use net::{
-    clear_run, forced_side, is_run as is_net_run, offset as net_offset, text_normal,
+    clear_run, forced_side, is_run as is_net_run, offset as net_offset, text_normal, text_turn,
+    turned as net_turned,
 };
 /// The router's view of a placed part [SPEC 16.5] — the scene index folds a
 /// part's anatomy into this one obstacle and reads its fixed ports off it.
@@ -117,6 +118,9 @@ fn arrange(
     for c in inst_children {
         children.push(layout_inst(c, &child_path(path, c), program, Ctx::sheet())?);
     }
+    // A run stood on end reads along itself [SPEC 16.4] — re-boxed here, before
+    // the field reads any box.
+    net::turn_runs(&mut children)?;
     // The scope's own wires — what the seat pass reads a satellite's chain
     // off [SPEC 16.1]; the engine only *reads* them, the router still draws
     // every one [SPEC 16.7].

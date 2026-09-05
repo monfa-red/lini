@@ -11,15 +11,19 @@
 //! | `u7.vs - c24.p1 "VM"` — the wire's own label | the router's label pass ([`crate::routing::ortho::labels`]) | the drawn route at the `along:` anchor |
 //! | `u7.en - "EN"` — the minted net run | the field pass ([`super::field`]) | the run's own axis |
 //!
-//! Two answers, shared by both: **which side** of the wire the text takes
-//! ([`text_normal`]) and **how far off** it sits ([`offset`]). Each caller
+//! Three answers, shared by both: **which side** of the wire the text takes
+//! ([`text_normal`]), **how far off** it sits ([`offset`]) and **which way it
+//! reads** ([`text_turn`]) — upright over a horizontal wire, along a vertical
+//! one, the way a dimension's value rides its line [SPEC 15.6]. Each caller
 //! brings its own reading of "which way is freer" — a routed label measures the
 //! scene's obstacles with [`clear_run`]; a seated run reads its field instead,
 //! and steps outward, away from the anchor it hangs off [SPEC 16.4].
 
 use super::super::ir::{Bbox, PlacedNode};
+use super::super::primitives;
 use crate::desugar::pose::{Pose, Side};
 use crate::desugar::schematic::{NET_RUN_FACING, is_net_run};
+use crate::error::Error;
 use crate::layout::stack::Painted;
 use crate::ledger::consts::{NET_LABEL_OFFSET, NET_LABEL_RUN};
 use crate::resolve::{AttrMap, ResolvedValue};
@@ -55,6 +59,57 @@ pub(crate) fn text_normal(
         Side::Left
     };
     side.normal()
+}
+
+/// Which way a net name **reads** [SPEC 16.4], in the degrees `rotate:`
+/// states: upright over a horizontal wire; along a vertical one, bottom to
+/// top — ISO-aligned, read from the right as a dimension's value is
+/// [SPEC 15.6] — which is a quarter turn widdershins.
+pub(crate) fn text_turn(tangent: (f64, f64)) -> f64 {
+    if tangent.0.abs() >= tangent.1.abs() {
+        0.0
+    } else {
+        270.0
+    }
+}
+
+/// A text box after [`text_turn`]: the extent a turned name really reaches,
+/// which is what its offset and its clearance read. A quarter turn about the
+/// box's centre swaps its two reaches.
+pub(crate) fn turned(text: Bbox, turn: f64) -> Bbox {
+    if turn == 0.0 {
+        return text;
+    }
+    let (cx, cy) = text.center();
+    Bbox::centered(text.h(), text.w()).shifted(cx, cy)
+}
+
+/// Turn every run stood on end to read along itself [SPEC 16.4], before the
+/// field reads a box. The name takes the core's own turn — the `rotate:` any
+/// text leaf wears, a paint transform whose extent the sheet measures — and
+/// the run re-boxes around the turned name through the one sizing law, so it
+/// is as long as its name exactly as a horizontal run is.
+pub(super) fn turn_runs(children: &mut [PlacedNode]) -> Result<(), Error> {
+    for run in children.iter_mut().filter(|c| is_run(c)) {
+        let turn = text_turn(run_tangent(run));
+        if turn == 0.0 {
+            continue;
+        }
+        for c in run.children.iter_mut() {
+            c.rotation = turn;
+            c.attrs.insert("rotate", ResolvedValue::Number(turn));
+        }
+        let Some(content) = content_box(run) else {
+            continue;
+        };
+        let (dx, dy) = content.center();
+        for c in run.children.iter_mut() {
+            c.cx -= dx;
+            c.cy -= dy;
+        }
+        run.bbox = primitives::box_around(&run.attrs, run.span, content, 1.0)?;
+    }
+    Ok(())
 }
 
 /// The text's displacement from a point on the wire: [`NET_LABEL_OFFSET`] of
@@ -144,11 +199,12 @@ pub(super) fn seat_text(run: &PlacedNode, outward: Option<Side>) -> (f64, f64) {
 }
 
 /// A run's content box in its own frame — the union of what it carries, which
-/// for a net run is its name. `None` when it carries nothing.
+/// for a net run is its name, as it is **drawn**: turned, where the run stands
+/// on end. `None` when it carries nothing.
 fn content_box(run: &PlacedNode) -> Option<Bbox> {
     run.children
         .iter()
-        .map(|c| c.bbox.shifted(c.cx, c.cy))
+        .map(|c| Bbox::drawn_of(c).shifted(c.cx, c.cy))
         .reduce(|a, b| a.union(b))
 }
 

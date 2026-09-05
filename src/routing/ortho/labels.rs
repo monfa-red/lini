@@ -17,7 +17,9 @@ use super::request::EdgeReq;
 use super::scene::SceneIndex;
 use crate::layout::as_pair;
 use crate::layout::ir::{Bbox, RoutedLink, RoutedText};
-use crate::layout::schematic::{clear_run, forced_side, net_offset, text_normal};
+use crate::layout::schematic::{
+    clear_run, forced_side, net_offset, net_turned, text_normal, text_turn,
+};
 use crate::layout::stack::Painted;
 use crate::math;
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
@@ -101,7 +103,6 @@ pub fn place(
         let forced = w.sheet.then(|| forced_side(&w.attrs));
         for t in &w.texts {
             let box_ = crate::layout::text::measure(&t.text, &t.attrs);
-            let (bw, bh) = (box_.w(), box_.h());
             let (tx, ty) = translate_of(t.attrs.get("translate"));
             let s0 = match t.along {
                 Along::Auto => {
@@ -111,6 +112,10 @@ pub fn place(
                 }
                 Along::Fraction(f) => f * total,
             };
+            // A sheet's net name also reads along its wire [SPEC 16.4] — its
+            // box, for the step off the trace and the clearance, is the
+            // turned one.
+            let turn = |tan: (f64, f64)| if w.sheet { text_turn(tan) } else { 0.0 };
             // A label rides on the line; lift it off with `translate: x y` — a
             // world-frame nudge, the same as on any node [SPEC 5/9]. On a
             // sheet's wire it also steps clear of the trace [SPEC 16.4],
@@ -121,13 +126,15 @@ pub fn place(
                 let (nx, ny) = match forced {
                     Some(forced) => net_offset(
                         text_normal(tan, forced, |side| clear_run(p, side.normal(), &boxes)),
-                        box_,
+                        net_turned(box_, turn(tan)),
                     ),
                     None => (0.0, 0.0),
                 };
                 ((p.0 + tx + nx, p.1 + ty + ny), tan, si)
             };
-            let boxed = |pos: (f64, f64)| {
+            let boxed = |pos: (f64, f64), tan: (f64, f64)| {
+                let b = net_turned(box_, turn(tan));
+                let (bw, bh) = (b.w(), b.h());
                 Rect::new(
                     pos.0 - bw / 2.0,
                     pos.1 - bh / 2.0,
@@ -149,18 +156,23 @@ pub fn place(
                 let delta = STEP * k.div_ceil(2) as f64 * if k % 2 == 1 { 1.0 } else { -1.0 };
                 let s = (s0 + delta).clamp(0.0, total);
                 let cand = spot(s);
-                if clear(boxed(cand.0)) {
+                if clear(boxed(cand.0, cand.1)) {
                     chosen = Some(cand);
                     break;
                 }
             }
             let (pos, tangent, si) = chosen.unwrap_or_else(|| spot(s0));
-            placed.push(boxed(pos));
+            placed.push(boxed(pos, tangent));
+            let mut attrs = t.attrs.clone();
+            let turned = turn(tangent);
+            if turned != 0.0 {
+                attrs.insert("rotate", crate::resolve::ResolvedValue::Number(turned));
+            }
             links[segs[si]].texts.push(RoutedText {
                 content: t.text.clone(),
                 position: pos,
                 tangent,
-                attrs: t.attrs.clone(),
+                attrs,
                 class: crate::layout::ir::LINK_LABEL_CLASS,
                 applied_styles: t.applied_styles.clone(),
             });

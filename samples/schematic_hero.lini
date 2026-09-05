@@ -260,7 +260,12 @@
   |region#fan| "Fan drive" { cell: 2 3; } [
     |Q#Q2| "IRLZ44N" { symbol: nfet; }
     |J#J4| "Molex 5045" { pins: 3; }
-    |R#R14| "100R"
+    // A forced turn states the chain's ray [SPEC 16.1]: stood on end with
+    // `p1` at its bottom, the gate resistor grows its chain **up** off the
+    // gate, sharing the pull-down's column, and the net name stands on end
+    // above it, reading along the trace [SPEC 16.4] — the whole gate network
+    // in one column instead of a row across the block.
+    |R#R14| "100R" { rotate: 270; }
     |R#R15| "100k"
     |R#R16| "10k"
     |D#D8| "1N4007"

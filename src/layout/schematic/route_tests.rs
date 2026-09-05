@@ -647,6 +647,87 @@ fn a_plain_net_label_is_a_run_the_wire_travels() {
     );
 }
 
+/// A run stood on end turns its name with it [SPEC 16.4]: the name reads
+/// bottom-to-top beside the trace, stands the same clear distance off it, and
+/// the run is as long as the name — exactly as a horizontal run is.
+#[test]
+fn a_vertical_runs_name_reads_along_it() {
+    let laid = routed(&sheet(
+        &(sided("u1").replace("  |component", "|component") + "u1.c - \"LONG_NET_NAME\"\n"),
+    ));
+    let (run, rx, ry) = placed(&laid.nodes, "lini-label-1");
+    assert!(
+        run.type_chain.iter().any(|t| t == "net-run-turned"),
+        "off a bottom pin the run stands on end"
+    );
+    let text = run.children.first().expect("the net text");
+    assert_eq!(text.rotation, 270.0, "the name reads from the right");
+    assert!(
+        run.bbox.w() < run.bbox.h() && run.bbox.h() >= text.bbox.w(),
+        "the run is as long as its name: {:?} holding {:?}",
+        run.bbox,
+        text.bbox
+    );
+    // Beside the trace by the constant: the turned name's reach across the
+    // line is its height.
+    let clear = text.cx.abs() - text.bbox.h() / 2.0;
+    assert!(
+        (clear - crate::ledger::consts::NET_LABEL_OFFSET).abs() < 1e-9,
+        "the name stands the offset off the centreline: {clear}"
+    );
+    assert!(
+        close(text.cy, 0.0),
+        "and centred along the run: {}",
+        text.cy
+    );
+    // …and the wire still crosses the whole run to land on its far end.
+    let path = wire(&laid, "u1.c", "lini-label-1");
+    assert!(
+        near(path[path.len() - 1], (rx, ry + run.bbox.max_y)),
+        "{:?} vs the far edge",
+        path[path.len() - 1]
+    );
+}
+
+/// The two-ended spelling reads alike [SPEC 16.4/16.5]: a net name on a
+/// vertical wire turns to read along it, through the same convention.
+#[test]
+fn a_net_name_on_a_vertical_wire_reads_along_it() {
+    let src = sheet(
+        "|component#u1| { cell: 1 1 } [ |pin#c| { side: bottom } ]\n\
+         |component#u2| { cell: 1 2 } [ |pin#t| { side: top } ]\n\
+         u1.c - u2.t \"VM\"\n",
+    );
+    let laid = routed(&src);
+    let text = laid
+        .links
+        .iter()
+        .flat_map(|l| l.texts.iter())
+        .find(|t| t.content == "VM")
+        .expect("the net name");
+    assert_eq!(
+        text.attrs.number("rotate"),
+        Some(270.0),
+        "reads from the right"
+    );
+    let horizontal = routed(&sheet(
+        "|component#u1| { cell: 1 1 } [ |pin#r| { side: right } ]\n\
+         |component#u2| { cell: 2 1 } [ |pin#l| { side: left } ]\n\
+         u1.r - u2.l \"VM\"\n",
+    ));
+    let text = horizontal
+        .links
+        .iter()
+        .flat_map(|l| l.texts.iter())
+        .find(|t| t.content == "VM")
+        .expect("the net name");
+    assert_eq!(
+        text.attrs.number("rotate"),
+        None,
+        "upright over a horizontal wire"
+    );
+}
+
 /// A **shaped** tag is untouched [SPEC 16.4]: it stays a body the wire ends
 /// on, its landing the outline's own edge — the run reading is the plain
 /// shape's alone.

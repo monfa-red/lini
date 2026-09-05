@@ -3612,9 +3612,9 @@ meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose,
 and so states the ray for the chain it stands in (above): a resistor stood with
 its entry pin at its bottom grows its chain **up**, the unforced members turning
 to follow. Rotation on a connection-bearing part is read **at lowering** — pins
-re-side, the symbol re-lays, and every text (net text, ref, value, pin names)
-stays upright — never as a paint transform; any other angle is an error
-([SPEC 21](#21-errors)).
+re-side, the symbol re-lays, and every text (ref, value, pin names) stays
+upright, bar a net name, which reads along its run ([16.4](#164-labels)) — never
+as a paint transform; any other angle is an error ([SPEC 21](#21-errors)).
 
 ### 16.2 Components & pins
 
@@ -3803,14 +3803,14 @@ tip, and shares no slot row ([16.1](#161-placement--the-lattice)).
 | Run | Text |
 |---|---|
 | horizontal | **above** |
-| vertical | **beside**, on the **freer** side: a minted run reads its field and steps outward, away from the anchor it hangs off ([SPEC 16.1](#161-placement--the-lattice)), a wire's own label the room the scene leaves either way; ties break on the routing side rank (right → bottom → left → top) |
+| vertical | **beside**, reading **along** it bottom to top — ISO-aligned, as a dimension's value rides its line ([15.6](#156-dimensions)) — on the **freer** side: a minted run reads its field and steps outward, away from the anchor it hangs off ([SPEC 16.1](#161-placement--the-lattice)), a wire's own label the room the scene leaves either way; ties break on the routing side rank (right → bottom → left → top) |
 
 **`side: left \| right \| top \| bottom`** forces it — on the `|label|` for the
 minted run, on the **wire statement** for the two-ended form (`u7.vs -
 c24.p1 "VM" { side: bottom }`), one more owner of the `side` homonym
-([SPEC 17](#17-property-ledger--support)). Text always stays **upright**: a run
-poses like any part ([16.1](#161-placement--the-lattice)) and rotation
-is read at lowering, never as a paint transform.
+([SPEC 17](#17-property-ledger--support)). A run poses like any part
+([16.1](#161-placement--the-lattice)), read at lowering; its name is the one
+text a sheet turns, a name belonging to its trace as a label does to its body.
 
 ### 16.5 Wires
 
