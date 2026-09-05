@@ -4382,11 +4382,11 @@ lini theme [NAME]
 |---|---|
 | `-o FILE` | Output path (default stdout). |
 | `--format svg\|html` | `svg` (default) or HTML wrapper. |
-| `--check` | Parse + validate + resolve only — layout/render errors still surface on a full compile. (`fmt --check` is that subcommand's own flag — below.) |
+| `--check` | The full compile, no artefact written — the same errors and warnings, the same exit code. (`fmt --check` is that subcommand's own flag — below.) |
 | `--port N` | `lini serve` only — the preview port (default 7700). |
 | `--json` | Emit diagnostics as a JSON document (stable codes, severity, spans, related spans, machine-applicable fixes — [SPEC 21](#21-errors)) instead of SVG; the tooling/LSP form. Exit 1 if any error-level diagnostic fired. |
 | `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `high-contrast`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
-| `--no-warn` / `--strict` | Silence warnings / treat them as errors. |
+| `--no-warn` / `--strict` | Silence warnings / treat them as errors — under every form (`--check`, `--json`, SVG) alike. |
 | `--static` | A self-contained SVG that renders identically anywhere ([SPEC 10.6](#106---static), [SPEC 18](#18-svg-output)). |
 | `--embed-font` | Embed the used bundled family × weights as base64 `@font-face` — browser-only ([SPEC 18](#18-svg-output)). Both font flags need the default-on `font` build feature; name-only output never does. |
 | `--watch` | Recompile on every input change (requires `-o`). |

@@ -166,6 +166,19 @@ pub enum Level {
 }
 
 impl Level {
+    /// The gravest level among `diags` — what a run is worth to the CLI, which
+    /// fails on an error and, under `--strict`, on a warning [SPEC 20].
+    pub fn worst(diags: &[Diagnostic]) -> Option<Level> {
+        diags.iter().map(|d| d.level).reduce(Level::graver)
+    }
+
+    pub(crate) fn graver(self, other: Level) -> Level {
+        match (self, other) {
+            (Level::Warning, Level::Warning) => Level::Warning,
+            _ => Level::Error,
+        }
+    }
+
     fn as_str(self) -> &'static str {
         match self {
             Level::Error => "error",

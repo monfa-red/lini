@@ -324,7 +324,7 @@ lini theme     [NAME]
 | `--static` | Inline `var()` references and outline text to paths — resvg, librsvg, raster, email. |
 | `--embed-font` | Embed the used font weights as base64 `@font-face` — browser-only. |
 | `--theme NAME\|FILE` | A built-in theme, a CSS file, or a `light/dark` pair. |
-| `--check` | Parse and validate only. |
+| `--check` | The full compile, nothing written — same errors, warnings, exit code. |
 | `--json` | Diagnostics as JSON — stable codes, spans, machine-applicable fixes. |
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence warnings, or promote them to errors. |

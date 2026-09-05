@@ -94,7 +94,8 @@ struct CompileArgs {
     #[arg(long = "embed-font")]
     embed_font: bool,
 
-    /// Parse and validate only — no layout, no render.
+    /// Run the full compile but write nothing — every error and warning
+    /// the compile would report, without the SVG.
     #[arg(long = "check")]
     check: bool,
 
@@ -191,21 +192,33 @@ fn main() -> ExitCode {
         .then(|| Path::new(&cli.input).parent().map(Path::to_path_buf))
         .flatten();
 
+    let opts = lini::Options {
+        static_mode: cli.static_mode,
+        embed_font: cli.embed_font,
+        format,
+        theme_css,
+        base_dir,
+        ..Default::default()
+    };
+    let build = Build {
+        form: if cli.json {
+            Form::Json
+        } else if cli.check {
+            Form::Check
+        } else {
+            Form::Svg
+        },
+        output: cli.output,
+        no_warn: cli.no_warn,
+        strict: cli.strict,
+    };
+
     if cli.watch {
-        let out_path = cli.output.clone().expect("clap enforces -o with --watch");
         if cli.input == "-" {
             eprintln!("error: --watch cannot read from stdin");
             return ExitCode::from(3);
         }
-        let opts = lini::Options {
-            static_mode: cli.static_mode,
-            embed_font: cli.embed_font,
-            format,
-            theme_css,
-            base_dir,
-            ..Default::default()
-        };
-        return watch_loop(Path::new(&cli.input), &out_path, &opts, cli.check);
+        return watch_loop(Path::new(&cli.input), &opts, &build);
     }
 
     let (filename, source) = match cli.input.as_str() {
@@ -225,67 +238,79 @@ fn main() -> ExitCode {
             }
         },
     };
+    ExitCode::from(build.run(&source, &filename, &opts))
+}
 
-    let opts = lini::Options {
-        static_mode: cli.static_mode,
-        embed_font: cli.embed_font,
-        format,
-        theme_css,
-        base_dir,
-        ..Default::default()
-    };
+/// What a compile emits: the SVG, nothing (`--check`), or the diagnostics as
+/// JSON. All three run the same passes, so they agree on what a file is worth.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Form {
+    Svg,
+    Check,
+    Json,
+}
 
-    if cli.json {
-        let (doc, had_error) = lini::diagnostics_json(&source, &opts, &filename);
-        print!("{}", doc);
-        return if had_error {
-            ExitCode::from(1)
-        } else {
-            ExitCode::SUCCESS
-        };
-    }
+/// One build of one source — the default invocation and each `--watch` turn.
+/// The CLI contract lives here alone [SPEC 20]: an error is exit 1, a warning
+/// prints (unless `--no-warn`) and is exit 1 under `--strict`, I/O is exit 2.
+struct Build {
+    form: Form,
+    output: Option<PathBuf>,
+    no_warn: bool,
+    strict: bool,
+}
 
-    if cli.check {
-        return match lini::check_with(&source, &opts) {
-            Ok(_) => ExitCode::SUCCESS,
-            Err(e) => {
-                eprintln!("{}", e.display_with_source(&source, &filename));
-                ExitCode::from(1)
-            }
-        };
-    }
-
-    let mut warnings_were_emitted = false;
-    // Validate, compile, and collect warnings in one authoritative pipeline.
-    match lini::compile_str_checked(&source, &opts) {
-        Ok((svg, diags)) => {
-            if !cli.no_warn {
-                for d in &diags {
-                    eprintln!("{}", d.display_with_source(&source, &filename));
-                }
-                warnings_were_emitted |= !diags.is_empty();
-            }
-            if let Some(out_path) = cli.output {
-                if let Err(e) = std::fs::write(&out_path, svg.as_bytes()) {
-                    eprintln!("error: write {}: {}", out_path.display(), e);
-                    return ExitCode::from(2);
-                }
-            } else {
-                print!("{}", svg);
-            }
-            if cli.strict && warnings_were_emitted {
-                return ExitCode::from(1);
-            }
-            ExitCode::SUCCESS
+impl Build {
+    fn run(&self, source: &str, filename: &str, opts: &lini::Options) -> u8 {
+        if self.form == Form::Json {
+            let (doc, worst) = lini::diagnostics_json(source, opts, filename);
+            print!("{}", doc);
+            return self.exit_for(worst);
         }
-        Err(e) => {
-            eprintln!("{}", e.display_with_source(&source, &filename));
-            ExitCode::from(1)
+        let result = match self.form {
+            Form::Check => lini::check_with(source, opts).map(|diags| (None, diags)),
+            _ => lini::compile_str_checked(source, opts).map(|(svg, diags)| (Some(svg), diags)),
+        };
+        let (svg, diags) = match result {
+            Ok(built) => built,
+            Err(e) => {
+                eprintln!("{}", e.display_with_source(source, filename));
+                return 1;
+            }
+        };
+        if !self.no_warn {
+            for d in &diags {
+                eprintln!("{}", d.display_with_source(source, filename));
+            }
+        }
+        if let Some(svg) = svg {
+            match &self.output {
+                Some(path) => {
+                    if let Err(e) = std::fs::write(path, svg.as_bytes()) {
+                        eprintln!("error: write {}: {}", path.display(), e);
+                        return 2;
+                    }
+                }
+                None => print!("{}", svg),
+            }
+        }
+        self.exit_for(lini::Level::worst(&diags))
+    }
+
+    fn exit_for(&self, worst: Option<lini::Level>) -> u8 {
+        match worst {
+            Some(lini::Level::Error) => 1,
+            Some(lini::Level::Warning) if self.strict => 1,
+            _ => 0,
         }
     }
 }
 
-fn watch_loop(input: &Path, output: &Path, opts: &lini::Options, check_only: bool) -> ExitCode {
+fn watch_loop(input: &Path, opts: &lini::Options, build: &Build) -> ExitCode {
+    let output = build
+        .output
+        .as_deref()
+        .expect("clap enforces -o with --watch");
     eprintln!("watching {} → {}", input.display(), output.display());
     let mut last_signature = None;
     loop {
@@ -296,7 +321,7 @@ fn watch_loop(input: &Path, output: &Path, opts: &lini::Options, check_only: boo
 
         if signature != last_signature {
             last_signature = signature;
-            recompile(input, output, opts, check_only);
+            recompile(input, opts, build);
         }
         std::thread::sleep(Duration::from_millis(200));
     }
@@ -435,7 +460,7 @@ fn run_highlight(input_arg: Option<&str>, css: bool) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool) {
+fn recompile(input: &Path, opts: &lini::Options, build: &Build) {
     let start = Instant::now();
     let source = match std::fs::read_to_string(input) {
         Ok(s) => s,
@@ -444,25 +469,16 @@ fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool
             return;
         }
     };
-    let filename = input.display().to_string();
-    let result = if check_only {
-        lini::check_with(&source, opts).map(|_| String::new())
-    } else {
-        lini::compile_str_with(&source, opts)
-    };
-    match result {
-        Ok(_) if check_only => {
-            eprintln!("ok ({} ms) — check passed", start.elapsed().as_millis());
-        }
-        Ok(svg) => match std::fs::write(output, svg.as_bytes()) {
-            Ok(()) => eprintln!(
+    if build.run(&source, &input.display().to_string(), opts) == 0 {
+        let ms = start.elapsed().as_millis();
+        match build.form {
+            Form::Check => eprintln!("ok ({} ms) — check passed", ms),
+            _ => eprintln!(
                 "ok ({} ms) → {}",
-                start.elapsed().as_millis(),
-                output.display()
+                ms,
+                build.output.as_deref().unwrap_or(Path::new("-")).display()
             ),
-            Err(e) => eprintln!("error: write {}: {}", output.display(), e),
-        },
-        Err(e) => eprintln!("{}", e.display_with_source(&source, &filename)),
+        }
     }
 }
 

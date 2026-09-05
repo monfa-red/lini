@@ -300,7 +300,9 @@ fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
     assert_eq!(code, Some(1), "validation errors always fail: {err}");
     assert!(err.contains("unknown property 'colr'"), "{err}");
 
-    // The cheap check path applies the same acceptance gate.
+    // `--check` is the same compile without its artefact: it applies the
+    // acceptance gate, prints warnings, and honours --strict — and so does
+    // `--json`, whose exit code is the same contract [SPEC 20].
     let (code, err) = run(&["--check", bad.to_str().unwrap()]);
     assert_eq!(
         code,
@@ -308,6 +310,31 @@ fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
         "--check must reject validation errors: {err}"
     );
     assert!(err.contains("unknown property 'colr'"), "{err}");
+    let (code, err) = run(&["--check", f]);
+    assert_eq!(
+        code,
+        Some(0),
+        "--check reports warnings without failing: {err}"
+    );
+    assert!(err.contains("did you mean 'cat'?"), "{err}");
+    let (code, _) = run(&["--check", "--strict", f]);
+    assert_eq!(code, Some(1), "--check --strict promotes warnings");
+    let (code, _) = run(&["--json", f]);
+    assert_eq!(code, Some(0), "--json reports warnings without failing");
+    let (code, _) = run(&["--json", "--strict", f]);
+    assert_eq!(code, Some(1), "--json --strict promotes warnings");
+
+    // A layout-phase error is a compile error, so `--check` rejects it too —
+    // a file the check accepts is a file the compile accepts.
+    let cramped = dir.join("cramped.lini");
+    std::fs::write(
+        &cramped,
+        "|box| \"abcdefghijklmnop\" { max-width: 20; text-wrap: nowrap }\n",
+    )
+    .unwrap();
+    let (code, err) = run(&["--check", cramped.to_str().unwrap()]);
+    assert_eq!(code, Some(1), "--check must reject layout errors: {err}");
+    assert!(err.contains("without wrapping"), "{err}");
 
     std::fs::remove_dir_all(&dir).ok();
 }

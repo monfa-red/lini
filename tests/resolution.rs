@@ -528,10 +528,11 @@ fn pin_rails_are_scope_transparent() {
     // `U7.VS` resolves with no rail in the path [SPEC 16.2]; a discrete's
     // generated `p1`/`p2` resolve the same way.
     lini::check(
-        "|component#U7| \"IC\" [\n  |pin#VS| { number: 1 }\n  |pin#EN| { number: 2 }\n]\n|R#r1| \"1k\"\nU7.VS - r1.p1\n",
+        "{ layout: schematic }\n|component#U7| \"IC\" [\n  |pin#VS| { number: 1 }\n  |pin#EN| { number: 2 }\n]\n|R#r1| \"1k\"\nU7.VS - r1.p1\n",
     )
     .expect("pin paths resolve through the rails");
-    lini::check("|Q#q1| { symbol: npn }\n|box#x|\nq1.b - x\n").expect("semantic pin ids");
+    lini::check("{ layout: schematic }\n|Q#q1| { symbol: npn }\n|box#x|\nq1.b - x\n")
+        .expect("semantic pin ids");
 }
 
 #[test]

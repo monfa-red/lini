@@ -163,21 +163,29 @@ pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
 /// Validate and compile to SVG, collecting validation and routing warnings in
 /// the same result. Any error-level validation diagnostic rejects the compile.
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
-    let (program, mut diags) = validated_resolve_pipeline(src, opts)?;
-    let (svg, later_diags) = compile_program_checked(&program, opts)?;
-    diags.extend(later_diags);
-    Ok((svg, diags))
+    let (laid_out, diags) = analyze(src, opts)?;
+    Ok((finish_svg(&laid_out, opts), diags))
 }
 
-fn compile_program_checked(
+/// Every pass but the render — validate, resolve, lay out, route — with each
+/// pass's warnings. A compile renders the result; a check drops it; the JSON
+/// form serialises the diagnostics. One pipeline, so the three never disagree
+/// on what a file is worth [SPEC 20].
+fn analyze(src: &str, opts: &Options) -> Result<(layout::LaidOut, Vec<Diagnostic>), Error> {
+    let (program, mut diags) = validated_resolve_pipeline(src, opts)?;
+    let (laid_out, later_diags) = analyze_program(&program)?;
+    diags.extend(later_diags);
+    Ok((laid_out, diags))
+}
+
+fn analyze_program(
     program: &resolve::Program,
-    opts: &Options,
-) -> Result<(String, Vec<Diagnostic>), Error> {
+) -> Result<(layout::LaidOut, Vec<Diagnostic>), Error> {
     let mut laid_out = layout_stage(program)?;
     render::lower_paints(&mut laid_out);
     let mut diags = error::stamp_phase(layout::layout_hints(&laid_out, program), Phase::Layout);
     diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
-    Ok((finish_svg(&laid_out, opts), diags))
+    Ok((laid_out, diags))
 }
 
 /// The full diagnostic set for a source, as one serde-free JSON document
@@ -185,48 +193,46 @@ fn compile_program_checked(
 /// default compile does (validation, then layout + routing when validation is
 /// clean), collecting every diagnostic — errors, warnings, and a fatal
 /// compile error — each with its stable code, span, related span, and any
-/// machine-applicable replacement. Returns the document plus whether any
-/// **error**-level diagnostic fired (the caller's exit code).
-pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, bool) {
+/// machine-applicable replacement. Returns the document plus the worst level
+/// that fired (`None` when the file is clean) — the caller's exit code.
+pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, Option<Level>) {
     let mut items = Vec::new();
-    let mut had_error = false;
+    let mut levels = Vec::new();
 
     // The property/lint pass [SPEC 17/21] — surfaces on the raw parse. A parse
     // or lex error here is fatal and stops the pipeline, exactly as the default
     // CLI path returns early.
     match lint_str(src) {
         Ok(diags) => {
-            for d in &diags {
-                had_error |= d.level == Level::Error;
-                items.push(d.to_json(src));
-            }
+            items.extend(diags.iter().map(|d| d.to_json(src)));
+            levels.extend(diags.iter().map(|d| d.level));
         }
         Err(e) => {
             items.push(e.to_json(src));
-            return (error::diagnostics_document(items, filename), true);
+            return (
+                error::diagnostics_document(items, filename),
+                Some(Level::Error),
+            );
         }
     }
 
-    // Validation errors stop the compile [SPEC 20] — mirror that: only route on
+    // Validation errors stop the compile [SPEC 20] — mirror that: only lay out
     // a clean validation, so layout never runs on a rejected file.
-    if !had_error {
-        match resolve_pipeline(src, opts)
-            .and_then(|program| compile_program_checked(&program, opts))
-        {
-            Ok((_, route_diags)) => {
-                for d in &route_diags {
-                    had_error |= d.level == Level::Error;
-                    items.push(d.to_json(src));
-                }
+    if !levels.contains(&Level::Error) {
+        match resolve_pipeline(src, opts).and_then(|program| analyze_program(&program)) {
+            Ok((_, diags)) => {
+                items.extend(diags.iter().map(|d| d.to_json(src)));
+                levels.extend(diags.iter().map(|d| d.level));
             }
             Err(e) => {
                 items.push(e.to_json(src));
-                had_error = true;
+                levels.push(Level::Error);
             }
         }
     }
 
-    (error::diagnostics_document(items, filename), had_error)
+    let worst = levels.into_iter().reduce(Level::graver);
+    (error::diagnostics_document(items, filename), worst)
 }
 
 fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
@@ -253,15 +259,15 @@ pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
     Ok(error::stamp_phase(out, Phase::Validate))
 }
 
-/// Validate, resolve, and reject any error-level diagnostic without running
-/// layout or render. The CLI's `--check` flag goes through here.
-pub fn check(src: &str) -> Result<(), Error> {
+/// The full compile without its artefact: every pass and every warning a
+/// compile would report, the SVG never rendered. The CLI's `--check` flag
+/// goes through here, so a file it accepts is a file a compile accepts.
+pub fn check(src: &str) -> Result<Vec<Diagnostic>, Error> {
     check_with(src, &Options::default())
 }
 
-pub fn check_with(src: &str, opts: &Options) -> Result<(), Error> {
-    let _ = validated_resolve_pipeline(src, opts)?;
-    Ok(())
+pub fn check_with(src: &str, opts: &Options) -> Result<Vec<Diagnostic>, Error> {
+    analyze(src, opts).map(|(_, diags)| diags)
 }
 
 /// Lex, parse, resolve, lay out, route, then validate the routing against the
