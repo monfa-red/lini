@@ -10,16 +10,16 @@ use crate::ledger::consts::PIN_PITCH;
 use crate::ledger::defaults::SCH_GAP;
 
 /// How many coarse cells apart two anchors stand [SPEC 16.1] — a track is
-/// packed in whole cells, so this is always a whole number, and the ink
-/// between two of them is whatever their own widths leave.
+/// packed on the fine grid, so this is a whole number of fine pitches, and
+/// the ink between two of them is whatever their own widths leave.
 fn apart(nodes: &[PlacedNode], from: &str, to: &str, vertical: bool) -> f64 {
     let (a, b) = (at(nodes, from), at(nodes, to));
     (if vertical { b.1 - a.1 } else { b.0 - a.0 }) / SCH_GAP
 }
 
-/// Whether a cell distance is a whole number of them, and at least one.
+/// Whether a cell distance is on the fine grid, and at least one cell.
 fn whole_cells(d: f64) -> bool {
-    close(d, d.round()) && d >= 1.0
+    on_fine_grid(d * SCH_GAP) && d >= 1.0 - 1e-9
 }
 
 // ───────────────────────── tracks ─────────────────────────
@@ -139,7 +139,7 @@ fn an_explicit_cell_may_reach_past_the_wrap_count() {
 
 #[test]
 fn a_track_sizes_to_its_widest_anchor() {
-    // A track is packed in whole coarse cells and takes the **max** over every
+    // A track is packed on the fine grid and takes the **max** over every
     // anchor in it — including one in another row. `u3` (wide and tall) sits in
     // column 1 / row 2, so it is what parts column 2 and row 2; a rule reading
     // only its own row's anchors would leave both where the bare sheet has
@@ -168,7 +168,7 @@ fn a_track_sizes_to_its_widest_anchor() {
     );
     assert!(
         whole_cells(col) && whole_cells(row),
-        "both in whole coarse cells: {col} {row}"
+        "both on the fine grid, a cell at the least: {col} {row}"
     );
     assert!(
         close(at(&wide, "u3").0, at(&wide, "u1").0),
@@ -479,9 +479,11 @@ fn a_defines_own_gap_and_clearance_reach_the_scope_it_opens() {
         let nodes = laid(&src);
         at(&nodes, "u2").0 - at(&nodes, "u1").0
     };
+    // Two bodies and one wire want a little more than the sheet's default
+    // cell, so the fine grid parts them by that; a roomier cell is the floor.
     assert!(
-        sep(300.0) > sep(100.0) && close(sep(100.0) % 100.0, 0.0) && close(sep(300.0) % 300.0, 0.0),
-        "the define's own gap parts the tracks, in its own cells: {} vs {}",
+        sep(300.0) > sep(100.0) && sep(100.0) >= 100.0 && close(sep(300.0), 300.0),
+        "the define's own gap is the floor the tracks part by: {} vs {}",
         sep(100.0),
         sep(300.0)
     );

@@ -3421,7 +3421,7 @@ part centre lands on: here `gap` is the column and row pitch, not the space
 between two tracks, and it rounds **up** to a whole number of fine pitches, so a
 part centre is always a wire line too (`gap: 120 80` states row and column
 apart, as `gap` reads everywhere). Two adjacent anchors with nothing between
-them stand one coarse column apart. Two wired neighbouring pins stand one
+them stand one coarse column apart, and never closer. Two wired neighbouring pins stand one
 **fine** pitch apart, so a scope whose `clearance` runs past that pitch is an
 error ([SPEC 21](#21-errors)) — said once, where the number is written, rather
 than as a stray for every lead that then finds no track. The finished sheet
@@ -3455,11 +3455,13 @@ explicitly. Track indices are **ordinal** — tracks spring into existence up to
 the largest referenced index and empty tracks collapse entirely, so sparse
 indices (10, 20, 30…) are safe ordering room and never inject invisible space.
 This is the engine's own track list; it does not alter the grid layout's laws
-([SPEC 12](#12-flow-grid-stack--tree)). A track sizes in **whole coarse cells**,
-to its anchors' bodies and the lanes their fields take — so satellites consume
-cells, never tracks — and two neighbouring anchors take a further cell wherever
-one column would not leave their two **bodies** a fine pitch of air: a cell
-holds a part, it does not part it from the next.
+([SPEC 12](#12-flow-grid-stack--tree)). A track sizes on the **fine** grid, to
+what stands between its anchors and the next track's: the earlier's field on
+the side they face, a span's cells between them, the later's field, and the
+**corridor** the two keep — a fine pitch of air per wire crossing it, one at
+the least, so a sheet with more traces between two parts spaces them further —
+never closer than a pitch of air between their **bodies**, nor than one coarse
+cell centre to centre. Satellites consume room, never tracks.
 
 **A chain is a walk.** A satellite chain — the run of satellites one wire holds
 — takes a ray, a lane, and a slot per member:
@@ -3907,7 +3909,7 @@ pages, and title blocks are the core types, restyled by scoped rules.
 ([SPEC 19](#19-compile-pipeline)): desugar has already lowered components
 into rails and chrome, minted label wires and capsule declarations, and
 emitted the scoped look rules; the engine then assigns every satellite its
-**cell** (ray, lane, slot), **packs** the tracks in whole coarse cells,
+**cell** (ray, lane, slot), **packs** the tracks on the fine grid,
 absolutizes the seats, seats the **readouts**, and hands
 every wire — with its fixed ports — to the router. Junction dots are read off
 the routed geometry and emitted as `|junction|` chrome. The scope's links stay

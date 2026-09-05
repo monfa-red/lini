@@ -177,7 +177,7 @@ pub(super) fn collapse(used: impl Iterator<Item = usize>) -> Vec<usize> {
 ///    **field** pass — every satellite takes a ray, a lane and a slot in its
 ///    anchor's own frame, so no anchor need be placed yet, and a slot origin
 ///    can be shared by the track line the anchor rides;
-/// 2. **pack** the tracks in whole coarse cells and land every anchor on the
+/// 2. **pack** the tracks on the fine grid and land every anchor on the
 ///    lattice ([`pack`]);
 /// 3. **absolutize** the field — a seated satellite rides its anchor, a span
 ///    reads the two now-placed landings;

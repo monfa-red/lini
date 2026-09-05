@@ -390,8 +390,8 @@ fn a_root_schematic_scene_is_the_scope() {
     assert!(x1 < x2, "declaration order: {x1} {x2}");
     assert!(close(y1, y2), "one row: {y1} {y2}");
     assert!(
-        close((x2 - x1) % SCH_GAP, 0.0),
-        "a whole number of coarse cells apart: {}",
+        on_fine_grid(x2 - x1) && x2 - x1 >= SCH_GAP,
+        "on the fine grid, a coarse cell at the least: {}",
         x2 - x1
     );
 }

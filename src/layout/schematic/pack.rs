@@ -1,9 +1,9 @@
-//! **Packing** [SPEC 16.1] — the anchor tracks, sized in whole coarse cells.
+//! **Packing** [SPEC 16.1] — the anchor tracks, sized on the fine grid.
 //!
-//! Every anchor's origin lands on a coarse lattice line, and what parts two of
-//! them is arithmetic on cells: the earlier one's field on the side they face,
-//! the members of any span riding between them, the later one's field, and the
-//! one clear column two neighbouring anchors always stand apart by. A part's
+//! Every anchor's origin lands on a fine lattice line, and what parts two of
+//! them is what stands between: the earlier one's field on the side they face,
+//! the members of any span riding between them, the later one's field, and
+//! the corridor the two keep — a fine track per wire crossing it. A part's
 //! own ink is read here and nowhere else in the packing, and only ever to say
 //! how far two of them must stand apart or how far the sheet reaches — never
 //! where a part lands, so a long value still overhangs the column beside it
@@ -27,8 +27,8 @@ use crate::desugar::pose::Side;
 use crate::desugar::schematic::chain::End;
 use crate::resolve::ResolvedLink;
 
-/// Where every anchor lands [SPEC 16.1]: the ordinal track grid, sized in
-/// whole coarse cells from its anchors' fields.
+/// Where every anchor lands [SPEC 16.1]: the ordinal track grid, sized on the
+/// fine grid from its anchors' fields.
 pub(super) struct Packing {
     /// Per anchor, its origin in scope coordinates, parallel to `anchored`.
     pub origins: Vec<(f64, f64)>,
@@ -48,8 +48,17 @@ pub(super) fn pack(
     lat: Lattice,
 ) -> Packing {
     let offsets = align(children, links, scope, anchored, slots, field, lat);
-    let x = axis(Ax::X, children, anchored, slots, field, &offsets, lat);
-    let y = axis(Ax::Y, children, anchored, slots, field, &offsets, lat);
+    let tracks = Tracks {
+        children,
+        anchored,
+        slots,
+        field,
+        offsets: &offsets,
+        lat,
+    };
+    let hops = edges(children, links, scope);
+    let x = tracks.axis(Ax::X, &hops);
+    let y = tracks.axis(Ax::Y, &hops);
     let origins: Vec<(f64, f64)> = x.into_iter().zip(y).collect();
     let body = origins
         .iter()
@@ -58,6 +67,17 @@ pub(super) fn pack(
         .reduce(Bbox::union)
         .unwrap_or_else(Bbox::empty);
     Packing { origins, body }
+}
+
+/// The packing's one reading of the scope, shared by its two axes.
+struct Tracks<'a> {
+    children: &'a [PlacedNode],
+    anchored: &'a [usize],
+    slots: &'a [Slot],
+    field: &'a Field,
+    /// Each anchor's alignment offset, parallel to `anchored` ([`align`]).
+    offsets: &'a [(f64, f64)],
+    lat: Lattice,
 }
 
 /// One anchor's whole extent [SPEC 16.1]: its own drawn ink, and the **cells**
@@ -72,68 +92,110 @@ fn extent(field: &Field, node: &PlacedNode, anchor: usize) -> Bbox {
     ]))
 }
 
-/// One axis of the packing [SPEC 16.1]: each track takes the first coarse line
-/// every anchor before it leaves free, and every anchor stands on its track's
-/// line plus its own alignment offset.
-fn axis(
-    ax: Ax,
-    children: &[PlacedNode],
-    anchored: &[usize],
-    slots: &[Slot],
-    field: &Field,
-    offsets: &[(f64, f64)],
-    lat: Lattice,
-) -> Vec<f64> {
-    let step = lat.step(ax);
-    let ordinals = collapse(slots.iter().map(|s| s.on(ax)));
-    let track = |k: usize| {
-        ordinals
-            .binary_search(&slots[k].on(ax))
-            .expect("a collapsed ordinal")
-    };
-    let shift = |k: usize| match ax {
-        Ax::X => offsets[k].0,
-        Ax::Y => offsets[k].1,
-    };
-    let (back, ahead) = match ax {
-        Ax::X => (Side::Left, Side::Right),
-        Ax::Y => (Side::Top, Side::Bottom),
-    };
-    let ink = |k: usize, side| edge(&children[anchored[k]], side);
-    // The field answers a distance; a track counts in whole coarse cells, and
-    // takes the lattice's slack before the ceiling as every other count does.
-    let holds = |k: usize, side| {
-        (field.free(anchored[k], side) / lat.step(Ax::of(side)) - EPS).ceil() - 1.0
-    };
-    // What one anchor owes another ahead of it, in cells: the cells it holds
-    // that way, whatever spans between them, the cells held back at it, and
-    // the one column two neighbours with nothing between them stand apart by
-    // — and never less than the two **bodies** themselves ask, since a part
-    // narrower than its own cell still keeps the sheet's pitch off the next
-    // one. Their offsets are already struck, so the cells those consume are
-    // part of the distance rather than a shift applied over the top of it.
-    let apart = |k: usize, j: usize| -> f64 {
-        let cells =
-            holds(k, ahead) + f64::from(spanning(field, anchored, k, j)) + holds(j, back) + 1.0;
-        // Less the lattice's slack before the ceiling, as every other count of
-        // cells takes it: two bodies that exactly fill their columns owe the
-        // next one, not the one after it that rounding noise would ask for.
-        let bodies = (ink(k, ahead) + lat.pitch + ink(j, back)) / step - EPS;
-        cells.max(bodies.ceil()) + (shift(k) - shift(j)) / step
-    };
-    let mut line = vec![0i32; ordinals.len()];
-    for t in 1..ordinals.len() {
-        let mut at = line[t - 1];
-        for j in (0..anchored.len()).filter(|&j| track(j) == t) {
-            for k in (0..anchored.len()).filter(|&k| track(k) < t) {
-                at = at.max(line[track(k)] + apart(k, j).ceil() as i32);
+impl Tracks<'_> {
+    /// One axis of the packing [SPEC 16.1]: each track takes the first fine
+    /// line every anchor before it leaves free, and every anchor stands on its
+    /// track's line plus its own alignment offset. `hops` are the scope's
+    /// wires, one per hop ([`edges`]).
+    fn axis(&self, ax: Ax, hops: &[[End; 2]]) -> Vec<f64> {
+        let (children, anchored, slots, field) =
+            (self.children, self.anchored, self.slots, self.field);
+        let (step, pitch) = (self.lat.step(ax), self.lat.pitch);
+        let ordinals = collapse(slots.iter().map(|s| s.on(ax)));
+        let track = |k: usize| {
+            ordinals
+                .binary_search(&slots[k].on(ax))
+                .expect("a collapsed ordinal")
+        };
+        let shift = |k: usize| match ax {
+            Ax::X => self.offsets[k].0,
+            Ax::Y => self.offsets[k].1,
+        };
+        let (back, ahead) = match ax {
+            Ax::X => (Side::Left, Side::Right),
+            Ax::Y => (Side::Top, Side::Bottom),
+        };
+        let ink = |k: usize, side| edge(&children[anchored[k]], side);
+        let crossings = crossings(hops, anchored, field, &track, ordinals.len());
+        // How far an anchor reaches out on a side: to its field's outermost
+        // cell edge, or to its own drawn ink where no chain went that way — a
+        // field stands clear of the ink already, so the further is the edge.
+        let reach = |k: usize, side| field.extent(anchored[k], side).max(ink(k, side));
+        // What one anchor owes another ahead of it: its reach that way, the
+        // span riding between them on its coarse cells, the reach back at it,
+        // and the corridor between the two — a fine pitch of air per wire
+        // crossing it, one at the least — and never less than one coarse cell
+        // centre to centre. Their offsets are already struck, so the cells
+        // those consume are part of the distance rather than a shift applied
+        // over the top.
+        let apart = |k: usize, j: usize| -> f64 {
+            let wires = (track(k) + 1..=track(j))
+                .map(|b| crossings[b])
+                .sum::<usize>()
+                .max(1);
+            let span = spanning(field, anchored, k, j);
+            // A span's members ride coarse cells counted from the first free
+            // coarse line past the landing anchor's field ([`Field::lay`]),
+            // the first-named one furthest out; the region ends half a cell
+            // past it.
+            let held_back = if span > 0 {
+                let free = (field.free(anchored[j], back) / step - EPS).ceil();
+                (free + f64::from(span) - 0.5) * step
+            } else {
+                reach(j, back)
+            };
+            let d = (reach(k, ahead) + pitch * wires as f64 + held_back).max(step);
+            // Onto the fine grid, taking the lattice's slack before the
+            // ceiling as every other count does.
+            (d / pitch - EPS).ceil() * pitch + shift(k) - shift(j)
+        };
+        let mut line = vec![0.0f64; ordinals.len()];
+        for t in 1..ordinals.len() {
+            let mut at = line[t - 1];
+            for j in (0..anchored.len()).filter(|&j| track(j) == t) {
+                for k in (0..anchored.len()).filter(|&k| track(k) < t) {
+                    at = at.max(line[track(k)] + apart(k, j));
+                }
             }
+            line[t] = at;
         }
-        line[t] = at;
+        (0..anchored.len())
+            .map(|k| line[track(k)] + shift(k))
+            .collect()
     }
-    (0..anchored.len())
-        .map(|k| f64::from(line[track(k)]) * step + shift(k))
-        .collect()
+}
+
+/// The wires that **cross** each track boundary on one axis [SPEC 16.1] —
+/// `crossings[b]` counts those with one end before track `b` and the other
+/// at or past it: every hop between two anchors, and every span between two.
+/// A wire may jog in the corridor it crosses, so the corridor holds a fine
+/// track for each; a wire between two anchors of one track crosses nothing.
+fn crossings(
+    hops: &[[End; 2]],
+    anchored: &[usize],
+    field: &Field,
+    track: &dyn Fn(usize) -> usize,
+    tracks: usize,
+) -> Vec<usize> {
+    let mut out = vec![0usize; tracks + 1];
+    let anchor_of = |child: usize| anchored.iter().position(|&i| i == child);
+    let mut cross = |a: usize, b: usize| {
+        let (lo, hi) = (track(a).min(track(b)), track(a).max(track(b)));
+        for slot in out.iter_mut().take(hi + 1).skip(lo + 1) {
+            *slot += 1;
+        }
+    };
+    for [a, b] in hops {
+        if let (Some(ka), Some(kb)) = (anchor_of(a.child), anchor_of(b.child)) {
+            cross(ka, kb);
+        }
+    }
+    for s in field.spans() {
+        if let (Some(ka), Some(kb)) = (anchor_of(s.ends[0].0), anchor_of(s.ends[1].0)) {
+            cross(ka, kb);
+        }
+    }
+    out
 }
 
 /// How far one part's **drawn** ink reaches out on `side` of its own origin —
