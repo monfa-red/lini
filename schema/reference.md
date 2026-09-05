@@ -1,6 +1,6 @@
 # Lini property reference
 
-Generated from the property ledger by `cargo xtask gen-schema` — **do not edit**. Schema v1, lini 1.0.0-rc.3. The machine-readable form, with one compiled example per property, is `lini.schema.json`.
+Generated from the property ledger by `cargo xtask gen-schema` — **do not edit**. Schema v1, lini 1.0.0. The machine-readable form, with one compiled example per property, is `lini.schema.json`.
 
 ## Primitives
 
@@ -141,7 +141,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `font-size` | universal | `one:number` | `bundles` | text | text baked |
 | `font-weight` | universal | `one:any` | `bundles` | text | text |
 | `font-style` | universal | `one:ident` | `engine` | text | text |
-| `text-transform` | universal | `one:ident` | `engine` | text | text |
+| `text-transform` | universal | `one:ident` | `engine` | text | text baked |
 | `text-decoration` | universal | `one:ident` | `engine` | text | text |
 | `text-shadow` | universal | `one:any` | `none` | text | text |
 | `letter-spacing` | universal | `one:number` | `engine` | text | text baked |

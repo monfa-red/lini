@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "crate": "lini",
-  "crateVersion": "1.0.0-rc.3",
+  "crateVersion": "1.0.0",
   "generator": "cargo xtask gen-schema",
   "enums": {
     "kinds": {
@@ -1680,7 +1680,7 @@
       "inherit": "text",
       "gate": "lenient",
       "text": true,
-      "baked": false,
+      "baked": true,
       "deferred": false,
       "dualChannel": false,
       "example": "|box| \"loud\" { text-transform: uppercase; }"
