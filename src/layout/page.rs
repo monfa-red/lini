@@ -8,6 +8,7 @@
 //! inset by 5 mm: `padded_attrs` folds that into the page's padding for the
 //! arrange pass (`padding:` adds, per the spec).
 
+use super::anchors;
 use super::ir::{Bbox, PlacedNode};
 use super::primitives;
 use crate::error::Error;
@@ -178,6 +179,40 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
             }
         }
     }
+    lift_clear_of_title_block(children, fy0 + CONTENT_CLEAR * s, CONTENT_CLEAR * s);
+}
+
+/// The content stays centred on the sheet; only a view whose box would run
+/// under the seated title block lifts the page's flow content clear of it —
+/// by the overlap plus the content clear, and no further than the content
+/// area's top allows [SPEC 15.8]. Pinned children and the furniture stay.
+fn lift_clear_of_title_block(children: &mut [PlacedNode], content_top: f64, clear: f64) {
+    let is_block = |c: &PlacedNode| c.type_chain.iter().any(|t| t == "title-block");
+    let is_flow = |c: &PlacedNode| !anchors::is_pinned(&c.attrs) && marker(&c.attrs).is_none();
+    let Some(block) = children.iter().find(|c| is_block(c)) else {
+        return;
+    };
+    let block_left = block.cx + block.bbox.min_x;
+    let block_top = block.cy + block.bbox.min_y - clear;
+    let mut overlap = 0.0_f64;
+    let mut room = f64::INFINITY;
+    for c in children.iter().filter(|c| is_flow(c)) {
+        let (right, top, bottom) = (
+            c.cx + c.bbox.max_x,
+            c.cy + c.bbox.min_y,
+            c.cy + c.bbox.max_y,
+        );
+        if right > block_left && bottom > block_top {
+            overlap = overlap.max(bottom - block_top);
+        }
+        room = room.min(top - content_top);
+    }
+    let lift = overlap.min(room.max(0.0));
+    if lift > 0.0 {
+        for c in children.iter_mut().filter(|c| is_flow(c)) {
+            c.cy -= lift;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -261,6 +296,34 @@ mod tests {
         assert!(
             (bottom - (p.bbox.h() / 2.0 - SHEET_MARGIN * s)).abs() < 1e-6,
             "flush bottom: {bottom}"
+        );
+    }
+
+    /// Content is centred on the sheet and ignores the block until a view
+    /// would run under it; then the page's flow content lifts by the overlap
+    /// plus the content clear — no further [SPEC 15.8].
+    #[test]
+    fn a_view_lifts_clear_of_the_title_block_only_when_it_would_run_under_it() {
+        let sheet = |h: u32| {
+            format!(
+                "|page#p| {{ sheet: a5 landscape }} [\n  |rect#v| {{ width: 170; height: {h}; }}\n  |title-block#tb| {{ title: \"T\" }}\n]\n"
+            )
+        };
+        let short = laid(&sheet(20));
+        assert!(
+            by_id(&short.nodes, "v").cy.abs() < 1e-9,
+            "a short view stays centred"
+        );
+
+        let tall = laid(&sheet(105));
+        let (v, tb) = (by_id(&tall.nodes, "v"), by_id(&tall.nodes, "tb"));
+        let bottom = v.cy + v.bbox.max_y;
+        let block_top = tb.cy + tb.bbox.min_y;
+        let clear = CONTENT_CLEAR * 4.0;
+        assert!(v.cy < 0.0, "a tall view lifts");
+        assert!(
+            (block_top - bottom - clear).abs() < 1e-6,
+            "lifted exactly clear of the block: bottom {bottom}, block top {block_top}"
         );
     }
 

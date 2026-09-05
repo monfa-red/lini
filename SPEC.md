@@ -3117,7 +3117,9 @@ four centring marks, each crossing the frame at an edge's midpoint (the middle
 divider, which would coincide, is not drawn). The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
-by **type**, flush inside the frame's bottom-right corner. **String-valued field
+by **type**, flush inside the frame's bottom-right corner; content stays centred
+on the sheet, and only a view whose box would run under the block lifts the
+page's flow content clear of it, as far as the content area's top allows. **String-valued field
 properties** — `title`, `drawing-number`, `revision`, `date`, `sheet-number`,
 `author`, `approved`, `department`, `reference`, `document-type`, `status` — desugar
 (like `sheet:`) into the fixed ISO grid: each a caption in the muted footer tone
