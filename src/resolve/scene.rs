@@ -523,7 +523,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
         kind: NodeKind::Text,
         type_chain,
         applied_styles,
-        label: Some(t.text.clone()),
+        label: Some(super::text::transformed(&t.text, &attrs)),
         font: crate::font::Font::of(&attrs),
         attrs,
         own_style,

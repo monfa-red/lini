@@ -242,7 +242,7 @@ pub fn resolve_link(
                 );
             }
             texts.push(ResolvedText {
-                text: label.text.clone(),
+                text: super::text::transformed(&label.text, &lattrs),
                 along: pos,
                 attrs: lattrs,
                 applied_styles,

@@ -134,14 +134,8 @@ pub(crate) fn emit(
     let (font, size) = effective_font(attrs, classes, ruleset, sink);
     #[cfg(feature = "font")]
     if opts.static_mode {
-        // `text-transform` is live CSS on a `<text>`, but outlined paths bake
-        // the glyph choice — apply it before the defs registration so the
-        // `<use>` references and the emitted defs agree.
-        let content = apply_text_transform(content, attrs);
-        sink.register(font, &content, true);
-        return emit_outlined(
-            out, indent, classes, &content, pos, attrs, style, font, size,
-        );
+        sink.register(font, content, true);
+        return emit_outlined(out, indent, classes, content, pos, attrs, style, font, size);
     }
     if opts.embed_font {
         sink.register(font, content, false);
@@ -237,38 +231,12 @@ fn dx_attr(line: &str, letter_spacing: f64) -> String {
     s
 }
 
-/// `text-transform` applied at compile time — only for outlining, where no
-/// live CSS can apply it later.
-#[cfg(feature = "font")]
-fn apply_text_transform(content: &str, attrs: &AttrMap) -> String {
-    let t = match attrs.get("text-transform") {
-        Some(ResolvedValue::Ident(s)) => s.as_str(),
-        _ => "",
-    };
-    match t {
-        "uppercase" => content.to_uppercase(),
-        "lowercase" => content.to_lowercase(),
-        "capitalize" => content
-            .split_inclusive(char::is_whitespace)
-            .map(|w| {
-                let mut c = w.chars();
-                match c.next() {
-                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-                    None => String::new(),
-                }
-            })
-            .collect(),
-        _ => content.to_string(),
-    }
-}
-
 /// The `--static` twin of the `<text>` path [SPEC 18]: each line becomes
 /// `<use>` references to deduped glyph paths in `<defs>` (font units, y-up —
 /// the per-use `scale(s, -s)` flips and sizes them), positioned by the same
-/// measurement fold layout reserved room with. `text-transform` bakes into
-/// the glyph choice, `text-decoration` becomes a filled band from the face's
-/// own metrics, `font-style: italic` a synthetic oblique — live CSS can't
-/// reach outlined paths, so their effects bake here.
+/// measurement fold layout reserved room with. `text-decoration` becomes a
+/// filled band from the face's own metrics, `font-style: italic` a synthetic
+/// oblique — live CSS can't reach outlined paths, so their effects bake here.
 #[cfg(feature = "font")]
 #[allow(clippy::too_many_arguments)] // the text chokepoint's twin — same surface
 fn emit_outlined(

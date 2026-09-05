@@ -61,12 +61,7 @@ pub(super) fn build_frame_rules(
         ("color".into(), global("color", "text-color")),
     ];
     // The rest ride `.lini` only when globally set — live CSS with no default.
-    for attr in [
-        "font-style",
-        "text-transform",
-        "text-decoration",
-        "text-shadow",
-    ] {
+    for attr in ["font-style", "text-decoration", "text-shadow"] {
         if let Some(v) = rt.get(attr) {
             root_props.push((attr.to_string(), css_value(attr, v, vars, opts)));
         }

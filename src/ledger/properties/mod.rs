@@ -188,7 +188,7 @@ impl Property {
         self.text = true;
         self
     }
-    /// Mark a baked-spacing text prop [SPEC 6].
+    /// Mark a baked text prop — one layout reads, never live CSS [SPEC 6].
     const fn baked(mut self) -> Self {
         self.baked = true;
         self
@@ -267,7 +267,9 @@ pub static PROPERTIES: &[Property] = &[
         .text()
         .face(),
     row("font-style", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
-    row("text-transform", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
+    row("text-transform", UNIVERSAL, One(Kind::Ident), Engine, Text)
+        .text()
+        .baked(),
     row("text-decoration", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
     row(
         "text-shadow",

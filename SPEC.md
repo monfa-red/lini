@@ -651,11 +651,12 @@ generalised to every box, which is why there is no second `text-align` knob.
 
 Two kinds of text property, split by whether they touch layout:
 
-- **Baked spacing** — `letter-spacing`, `line-spacing`, and `font-size` — changes
-  **layout** (the text box grows to fit the wider glyphs or taller block) and compiles
-  into the glyph and line positions, never emitted as a style ([SPEC 1](#1-mental-model)).
+- **Baked** — `letter-spacing`, `line-spacing`, `font-size`, and `text-transform` —
+  changes **layout** (the text box grows to fit the wider glyphs, the taller block, the
+  capitals) and compiles into the glyph and line positions — `text-transform` into the
+  text itself, measured as it will draw — never emitted as a style ([SPEC 1](#1-mental-model)).
   `letter-spacing` / `line-spacing` default to 0, so text is unaffected until set.
-- **Live CSS** — `font-style`, `text-transform`, `text-decoration` — does *not* touch
+- **Live CSS** — `font-style`, `text-decoration`, `text-shadow` — does *not* touch
   layout: it rides the class / `<g>` / `.lini` rule and a host page can override it. Set
   any in the global block to style the whole scene.
 
@@ -4018,7 +4019,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `font-size` | number | 15 — chrome derives from it: a link label 11∕15, a caption 12∕15 ([SPEC 6](#6-paint-stroke--text)) | baked |
 | `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `medium` (500, `--font-weight`) | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); another number is an **error**, arbitrary 100–900 ⌛ |
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
-| `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
+| `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | baked — into the text, measured as drawn ([SPEC 6](#6-paint-stroke--text)) |
 | `text-decoration` | `underline` · `overline` · `line-through` · `none` | `none` | live |
 | `text-shadow` | `dx dy blur colour` | — | live (numbers gain `px`) |
 | `letter-spacing` | number | 0 | baked |

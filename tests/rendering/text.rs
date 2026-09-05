@@ -109,7 +109,6 @@ fn line_spacing_widens_the_tspan_leading_never_css() {
 fn every_live_css_text_property_emits_where_set() {
     for (decl, emitted) in [
         ("font-style: italic", "font-style: italic"),
-        ("text-transform: uppercase", "text-transform: uppercase"),
         ("text-decoration: underline", "text-decoration: underline"),
         ("text-shadow: 1 1 2 gray", "text-shadow: 1px 1px 2px gray"),
     ] {
@@ -129,7 +128,6 @@ fn every_live_css_text_property_emits_where_set() {
 fn every_live_css_text_property_states_globally_on_the_lini_rule() {
     for (decl, emitted) in [
         ("font-style: italic", "font-style: italic"),
-        ("text-transform: capitalize", "text-transform: capitalize"),
         (
             "text-decoration: line-through",
             "text-decoration: line-through",
@@ -139,6 +137,41 @@ fn every_live_css_text_property_states_globally_on_the_lini_rule() {
         let rule = lini_root_rule(&render_baked(&format!("{{ {decl} }}\n|box| \"hi\"\n")));
         assert!(rule.contains(emitted), "global {decl}: {rule}");
     }
+}
+
+/// `text-transform` is baked, not live [SPEC 6]: the content is rewritten
+/// before measurement, so the box fits the glyphs it draws and no CSS is
+/// emitted — on a node's text, a link label, and scene-wide from the root.
+#[test]
+fn text_transform_bakes_into_the_measured_content() {
+    let narrow = render_baked("|box| \"iiiiiiiiiiii\" { padding: 0 }\n");
+    let upper = render_baked("|box| \"iiiiiiiiiiii\" { padding: 0; text-transform: uppercase }\n");
+    assert!(upper.contains(">IIIIIIIIIIII<"), "{upper}");
+    assert!(
+        !upper.contains("text-transform"),
+        "no live CSS for a baked prop: {upper}"
+    );
+    let width = |svg: &str| {
+        let at = svg.find("<rect").expect("the box");
+        let w = svg[at..].split("width=\"").nth(1).unwrap();
+        w.split('"').next().unwrap().parse::<f64>().unwrap()
+    };
+    assert!(
+        width(&upper) > width(&narrow) * 1.5,
+        "the box grows to the capitals"
+    );
+
+    let scene = render_baked(
+        "{ text-transform: uppercase }\n|box#a| \"hi\"\n|box#b| \"yo\"\na -> b \"via\"\n",
+    );
+    for run in [">HI<", ">YO<", ">VIA<"] {
+        assert!(
+            scene.contains(run),
+            "{run} inherits the root transform: {scene}"
+        );
+    }
+    let lower = render_baked("|box| \"Ab Cd\" { text-transform: capitalize }\n");
+    assert!(lower.contains(">Ab Cd<"), "{lower}");
 }
 
 #[test]

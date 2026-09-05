@@ -24,7 +24,6 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("font-size", "font-size"),
     ("font-weight", "font-weight"),
     ("font-style", "font-style"),
-    ("text-transform", "text-transform"),
     ("text-decoration", "text-decoration"),
     ("text-shadow", "text-shadow"),
 ];

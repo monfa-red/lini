@@ -57,8 +57,9 @@ pub struct SheetInputs {
     pub root_font_size: f64,
     /// Inherited-text props the global block set, for the `.lini` rule [SPEC 6]:
     /// `font-family` / `font-weight` / `color` override their themeable var, the
-    /// rest (`font-style`, `text-transform`, `text-decoration`, `text-shadow`) are
-    /// live CSS with no default. Present only when authored.
+    /// rest (`font-style`, `text-decoration`, `text-shadow`) are live CSS with
+    /// no default. Present only when authored. (`text-transform` bakes into
+    /// the text itself — `resolve::text`.)
     pub root_text: AttrMap,
 }
 

@@ -100,7 +100,12 @@ fn classifier_sets_match_the_legacy_lists() {
             .filter(|p| p.baked)
             .map(|p| p.name)
             .collect::<Vec<_>>(),
-        ["font-size", "letter-spacing", "line-spacing"]
+        [
+            "font-size",
+            "text-transform",
+            "letter-spacing",
+            "line-spacing"
+        ]
     );
     // resolve/scene.rs is_text_prop.
     let legacy_text = [

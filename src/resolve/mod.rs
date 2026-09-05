@@ -21,6 +21,7 @@ pub(crate) mod pattern;
 mod program;
 pub(crate) mod scene;
 mod tables;
+pub(crate) mod text;
 pub(crate) mod tracks;
 pub(crate) mod value;
 
