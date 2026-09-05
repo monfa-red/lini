@@ -564,3 +564,19 @@ fn a_formula_holds_a_bare_call_like_a_group() {
         lini::check("|chart| [ |line| { fn: 1 2 } ]\n").expect_err("a space-run is not a formula");
     assert!(err.message.contains("comma-separated"), "{}", err.message);
 }
+
+/// A scalar binding reads bare wherever a value goes [SPEC 10.7] — as a
+/// property value too, not only inside a call's parens — so `stroke-width: w`
+/// bakes the number rather than leaking the name into the SVG.
+#[test]
+fn a_scalar_binding_reads_bare_as_a_property_value() {
+    let svg = lini::compile_str("{ w = 3; }\n|box#a| \"A\" { stroke-width: w; padding: w; }\n")
+        .expect("compile");
+    assert!(svg.contains("stroke-width: 3"), "{svg}");
+    assert!(!svg.contains("stroke-width: w"), "{svg}");
+    // A function binding is not a scalar: bare, it stays an identifier and
+    // the property's own reader judges it.
+    let err =
+        lini::check("{ f(n) = (n * 2); }\n|box#a| { padding: f; }\n").expect_err("not a value");
+    assert!(err.message.contains("number"), "{}", err.message);
+}

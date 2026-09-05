@@ -267,6 +267,9 @@ fn resolve_scalar(
         Value::Percent(n) => ResolvedValue::Percent(*n),
         Value::String(s) => ResolvedValue::String(s.clone()),
         Value::Hex(h) => ResolvedValue::Hex(h.clone()),
+        // A bare name that is a scalar binding reads as its value [SPEC 10.7];
+        // any other bare word is a keyword, a colour, or an id.
+        Value::Ident(s) if funcs.is_scalar(s) => from_expr(fold_expr(s, span, funcs)?),
         Value::Ident(s) => ResolvedValue::Ident(s.clone()),
         // `--name` → a live `var(--lini-name)`; visual-only [SPEC 10.2].
         Value::Var(name) => ResolvedValue::live(name.clone()),

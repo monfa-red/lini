@@ -1494,6 +1494,7 @@ compile-time (baked), where `:` sets a live property — the two never meet:
   wave(a, f) = (u*300, a*sin(2*pi*f*u));  // a function returning a point
 }
 |sketch#part| { draw: move(-my_radius, 0) right(2 * my_radius) up(my_radius); }
+|box| { padding: my_radius; }             // a scalar is a value wherever one goes
 ```
 
 Call a binding anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a

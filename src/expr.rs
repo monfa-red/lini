@@ -286,6 +286,12 @@ impl FuncTable {
         self.funcs.contains_key(name)
     }
 
+    /// Whether `name` is a **scalar** binding (`name = value`) — a bare name
+    /// that reads as its value wherever a value goes [SPEC 10.7].
+    pub fn is_scalar(&self, name: &str) -> bool {
+        self.funcs.get(name).is_some_and(|f| f.params.is_empty())
+    }
+
     fn get(&self, name: &str) -> Option<&Func> {
         self.funcs.get(name)
     }
