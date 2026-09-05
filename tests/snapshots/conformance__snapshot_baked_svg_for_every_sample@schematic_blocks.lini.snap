@@ -3,40 +3,41 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/schematic_blocks.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-987 -697.95 1974 1395.9" width="420mm" height="297mm" class="lini lini-scope-0d19ac8d">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-987 -697.95 1974 1395.9" width="420mm" height="297mm" class="lini lini-scope-a1ff9932">
   <style>
-    .lini-scope-0d19ac8d { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-0d19ac8d .lini-canvas { fill: white; }
-    .lini-scope-0d19ac8d .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-oval { stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-0d19ac8d .lini-gutter { stroke: none; }
-    .lini-scope-0d19ac8d .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-0d19ac8d .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
-    .lini-scope-0d19ac8d .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-0d19ac8d .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-page { fill: white; stroke-width: 0; }
-    .lini-scope-0d19ac8d .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
-    .lini-scope-0d19ac8d .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini-scope-0d19ac8d .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
-    .lini-scope-0d19ac8d .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
-    .lini-scope-0d19ac8d .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
-    .lini-scope-0d19ac8d .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-0d19ac8d .lini-pin { font-size: 11px; }
-    .lini-scope-0d19ac8d .lini-label { color: #0e6a6a; font-size: 11px; }
-    .lini-scope-0d19ac8d .lini-junction { fill: #0a7a2f; stroke: none; }
-    .lini-scope-0d19ac8d .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-0d19ac8d .lini-sch-solid { fill: #8a1c1c; stroke: none; }
-    .lini-scope-0d19ac8d .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
-    .lini-scope-0d19ac8d .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-0d19ac8d .lini-pin-number { color: #00000073; font-size: 10px; }
-    .lini-scope-0d19ac8d .lini-ref { font-size: 12px; font-weight: 600; }
-    .lini-scope-0d19ac8d .lini-part-value { font-size: 12px; }
-    .lini-scope-0d19ac8d .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-0d19ac8d .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini-scope-0d19ac8d .lini-links .lini-schematic-wire { stroke: #0a7a2f; stroke-width: 1.5; }
+    .lini-scope-a1ff9932 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-a1ff9932 .lini-canvas { fill: white; }
+    .lini-scope-a1ff9932 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-oval { stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-a1ff9932 .lini-gutter { stroke: none; }
+    .lini-scope-a1ff9932 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-a1ff9932 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-a1ff9932 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-a1ff9932 .lini-sheet-caption { font-size: 16px; font-weight: 600; }
+    .lini-scope-a1ff9932 .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-page { fill: white; stroke-width: 0; }
+    .lini-scope-a1ff9932 .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
+    .lini-scope-a1ff9932 .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini-scope-a1ff9932 .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
+    .lini-scope-a1ff9932 .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
+    .lini-scope-a1ff9932 .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
+    .lini-scope-a1ff9932 .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-a1ff9932 .lini-pin { font-size: 11px; }
+    .lini-scope-a1ff9932 .lini-label { color: #0e6a6a; font-size: 11px; }
+    .lini-scope-a1ff9932 .lini-junction { fill: #0a7a2f; stroke: none; }
+    .lini-scope-a1ff9932 .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-a1ff9932 .lini-sch-solid { fill: #8a1c1c; stroke: none; }
+    .lini-scope-a1ff9932 .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
+    .lini-scope-a1ff9932 .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-a1ff9932 .lini-pin-number { color: #00000073; font-size: 10px; }
+    .lini-scope-a1ff9932 .lini-ref { font-size: 12px; font-weight: 600; }
+    .lini-scope-a1ff9932 .lini-part-value { font-size: 12px; }
+    .lini-scope-a1ff9932 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-a1ff9932 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-a1ff9932 .lini-links .lini-schematic-wire { stroke: #0a7a2f; stroke-width: 1.5; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>
@@ -57,14 +58,11 @@ input_file: samples/schematic_blocks.lini
     <path id="lini-g1400-259" d="…"/>
     <path id="lini-g1400-265" d="…"/>
     <path id="lini-g1400-271" d="…"/>
-    <path id="lini-g1400-296" d="…"/>
     <path id="lini-g1400-299" d="…"/>
-    <path id="lini-g1400-303" d="…"/>
     <path id="lini-g1400-310" d="…"/>
     <path id="lini-g1400-334" d="…"/>
     <path id="lini-g1400-335" d="…"/>
     <path id="lini-g1400-1653" d="…"/>
-    <path id="lini-g1400-1657" d="…"/>
     <path id="lini-g1400-1660" d="…"/>
     <path id="lini-g1400-1779" d="…"/>
     <path id="lini-g1400-1833" d="…"/>
@@ -112,16 +110,19 @@ input_file: samples/schematic_blocks.lini
     <path id="lini-g1600-1" d="…"/>
     <path id="lini-g1600-27" d="…"/>
     <path id="lini-g1600-28" d="…"/>
+    <path id="lini-g1600-34" d="…"/>
     <path id="lini-g1600-81" d="…"/>
     <path id="lini-g1600-87" d="…"/>
     <path id="lini-g1600-88" d="…"/>
     <path id="lini-g1600-122" d="…"/>
+    <path id="lini-g1600-126" d="…"/>
     <path id="lini-g1600-137" d="…"/>
     <path id="lini-g1600-177" d="…"/>
     <path id="lini-g1600-202" d="…"/>
     <path id="lini-g1600-203" d="…"/>
     <path id="lini-g1600-209" d="…"/>
     <path id="lini-g1600-213" d="…"/>
+    <path id="lini-g1600-241" d="…"/>
     <path id="lini-g1600-256" d="…"/>
     <path id="lini-g1600-259" d="…"/>
     <path id="lini-g1600-265" d="…"/>
@@ -130,6 +131,7 @@ input_file: samples/schematic_blocks.lini
     <path id="lini-g1600-299" d="…"/>
     <path id="lini-g1600-303" d="…"/>
     <path id="lini-g1600-310" d="…"/>
+    <path id="lini-g1600-334" d="…"/>
     <path id="lini-g1600-1652" d="…"/>
     <path id="lini-g1600-1653" d="…"/>
     <path id="lini-g1600-1654" d="…"/>
@@ -138,6 +140,7 @@ input_file: samples/schematic_blocks.lini
     <path id="lini-g1600-1657" d="…"/>
     <path id="lini-g1600-1658" d="…"/>
     <path id="lini-g1600-1660" d="…"/>
+    <path id="lini-g1600-1779" d="…"/>
     <path id="lini-g1600-1800" d="…"/>
     <path id="lini-g1600-1828" d="…"/>
   </defs>
@@ -561,18 +564,18 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-351.698,-198)">
-          <rect x="-28.302" y="-6" width="56.604" height="12" rx="0" ry="0"/>
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-340.424,-196)">
+          <rect x="-39.576" y="-8" width="79.152" height="16" rx="0" ry="0"/>
           <g class="lini-text">
-            <use href="#lini-g1400-1657" transform="translate(-28.302 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-1779" transform="translate(-21.594 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-1657" transform="translate(-18.762 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-334" transform="translate(-12.054 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-27" transform="translate(-3.174 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-271" transform="translate(4.026 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-271" transform="translate(11.154 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-303" transform="translate(18.282 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-310" transform="translate(23.934 4.296) scale(0.012 -0.012)"/>
+            <use href="#lini-g1600-1657" transform="translate(-39.576 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-1779" transform="translate(-30.44 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-1657" transform="translate(-26.088 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-334" transform="translate(-16.952 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-27" transform="translate(-4.328 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-271" transform="translate(5.768 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-271" transform="translate(15.496 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-303" transform="translate(25.224 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-310" transform="translate(33.144 5.728) scale(0.016 -0.016)"/>
           </g>
         </g>
       </g>
@@ -1334,22 +1337,22 @@ input_file: samples/schematic_blocks.lini
             <path d="M 0 0 M 16 15 M 8 0 L 8 6 M 0 6 L 16 6 M 1 6 L 8 15 L 15 6"/>
           </g>
         </g>
-        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-440.628,-238)">
-          <rect x="-39.372" y="-6" width="78.744" height="12" rx="0" ry="0"/>
+        <g class="lini-node lini-sheet-caption lini-caption lini-block" transform="translate(-424.496,-236)">
+          <rect x="-55.504" y="-8" width="111.008" height="16" rx="0" ry="0"/>
           <g class="lini-text">
-            <use href="#lini-g1400-126" transform="translate(-39.372 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-310" transform="translate(-32.712 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-213" transform="translate(-28.344 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-296" transform="translate(-21.612 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-296" transform="translate(-14.412 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-213" transform="translate(-7.212 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-299" transform="translate(-0.48 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-34" transform="translate(6.744 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-299" transform="translate(15.156 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-241" transform="translate(19.596 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-334" transform="translate(22.104 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-213" transform="translate(28.2 4.296) scale(0.012 -0.012)"/>
-            <use href="#lini-g1400-299" transform="translate(34.932 4.296) scale(0.012 -0.012)"/>
+            <use href="#lini-g1600-126" transform="translate(-55.504 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-310" transform="translate(-46.304 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-213" transform="translate(-39.872 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-296" transform="translate(-30.624 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-296" transform="translate(-20.688 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-213" transform="translate(-10.752 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-299" transform="translate(-1.504 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-34" transform="translate(8.752 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-299" transform="translate(20.384 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-241" transform="translate(26.912 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-334" transform="translate(30.832 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-213" transform="translate(39.728 5.728) scale(0.016 -0.016)"/>
+            <use href="#lini-g1600-299" transform="translate(48.976 5.728) scale(0.016 -0.016)"/>
           </g>
         </g>
       </g>

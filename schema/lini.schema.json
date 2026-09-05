@@ -271,7 +271,8 @@
         "sheet-caption"
       ],
       "defaults": {
-        "translate": "10 10"
+        "translate": "10 10",
+        "font-weight": "semibold"
       }
     },
     {

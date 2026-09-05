@@ -77,6 +77,9 @@ pub(crate) const ROOT_FONT_SIZE: f64 = 15.0;
 /// `inherited × N / 15` (multiply before divide — exact at the default).
 pub(crate) const LINK_FONT_AT_ROOT: f64 = 11.0;
 pub(crate) const CAPTION_FONT_AT_ROOT: f64 = 12.0;
+/// …and a schematic block's title 16 [SPEC 16.6] — above the body text a
+/// sheet sets its net names and readouts in, as a sheet titles a block.
+pub(crate) const SHEET_CAPTION_FONT_AT_ROOT: f64 = 16.0;
 /// The default ISO 5457 sheet — A4 portrait, mm [SPEC 15.8].
 pub(crate) const A4: (f64, f64) = (210.0, 297.0);
 

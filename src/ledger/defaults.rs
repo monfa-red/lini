@@ -260,9 +260,17 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // A schematic scope's caption [SPEC 16.6]: inside the frame it names,
         // one small step in from the top-left corner — a sheet titles its
         // blocks within them, where a tiled page leaves no gutter to hold a
-        // name. The caption's seat and look ride the chain; only the nudge
-        // differs.
-        "sheet-caption" => vec![pair("translate", 10.0, 10.0)],
+        // name — and a block title, so it reads above the sheet's body text
+        // and heavier than it. The seat and the colour ride the chain.
+        "sheet-caption" => vec![
+            pair("translate", 10.0, 10.0),
+            pair(
+                "font-scale",
+                consts::SHEET_CAPTION_FONT_AT_ROOT,
+                consts::ROOT_FONT_SIZE,
+            ),
+            id("font-weight", "semibold"),
+        ],
         "badge" => vec![
             decl(
                 "pin",
