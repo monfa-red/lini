@@ -9,7 +9,7 @@
   // `density:` is px per millimetre — screen resolution alone, so the paper
   // stays true-scale in print [SPEC 15.1]; 7 is what these two blocks need of
   // an A4, the parts being drawn in sheet px [SPEC 16.6].
-  density: 7;
+  density: 4.7;
 
   // The rails both blocks ride: power flags are one-line defines with
   // intrinsic text [SPEC 8/16.4], so a chain ending in one grows up out of
@@ -21,11 +21,11 @@
     "VM"
   ]
 
-  |region::group| { layout: schematic; }
+  |region::group| { layout: schematic; padding: 40 20; }
 }
 
 |page| {
-  sheet: a4 landscape; layout: grid; padding: 0; columns: 790, 1020; rows: 700; gap: 10; align: stretch; justify: stretch;
+  sheet: a3 landscape; layout: grid; padding: 0; columns: 800, 1000; gap: 10;
 } [
 
   |region#boost| "5.5v Boost" { cell: 1 1; } [
@@ -41,6 +41,7 @@
       |pin#EN| { side: left; number: 4; }
       |pin#GND| { side: bottom; number: 1; }
       |pin#VOUT| { side: right; number: 6; }
+      |space| { span: 4; }
       |pin#FB| { side: right; number: 2; }
     ]
     |C#C11| "10u"

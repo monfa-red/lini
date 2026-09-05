@@ -25,7 +25,7 @@
 // connector is a header, not a bilateral part — so the header already faces
 // back at the regulator; `rotate: 180` would turn the whole column the other
 // way, and is read at lowering (the rail reverses, every text stays upright).
-|J#j1| "3V3 OUT" { pins: 4; }
+|J#j1| "JST XH" { pins: 4; }
 
 // ── satellites ──
 |C#c1| "22u"

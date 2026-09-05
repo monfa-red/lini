@@ -11,7 +11,7 @@
   // stays true-scale in print [SPEC 15.1] and the number says how much circuit
   // an A3 holds: the parts are drawn in sheet px [SPEC 16.6], so 10 fits these
   // seven blocks on the sheet edge to edge.
-  density: 5.9;
+  density: 5.8;
 
   // A power flag is a one-line define with intrinsic text [SPEC 8/16.4]: the
   // symbol's connection point sits at its bottom, so a chain ending in one
@@ -34,13 +34,13 @@
   // states no `gap:` — the sheet's own coarse pitch is the lattice every part
   // centre lands on [SPEC 16.1], and a block that overrode it would draw on a
   // grid of its own.
-  |region::group| { layout: schematic; padding: 10; }
+  |region::group| { layout: schematic; }
 
   // A caption is pinned just **above** its group's top-left corner by default
   // [SPEC 17]; on a tiled sheet that puts every block's name in the gutter
   // between blocks. `translate:` moves it back inside the frame it names —
   // still top-left, one line in [SPEC 5].
-  |region| |caption| { translate: 8 8; }
+  |region| |caption| { translate: 10 10; }
 }
 
 // The page is an ordinary container inside its frame [SPEC 15.8], so the blocks
@@ -51,7 +51,7 @@
 // frame's corner [SPEC 15.8]. `padding:` clears the frame, which is inset
 // 10 mm from the trimmed edge, so no block draws over it.
 |page| {
-  sheet: a3 landscape; layout: grid; columns: 850, 800, 610; rows: 500, 480, 500; padding: 0; gap: 24; align: stretch; justify: stretch;
+  sheet: a3 landscape; layout: grid; columns: 820, 790, 610; rows: 500, 480, 510; padding: 0; gap: 24; align: stretch; justify: stretch;
 } [
 
   |region#entry| "24 V entry" { cell: 1 1; } [
@@ -63,7 +63,7 @@
     // `pins: N` gives a connector one column of pins, facing left; the terminal
     // block sits at the sheet's edge, so it is turned to face its circuit —
     // `rotate: 180` re-sides the whole column [SPEC 16.1/16.2].
-    |J#J1| "Phoenix 1725656" { pins: 3; cell: 1 1; rotate: 180; }
+    |J#J1| "JST XH" { pins: 2; cell: 1 1; rotate: 180; }
     |F#F1| "2A"
     |D#D1| "SMAJ24A" { symbol: tvs; }
     |R#R1| "100k"
@@ -77,9 +77,8 @@
     // the line joining the two pins. The feed rides the block's **top** screw
     // and the two returns the ones below it, so the returns drop straight to
     // their studs instead of crossing back over the line they came in beside.
-    J1.p3 - F1 - Q1.s
-    J1.p2 - |gnd|
-    J1.p1 - |chassis|
+    J1.p2 - F1 - Q1.s
+    J1.p1 - |gnd|
     // Everything the fused rail carries hangs under the one straight bus: the
     // indicator sits **after** the fuse, so a lit LED says the fuse is good.
     Q1.s - R2 - D2 - |gnd|

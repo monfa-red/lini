@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/schematic.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-324.414 -170 648.828 340" width="648.828" height="340" class="lini lini-scope-de409ed0">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-319.602 -170 639.204 340" width="639.204" height="340" class="lini lini-scope-de409ed0">
   <style>
     .lini-scope-de409ed0 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
     .lini-scope-de409ed0 .lini-canvas { fill: #faf5e6; }
@@ -35,15 +35,16 @@ input_file: samples/schematic.lini
     <path id="lini-g1500-27" d="…"/>
     <path id="lini-g1500-34" d="…"/>
     <path id="lini-g1500-38" d="…"/>
+    <path id="lini-g1500-62" d="…"/>
+    <path id="lini-g1500-77" d="…"/>
     <path id="lini-g1500-81" d="…"/>
     <path id="lini-g1500-87" d="…"/>
     <path id="lini-g1500-88" d="…"/>
-    <path id="lini-g1500-94" d="…"/>
     <path id="lini-g1500-119" d="…"/>
     <path id="lini-g1500-126" d="…"/>
     <path id="lini-g1500-132" d="…"/>
-    <path id="lini-g1500-137" d="…"/>
     <path id="lini-g1500-156" d="…"/>
+    <path id="lini-g1500-162" d="…"/>
     <path id="lini-g1500-163" d="…"/>
     <path id="lini-g1500-209" d="…"/>
     <path id="lini-g1500-233" d="…"/>
@@ -67,7 +68,7 @@ input_file: samples/schematic.lini
     <path id="lini-g1600-315" d="…"/>
     <path id="lini-g1600-1653" d="…"/>
   </defs>
-  <rect class="lini-canvas" x="-324.414" y="-170" width="648.828" height="340"/>
+  <rect class="lini-canvas" x="-319.602" y="-170" width="639.204" height="340"/>
   <g class="lini-scene">
     <g class="lini-node lini-component lini-block" data-id="u1" transform="translate(-140,-20)">
       <rect x="-39.0355" y="-38" width="78.071" height="76" rx="0" ry="0"/>
@@ -210,14 +211,13 @@ input_file: samples/schematic.lini
         </g>
       </g>
       <g class="lini-node lini-part-value lini-block" transform="translate(0,-72)">
-        <rect x="-24.414" y="-6" width="48.828" height="12" rx="0" ry="0"/>
+        <rect x="-19.602" y="-6" width="39.204" height="12" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lini-g1500-1655" transform="translate(-24.414 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-156" transform="translate(-17.754 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-1655" transform="translate(-9.846 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-94" transform="translate(-0.39 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-137" transform="translate(9.57 4.296) scale(0.012 -0.012)"/>
-          <use href="#lini-g1500-132" transform="translate(17.766 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-77" transform="translate(-19.602 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-126" transform="translate(-13.026 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-132" transform="translate(-6.21 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-162" transform="translate(3.234 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-62" transform="translate(11.034 4.296) scale(0.012 -0.012)"/>
         </g>
       </g>
       <g class="lini-node lini-ref lini-block" transform="translate(0,-88)">
