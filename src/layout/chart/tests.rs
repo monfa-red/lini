@@ -499,7 +499,9 @@ fn row_bands_and_marks_flip_with_the_direction() {
         "a row value-band is a vertical strip: {rect}"
     );
     // The mark's reference line: vertical (both endpoints share one x).
-    let mark = s.find("stroke-dasharray: 5").expect("the dashed mark line");
+    let mark = s
+        .find("stroke-dasharray: 6,4.75")
+        .expect("the dashed mark line");
     let after = &s[mark..];
     let line = &after[after.find("<line ").unwrap()..];
     let line = &line[..line.find("/>").unwrap()];

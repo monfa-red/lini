@@ -1,43 +1,42 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-208.8725 -276.5 444.052 553" width="444.052" height="553" class="lini lini-scope-eced7d41">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-208.8725 -276.5 444.052 553" width="444.052" height="553" class="lini lini-scope-fde0879e">
   <style>
-    .lini-scope-eced7d41 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-eced7d41 .lini-canvas { fill: white; }
-    .lini-scope-eced7d41 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eced7d41 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eced7d41 .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eced7d41 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-eced7d41 .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eced7d41 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-eced7d41 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-eced7d41 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-eced7d41 .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini-scope-eced7d41 .lini-sign { stroke-width: 2; }
-    .lini-scope-eced7d41 .lini-edge { fill: #cff6ff; stroke: #00547e; color: #00547e; }
-    .lini-scope-eced7d41 .lini-svc { fill: #cdf9f4; stroke: #005d56; color: #005d56; }
-    .lini-scope-eced7d41 .lini-api { fill: #d6f8e3; stroke: #005d26; color: #005d26; }
-    .lini-scope-eced7d41 .lini-auth { fill: #eaebff; stroke: #443394; color: #443394; }
-    .lini-scope-eced7d41 .lini-store { fill: #ffe3ec; stroke: #811442; color: #811442; }
-    .lini-scope-eced7d41 .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eced7d41 .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini-scope-eced7d41 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini-scope-eced7d41 .lini-cut-bg { fill: white; stroke: none; }
-    .lini-scope-eced7d41 .lini-cut { fill: black; stroke: none; }
-    .lini-scope-eced7d41 .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-eced7d41 .lini-link .lini-marker { fill: #747474; }
-    .lini-scope-eced7d41 .lini-style-flow { stroke: #2774ce; }
-    .lini-scope-eced7d41 .lini-style-flow .lini-marker { fill: #2774ce; }
-    .lini-scope-eced7d41 .lini-style-cache { stroke: #008e85; }
-    .lini-scope-eced7d41 .lini-style-cache .lini-marker { fill: #008e85; }
-    .lini-scope-eced7d41 .lini-style-async { stroke: #9f6900; }
-    .lini-scope-eced7d41 .lini-style-async .lini-marker { fill: #9f6900; }
-    .lini-scope-eced7d41 .lini-style-auth { stroke: #6e62cc; }
-    .lini-scope-eced7d41 .lini-style-auth .lini-marker { fill: #6e62cc; }
+    .lini-scope-fde0879e { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-fde0879e .lini-canvas { fill: white; }
+    .lini-scope-fde0879e .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fde0879e .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fde0879e .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fde0879e .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-fde0879e .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fde0879e .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-fde0879e .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-fde0879e .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-fde0879e .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
+    .lini-scope-fde0879e .lini-sign { stroke-width: 2; }
+    .lini-scope-fde0879e .lini-edge { fill: #cff6ff; stroke: #00547e; color: #00547e; }
+    .lini-scope-fde0879e .lini-svc { fill: #cdf9f4; stroke: #005d56; color: #005d56; }
+    .lini-scope-fde0879e .lini-api { fill: #d6f8e3; stroke: #005d26; color: #005d26; }
+    .lini-scope-fde0879e .lini-auth { fill: #eaebff; stroke: #443394; color: #443394; }
+    .lini-scope-fde0879e .lini-store { fill: #ffe3ec; stroke: #811442; color: #811442; }
+    .lini-scope-fde0879e .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-fde0879e .lini-link-dashed { stroke-dasharray: 7,5.5; }
+    .lini-scope-fde0879e .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-fde0879e .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-fde0879e .lini-cut { fill: black; stroke: none; }
+    .lini-scope-fde0879e .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-fde0879e .lini-link .lini-marker { fill: #747474; }
+    .lini-scope-fde0879e .lini-style-flow { stroke: #2774ce; }
+    .lini-scope-fde0879e .lini-style-flow .lini-marker { fill: #2774ce; }
+    .lini-scope-fde0879e .lini-style-cache { stroke: #008e85; }
+    .lini-scope-fde0879e .lini-style-cache .lini-marker { fill: #008e85; }
+    .lini-scope-fde0879e .lini-style-async { stroke: #9f6900; }
+    .lini-scope-fde0879e .lini-style-async .lini-marker { fill: #9f6900; }
+    .lini-scope-fde0879e .lini-style-auth { stroke: #6e62cc; }
+    .lini-scope-fde0879e .lini-style-auth .lini-marker { fill: #6e62cc; }
   </style>
   <defs>
     <filter id="lini-shadow-803f42a2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>

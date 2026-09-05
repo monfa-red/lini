@@ -1,21 +1,20 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/desugar.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-117.855 -88.5 235.71 157.5" width="235.71" height="157.5" class="lini lini-scope-eee19db7">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-117.855 -88.5 235.71 157.5" width="235.71" height="157.5" class="lini lini-scope-7c9f4681">
   <style>
-    .lini-scope-eee19db7 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-eee19db7 .lini-canvas { fill: white; }
-    .lini-scope-eee19db7 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eee19db7 .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-eee19db7 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-eee19db7 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-eee19db7 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-eee19db7 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-eee19db7 .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini-scope-eee19db7 .lini-chip { fill: #cff6ff; stroke: #00547e; color: #00547e; }
+    .lini-scope-7c9f4681 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-7c9f4681 .lini-canvas { fill: white; }
+    .lini-scope-7c9f4681 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-7c9f4681 .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-7c9f4681 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-7c9f4681 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-7c9f4681 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-7c9f4681 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-7c9f4681 .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
+    .lini-scope-7c9f4681 .lini-chip { fill: #cff6ff; stroke: #00547e; color: #00547e; }
   </style>
   <defs>
     <filter id="lini-shadow-803f42a2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>

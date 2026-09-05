@@ -1,20 +1,19 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/palette.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-281.5 -320.25 563 640.5" width="563" height="640.5" class="lini lini-scope-0d60fcf4">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-281.5 -320.25 563 640.5" width="563" height="640.5" class="lini lini-scope-171a7d45">
   <style>
-    .lini-scope-0d60fcf4 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 13px; font-weight: 500; color: black; }
-    .lini-scope-0d60fcf4 .lini-canvas { fill: white; }
-    .lini-scope-0d60fcf4 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-0d60fcf4 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-0d60fcf4 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-0d60fcf4 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-0d60fcf4 .lini-sw { stroke: none; }
-    .lini-scope-0d60fcf4 .lini-h { color: #888; }
-    .lini-scope-0d60fcf4 .lini-card { stroke-width: 1.5; }
+    .lini-scope-171a7d45 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 13px; font-weight: 500; color: black; }
+    .lini-scope-171a7d45 .lini-canvas { fill: white; }
+    .lini-scope-171a7d45 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-171a7d45 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-171a7d45 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-171a7d45 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-171a7d45 .lini-sw { stroke: none; }
+    .lini-scope-171a7d45 .lini-h { color: #888; }
+    .lini-scope-171a7d45 .lini-card { stroke-width: 1.5; }
   </style>
   <defs>
     <path id="lini-g1500-0" d="…"/>

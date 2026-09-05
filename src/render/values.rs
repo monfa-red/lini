@@ -171,11 +171,13 @@ pub fn dash_pattern(style: &str, width: f64) -> String {
     match style {
         // Dash and gap grow with the stroke, but **gently**: a flat `4×width`
         // made thick strokes gappy (16,16 at width 4 reads as dots adrift). Scale
-        // a `width + 1` unit instead — dash 2 units, gap 1.5 (a 4:3 dash:gap) — so
-        // the pattern runs 4,3 at 1px and 10,7.5 at 4px, staying tight as it thickens.
+        // a `width + 1` unit instead — dash 2 units, gap 1.5 (a 4:3 dash:gap),
+        // each a pixel longer so a hairline frame still reads as dashes rather
+        // than stitches — so the pattern runs 5,4 at 1px and 11,8.5 at 4px,
+        // staying tight as it thickens.
         "dashed" => {
             let unit = width + 1.0;
-            format!("{},{}", num(unit * 2.0), num(unit * 1.5))
+            format!("{},{}", num(unit * 2.0 + 1.0), num(unit * 1.5 + 1.0))
         }
         // Dot ≈ width, gap 1.5× — `2,3` at the link default, tight but readable.
         "dotted" => format!("{},{}", num(width), num(width * 1.5)),

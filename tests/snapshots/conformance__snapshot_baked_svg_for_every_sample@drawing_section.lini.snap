@@ -3,48 +3,48 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/drawing_section.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-840 -594 1680 1188" width="420mm" height="297mm" class="lini lini-scope-51228d9e">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-840 -594 1680 1188" width="420mm" height="297mm" class="lini lini-scope-60d1d743">
   <style>
-    .lini-scope-51228d9e { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-51228d9e .lini-canvas { fill: white; }
-    .lini-scope-51228d9e .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-poly { stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-path { stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
-    .lini-scope-51228d9e .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini-scope-51228d9e .lini-dim-text { font-size: 12px; font-weight: 400; }
-    .lini-scope-51228d9e .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-51228d9e .lini-gutter { stroke: none; }
-    .lini-scope-51228d9e .lini-cut-bg { fill: white; stroke: none; }
-    .lini-scope-51228d9e .lini-halo { stroke: black; }
-    .lini-scope-51228d9e .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-51228d9e .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-51228d9e .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-51228d9e .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
-    .lini-scope-51228d9e .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-hole { fill: white; stroke: black; }
-    .lini-scope-51228d9e .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini-scope-51228d9e .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-51228d9e .lini-shoulder { stroke: black; }
-    .lini-scope-51228d9e .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini-scope-51228d9e .lini-plane { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini-scope-51228d9e .lini-magnifier { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini-scope-51228d9e .lini-page { fill: white; stroke-width: 0; }
-    .lini-scope-51228d9e .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
-    .lini-scope-51228d9e .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini-scope-51228d9e .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
-    .lini-scope-51228d9e .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
-    .lini-scope-51228d9e .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
-    .lini-scope-51228d9e .lini-steel { fill: url(#lini-hatch-c92119d9); }
-    .lini-scope-51228d9e .lini-bronze { fill: url(#lini-hatch-0d0a0343); }
-    .lini-scope-51228d9e .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-51228d9e .lini-marker-dim { fill: black; }
-    .lini-scope-51228d9e .lini-plane-end { stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-plane-shaft { stroke-dasharray: none; }
-    .lini-scope-51228d9e .lini-plane-arrow { fill: rgba(0, 0, 0, 0.545); }
+    .lini-scope-60d1d743 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-60d1d743 .lini-canvas { fill: white; }
+    .lini-scope-60d1d743 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-poly { stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-path { stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini-scope-60d1d743 .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-60d1d743 .lini-dim-text { font-size: 12px; font-weight: 400; }
+    .lini-scope-60d1d743 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-60d1d743 .lini-gutter { stroke: none; }
+    .lini-scope-60d1d743 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-60d1d743 .lini-halo { stroke: black; }
+    .lini-scope-60d1d743 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-60d1d743 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-60d1d743 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-60d1d743 .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
+    .lini-scope-60d1d743 .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-hole { fill: white; stroke: black; }
+    .lini-scope-60d1d743 .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-60d1d743 .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-60d1d743 .lini-shoulder { stroke: black; }
+    .lini-scope-60d1d743 .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-60d1d743 .lini-plane { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini-scope-60d1d743 .lini-magnifier { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini-scope-60d1d743 .lini-page { fill: white; stroke-width: 0; }
+    .lini-scope-60d1d743 .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
+    .lini-scope-60d1d743 .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini-scope-60d1d743 .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
+    .lini-scope-60d1d743 .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
+    .lini-scope-60d1d743 .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
+    .lini-scope-60d1d743 .lini-steel { fill: url(#lini-hatch-c92119d9); }
+    .lini-scope-60d1d743 .lini-bronze { fill: url(#lini-hatch-0d0a0343); }
+    .lini-scope-60d1d743 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-60d1d743 .lini-marker-dim { fill: black; }
+    .lini-scope-60d1d743 .lini-plane-end { stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-plane-shaft { stroke-dasharray: none; }
+    .lini-scope-60d1d743 .lini-plane-arrow { fill: rgba(0, 0, 0, 0.545); }
   </style>
   <defs>
     <pattern id="lini-hatch-c92119d9" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="2.5" y1="0" x2="2.5" y2="5"/></g></pattern>

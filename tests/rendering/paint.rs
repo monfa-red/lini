@@ -145,7 +145,7 @@ loud --> mix .wire
     // rides a `lini-link-dashed` class (the pattern stated once in the sheet),
     // never an inline diff repeated on every dashed link.
     assert!(
-        svg.contains(".lini .lini-link-dashed { stroke-dasharray: 4,3; }"),
+        svg.contains(".lini .lini-link-dashed { stroke-dasharray: 5,4; }"),
         "the operator dash must be stated once as a class rule: {}",
         svg
     );

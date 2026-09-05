@@ -3,25 +3,25 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/links.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-327.1225 -239.5 654.245 479" width="654.245" height="479" class="lini lini-scope-c3199601">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-327.1225 -239.5 654.245 479" width="654.245" height="479" class="lini lini-scope-35e47335">
   <style>
-    .lini-scope-c3199601 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-c3199601 .lini-canvas { fill: white; }
-    .lini-scope-c3199601 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-c3199601 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-c3199601 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-c3199601 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-c3199601 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini-scope-c3199601 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-c3199601 .lini-spec { stroke-width: 2; }
-    .lini-scope-c3199601 .lini-port { fill: #79e3da; stroke: #005d56; color: #005d56; }
-    .lini-scope-c3199601 .lini-room { fill: #cdf9f4; stroke: #005d56; }
-    .lini-scope-c3199601 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-c3199601 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini-scope-c3199601 .lini-cut-bg { fill: white; stroke: none; }
-    .lini-scope-c3199601 .lini-cut { fill: black; stroke: none; }
-    .lini-scope-c3199601 .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-c3199601 .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
+    .lini-scope-35e47335 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-35e47335 .lini-canvas { fill: white; }
+    .lini-scope-35e47335 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-35e47335 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-35e47335 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-35e47335 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-35e47335 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-35e47335 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-35e47335 .lini-spec { stroke-width: 2; }
+    .lini-scope-35e47335 .lini-port { fill: #79e3da; stroke: #005d56; color: #005d56; }
+    .lini-scope-35e47335 .lini-room { fill: #cdf9f4; stroke: #005d56; }
+    .lini-scope-35e47335 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-35e47335 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-35e47335 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-35e47335 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-35e47335 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-35e47335 .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>

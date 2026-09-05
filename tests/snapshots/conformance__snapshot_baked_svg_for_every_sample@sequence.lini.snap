@@ -1,27 +1,26 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/sequence.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-278.9935 -252.5 557.987 505" width="557.987" height="505" class="lini lini-scope-3b8b490a">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-278.9935 -252.5 557.987 505" width="557.987" height="505" class="lini lini-scope-595b84af">
   <style>
-    .lini-scope-3b8b490a { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-3b8b490a .lini-canvas { fill: white; }
-    .lini-scope-3b8b490a .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-slant { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-path { stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-3b8b490a .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-sequence-tab { font-size: 12px; font-weight: 600; }
-    .lini-scope-3b8b490a .lini-sequence-guard { font-size: 11px; font-weight: normal; }
-    .lini-scope-3b8b490a .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-3b8b490a .lini-note { fill: white; stroke: #444; }
-    .lini-scope-3b8b490a .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3b8b490a .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini-scope-3b8b490a .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; font-size: 13px; font-weight: normal; }
-    .lini-scope-3b8b490a .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-595b84af { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-595b84af .lini-canvas { fill: white; }
+    .lini-scope-595b84af .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-slant { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-path { stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-595b84af .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-sequence-tab { font-size: 12px; font-weight: 600; }
+    .lini-scope-595b84af .lini-sequence-guard { font-size: 11px; font-weight: normal; }
+    .lini-scope-595b84af .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-595b84af .lini-note { fill: white; stroke: #444; }
+    .lini-scope-595b84af .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-595b84af .lini-link-dashed { stroke-dasharray: 7,5.5; }
+    .lini-scope-595b84af .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; font-size: 13px; font-weight: normal; }
+    .lini-scope-595b84af .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>
@@ -78,7 +77,7 @@ input_file: samples/sequence.lini
   </defs>
   <rect class="lini-canvas" x="-278.9935" y="-252.5" width="557.987" height="505"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #443394; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(52.91,92.5)">
+    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #443394; stroke-width: 1; stroke-dasharray: 5,4" transform="translate(52.91,92.5)">
       <rect x="-158.54" y="-43.5" width="317.08" height="87" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
