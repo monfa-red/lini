@@ -642,7 +642,7 @@ input_file: samples/schematic_parts.lini
     <g class="lini-node lini-opamp lini-component lini-block" data-id="U1" transform="translate(80,-40)">
       <rect x="-40.75" y="-40.75" width="81.5" height="81.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-line lini-path" transform="translate(-32,-32)">
-        <path d="M 0 0 M 64 64 M 12 0 L 60 32 L 12 64 Z M 0 12 L 12 12 M 0 52 L 12 52 M 60 32 L 64 32 M 17 12 L 25 12 M 21 8 L 21 16 M 17 52 L 25 52"/>
+        <path d="M 0 0 M 64 64 M 12 4 L 60 32 L 12 60 Z M 0 12 L 12 12 M 0 52 L 12 52 M 60 32 L 64 32 M 17 17 L 25 17 M 21 13 L 21 21 M 17 47 L 25 47"/>
       </g>
       <g class="lini-node lini-part-value lini-block" transform="translate(0,54.75)">
         <rect x="-23.838" y="-6" width="47.676" height="12" rx="0" ry="0"/>

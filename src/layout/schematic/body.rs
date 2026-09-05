@@ -38,9 +38,21 @@ pub(super) fn recentre(children: &mut [PlacedNode]) -> Result<(), Error> {
                 });
             (lo <= hi).then_some((lo + hi) / 2.0)
         };
+        // …and only along an axis whose two edges carry no pins: a top or
+        // bottom rail's stubs leave the very edge they stand on, so a body
+        // with one keeps its height where it is, and re-centres only across.
+        let edged = |rows: bool| {
+            terms
+                .iter()
+                .any(|t| t.facing.is_some_and(|f| f.is_vertical() != rows))
+        };
         let (cx, cy) = node.bbox.center();
-        let dx = middle(false).map_or(0.0, |m| m - cx);
-        let dy = middle(true).map_or(0.0, |m| m - cy);
+        let dx = middle(false)
+            .filter(|_| !edged(false))
+            .map_or(0.0, |m| m - cx);
+        let dy = middle(true)
+            .filter(|_| !edged(true))
+            .map_or(0.0, |m| m - cy);
         if dx.abs() <= EPS && dy.abs() <= EPS {
             continue;
         }

@@ -146,7 +146,7 @@
     |component#U3| "STM32G031K8T6" [
       |pin#VDD| { side: left; number: 3; }
       |pin#BOOT0| "PB8/BOOT0" { side: left; number: 31; }
-      |pin#VSS| { side: bottom; number: 4; }
+      |pin#GND| { side: bottom; number: 4; }
       |pin#PA1| "PA1/DE" { side: right; number: 7; }
       |pin#PA2| "PA2/TX" { side: right; number: 8; }
       |pin#PA3| "PA3/RX" { side: right; number: 9; }
@@ -176,7 +176,7 @@
     U3.VDD - |v3|
     U3.VDD - C6 - |gnd|
     U3.BOOT0 - R7 - |gnd|
-    U3.VSS - |gnd|
+    U3.GND - |gnd|
     U3.NRST - C7 - |gnd|
     U3.NRST - SW1 - |gnd|
     U3.PA5 - R8 - |gnd|
