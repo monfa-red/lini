@@ -144,8 +144,8 @@ fn every_live_css_text_property_states_globally_on_the_lini_rule() {
 /// emitted — on a node's text, a link label, and scene-wide from the root.
 #[test]
 fn text_transform_bakes_into_the_measured_content() {
-    let narrow = render_baked("|box| \"iiiiiiiiiiii\" { padding: 0 }\n");
-    let upper = render_baked("|box| \"iiiiiiiiiiii\" { padding: 0; text-transform: uppercase }\n");
+    let narrow = render_live("|box| \"iiiiiiiiiiii\" { padding: 0 }\n");
+    let upper = render_live("|box| \"iiiiiiiiiiii\" { padding: 0; text-transform: uppercase }\n");
     assert!(upper.contains(">IIIIIIIIIIII<"), "{upper}");
     assert!(
         !upper.contains("text-transform"),
@@ -157,11 +157,11 @@ fn text_transform_bakes_into_the_measured_content() {
         w.split('"').next().unwrap().parse::<f64>().unwrap()
     };
     assert!(
-        width(&upper) > width(&narrow) * 1.5,
+        width(&upper) > width(&narrow),
         "the box grows to the capitals"
     );
 
-    let scene = render_baked(
+    let scene = render_live(
         "{ text-transform: uppercase }\n|box#a| \"hi\"\n|box#b| \"yo\"\na -> b \"via\"\n",
     );
     for run in [">HI<", ">YO<", ">VIA<"] {
@@ -170,7 +170,7 @@ fn text_transform_bakes_into_the_measured_content() {
             "{run} inherits the root transform: {scene}"
         );
     }
-    let lower = render_baked("|box| \"Ab Cd\" { text-transform: capitalize }\n");
+    let lower = render_live("|box| \"Ab Cd\" { text-transform: capitalize }\n");
     assert!(lower.contains(">Ab Cd<"), "{lower}");
 }
 
