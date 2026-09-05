@@ -2,9 +2,11 @@
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/logo/lini.svg" alt="Lini" width="256">
 </p>
 
-<p align="center"><strong>From a mindmap to a blueprint.</strong></p>
+<p align="center"><strong>From mindmap to blueprint.</strong></p>
 
 <p align="center">One small language for every kind of figure — pretty by default, precise when it has to be.</p>
+
+<p align="center"><a href="https://lini.rs">lini.rs</a> — the tour, the reference, a playground in the browser, and the gallery.</p>
 
 <p align="center">
   <a href="https://crates.io/crates/lini"><img src="https://img.shields.io/crates/v/lini.svg" alt="crates.io"></a>
@@ -382,9 +384,11 @@ A CI drift test regenerates all three grammars and asserts byte-equality, and ho
 
 ## Status
 
-**1.0 release candidate.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen: syntax, property names, value shapes, defaults, diagnostic codes, and the theming surface (`--lini-*` vars, `.lini-*` classes, SVG structure) remain compatible throughout 1.x, with new capabilities added without breaking existing diagrams.
+**1.0.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen: syntax, property names, value shapes, defaults, diagnostic codes, and the theming surface (`--lini-*` vars, `.lini-*` classes, SVG structure) remain compatible throughout 1.x, with new capabilities added without breaking existing diagrams.
 
 Every layout lowers to the same primitives, so theming, baking, and diffing work everywhere. The formatter, dev server, schema, and structured diagnostics ship in the one binary.
+
+Around it: [lini.rs](https://lini.rs) is the site — a fourteen-page tour, the reference split from `SPEC.md`, and the compiler running in the browser at [lini.rs/play](https://lini.rs/play/). [mdbook-lini](https://github.com/monfa-red/mdbook-lini) puts ` ```lini ` fences in an mdbook, and [mdbook-ramjet](https://github.com/monfa-red/mdbook-ramjet) is the theme those books, and lini.rs's own, are set in.
 
 ---
 
