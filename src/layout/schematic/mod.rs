@@ -20,6 +20,7 @@ use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst};
 use crate::span::Span;
 
+mod body;
 mod field;
 mod hints;
 mod junction;
@@ -127,9 +128,11 @@ fn arrange(
     for c in inst_children {
         children.push(layout_inst(c, &child_path(path, c), program, Ctx::sheet())?);
     }
-    // A run stood on end reads along itself [SPEC 16.4] — re-boxed here, before
-    // the field reads any box.
+    // A run stood on end reads along itself [SPEC 16.4], and a component's
+    // outline centres on its pins [SPEC 16.2] — both re-boxed here, before the
+    // field reads any box.
     net::turn_runs(&mut children)?;
+    body::recentre(&mut children)?;
     // The scope's own wires — what the seat pass reads a satellite's chain
     // off [SPEC 16.1]; the engine only *reads* them, the router still draws
     // every one [SPEC 16.7].

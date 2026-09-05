@@ -281,6 +281,38 @@ fn a_components_pins_stand_a_whole_pitch_from_its_centre() {
     }
 }
 
+#[test]
+fn a_bodys_outline_centres_on_its_pins() {
+    // [SPEC 16.2] an even rail reserves a slot at its far end so its pins stay
+    // on the lattice; the outline re-centres on the pins, so the slot shows
+    // at neither end — a two-pin header reads even, top and bottom — and the
+    // readouts ride the box that moved.
+    let nodes = laid(&scope("", "  |J#j1| \"JST XH\" { pins: 2; cell: 1 1 }\n"));
+    let (j, jx, jy) = placed(&nodes, "j1");
+    let (_, _, p1) = placed(&nodes, "p1");
+    let (_, _, p2) = placed(&nodes, "p2");
+    let (top, bottom) = (jy + j.bbox.min_y, jy + j.bbox.max_y);
+    let (above, below) = (p1.min(p2) - top, bottom - p1.max(p2));
+    assert!(
+        close(above, below),
+        "even margins: {above} above, {below} below"
+    );
+    assert!(
+        on_fine_grid(p1) && on_fine_grid(p2),
+        "pins on the lattice: {p1} {p2}"
+    );
+    let ref_box = j
+        .children
+        .iter()
+        .find(|c| c.type_chain.iter().any(|t| t == "ref"))
+        .map(|c| c.bbox.shifted(jx + c.cx, jy + c.cy))
+        .expect("the ref readout");
+    assert!(
+        ref_box.max_y <= top + 1e-9,
+        "the ref clears the top it rides: {ref_box:?} vs {top}"
+    );
+}
+
 // ───────────────────────── roles ─────────────────────────
 
 #[test]
@@ -311,11 +343,9 @@ fn an_anonymous_parts_pins_still_count() {
     let nodes = laid(&scope("", &(anchor("u1", "") + "  |Q|\n  |R| \"1k\"\n")));
     let (s, _, _) = placed(&nodes, "s");
     // Anonymous, so measured off the scope's own children: each part's own
-    // centre, which is what lands on a track's line [SPEC 16.1].
-    let [u1, q, r] = [0, 1, 2].map(|i| {
-        let c = &s.children[i];
-        c.cy + c.bbox.center().1
-    });
+    // origin, which is what lands on a track's line [SPEC 16.1] — a body's
+    // outline may sit half a pitch off it [SPEC 16.2].
+    let [u1, q, r] = [0, 1, 2].map(|i| s.children[i].cy);
     assert!(close(u1, q), "the 3-pin |Q| rides the track row: {u1} {q}");
     assert!(r > q, "the 2-pin |R| seats below: {r} vs {q}");
 }

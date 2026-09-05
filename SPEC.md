@@ -3689,9 +3689,12 @@ the corridor the wire that needs it runs in
 A component's pin rails seat so its pins land on **fine** lattice
 lines, whatever their count: a rail of an **even** count straddles its own
 middle, so it reserves the odd slot it is short of, and a part carrying only one
-of the two horizontal rails reserves the other, so its side pins ride the body's
-own centre line. A pin off the lattice cannot be aligned to a neighbour's
-([16.1](#161-placement--the-lattice)), and the wire between them jogs.
+of the two horizontal rails reserves the other, so its side pins keep the
+origin's line. The outline then re-centres on the pins, so a reserved slot shows
+at neither end and the origin — the lattice point the pins count from — may sit
+half a pitch off the box's middle. A pin off the lattice cannot be aligned to a
+neighbour's ([16.1](#161-placement--the-lattice)), and the wire between them
+jogs.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins

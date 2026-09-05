@@ -166,12 +166,15 @@ fn emit_rect(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
         return;
     }
     let radius = n.attrs.number("radius").unwrap_or(0.0);
+    // The box as laid out — its own corner, not a corner assumed about the
+    // origin: a schematic body re-centres its outline on its pins and leaves
+    // its origin off the box's middle [SPEC 16.2].
     writeln!(
         out,
         r#"{}<rect x="{}" y="{}" width="{}" height="{}" rx="{}" ry="{}"/>"#,
         indent,
-        num(-w / 2.0),
-        num(-h / 2.0),
+        num(n.bbox.min_x + thickness / 2.0),
+        num(n.bbox.min_y + thickness / 2.0),
         num(w),
         num(h),
         num(radius),
