@@ -10,7 +10,7 @@ use crate::math;
 
 mod rotate;
 
-pub(crate) use rotate::{point, rotated};
+pub(crate) use rotate::{mirror_point, mirrored, point, rotated};
 
 type P = (f64, f64);
 

@@ -150,6 +150,42 @@ fn a_schematic_scopes_label_lowers_to_a_sheet_caption() {
 }
 
 #[test]
+fn a_mirror_flips_a_part_about_its_own_axis_before_the_turn() {
+    // [SPEC 16.1] `mirror: y-axis` re-sides a connector's column with its
+    // order kept — pin 1 still on top — where `rotate: 180` reverses it; a
+    // symbol's ports take the same map, and the flip leaves its class behind.
+    let mirrored = desugar_source("|J#J| { pins: 3; mirror: y-axis }\n").unwrap();
+    let turned = desugar_source("|J#J| { pins: 3; rotate: 180 }\n").unwrap();
+    let sides = |out: &str| pin_sides(out);
+    assert_eq!(
+        sides(&mirrored),
+        [("p1", "right"), ("p2", "right"), ("p3", "right")].map(|(a, b)| (a.into(), b.into())),
+        "{mirrored}"
+    );
+    assert_eq!(
+        sides(&turned),
+        [("p3", "right"), ("p2", "right"), ("p1", "right")].map(|(a, b)| (a.into(), b.into())),
+        "{turned}"
+    );
+    assert!(
+        mirrored.contains(".lini-mirror-y") && !mirrored.contains("mirror: y-axis"),
+        "{mirrored}"
+    );
+    // An npn's collector swaps rows in an x mirror: (56, 4) → (56, 44).
+    let q = desugar_source("|Q#Q| { mirror: x-axis }\n").unwrap();
+    assert!(
+        q.contains("|block#c| .lini-block { pin: center; translate: 28 20; }"),
+        "{q}"
+    );
+    assert!(
+        q.contains("|block#e| .lini-block { pin: center; translate: 28 -20; }"),
+        "{q}"
+    );
+    let err = desugar_source("|R#r1| { mirror: 45 }\n").expect_err("no such axis");
+    assert!(err.to_string().contains("x-axis, y-axis, or none"), "{err}");
+}
+
+#[test]
 fn desugar_is_idempotent() {
     let src = "|group#g| [\n  |caption| \"T\"\n  |box#a|\n]\nx -> y \"w\"\n";
     let once = desugar_source(src).unwrap();

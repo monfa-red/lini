@@ -71,25 +71,25 @@
             <text class="lini-text" x="0" y="0" dy="0.358em">Q1</text>
           </g>
         </g>
-        <g class="lini-node lini-J lini-component lini-pose-180 lini-block" data-id="J1" transform="translate(-280,-40)">
+        <g class="lini-node lini-J lini-component lini-mirror-y lini-block" data-id="J1" transform="translate(-280,-40)">
           <rect x="-8" y="-48" width="16" height="76" rx="0" ry="0"/>
           <g class="lini-node lini-column lini-block" transform="translate(0,0)">
-            <g class="lini-node lini-pin lini-block" data-id="p2" transform="translate(0,-20)">
-              <g class="lini-node lini-pin-stub lini-line" transform="translate(7.25,0)">
-                <line x1="0" y1="0" x2="20" y2="0"/>
-              </g>
-              <g class="lini-node lini-pin-number lini-block" transform="translate(18,-9)">
-                <rect x="-10" y="-5" width="20" height="10" rx="0" ry="0"/>
-                <text class="lini-text" x="0" y="0" dy="0.358em">2</text>
-              </g>
-            </g>
-            <g class="lini-node lini-pin lini-block" data-id="p1" transform="translate(0,0)">
+            <g class="lini-node lini-pin lini-block" data-id="p1" transform="translate(0,-20)">
               <g class="lini-node lini-pin-stub lini-line" transform="translate(7.25,0)">
                 <line x1="0" y1="0" x2="20" y2="0"/>
               </g>
               <g class="lini-node lini-pin-number lini-block" transform="translate(18,-9)">
                 <rect x="-10" y="-5" width="20" height="10" rx="0" ry="0"/>
                 <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
+              </g>
+            </g>
+            <g class="lini-node lini-pin lini-block" data-id="p2" transform="translate(0,0)">
+              <g class="lini-node lini-pin-stub lini-line" transform="translate(7.25,0)">
+                <line x1="0" y1="0" x2="20" y2="0"/>
+              </g>
+              <g class="lini-node lini-pin-number lini-block" transform="translate(18,-9)">
+                <rect x="-10" y="-5" width="20" height="10" rx="0" ry="0"/>
+                <text class="lini-text" x="0" y="0" dy="0.358em">2</text>
               </g>
             </g>
           </g>
@@ -1920,13 +1920,13 @@
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link lini-schematic-wire" data-from="entry.J1.p2" data-to="entry.F1.p1">
+    <g class="lini-link lini-schematic-wire" data-from="entry.J1.p1" data-to="entry.F1.p1">
       <path d="M -976.75 -554 L -896 -554"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.F1.p2" data-to="entry.Q1.s">
       <path d="M -832 -554 L -592 -554"/>
     </g>
-    <g class="lini-link lini-schematic-wire" data-from="entry.J1.p1" data-to="entry.lini-cap-1">
+    <g class="lini-link lini-schematic-wire" data-from="entry.J1.p2" data-to="entry.lini-cap-1">
       <path d="M -976.75 -534 L -944 -534 L -944 -454"/>
     </g>
     <g class="lini-link lini-schematic-wire" data-from="entry.Q1.s" data-to="entry.D1.k">

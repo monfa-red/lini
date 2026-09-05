@@ -1,9 +1,10 @@
-//! Quarter turns of path data — the geometry side of a schematic part's pose
-//! [SPEC 16.1]: a rotated part is **re-laid**, not paint-transformed, so its
-//! symbol's `d` is rewritten here and its ports move by the same [`point`] map.
-//! Turns are exact (no trigonometry): a quarter turn only swaps and negates
-//! coordinates, so a glyph's round numbers stay round and four turns are the
-//! identity.
+//! Quarter turns — and mirrors — of path data: the geometry side of a
+//! schematic part's pose [SPEC 16.1]. A posed part is **re-laid**, not
+//! paint-transformed, so its symbol's `d` is rewritten here and its ports
+//! move by the same [`point`] / [`mirror_point`] map. Both are exact (no
+//! trigonometry): a quarter turn only swaps and negates coordinates, a mirror
+//! only negates one, so a glyph's round numbers stay round, four turns are the
+//! identity and so are two mirrors.
 
 use super::{P, Scanner};
 use crate::render::values::num;
@@ -21,19 +22,38 @@ pub(crate) fn point(p: P, quarters: u8, w: f64, h: f64) -> P {
     }
 }
 
-/// `d` turned `quarters` clockwise quarter turns in the `w` × `h` box, in the
-/// same frame [`point`] uses. The result is absolute and canonical — `H`/`V`
-/// become `L`, a `M`'s trailing pairs become explicit `L`s — because a turn
-/// takes a horizontal run to a vertical one; every other command keeps its
-/// letter (`S`/`T`'s implied control reflects about the current point, which
-/// commutes with rotation, and an arc's sweep survives a rotation, only its
-/// x-axis angle turning with the rest).
+/// `p` reflected in the `w` × `h` box: about its vertical middle (`across_y`
+/// — left ↔ right) or its horizontal one (top ↔ bottom). The box stays
+/// anchored at the origin, as [`point`] keeps it.
+pub(crate) fn mirror_point(p: P, across_y: bool, w: f64, h: f64) -> P {
+    if across_y {
+        (w - p.0, p.1)
+    } else {
+        (p.0, h - p.1)
+    }
+}
+
+/// `d` reflected as [`mirror_point`] reflects a point. An arc's sweep turns
+/// the other way in a mirror, and its x-axis angle reflects with it.
+pub(crate) fn mirrored(d: &str, across_y: bool, w: f64, h: f64) -> String {
+    transformed(d, &|p| mirror_point(p, across_y, w, h), &|rot, sweep| {
+        ((-rot).rem_euclid(360.0), !sweep)
+    })
+}
+
 pub(crate) fn rotated(d: &str, quarters: u8, w: f64, h: f64) -> String {
     let q = quarters % 4;
     if q == 0 {
         return d.to_string();
     }
-    let m = |p: P| point(p, q, w, h);
+    transformed(d, &|p| point(p, q, w, h), &|rot, sweep| {
+        ((rot + 90.0 * q as f64).rem_euclid(360.0), sweep)
+    })
+}
+
+/// `d` with every point through `m` and every arc's `(x-axis angle, sweep)`
+/// through `arc` — the one walk a turn and a mirror share.
+fn transformed(d: &str, m: &dyn Fn(P) -> P, arc: &dyn Fn(f64, bool) -> (f64, bool)) -> String {
     let mut s = Scanner::new(d);
     let mut out = String::new();
     let (mut cx, mut cy) = (0.0, 0.0); // current point
@@ -97,13 +117,14 @@ pub(crate) fn rotated(d: &str, quarters: u8, w: f64, h: f64) -> String {
             b'A' => {
                 while let Some(a) = s.arc(rel, cx, cy) {
                     let end = m(a.end);
+                    let (rot, sweep) = arc(a.rot, a.sweep);
                     out.push_str(&format!(
                         " A {} {} {} {} {} {} {}",
                         num(a.rx),
                         num(a.ry),
-                        num((a.rot + 90.0 * q as f64).rem_euclid(360.0)),
+                        num(rot),
                         u8::from(a.large),
-                        u8::from(a.sweep),
+                        u8::from(sweep),
                         num(end.0),
                         num(end.1),
                     ));
@@ -163,6 +184,53 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn a_mirror_maps_every_point_by_the_same_map_and_undoes_itself() {
+        // The mirror's twin of the turn's law: one map for the `d` and the
+        // ports, and two mirrors the identity.
+        for name in crate::glyph::names() {
+            let g = crate::glyph::lookup(name).expect(name);
+            for (_, frag) in g.frags {
+                let d = frag
+                    .strip_prefix(r#"<path d=""#)
+                    .and_then(|f| f.strip_suffix(r#""/>"#))
+                    .expect("one <path d=…/>");
+                let src = extent_points(d);
+                for across_y in [true, false] {
+                    let once = mirrored(d, across_y, g.width, g.height);
+                    let got = extent_points(&once);
+                    assert_eq!(got.len(), src.len(), "{name}: command stream kept");
+                    for (a, b) in got.iter().zip(
+                        src.iter()
+                            .map(|p| mirror_point(*p, across_y, g.width, g.height)),
+                    ) {
+                        assert!(
+                            (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6,
+                            "{name}: {a:?} vs {b:?}"
+                        );
+                    }
+                    let twice = extent_points(&mirrored(&once, across_y, g.width, g.height));
+                    for (a, b) in twice.iter().zip(&src) {
+                        assert!(
+                            (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6,
+                            "{name}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_mirrored_arc_sweeps_the_other_way() {
+        // A half circle drawn clockwise reads counter-clockwise in a mirror,
+        // and its x-axis angle reflects with it.
+        assert_eq!(
+            mirrored("M 0 10 A 10 10 30 0 1 20 10", true, 20.0, 20.0),
+            "M 20 10 A 10 10 330 0 0 0 10"
+        );
     }
 
     #[test]

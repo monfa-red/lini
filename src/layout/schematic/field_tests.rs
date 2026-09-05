@@ -134,6 +134,32 @@ fn a_forced_up_chain_shares_its_pins_lane_with_the_down_chain() {
 }
 
 #[test]
+fn an_authored_mirror_rides_the_pose_the_chooser_picks() {
+    // [SPEC 16.1] a flip is never chosen: the chooser turns the part to face
+    // its wire and the authored `mirror:` rides along — so a mirrored
+    // resistor in a down-chain still presents `p1` up the ray.
+    let nodes = laid(&scope(
+        "",
+        &(sided("u1") + "  |R#r1| \"1k\" { mirror: x-axis }\n  |gnd#g1|\n  u1.a - r1 - g1\n"),
+    ));
+    let (r, _, _) = placed(&nodes, "r1");
+    assert!(
+        r.type_chain.iter().any(|t| t == "mirror-x"),
+        "the flip stays"
+    );
+    assert_eq!(
+        pose_of(&nodes, "r1"),
+        90,
+        "and the turn is chosen around it"
+    );
+    let ((_, uy), (_, ry), (_, gy)) = (at(&nodes, "u1"), at(&nodes, "r1"), at(&nodes, "g1"));
+    assert!(
+        uy < ry && ry < gy,
+        "the chain still grows down: {uy} {ry} {gy}"
+    );
+}
+
+#[test]
 fn a_chain_grows_link_by_link() {
     // Each link takes the next slot along the same ray, in wire order: the
     // grounded chain runs **down** past the pin it leaves, the resistor above

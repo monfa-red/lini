@@ -576,8 +576,10 @@ Discretes with generated pins: `|R| |C| |L| |D| |LED| |Q| |Y| |F| |FB| |SW|
 (`#R5` reads R5); anonymous parts auto-number (display only — give an id to
 wire it). `rotate:` is 90°-step: a satellite auto-poses to face its wire, and
 a forced turn also sets which way its chain grows (`|R| { rotate: 270 }` off a
-side pin stands the chain **up**); text stays upright, bar a net name, which
-reads along a vertical trace. The classic look (green
+side pin stands the chain **up**); `mirror: x-axis | y-axis` flips a part about
+its own axis before the turn (a `|J|` facing right with pin 1 still on top, a
+transistor's collector on the other side); text stays upright, bar a net name,
+which reads along a vertical trace. The classic look (green
 wires, yellow bodies, beige sheet) is automatic.
 
 ## Making it beautiful

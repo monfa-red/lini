@@ -57,10 +57,11 @@
     // — read at lowering, every text upright [SPEC 16.1] — so the 24 V path
     // runs straight through instead of orbiting the body.
     |Q#Q1| "AOD4185" { symbol: pfet; cell: 2 1; rotate: 180; }
-    // `pins: N` gives a connector one column of pins, facing left; the terminal
-    // block sits at the sheet's edge, so it is turned to face its circuit —
-    // `rotate: 180` re-sides the whole column [SPEC 16.1/16.2].
-    |J#J1| "JST XH" { pins: 2; cell: 1 1; rotate: 180; }
+    // `pins: N` gives a connector one column of pins, facing left; the header
+    // sits at the sheet's edge, so it is flipped to face its circuit —
+    // `mirror: y-axis` re-sides the column with pin 1 still on top, where
+    // `rotate: 180` would put it at the bottom [SPEC 16.1/16.2].
+    |J#J1| "JST XH" { pins: 2; cell: 1 1; mirror: y-axis; }
     |F#F1| "2A"
     |D#D1| "SMAJ24A" { symbol: tvs; }
     |R#R1| "100k"
@@ -72,8 +73,8 @@
     // the line joining the two pins. The feed rides the block's **top** screw
     // and the two returns the ones below it, so the returns drop straight to
     // their studs instead of crossing back over the line they came in beside.
-    J1.p2 - F1 - Q1.s
-    J1.p1 - |gnd|
+    J1.p1 - F1 - Q1.s
+    J1.p2 - |gnd|
     // Everything the fused rail carries hangs under the one straight bus: the
     // indicator sits **after** the fuse, so a lit LED says the fuse is good.
     // Cathode first — polarity in a wire is a pin path [SPEC 16.3].

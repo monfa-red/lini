@@ -670,6 +670,38 @@ input_file: samples/schematic_parts.lini
         </g>
       </g>
     </g>
+    <g class="lini-node lini-Q lini-mirror-x lini-block" data-id="Q5" transform="translate(180,-40)">
+      <rect x="-28.75" y="-24.75" width="57.5" height="49.5" rx="0" ry="0"/>
+      <g class="lini-node lini-sch-line lini-path" transform="translate(-28,-24)">
+        <path d="M 0 48 M 56 0 M 10 24 A 20 20 0 1 0 50 24 A 20 20 0 1 0 10 24 M 0 24 L 24 24 M 24 28 L 40 44 L 56 44 M 24 20 L 40 4 L 56 4"/>
+      </g>
+      <g class="lini-node lini-sch-solid lini-path" transform="translate(-28,-24)">
+        <path d="M 0 48 M 56 0 M 22.5 32 L 25.5 32 L 25.5 16 L 22.5 16 Z M 36.02 7.98 L 31.92 16.6 L 27.4 12.08 Z"/>
+      </g>
+      <g class="lini-node lini-part-value lini-block" transform="translate(0,38.75)">
+        <rect x="-18.51" y="-6" width="37.02" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1500-27" transform="translate(-18.51 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-28" transform="translate(-11.07 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1660" transform="translate(-2.19 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1656" transform="translate(4.734 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1500-1659" transform="translate(12.018 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+      <g class="lini-node lini-block" data-id="b" transform="translate(-28,0)">
+      </g>
+      <g class="lini-node lini-block" data-id="c" transform="translate(28,20)">
+      </g>
+      <g class="lini-node lini-block" data-id="e" transform="translate(28,-20)">
+      </g>
+      <g class="lini-node lini-ref lini-block" transform="translate(0,-38.75)">
+        <rect x="-8.43" y="-6" width="16.86" height="12" rx="0" ry="0"/>
+        <g class="lini-text">
+          <use href="#lini-g1600-121" transform="translate(-8.43 4.296) scale(0.012 -0.012)"/>
+          <use href="#lini-g1600-1657" transform="translate(1.578 4.296) scale(0.012 -0.012)"/>
+        </g>
+      </g>
+    </g>
     <g class="lini-node lini-head lini-block" transform="translate(-440,80)">
       <rect x="-66.2855" y="-6.5" width="132.571" height="13" rx="0" ry="0"/>
       <g class="lini-text">

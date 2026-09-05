@@ -41,7 +41,7 @@
 //! terminal with no facing at all (a symbol-less `|label|`).
 
 use super::Lower;
-use super::pose::{self, Pose, Side};
+use super::pose::{self, Flip, Pose, Side};
 use super::schematic::{
     self, Role, SchKind,
     chain::{End, holder, placed_ends},
@@ -88,10 +88,13 @@ impl<'a> Part<'a> {
         let symbol = cx.chain_ident(&chain, &node.style, "symbol");
         let shape = cx.chain_ident(&chain, &node.style, "shape");
         let has = |name: &str| cx.chain_decl(&chain, &node.style, name).is_some();
+        // The authored turn, and the authored flip riding it: a `mirror:`
+        // is never chosen here, so it rides every candidate the chooser tries.
         let pose = cx
             .chain_number(&chain, &node.style, "rotate")
             .and_then(|deg| Pose::from_degrees(deg, node.span).ok())
-            .unwrap_or(Pose::NONE);
+            .unwrap_or(Pose::NONE)
+            .flipped(Pose::flip_of(cx, &chain, &node.style, node.span).unwrap_or(Flip::None));
         // The one authored pin reader — the same list the landings resolve
         // against, so a part's arity is one answer at this stage too.
         let pins = schematic::authored_terminal_ids(cx, node, &chain).len();
@@ -206,7 +209,8 @@ pub(super) fn choose<'a>(
                     let Some(base) = part.terminal_side(cx, inbound.as_deref()) else {
                         continue;
                     };
-                    if let Some(pose) = Pose::ALL.into_iter().find(|p| p.side(base) == want) {
+                    let candidates = Pose::ALL.map(|p| p.flipped(part.pose.flip()));
+                    if let Some(pose) = candidates.into_iter().find(|p| p.side(base) == want) {
                         decided.push((member, pose));
                     }
                 }
@@ -286,7 +290,8 @@ pub(super) fn choose<'a>(
             } else {
                 ray.opposite()
             };
-            if let Some(pose) = Pose::ALL.into_iter().find(|p| p.side(side) == want) {
+            let candidates = Pose::ALL.map(|p| p.flipped(part.pose.flip()));
+            if let Some(pose) = candidates.into_iter().find(|p| p.side(side) == want) {
                 decided.push((member, pose));
             }
         }

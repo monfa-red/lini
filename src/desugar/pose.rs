@@ -1,14 +1,17 @@
-//! A schematic part's **pose** [SPEC 16.1]: `rotate:` in 90° steps, read at
-//! lowering. A part carries connection geometry — pins on a component, glyph
-//! ports on a symbol, one connection point on a label — so a turn is
-//! **structural**: pins re-side, the symbol's `d` and its ports re-lay, and
-//! every text (pin names and numbers, ref, value, net text) stays upright,
-//! because nothing here is a paint transform. Any other angle is an error.
+//! A schematic part's **pose** [SPEC 16.1]: `rotate:` in 90° steps and a
+//! `mirror:` about the part's own axis, read at lowering. A part carries
+//! connection geometry — pins on a component, glyph ports on a symbol, one
+//! connection point on a label — so a turn or a flip is **structural**: pins
+//! re-side, the symbol's `d` and its ports re-lay, and every text (pin names
+//! and numbers, ref, value, net text) stays upright, because nothing here is
+//! a paint transform. The flip comes first, the turn after. Any other angle,
+//! or any other axis, is an error.
 //!
-//! The pose is consumed at lowering and left behind as a generated class
-//! (`lini-pose-90`), exactly as the family is [SPEC 16.7] — so the engine
-//! reads a part's pose back off its chain (a label's connection point is the
-//! registry's, turned by this) while `rotate:` never reaches the renderer.
+//! The pose is consumed at lowering and left behind as generated classes
+//! (`lini-pose-90`, `lini-mirror-y`), exactly as the family is [SPEC 16.7] —
+//! so the engine reads a part's pose back off its chain (a label's connection
+//! point is the registry's, posed by this) while neither property reaches
+//! the renderer.
 
 use super::Lower;
 use crate::error::{Code, Error};
@@ -64,7 +67,7 @@ impl Side {
 
     /// The side across the box — a half turn, so there is no second table.
     pub(crate) fn opposite(self) -> Side {
-        Pose(2).side(self)
+        Pose::turns(2).side(self)
     }
 
     /// The side's **outward unit normal** in scene coordinates (`y` grows
@@ -95,27 +98,107 @@ impl From<Side> for crate::ast::Side {
     }
 }
 
-/// A part's pose: clockwise quarter turns, `0..4`.
+/// A part's **flip** [SPEC 16.1]: `mirror:` about one of its own axes,
+/// named as the pen names them ([SPEC 15.3](crate::layout::drawing)) — the
+/// `x-axis` runs left to right, so mirroring about it swaps top and bottom.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub(crate) enum Flip {
+    #[default]
+    None,
+    /// About the horizontal axis: top ↔ bottom.
+    X,
+    /// About the vertical axis: left ↔ right.
+    Y,
+}
+
+impl Flip {
+    pub(crate) fn parse(s: &str) -> Option<Flip> {
+        match s {
+            "none" => Some(Flip::None),
+            "x-axis" => Some(Flip::X),
+            "y-axis" => Some(Flip::Y),
+            _ => None,
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Flip::None => "none",
+            Flip::X => "x",
+            Flip::Y => "y",
+        }
+    }
+
+    /// The side `side` lands on in the mirror.
+    fn side(self, side: Side) -> Side {
+        match (self, side) {
+            (Flip::X, Side::Top) => Side::Bottom,
+            (Flip::X, Side::Bottom) => Side::Top,
+            (Flip::Y, Side::Left) => Side::Right,
+            (Flip::Y, Side::Right) => Side::Left,
+            _ => side,
+        }
+    }
+
+    /// A free vector in the mirror.
+    fn vector(self, v: (f64, f64)) -> (f64, f64) {
+        match self {
+            Flip::None => v,
+            Flip::X => (v.0, -v.1),
+            Flip::Y => (-v.0, v.1),
+        }
+    }
+}
+
+/// A part's pose: a flip about its own axis, then clockwise quarter turns,
+/// `0..4`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(crate) struct Pose(u8);
+pub(crate) struct Pose {
+    turns: u8,
+    flip: Flip,
+}
 
 impl Pose {
-    pub(crate) const NONE: Pose = Pose(0);
+    pub(crate) const NONE: Pose = Pose::turns(0);
 
-    /// The four poses **in tie-break order** — the unrotated one, then
-    /// clockwise [SPEC 16.1]. [`super::autopose`] walks this and takes the
-    /// first pose that faces its anchor; the order *is* the tie-break, so
-    /// there is no second rule to remember.
-    pub(crate) const ALL: [Pose; 4] = [Pose(0), Pose(1), Pose(2), Pose(3)];
+    /// The four unflipped poses **in tie-break order** — the unrotated one,
+    /// then clockwise [SPEC 16.1]. [`super::autopose`] walks this and takes
+    /// the first pose that faces its anchor; the order *is* the tie-break, so
+    /// there is no second rule to remember. An authored flip rides every
+    /// candidate ([`Pose::flipped`]) — the chooser turns, it never mirrors.
+    pub(crate) const ALL: [Pose; 4] = [
+        Pose::turns(0),
+        Pose::turns(1),
+        Pose::turns(2),
+        Pose::turns(3),
+    ];
 
+    /// `q` clockwise quarter turns, no flip.
+    pub(crate) const fn turns(q: u8) -> Pose {
+        Pose {
+            turns: q % 4,
+            flip: Flip::None,
+        }
+    }
+
+    /// This pose's turns over `flip`.
+    pub(crate) fn flipped(self, flip: Flip) -> Pose {
+        Pose { flip, ..self }
+    }
+
+    pub(crate) fn flip(self) -> Flip {
+        self.flip
+    }
+
+    /// Whether the pose moves anything at all — a turn or a flip.
     pub(crate) fn is_turned(self) -> bool {
-        self.0 != 0
+        self != Pose::NONE
     }
 
     /// Whether this pose swaps the box's axes — a quarter or three-quarter
-    /// turn (a half turn keeps them).
+    /// turn (a half turn keeps them, and so does a flip).
     pub(crate) fn swaps_axes(self) -> bool {
-        self.0 % 2 == 1
+        self.turns % 2 == 1
     }
 
     /// The pose `deg` names — any multiple of 90, normalized clockwise.
@@ -128,38 +211,66 @@ impl Pose {
             )
             .code(Code::SCHEMATIC_POSE));
         }
-        Ok(Pose(quarters.rem_euclid(4.0) as u8))
+        Ok(Pose::turns(quarters.rem_euclid(4.0) as u8))
     }
 
-    /// The class a turned part wears, so the engine reads the pose back.
-    fn class(self) -> Option<String> {
-        (self.0 != 0).then(|| format!("lini-pose-{}", self.0 as u32 * 90))
+    /// The flip `mirror:` names on a part — `x-axis`, `y-axis`, or `none`.
+    pub(super) fn flip_of(
+        cx: &Lower,
+        chain: &[String],
+        style: &[Decl],
+        span: Span,
+    ) -> Result<Flip, Error> {
+        if cx.chain_decl(chain, style, "mirror").is_none() {
+            return Ok(Flip::None);
+        }
+        // Stated, then: an ident names an axis, anything else names none.
+        let name = cx.chain_ident(chain, style, "mirror").unwrap_or_default();
+        Flip::parse(&name).ok_or_else(|| {
+            Error::at(
+                span,
+                "a schematic part mirrors about its own axis — x-axis, y-axis, or none",
+            )
+            .code(Code::SCHEMATIC_POSE)
+        })
+    }
+
+    /// The classes a posed part wears, so the engine reads the pose back.
+    fn classes(self) -> impl Iterator<Item = String> {
+        let turn = (self.turns != 0).then(|| format!("lini-pose-{}", self.turns as u32 * 90));
+        let flip = (self.flip != Flip::None).then(|| format!("lini-mirror-{}", self.flip.as_str()));
+        turn.into_iter().chain(flip)
     }
 
     /// The degrees this pose is written as — what [`set_rotate`] authors.
     fn degrees(self) -> f64 {
-        self.0 as f64 * 90.0
+        self.turns as f64 * 90.0
     }
 
     /// The pose a lowered part wears — its `lini-*` classes with the prefix
     /// stripped, the same chain [`super::schematic::sch_kind`] reads. The
     /// engine's read-back: a label's connection point is the registry port
-    /// turned by this (a component's pins and a symbol's ports lower turned,
-    /// so they need no reader).
+    /// posed by this (a component's pins and a symbol's ports lower posed, so
+    /// they need no reader).
     pub(crate) fn of_chain<S: AsRef<str>>(chain: &[S]) -> Pose {
-        for q in 1..4u8 {
-            let name = format!("pose-{}", q as u32 * 90);
-            if chain.iter().any(|t| t.as_ref() == name) {
-                return Pose(q);
-            }
-        }
-        Pose::NONE
+        let wears = |name: &str| chain.iter().any(|t| t.as_ref() == name);
+        let turns = (1..4u8)
+            .find(|q| wears(&format!("pose-{}", *q as u32 * 90)))
+            .unwrap_or(0);
+        let flip = if wears("mirror-x") {
+            Flip::X
+        } else if wears("mirror-y") {
+            Flip::Y
+        } else {
+            Flip::None
+        };
+        Pose { turns, flip }
     }
 
-    /// The side a pin authored on `side` wears after the turn.
+    /// The side a pin authored on `side` wears after the flip and the turn.
     pub(crate) fn side(self, side: Side) -> Side {
-        let mut s = side;
-        for _ in 0..self.0 {
+        let mut s = self.flip.side(side);
+        for _ in 0..self.turns {
             // One clockwise quarter: the left edge swings up to the top.
             s = match s {
                 Side::Left => Side::Top,
@@ -173,30 +284,42 @@ impl Pose {
 
     /// Whether the pins of `side` read backwards on the side they land on —
     /// a rigid turn keeps their physical order, but a column reads
-    /// top-to-bottom and a row left-to-right, so half the landings reverse.
+    /// top-to-bottom and a row left-to-right, so half the landings reverse;
+    /// a mirror reverses the rails it runs across.
     pub(crate) fn flips(self, side: Side) -> bool {
-        let mut d = side.reading();
-        for _ in 0..self.0 {
+        let (x, y) = self
+            .flip
+            .vector((f64::from(side.reading().0), f64::from(side.reading().1)));
+        let mut d = (x as i8, y as i8);
+        for _ in 0..self.turns {
             d = (-d.1, d.0);
         }
         d != self.side(side).reading()
     }
 
-    /// A point of the `w` × `h` glyph box after the turn — the one map the
+    /// A point of the `w` × `h` glyph box after the pose — the one map the
     /// symbol's `d` and its ports both take.
     pub(crate) fn point(self, p: (f64, f64), w: f64, h: f64) -> (f64, f64) {
-        crate::path_data::point(p, self.0, w, h)
+        let p = match self.flip {
+            Flip::None => p,
+            flip => crate::path_data::mirror_point(p, flip == Flip::Y, w, h),
+        };
+        crate::path_data::point(p, self.turns, w, h)
     }
 
-    /// A free vector (a `translate:` nudge) after the turn — the same map with
-    /// no box to re-anchor it to.
+    /// A free vector (a `translate:` nudge) after the pose — the same map
+    /// with no box to re-anchor it to.
     pub(crate) fn vector(self, v: (f64, f64)) -> (f64, f64) {
-        crate::path_data::point(v, self.0, 0.0, 0.0)
+        crate::path_data::point(self.flip.vector(v), self.turns, 0.0, 0.0)
     }
 
     /// The glyph's `d`, re-laid.
     pub(crate) fn path(self, d: &str, w: f64, h: f64) -> String {
-        crate::path_data::rotated(d, self.0, w, h)
+        let d = match self.flip {
+            Flip::None => d.to_string(),
+            flip => crate::path_data::mirrored(d, flip == Flip::Y, w, h),
+        };
+        crate::path_data::rotated(&d, self.turns, w, h)
     }
 }
 
@@ -224,30 +347,38 @@ pub(crate) fn facing(p: (f64, f64), w: f64, h: f64) -> Option<Side> {
     }
 }
 
-/// Take the part's pose out of its style [SPEC 16.1]: read `rotate:` (the
-/// node's own, else its defines' / element rules'), then make sure nothing
-/// downstream paints it — the turn is structural, and a part's texts must
-/// stand upright. A pose read from the chain is neutralized with an explicit
-/// `rotate: 0`, which beats the class rule it came from.
+/// Take the part's pose out of its style [SPEC 16.1]: read `rotate:` and
+/// `mirror:` (the node's own, else its defines' / element rules'), then make
+/// sure nothing downstream paints either — the pose is structural, and a
+/// part's texts must stand upright. A pose read from the chain is neutralized
+/// with an explicit `rotate: 0` / `mirror: none`, which beats the class rule
+/// it came from.
 pub(super) fn take(
     cx: &Lower,
     chain: &[String],
     style: &mut Vec<Decl>,
     span: Span,
 ) -> Result<Pose, Error> {
-    let Some(deg) = cx.chain_number(chain, style, "rotate") else {
-        return Ok(Pose::NONE);
+    let turns = match cx.chain_number(chain, style, "rotate") {
+        Some(deg) => Pose::from_degrees(deg, span)?,
+        None => Pose::NONE,
     };
-    let pose = Pose::from_degrees(deg, span)?;
-    if pose.is_turned() {
+    let pose = turns.flipped(Pose::flip_of(cx, chain, style, span)?);
+    for (name, off) in [
+        ("rotate", Value::Number(0.0)),
+        ("mirror", Value::Ident("none".into())),
+    ] {
+        if cx.chain_decl(chain, style, name).is_none() {
+            continue;
+        }
         // A rule the instance can't delete needs cancelling, not dropping —
         // ask the chain alone, since the node's own decl is about to go.
-        let from_a_rule = cx.chain_decl(chain, &[], "rotate").is_some();
-        style.retain(|d| d.name != "rotate");
+        let from_a_rule = cx.chain_decl(chain, &[], name).is_some();
+        style.retain(|d| d.name != name);
         if from_a_rule {
             style.push(Decl {
-                name: "rotate".into(),
-                groups: vec![vec![Value::Number(0.0)]],
+                name: name.into(),
+                groups: vec![vec![off]],
                 span: Span::empty(),
             });
         }
@@ -255,9 +386,9 @@ pub(super) fn take(
     Ok(pose)
 }
 
-/// Leave the pose behind as a class, so the engine reads it back.
+/// Leave the pose behind as classes, so the engine reads it back.
 pub(super) fn mark(pose: Pose, classes: &mut Vec<String>) {
-    classes.extend(pose.class());
+    classes.extend(pose.classes());
 }
 
 /// Write a decided pose onto an **authored** part, before it lowers — as the
@@ -278,7 +409,7 @@ mod tests {
     use crate::syntax::ast::Child;
 
     fn pose(q: u8) -> Pose {
-        Pose(q)
+        Pose::turns(q)
     }
 
     #[test]
@@ -308,6 +439,40 @@ mod tests {
         // Three quarters is one quarter widdershins.
         assert!(!pose(3).flips(Side::Left));
         assert!(pose(3).flips(Side::Top));
+    }
+
+    #[test]
+    fn a_flip_comes_before_the_turn() {
+        // `mirror: y-axis` swaps left and right and keeps a column's order;
+        // a turn after it walks the mirrored sides.
+        let y = Pose::NONE.flipped(Flip::Y);
+        assert_eq!(y.side(Side::Left), Side::Right);
+        assert_eq!(y.side(Side::Top), Side::Top);
+        assert!(
+            !y.flips(Side::Left),
+            "a column keeps its reading in a y mirror"
+        );
+        assert!(y.flips(Side::Top), "a row reverses in it");
+        let x = Pose::NONE.flipped(Flip::X);
+        assert_eq!(x.side(Side::Top), Side::Bottom);
+        assert!(x.flips(Side::Left) && !x.flips(Side::Top));
+        // Mirrored then a quarter turn: left → right → bottom.
+        assert_eq!(pose(1).flipped(Flip::Y).side(Side::Left), Side::Bottom);
+        // The 64×12 resistor's right port lands left in a y mirror; the npn's
+        // collector (56, 4) swaps to the emitter's row in an x mirror.
+        assert_eq!(y.point((64.0, 6.0), 64.0, 12.0), (0.0, 6.0));
+        assert_eq!(x.point((56.0, 4.0), 56.0, 48.0), (56.0, 44.0));
+        assert_eq!(y.vector((10.0, 4.0)), (-10.0, 4.0));
+        // …and both read back off the classes they leave behind.
+        for p in [y, x, pose(1).flipped(Flip::Y), pose(3).flipped(Flip::X)] {
+            let mut classes = vec!["lini-R".to_string()];
+            mark(p, &mut classes);
+            let chain: Vec<&str> = classes
+                .iter()
+                .filter_map(|c| c.strip_prefix("lini-"))
+                .collect();
+            assert_eq!(Pose::of_chain(&chain), p);
+        }
     }
 
     #[test]

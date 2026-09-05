@@ -3620,10 +3620,15 @@ own drawing, is never turned, and a part in the middle of the chain stands to
 meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose,
 and so states the ray for the chain it stands in (above): a resistor stood with
 its entry pin at its bottom grows its chain **up**, the unforced members turning
-to follow. Rotation on a connection-bearing part is read **at lowering** — pins
-re-side, the symbol re-lays, and every text (ref, value, pin names) stays
-upright, bar a net name, which reads along its run ([16.4](#164-labels)) — never
-as a paint transform; any other angle is an error ([SPEC 21](#21-errors)).
+to follow. **`mirror: x-axis | y-axis`** flips the part about its own axis
+first, the turn coming after — the axes named as the pen names them
+([15.3](#153-the-sketch-pen)): `y-axis` swaps left and right, so a header faces
+the other way with pin 1 still on top, and a transistor swaps the side its
+collector points to. A flip is never chosen for a part — the chooser turns it,
+the flip riding along. Either is read **at lowering** — pins re-side, the symbol
+re-lays, and every text (ref, value, pin names) stays upright, bar a net name,
+which reads along its run ([16.4](#164-labels)) — never as a paint transform;
+any other angle or axis is an error ([SPEC 21](#21-errors)).
 
 ### 16.2 Components & pins
 
@@ -3702,8 +3707,9 @@ show numbers only; **`pins: N`** generates N numbered, nameless pins
 bilateral split: the generated pins are minted `side: left`, the header or
 terminal block standing at the sheet's edge with its pins facing the circuit.
 `rotate: 180` turns the column the other way ([16.1](#161-placement--the-lattice)),
-which is what a part on the *left* edge wants; authored `|pin|` children keep
-whatever side they state. `|opamp|` is the amplifier triangle —
+which is what a part on the *left* edge wants, and `mirror: y-axis` does the same
+with pin 1 still on top; authored `|pin|` children keep whatever side they
+state. `|opamp|` is the amplifier triangle —
 prefix U, pins `out`, `inp`, `inn`, its power pins present but hidden by
 default.
 
@@ -4264,7 +4270,7 @@ families:
 | floorplan | `lini-door-leaf` (a door's leaf, a slider's panels) · `lini-door-swing` (the quarter arc) · `lini-window-sill` · `lini-stair-tread` (a flight's risers) · `lini-stair-arrow` (its up arrow) ([SPEC 15.11](#1511-floorplan--the-architectural-dialect)) |
 | schematic | `lini-schematic-wire` (a nested sheet's dress) · `lini-sch-line` / `-solid` · `lini-sch-tag-line` · `lini-tag-outline` / `-round` / `-flag-left` / `-flag-right` / `-flag-both` · `lini-net-run` / `lini-net-run-turned` (a plain label's run of trace, [SPEC 16.4](#164-labels)) · `lini-pin-stub` · `lini-pin-number` · `lini-ref` · `lini-part-value` |
 | highlight | `lini-tok-{kind}` — a source **listing**'s token spans, not a figure's: `lini highlight` writes them and `lini highlight --css` paints them ([SPEC 20](#20-cli)) |
-| marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid-stack--tree)) · `lini-pose-90` / `-180` / `-270` (a schematic part's turn, consumed at lowering, [SPEC 16.1](#161-placement--the-lattice)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
+| marker | `lini-align-*` / `lini-justify-*` (a table column's carried alignment, [SPEC 8](#8-templates)) · `lini-side-left` / `-right` (which half of a bilateral tree a first-level topic fills, [SPEC 12](#12-flow-grid-stack--tree)) · `lini-pose-90` / `-180` / `-270` and `lini-mirror-x` / `-y` (a schematic part's turn and flip, consumed at lowering, [SPEC 16.1](#161-placement--the-lattice)) · `lini-carried` (an annotation node riding a drawing statement's `[ ]`, [SPEC 15.9](#159-drafting-symbols--annotation-composition)) |
 
 The last family is the odd one out: its classes carry **structure, not paint**.
 They emit no CSS rule and there is nothing in them for host CSS to restyle —
@@ -4756,6 +4762,7 @@ error.
 | Schematic type outside the scope | `'\|R\|' belongs in a 'layout: schematic'` (every schematic type) |
 | `:side` on a terminal | `a terminal owns its connection — a pin or label takes no ':side'` |
 | Non-90° rotation on a connection-bearing part | `a schematic part rotates in 90° steps — 0, 90, 180, or 270` |
+| A `mirror:` on such a part naming no axis of its own | `a schematic part mirrors about its own axis — x-axis, y-axis, or none` |
 | Pinless wire to a 3+-pin part | `'U7' has 21 pins — name one ('U7.VS')` |
 | Both pins of a 2-pin part taken | `both pins of 'R5' are wired — name one ('R5.p1')` |
 | Minted ref as an endpoint | `link endpoint 'R1' not found — a minted ref is display-only; give the part an id to wire it` |

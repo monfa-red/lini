@@ -38,6 +38,9 @@
 |Q#Q3| "2N7002" { cell: 4 3; symbol: nfet; }
 |Q#Q4| "DMP2" { cell: 5 3; symbol: pfet; }
 |opamp#U1| "TLV9061" { cell: 6 3; }
+// A flip is a pose too [SPEC 16.1]: `mirror: x-axis` swaps the collector and
+// emitter rows, the way a sheet stands a high-side transistor.
+|Q#Q5| "BC847" { cell: 7 3; mirror: x-axis; }
 
 |head| "Sources & switches" { cell: 1 4; }
 |V#V1| "5V" { cell: 2 4; }
