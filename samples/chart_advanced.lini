@@ -55,8 +55,8 @@
 |chart| "Cure strength" { width: 350; height: 240; samples: 60; } [
   |axis| "minutes" { side: bottom; range: 0 90; }
   |axis| { side: left; range: 0 100; unit: "%"; }
-  |line| "epoxy" { fn: (cure(18)); }
-  |line| "acrylic" { fn: (cure(34)); stroke-style: dashed; }
+  |line| "epoxy" { fn: cure(18); }
+  |line| "acrylic" { fn: cure(34); stroke-style: dashed; }
 ]
 
 // Bands cut the domain into three segments and the series answers with a

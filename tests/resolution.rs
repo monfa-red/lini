@@ -548,3 +548,19 @@ fn schematic_type_names_are_shadow_protected() {
     assert_resolve_error("{ |R::box| { } }\n", "'R' shadows a built-in type");
     assert_resolve_error("{ |label::box| { } }\n", "shadows a built-in type");
 }
+
+/// A chart formula is held for sampling, not folded, in every bare shape
+/// [SPEC 14.3]: `fn: sin(x)` is the same series as `fn: (sin(x))`, and a
+/// bare name or constant reads the same way — no group needed to call a
+/// function of `x`.
+#[test]
+fn a_formula_holds_a_bare_call_like_a_group() {
+    let chart = |fn_value: &str| {
+        lini::compile_str(&format!("|chart| [ |line| {{ fn: {fn_value} }} ]\n")).expect("compile")
+    };
+    assert_eq!(chart("sin(x)"), chart("(sin(x))"));
+    assert_eq!(chart("x"), chart("(x)"));
+    let err =
+        lini::check("|chart| [ |line| { fn: 1 2 } ]\n").expect_err("a space-run is not a formula");
+    assert!(err.message.contains("comma-separated"), "{}", err.message);
+}

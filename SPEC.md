@@ -2069,16 +2069,16 @@ its one smart label *is* its point label.
 operators, the math library, `name = expr;` locals, the ternary, and stylesheet functions.
 Charts bind two ambient names — the same seam that injects `u` for parametric `points:`:
 **`x`** the x-axis data value (a whole-domain `fn:` uses it) and **`u`** a band-local clock
-`0 → 1` ([14.5](#145-bands--annotations)). A `fn:` is therefore **not folded at resolve**
+`0 → 1` ([14.5](#145-bands--annotations)). A `fn:` is **not folded at resolve**
 (its `x` is unbound there) but held and **sampled at chart layout**, once the x-domain is
-fixed — so a `fn:` value is always a `(…)` group (or a bare constant), never a bare
-call: the resolver would fold a call with `x` unbound. Locals chain derivations in one group; a stylesheet function keeps twins DRY:
+fixed — a `(…)` group, a bare call (`fn: sin(x)`), a name, or a constant alike.
+Locals chain derivations in one group; a stylesheet function keeps twins DRY:
 
 ```
 { ramp(s) = min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2); }
 |chart| [
-  |area| "Steel"    { fn: (ramp(1)) }
-  |line| "Aluminum" { fn: (ramp(1/0.7)) }
+  |area| "Steel"    { fn: ramp(1) }
+  |line| "Aluminum" { fn: ramp(1/0.7) }
 ]
 ```
 

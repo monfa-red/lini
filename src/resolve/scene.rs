@@ -391,6 +391,8 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
     for group in &d.groups {
         let src = match group.as_slice() {
             [Value::Expr(s)] => s.clone(),
+            [Value::Call(c)] => call_src(c),
+            [Value::Ident(name)] => name.clone(),
             [Value::Number(n)] => n.to_string(),
             [_, _, ..] => {
                 return Err(Error::at(
@@ -401,7 +403,7 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
             _ => {
                 return Err(Error::at(
                     d.span,
-                    "'fn' takes expressions (or bare constants)",
+                    "'fn' takes an expression, a call, a name, or a constant",
                 ));
             }
         };
