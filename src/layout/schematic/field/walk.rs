@@ -12,10 +12,10 @@ use super::super::lattice::{Ax, EPS};
 use super::super::net;
 use super::super::place::Slot;
 use super::super::terminal::{Terminal, ident, terminal};
-use super::read::{growth, tag_facing, tap_flags};
+use super::read::{growth, stated, tap_flags};
 use super::{Claim, Field, LANED, Ladder, STRAIGHT, Seat, allocate, free, ink_edge};
 use crate::desugar::pose::Side;
-use crate::desugar::schematic::chain::{Chain, End, beside, limbs, tap_ray};
+use crate::desugar::schematic::chain::{Chain, End, beside, branch, limbs, tap_ray};
 use crate::desugar::schematic::{SchKind, sch_kind};
 use crate::layout::geom::dot;
 use crate::layout::ir::{Bbox, PlacedNode};
@@ -149,15 +149,8 @@ impl Field {
             let Some(attach) = self.attachment(chain, r) else {
                 continue;
             };
-            let limb: Vec<usize> = (0..chain.members.len())
-                .filter(|&i| limbs[i] == Some(r))
-                .collect();
-            let &last = limb.last().expect("a branch holds its root");
-            let ray = tag_facing(
-                &children[chain.members[last]],
-                chain.inbound[last].as_deref(),
-            )
-            .map_or(h.ray, Side::opposite);
+            let limb = branch(chain, r);
+            let ray = stated(children, chain, limb.clone()).map_or(h.ray, Side::opposite);
             let members: Vec<usize> = limb.iter().map(|&i| chain.members[i]).collect();
             if Ax::of(ray) != Ax::of(h.ray) {
                 // Across the trunk: the members march out from the junction on

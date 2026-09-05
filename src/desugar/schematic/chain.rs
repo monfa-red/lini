@@ -17,23 +17,26 @@ use std::collections::VecDeque;
 /// the pose chooser (authored tree) and the seat pass (placed tree), so a
 /// part is never posed for one ray and seated along another:
 ///
-/// - the **terminator's** own drawing decides (a `|gnd|`'s point is at its
-///   top, so its chain grows down; a power flag's at its bottom, so up) —
-///   *unless* honouring it would grow the chain back **through** the part it
-///   hangs from (a gnd off a `side: top` pin): an anti-parallel ray yields
-///   to the pin's outward normal, and the terminator poses upside-down
-///   instead, as a sheet flips a ground above a part;
-/// - with no terminator convention the chain runs straight out along the
-///   pin's normal — *unless* the pin is **shared**: the straight corridor of
-///   a shared pin is the trunk line of every sibling wire, so a seat there
-///   stands on all of them. The chain yields it exactly as chains yield each
-///   other's lanes, turning onto the sheet's roomy axis — down off a side
-///   pin, rightward off a top or bottom one. A **bodiless** chain — every
-///   member a net run — never yields: a run is a stretch of the corridor's
-///   own wire with a name over it, so it rides the trunk it would otherwise
-///   dodge, and the sibling wires merge along it.
+/// - a member that **states** a facing decides ([`stated_facing`]): the ray
+///   is the opposite of it, since every member presents its inbound
+///   terminal back up the ray — a `|gnd|`'s point is at its top, so its
+///   chain grows down; a power flag's at its bottom, so up; a part turned by
+///   an authored `rotate:` the way its turned pin points — *unless* honouring
+///   it would grow the chain back **through** the part it hangs from (a gnd
+///   off a `side: top` pin): an anti-parallel ray yields to the pin's outward
+///   normal, and the terminator poses upside-down instead, as a sheet flips a
+///   ground above a part;
+/// - with nothing stated the chain runs straight out along the pin's normal —
+///   *unless* the pin is **shared**: the straight corridor of a shared pin is
+///   the trunk line of every sibling wire, so a seat there stands on all of
+///   them. The chain yields it exactly as chains yield each other's lanes,
+///   turning onto the sheet's roomy axis — down off a side pin, rightward off
+///   a top or bottom one. A **bodiless** chain — every member a net run —
+///   never yields: a run is a stretch of the corridor's own wire with a name
+///   over it, so it rides the trunk it would otherwise dodge, and the sibling
+///   wires merge along it.
 pub(crate) fn growth_ray(
-    terminator_facing: Option<Side>,
+    stated: Option<Side>,
     pin_facing: Option<Side>,
     shared_pin: bool,
     bodiless: bool,
@@ -41,7 +44,7 @@ pub(crate) fn growth_ray(
     // A terminal with no facing at all still hangs below — the one
     // direction a sheet always has room in [SPEC 16.1].
     let normal = pin_facing.unwrap_or(Side::Bottom);
-    if let Some(f) = terminator_facing
+    if let Some(f) = stated
         && f.opposite() != normal.opposite()
     {
         return f.opposite();
@@ -53,6 +56,43 @@ pub(crate) fn growth_ray(
         Side::Left | Side::Right => Side::Bottom,
         Side::Top | Side::Bottom => Side::Right,
     }
+}
+
+/// The facing a run of members **states** [SPEC 16.1]: the first of
+/// `members`, walked outward from where the run grows, for which `states`
+/// answers — the way that member's inbound terminal points. A chain's trunk
+/// asks it from the pin, a branch from its junction ([`limbs`]).
+///
+/// What a member states is the caller's reading: the pose chooser hears an
+/// authored `rotate:` (the turned pin) and a symbol label's own drawing, and
+/// nothing else, since every other pose is the one it is about to decide;
+/// the seat pass, over the lowered tree, hears every posed terminal — the
+/// chooser turned the undecided ones to face the ray it found, so the first
+/// answer is that ray again.
+pub(crate) fn stated_facing(
+    members: impl IntoIterator<Item = usize>,
+    states: impl Fn(usize) -> Option<Side>,
+) -> Option<Side> {
+    members.into_iter().find_map(states)
+}
+
+/// The member indices on a chain's **trunk** [SPEC 16.1], from the held end
+/// out to the terminator — the run [`stated_facing`] walks for the growth
+/// ray.
+pub(crate) fn trunk(chain: &Chain) -> Vec<usize> {
+    let limbs = limbs(chain);
+    (0..chain.members.len())
+        .filter(|&i| limbs[i].is_none())
+        .collect()
+}
+
+/// The member indices of the **branch** rooted at `root` [SPEC 16.1], from
+/// the junction out — the run its own ray is stated over.
+pub(crate) fn branch(chain: &Chain, root: usize) -> Vec<usize> {
+    let limbs = limbs(chain);
+    (0..chain.members.len())
+        .filter(|&i| limbs[i] == Some(root))
+        .collect()
 }
 
 /// Whether `end`'s pin carries **through traffic** — a wire to another

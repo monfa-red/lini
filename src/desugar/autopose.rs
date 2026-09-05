@@ -13,9 +13,9 @@
 //!
 //! **The rule.** A satellite chain runs along a **ray**, and every part on it
 //! must present the terminal it wires back through facing *up* that ray. The
-//! ray is the one shared rule's ([`schematic::chain::growth_ray`] — the
-//! terminator's own drawing, yielding to the pin's normal and to a shared
-//! pin's corridor; [`schematic::chain::bridge_ray`] for a same-side pair);
+//! ray is the one shared rule's ([`schematic::chain::growth_ray`] — what the
+//! trunk states: an authored `rotate:`'s turned pin, else the terminator's
+//! own drawing; yielding to the pin's normal and to a shared pin's corridor);
 //! a **tap** answers to its own convention ([`schematic::chain::tap_ray`]),
 //! and a spanning chain's members face back against the sheet's reading
 //! direction. Then walk [`Pose::ALL`] — `0 → 90 → 180 → 270`, the unrotated
@@ -218,28 +218,27 @@ pub(super) fn choose<'a>(
             continue;
         };
         // Which way the chain grows [SPEC 16.1] — the one shared rule
-        // ([`schematic::chain::growth_ray`]): the **terminator's** own drawing
-        // (only a `|label|` that draws a symbol carries that convention, and a
-        // forced terminator poses first), yielding to the pin's outward normal
-        // when anti-parallel, and off a shared pin's straight corridor. Every
+        // ([`schematic::chain::growth_ray`]): what the trunk **states**, read
+        // from the pin out, yielding to the pin's outward normal when
+        // anti-parallel, and off a shared pin's straight corridor. Every
         // member then presents its terminal back up that ray — the same ray
         // the seat pass reads off the lowered tree
         // ([`crate::layout::schematic`]), so the two agree.
-        let term_facing = |i: usize| -> Option<Side> {
-            let term = &parts[chain.members[i]];
-            if term.kind != Some(SchKind::Label) || term.symbol.is_none() {
-                return None;
+        //
+        // What a member states here: an authored `rotate:` states its turned
+        // pin, a symbol label its own drawing (turned, where forced); every
+        // other pose is this pass's to decide, so it states nothing.
+        let states = |i: usize| -> Option<Side> {
+            let part = &parts[chain.members[i]];
+            let side = part.terminal_side(cx, chain.inbound[i].as_deref())?;
+            if part.forced {
+                return Some(part.pose.side(side));
             }
-            let side = term.terminal_side(cx, chain.inbound[i].as_deref())?;
-            Some(if term.forced {
-                term.pose.side(side)
-            } else {
-                side
-            })
+            (part.kind == Some(SchKind::Label) && part.symbol.is_some()).then_some(side)
         };
-        let terminator = chain.members.len().checked_sub(1).and_then(term_facing);
+        let stated = schematic::chain::stated_facing(schematic::chain::trunk(&chain), states);
         let ray = schematic::chain::growth_ray(
-            terminator,
+            stated,
             Some(held.pose.side(base)),
             schematic::chain::shared_pin(&wire_edges, anchor, |c| parts[c].role == Role::Satellite),
             chain.members.iter().all(|&m| {
@@ -278,14 +277,12 @@ pub(super) fn choose<'a>(
                 tr.opposite()
             } else if let Some(r) = limbs[i] {
                 // A **branch** member faces back up its branch's own ray —
-                // its terminator's convention, the trunk's when it states
-                // none ([`schematic::chain::limbs`]) — never the trunk's,
-                // which may run the other way entirely.
-                let last = (0..chain.members.len())
-                    .rev()
-                    .find(|&j| limbs[j] == Some(r))
-                    .expect("a branch holds its root");
-                term_facing(last).map_or(ray, Side::opposite).opposite()
+                // what its limb states, the trunk's ray when nothing does
+                // ([`schematic::chain::limbs`]) — never the trunk's, which
+                // may run the other way entirely.
+                schematic::chain::stated_facing(schematic::chain::branch(&chain, r), states)
+                    .map_or(ray, Side::opposite)
+                    .opposite()
             } else {
                 ray.opposite()
             };

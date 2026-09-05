@@ -84,6 +84,56 @@ fn an_authored_rotate_forces_the_pose_and_the_seat_follows_it() {
 }
 
 #[test]
+fn an_authored_rotate_on_a_mid_chain_part_states_the_ray() {
+    // [SPEC 16.1] a forced pose states the ray for its whole chain — the
+    // turned pin faces back up it. Off a left pin, a resistor stood with its
+    // `p1` at the bottom (270) grows its chain **up**, the run at the end
+    // posed on end above it; `p1` on top (90) grows it down.
+    for (deg, dir) in [(270, -1.0), (90, 1.0)] {
+        let nodes = laid(&scope(
+            "",
+            &(sided("u1")
+                + &format!(
+                    "  |R#r1| \"1k\" {{ rotate: {deg} }}\n  |label#pwm| \"PWM\"\n  u1.a - r1 - pwm\n"
+                )),
+        ));
+        let ((_, py), (rx, ry)) = (at(&nodes, "u1"), at(&nodes, "r1"));
+        assert_eq!(pose_of(&nodes, "r1"), deg, "the authored pose stands");
+        assert!(
+            (ry - py) * dir > 0.0,
+            "rotate {deg}: the chain grows the way the turned pin faces back from: {ry} vs {py}"
+        );
+        let (run, runx, runy) = placed(&nodes, "pwm");
+        assert!(
+            run.type_chain.iter().any(|t| t == "net-run-turned"),
+            "the run at its end is posed along the same ray"
+        );
+        assert!((runy - ry) * dir > 0.0, "past the resistor: {runy} vs {ry}");
+        assert!(close(runx, rx), "on the resistor's line: {runx} vs {rx}");
+    }
+}
+
+#[test]
+fn a_forced_up_chain_shares_its_pins_lane_with_the_down_chain() {
+    // The gate network: the series resistor forced on end grows up off the
+    // pin, the pull-down's ground chain grows down, and their cells are
+    // disjoint — so both ride one lane, the column a sheet draws.
+    let nodes = laid(&scope(
+        "",
+        &(sided("u1")
+            + "  |R#r1| \"100R\" { rotate: 270 }\n  |R#r2| \"100k\"\n  |gnd#g1|\n"
+            + "  |label#pwm| \"PWM\"\n  u1.a - r1 - pwm\n  u1.a - r2 - g1\n"),
+    ));
+    let (_, py, ..) = cell(&nodes, "a");
+    let ((r1x, r1y), (r2x, r2y)) = (at(&nodes, "r1"), at(&nodes, "r2"));
+    assert!(
+        r1y < py && py < r2y,
+        "one above the pin, one below: {r1y} {py} {r2y}"
+    );
+    assert!(close(r1x, r2x), "one lane, two rays: {r1x} vs {r2x}");
+}
+
+#[test]
 fn a_chain_grows_link_by_link() {
     // Each link takes the next slot along the same ray, in wire order: the
     // grounded chain runs **down** past the pin it leaves, the resistor above

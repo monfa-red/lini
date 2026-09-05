@@ -573,7 +573,9 @@ Discretes with generated pins: `|R| |C| |L| |D| |LED| |Q| |Y| |F| |FB| |SW|
 |BT| |V| |I|` (pins `p1 p2`, or `a k`, `b c e` / `g d s` by `symbol:` variant —
 `zener`, `npn`, `nfet`, `polarized`…). The id is the reference designator
 (`#R5` reads R5); anonymous parts auto-number (display only — give an id to
-wire it). `rotate:` is 90°-step; text stays upright. The classic look (green
+wire it). `rotate:` is 90°-step: a satellite auto-poses to face its wire, and
+a forced turn also sets which way its chain grows (`|R| { rotate: 270 }` off a
+side pin stands the chain **up**); text stays upright. The classic look (green
 wires, yellow bodies, beige sheet) is automatic.
 
 ## Making it beautiful

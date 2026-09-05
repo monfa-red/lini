@@ -3463,15 +3463,19 @@ holds a part, it does not part it from the next.
 **A chain is a walk.** A satellite chain — the run of satellites one wire holds
 — takes a ray, a lane, and a slot per member:
 
-- its **ray** is the growth direction. The **terminator's** own drawing decides
-  (a `|gnd|`'s connection point sits at its top, so its chain grows down; a
-  power flag's at its bottom, so up); with no such convention the chain runs
-  straight out along the pin's normal. A ray **anti-parallel** to that normal
-  yields to it, the terminator posing inverted as a sheet flips a ground above a
-  part. A pin's straight corridor belongs to the wire running **through** it —
-  one on to another placed part — so a chain sharing such a pin turns onto the
-  canonical ray: down off a side pin, rightward off a top or bottom one. A chain
-  of bare net runs is exempt, being that very trace named ([16.4](#164-labels)).
+- its **ray** is the growth direction, and the chain's own members **state**
+  it: every member presents the terminal its wire enters back up the ray, so
+  the first member from the pin whose facing is already fixed decides — a part
+  turned by an explicit `rotate:`, else the terminator's own drawing (a
+  `|gnd|`'s connection point sits at its top, so its chain grows down; a power
+  flag's at its bottom, so up). With nothing stated the chain runs straight out
+  along the pin's normal. A ray **anti-parallel** to that normal yields to it,
+  the terminator posing inverted as a sheet flips a ground above a part. A
+  pin's straight corridor belongs to the wire running **through** it — one on
+  to another placed part — so a chain sharing such a pin turns onto the
+  canonical ray: down off a side pin, rightward off a top or bottom one. A
+  chain of bare net runs is exempt, being that very trace named
+  ([16.4](#164-labels)).
 - its **lane** is the cross coordinate: a line out from the anchor's ink for a
   chain that turned off its pin, the pin's own line for one that grew straight
   out and takes no lane at all.
@@ -3482,7 +3486,7 @@ holds a part, it does not part it from the next.
 
 The **trunk** is the walk from the pin to the terminator; a subtree hanging off
 a mid-trunk member is a **branch**, grown from its attachment as a sub-chain
-along its own terminator's ray. A **tap** — a single symbol-label branch, the
+along the ray its own members state. A **tap** — a single symbol-label branch, the
 rail flag beside a junction — takes no slot, hanging off its attachment member
 along its own drawn convention and stepping aside when that points back into the
 trunk.
@@ -3604,11 +3608,12 @@ promotes a satellite to an anchor**; `translate:` nudges it from its seat
 chain's own growth ray (deterministic tie-break: the unrotated pose, then
 clockwise) — so a ground, which sets that ray from its
 own drawing, is never turned, and a part in the middle of the chain stands to
-meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose;
-the seat direction derives from the rotated connection point. Rotation on a
-connection-bearing part is read **at lowering** — pins re-side, the symbol
-re-lays, and every text (net text, ref, value, pin names) stays upright —
-never as a paint transform; any other angle is an error
+meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose,
+and so states the ray for the chain it stands in (above): a resistor stood with
+its entry pin at its bottom grows its chain **up**, the unforced members turning
+to follow. Rotation on a connection-bearing part is read **at lowering** — pins
+re-side, the symbol re-lays, and every text (net text, ref, value, pin names)
+stays upright — never as a paint transform; any other angle is an error
 ([SPEC 21](#21-errors)).
 
 ### 16.2 Components & pins
