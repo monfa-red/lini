@@ -123,6 +123,7 @@ auth -> db "write"
 - **[remark-lini](https://github.com/monfa-red/remark-lini)** — the same fences anywhere [remark](https://github.com/remarkjs/remark) runs: Docusaurus, Next and MDX, Gatsby, or a bare `unified()` pipeline. A toggle reveals the source that drew each figure. On [npm](https://www.npmjs.com/package/remark-lini-lang): `npm install remark-lini-lang` — npm refuses the short name as one edit from `remark-lint`.
 - **[astro-lini](https://github.com/monfa-red/astro-lini)** — the Astro integration: one line in `astro.config.mjs` and every fence in the site draws. It wraps `remark-lini` and adds the front end for Astro's own Markdown processor. On [npm](https://www.npmjs.com/package/astro-lini): `npm install astro-lini`.
 - **[lini-wasm](https://www.npmjs.com/package/lini-wasm)** — the compiler itself, for JavaScript. One package, two builds, so it runs in Node, Bun, Deno, a bundler or a browser. This is what `remark-lini` rides on, and what to reach for to build an integration of your own.
+- **[lini-view](https://github.com/FoxMaint/lini-view)** — Obsidian plugin: renders ` ```lini ` fences directly in your notes using `lini-wasm`.
 - **Editors** — a VS Code TextMate bundle and a Zed tree-sitter extension under [`editors/`](https://github.com/monfa-red/lini/tree/main/editors), installable from the repo. Their word lists are generated from the compiler's own tables, so a new property highlights the day it lands.
 - **As a library** — `lini` is a crate as well as a binary: [docs.rs/lini](https://docs.rs/lini).
 
