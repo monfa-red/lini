@@ -1,6 +1,6 @@
 name: Feature request
 description: A figure Lini cannot draw yet, or a rough edge in one it can
-title: "[Feature] "
+title: "[Feature Request] "
 labels: ["enhancement"]
 body:
   - type: markdown
