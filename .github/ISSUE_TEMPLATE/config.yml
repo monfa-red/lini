@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Language reference and gallery
+    url: https://lini.rs
+    about: The tour, every figure family, and the full property reference — most "how do I draw X" answers live here.
+  - name: SPEC.md — the language contract
+    url: https://github.com/monfa-red/lini/blob/main/SPEC.md
+    about: The single source of truth for syntax, properties, defaults and diagnostics.

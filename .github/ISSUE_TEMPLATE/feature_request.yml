@@ -1,0 +1,41 @@
+name: Feature request
+description: A figure Lini cannot draw yet, or a rough edge in one it can
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lini is one language with several layout engines over a single node,
+        link and cascade model — so the most useful thing you can tell us is
+        **what you are trying to draw**, not which knob you think is missing.
+        Often it already draws, and the answer is a sample.
+  - type: textarea
+    id: figure
+    attributes:
+      label: What do you want to draw?
+      description: Describe the figure, or link an example of one. A picture of the thing you want is ideal.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What happens today?
+      description: >
+        Have you tried it? Paste what you wrote and what came out — including
+        "I could not work out how to start". Knowing where it breaks down is
+        most of the work.
+      render: text
+  - type: dropdown
+    id: shape
+    attributes:
+      label: What shape do you think this is?
+      description: A guess is fine — it is a conversation starter, not a commitment.
+      options:
+        - A new figure family (like charts or drawings)
+        - A dialect of one that exists (like floorplan is of drawing)
+        - A new property or value on something that exists
+        - A fix or polish on something that already draws
+        - No idea
+    validations:
+      required: true

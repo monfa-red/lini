@@ -1,0 +1,59 @@
+name: Bug report
+description: A figure that draws wrong, an error that should not fire, or one that should have
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lini is a compiler, so the most useful report is almost always the
+        source: the smallest `.lini` file that shows the problem beats any
+        description of it.
+  - type: textarea
+    id: source
+    attributes:
+      label: The source
+      description: The smallest input that reproduces it. Trim everything that still leaves the problem behind.
+      render: text
+      placeholder: |
+        |box#a| "one"
+        |box#b| "two"
+        a -> b
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what you got
+      description: A screenshot or the emitted SVG helps for anything visual.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`lini --version`, or the version of the package you are using"
+      placeholder: "lini 1.0.5"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How are you running it?
+      options:
+        - The lini CLI
+        - The playground at lini.rs
+        - lini as a Rust library
+        - lini-wasm (JavaScript)
+        - remark-lini-lang (Docusaurus, Next, MDX, …)
+        - astro-lini
+        - mdbook-lini
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: "Output of `lini yourfile.lini --check`, if it reports anything. Leave blank if it compiles clean."
+      render: text
