@@ -1,11 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-145 -165 290 190" width="290" height="190" class="lini lini-scope-4d765d80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-145 -165 290 190" width="290" height="190" class="lini lini-scope-334eb73b">
   <style>
-    .lini-scope-4d765d80 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-4d765d80 .lini-canvas { fill: white; }
-    .lini-scope-4d765d80 .lini-sketch { fill: #e9536c; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    @layer lini.defaults {
+      :root, .lini-scope-334eb73b { color-scheme: light dark; --lini-coral: #e9536c; --lini-fg: light-dark(black, #e8e8ea); --lini-font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --lini-font-weight: 500; --lini-lilac: #9c8cee; --lini-text-color: var(--lini-fg); }
+      .lini-scope-334eb73b[data-theme="dark"], [data-theme="dark"] .lini-scope-334eb73b { color-scheme: dark; }
+      .lini-scope-334eb73b[data-theme="light"], [data-theme="light"] .lini-scope-334eb73b { color-scheme: light; }
+    }
+    .lini-scope-334eb73b { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini-scope-334eb73b .lini-sketch { fill: var(--lini-coral); stroke: none; stroke-width: 2; stroke-dasharray: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-145" y="-165" width="290" height="190"/>
   <g class="lini-scene">
     <g class="lini-node lini-sketch" data-id="n" transform="translate(0,0)">
       <path d="M 0 -68 A 34 34 0 0 1 34 -34 L 34 -9 A 9 9 0 0 1 16 -9 L 16 -34 A 16 16 0 0 0 0 -50 A 16 16 0 0 0 -16 -34 L -16 -9 A 9 9 0 0 1 -34 -9 L -34 -34 A 34 34 0 0 1 0 -68 Z" fill-rule="evenodd"/>
@@ -16,7 +19,7 @@
     <g class="lini-node lini-sketch" data-id="i" transform="translate(0,0)">
       <path d="M 52 -59 L 52 -34 A 34 34 0 0 0 86 0 A 9 9 0 0 0 86 -18 A 16 16 0 0 1 70 -34 L 70 -59 A 9 9 0 0 0 52 -59 Z" fill-rule="evenodd"/>
     </g>
-    <g class="lini-node lini-sketch" data-id="brow" style="fill: #9c8cee" transform="translate(0,0)">
+    <g class="lini-node lini-sketch" data-id="brow" style="fill: var(--lini-lilac)" transform="translate(0,0)">
       <path d="M -67.708 -87.5 A 9 9 0 0 1 -54.292 -87.5 A 4.5 4.5 0 0 0 -47.584 -87.5 A 18 18 0 0 0 -61 -117.5 A 18 18 0 0 0 -74.416 -87.5 A 4.5 4.5 0 0 0 -67.708 -87.5 Z M 67.708 -87.5 A 9 9 0 0 0 54.292 -87.5 A 4.5 4.5 0 0 1 47.584 -87.5 A 18 18 0 0 1 61 -117.5 A 18 18 0 0 1 74.416 -87.5 A 4.5 4.5 0 0 1 67.708 -87.5 Z" fill-rule="evenodd"/>
     </g>
     <g class="lini-node lini-sketch" data-id="dots" style="fill: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
