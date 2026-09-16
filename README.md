@@ -130,7 +130,7 @@ auth -> db "write"
 
 Built and maintained by their own authors, on their own release schedules.
 
-- **[lini-view](https://github.com/FoxMaint/lini-view)** — the Obsidian plugin: a ` ```lini ` fence draws in the note itself, live in the editor, on `lini-wasm`.
+- **[obsidian-lini-view](https://github.com/FoxMaint/obsidian-lini-view)** — the Obsidian plugin: a ` ```lini ` fence draws in the note itself, live in the editor, on `lini-wasm`.
 
 ## For agents
 
