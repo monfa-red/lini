@@ -3,31 +3,32 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/mindmap.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-574.42 -305 1148.84 610" width="1148.84" height="610" class="lini lini-scope-dfed4910">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-574.42 -305 1148.84 610" width="1148.84" height="610" class="lini lini-scope-63442d56">
   <style>
-    .lini-scope-dfed4910 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-dfed4910 .lini-canvas { fill: white; }
-    .lini-scope-dfed4910 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-dfed4910 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-dfed4910 .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-dfed4910 .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-dfed4910 .lini-mindmap { font-size: 17px; font-weight: 600; }
-    .lini-scope-dfed4910 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-topic { font-weight: 500; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-level-1 { font-size: 15px; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-level-2 { font-size: 14px; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-rose { fill: #ffe3ec; stroke: #b8476e; color: #811442; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-rose { stroke: #b8476e; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-orange { fill: #ffe8d2; stroke: #b45700; color: #7e2800; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-orange { stroke: #b45700; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-amber { fill: #feedca; stroke: #9f6900; color: #6d3b00; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-amber { stroke: #9f6900; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-lime { fill: #e8f4d3; stroke: #628200; color: #385300; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-lime { stroke: #628200; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-green { fill: #d6f8e3; stroke: #008d51; color: #005d26; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-green { stroke: #008d51; }
-    .lini-scope-dfed4910 .lini-mindmap .lini-hue-teal { fill: #cdf9f4; stroke: #008e85; color: #005d56; }
-    .lini-scope-dfed4910 .lini-links .lini-hue-teal { stroke: #008e85; }
+    .lini-scope-63442d56, .lini-scope-63442d56 text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-63442d56 { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-63442d56 .lini-canvas { fill: white; }
+    .lini-scope-63442d56 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-63442d56 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-63442d56 .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-63442d56 .lini-topic { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-63442d56 .lini-mindmap { font-size: 17px; font-weight: 600; }
+    .lini-scope-63442d56 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-63442d56 .lini-mindmap .lini-topic { font-weight: 500; }
+    .lini-scope-63442d56 .lini-mindmap .lini-level-1 { font-size: 15px; }
+    .lini-scope-63442d56 .lini-mindmap .lini-level-2 { font-size: 14px; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-rose { fill: #ffe3ec; stroke: #b8476e; color: #811442; }
+    .lini-scope-63442d56 .lini-links .lini-hue-rose { stroke: #b8476e; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-orange { fill: #ffe8d2; stroke: #b45700; color: #7e2800; }
+    .lini-scope-63442d56 .lini-links .lini-hue-orange { stroke: #b45700; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-amber { fill: #feedca; stroke: #9f6900; color: #6d3b00; }
+    .lini-scope-63442d56 .lini-links .lini-hue-amber { stroke: #9f6900; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-lime { fill: #e8f4d3; stroke: #628200; color: #385300; }
+    .lini-scope-63442d56 .lini-links .lini-hue-lime { stroke: #628200; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-green { fill: #d6f8e3; stroke: #008d51; color: #005d26; }
+    .lini-scope-63442d56 .lini-links .lini-hue-green { stroke: #008d51; }
+    .lini-scope-63442d56 .lini-mindmap .lini-hue-teal { fill: #cdf9f4; stroke: #008e85; color: #005d56; }
+    .lini-scope-63442d56 .lini-links .lini-hue-teal { stroke: #008e85; }
   </style>
   <defs>
     <path id="lini-g1500-0" d="…"/>

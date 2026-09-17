@@ -354,7 +354,15 @@ fn render_text(
     let mut classes = vec!["lini-text".to_string()];
     classes.extend(n.type_chain.iter().map(|t| format!("lini-{t}")));
     classes.extend(n.applied_styles.iter().map(|s| format!("lini-style-{s}")));
-    let style = text_paint_attr(&n.own_style, &classes, ancestors, ruleset, vars, opts);
+    let style = text_paint_attr(
+        &n.own_style,
+        &n.attrs,
+        &classes,
+        ancestors,
+        ruleset,
+        vars,
+        opts,
+    );
     text::emit(
         out,
         &indent,
@@ -380,6 +388,7 @@ fn render_text(
 /// never rides here — it is not in `PAINT_PROPS`.
 pub(super) fn text_paint_attr(
     own: &AttrMap,
+    effective: &AttrMap,
     classes: &[String],
     ancestors: &[String],
     ruleset: &RuleSet,
@@ -393,6 +402,13 @@ pub(super) fn text_paint_attr(
         |lini| match lini {
             "fill" => own.get("fill").or_else(|| own.get("color")),
             "color" => None,
+            // The measurement font, from the leaf's *effective* attrs rather than
+            // its own: an enclosing `|box| { font-family: … }` reaches the glyphs
+            // by inheritance, which the `TEXT_FONT_CLASS` rule would otherwise
+            // outrank. Stating it here keeps the authored face on the element that
+            // was measured with it — and a leaf at the default has no such attr,
+            // so the rule stays the only place the default is written.
+            "font-family" => own.get(lini).or_else(|| effective.get(lini)),
             _ => own.get(lini),
         },
         |lini, v| values::css_value(lini, v, vars, opts),

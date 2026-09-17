@@ -3,20 +3,21 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/chart_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-423 -466 846 932" width="846" height="932" class="lini lini-scope-46fae989">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-423 -466 846 932" width="846" height="932" class="lini lini-scope-97d1b6aa">
   <style>
-    .lini-scope-46fae989 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-46fae989 .lini-canvas { fill: white; }
-    .lini-scope-46fae989 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-46fae989 .lini-oval { stroke-dasharray: none; }
-    .lini-scope-46fae989 .lini-poly { stroke-dasharray: none; }
-    .lini-scope-46fae989 .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-46fae989 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-46fae989 .lini-chart-title { font-size: 15px; font-weight: 600; }
-    .lini-scope-46fae989 .lini-chart-text { font-size: 12px; font-weight: normal; }
-    .lini-scope-46fae989 .lini-chart-label { font-size: 12px; font-weight: normal; }
-    .lini-scope-46fae989 .lini-chart-legend { font-size: 12px; font-weight: 600; }
-    .lini-scope-46fae989 .lini-chart-label { pointer-events: none; }
+    .lini-scope-97d1b6aa, .lini-scope-97d1b6aa text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-97d1b6aa { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-97d1b6aa .lini-canvas { fill: white; }
+    .lini-scope-97d1b6aa .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-97d1b6aa .lini-oval { stroke-dasharray: none; }
+    .lini-scope-97d1b6aa .lini-poly { stroke-dasharray: none; }
+    .lini-scope-97d1b6aa .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-97d1b6aa .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-97d1b6aa .lini-chart-title { font-size: 15px; font-weight: 600; }
+    .lini-scope-97d1b6aa .lini-chart-text { font-size: 12px; font-weight: normal; }
+    .lini-scope-97d1b6aa .lini-chart-label { font-size: 12px; font-weight: normal; }
+    .lini-scope-97d1b6aa .lini-chart-legend { font-size: 12px; font-weight: 600; }
+    .lini-scope-97d1b6aa .lini-chart-label { pointer-events: none; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>

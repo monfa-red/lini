@@ -3,22 +3,23 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/styles.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-424.405 -287.75 848.81 575.5" width="848.81" height="575.5" class="lini lini-scope-3dc9da7d">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-424.405 -287.75 848.81 575.5" width="848.81" height="575.5" class="lini lini-scope-05f7e0a2">
   <style>
-    .lini-scope-3dc9da7d { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-3dc9da7d .lini-canvas { fill: white; }
-    .lini-scope-3dc9da7d .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3dc9da7d .lini-oval { fill: #cdf9f4; stroke: #005d56; stroke-width: 2; color: #005d56; stroke-dasharray: none; }
-    .lini-scope-3dc9da7d .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-3dc9da7d .lini-box { fill: #cff6ff; stroke: #00547e; stroke-width: 2; color: #00547e; }
-    .lini-scope-3dc9da7d .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
-    .lini-scope-3dc9da7d .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-3dc9da7d .lini-alert { fill: #ffe4df; stroke: #ef675e; color: #851618; }
-    .lini-scope-3dc9da7d .lini-style-thin { stroke-width: 1; }
-    .lini-scope-3dc9da7d .lini-style-bold { font-weight: bold; }
-    .lini-scope-3dc9da7d .lini-style-power { stroke: #ef675e; stroke-width: 2.5; }
-    .lini-scope-3dc9da7d .lini-style-warn { stroke: #e47600; stroke-width: 2; }
-    .lini-scope-3dc9da7d .lini-style-ghost { opacity: 0.35; }
+    .lini-scope-05f7e0a2, .lini-scope-05f7e0a2 text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-05f7e0a2 { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-05f7e0a2 .lini-canvas { fill: white; }
+    .lini-scope-05f7e0a2 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-05f7e0a2 .lini-oval { fill: #cdf9f4; stroke: #005d56; stroke-width: 2; color: #005d56; stroke-dasharray: none; }
+    .lini-scope-05f7e0a2 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-05f7e0a2 .lini-box { fill: #cff6ff; stroke: #00547e; stroke-width: 2; color: #00547e; }
+    .lini-scope-05f7e0a2 .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-05f7e0a2 .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-05f7e0a2 .lini-alert { fill: #ffe4df; stroke: #ef675e; color: #851618; }
+    .lini-scope-05f7e0a2 .lini-style-thin { stroke-width: 1; }
+    .lini-scope-05f7e0a2 .lini-style-bold { font-weight: bold; }
+    .lini-scope-05f7e0a2 .lini-style-power { stroke: #ef675e; stroke-width: 2.5; }
+    .lini-scope-05f7e0a2 .lini-style-warn { stroke: #e47600; stroke-width: 2; }
+    .lini-scope-05f7e0a2 .lini-style-ghost { opacity: 0.35; }
   </style>
   <defs>
     <filter id="lini-shadow-7e2a304c" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
@@ -303,7 +304,7 @@ input_file: samples/styles.lini
       </g>
       <g class="lini-node lini-box lini-block" style="font-family: serif" transform="translate(-252.635,0)">
         <rect x="-35.48" y="-27.5" width="70.96" height="55" rx="6" ry="6"/>
-        <g class="lini-text">
+        <g class="lini-text" style="font-family: serif">
           <use href="#lini-g1500-303" transform="translate(-15.48 5.37) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-213" transform="translate(-8.175 5.37) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-299" transform="translate(0.405 5.37) scale(0.015 -0.015)"/>

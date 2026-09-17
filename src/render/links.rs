@@ -560,6 +560,7 @@ fn render_link_text(
     classes.extend(t.applied_styles.iter().map(|s| format!("lini-style-{s}")));
     let style_attr = super::text_paint_attr(
         &t.attrs,
+        &t.attrs,
         &classes,
         &["lini-links".to_string()],
         ruleset,

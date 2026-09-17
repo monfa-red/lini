@@ -4,7 +4,7 @@
 //! defaults, marker rules, and the link-label rules. Each pushes onto the shared
 //! `rules` Vec; kept in one place so their emission order stays byte-identical.
 
-use super::super::rules::{Rule, ensure_dash_none};
+use super::super::rules::{Rule, TEXT_FONT_CLASS, ensure_dash_none};
 use super::super::values::{css_value, dash_pattern, format_value, num};
 use super::paint_props;
 use crate::Options;
@@ -45,17 +45,23 @@ pub(super) fn build_frame_rules(
     vars: &VarTable,
     opts: &Options,
 ) {
-    // Root rule: the inherited-text baseline, stated once. `font-family` /
-    // `font-weight` / `color` default to their themeable var, but a global override
-    // (in `root_text`) wins; `font-size` is the baked literal.
+    // Root rule: the inherited-text baseline, stated once. `font-weight` / `color`
+    // default to their themeable var, but a global override (in `root_text`) wins;
+    // `font-size` is the baked literal.
     let font_size = laid.sheet.root_font_size;
     let rt = &laid.sheet.root_text;
     let global = |attr: &str, var: &str| match rt.get(attr) {
         Some(v) => css_value(attr, v, vars, opts),
         None => live(var, vars, opts),
     };
+    // `font-family` is not on the root rule: it rides its own selector list, the
+    // root *and* the `<text>` elements ([`TEXT_FONT_CLASS`]), so a host stylesheet
+    // cannot inherit it away and repaint measured boxes in another face.
+    rules.push(Rule {
+        class: TEXT_FONT_CLASS.into(),
+        props: vec![("font-family".into(), global("font-family", "font-family"))],
+    });
     let mut root_props = vec![
-        ("font-family".into(), global("font-family", "font-family")),
         ("font-size".into(), format!("{}px", num(font_size))),
         ("font-weight".into(), global("font-weight", "font-weight")),
         ("color".into(), global("color", "text-color")),

@@ -3,42 +3,43 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/schematic_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1155 -816.75 2310 1633.5" width="420mm" height="297mm" class="lini lini-scope-55047d1a">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1155 -816.75 2310 1633.5" width="420mm" height="297mm" class="lini lini-scope-d6bc760d">
   <style>
-    .lini-scope-55047d1a { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-55047d1a .lini-canvas { fill: white; }
-    .lini-scope-55047d1a .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-oval { stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-55047d1a .lini-gutter { stroke: none; }
-    .lini-scope-55047d1a .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-55047d1a .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
-    .lini-scope-55047d1a .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
-    .lini-scope-55047d1a .lini-sheet-caption { font-size: 16px; font-weight: 600; }
-    .lini-scope-55047d1a .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-page { fill: white; stroke-width: 0; }
-    .lini-scope-55047d1a .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
-    .lini-scope-55047d1a .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini-scope-55047d1a .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
-    .lini-scope-55047d1a .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
-    .lini-scope-55047d1a .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
-    .lini-scope-55047d1a .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-55047d1a .lini-pin { font-size: 11px; }
-    .lini-scope-55047d1a .lini-label { color: #0e6a6a; font-size: 11px; }
-    .lini-scope-55047d1a .lini-junction { fill: #0a7a2f; stroke: none; }
-    .lini-scope-55047d1a .lini-opamp { fill: none; stroke: none; }
-    .lini-scope-55047d1a .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-55047d1a .lini-sch-solid { fill: #8a1c1c; stroke: none; }
-    .lini-scope-55047d1a .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
-    .lini-scope-55047d1a .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
-    .lini-scope-55047d1a .lini-pin-number { color: #00000073; font-size: 10px; }
-    .lini-scope-55047d1a .lini-ref { font-size: 12px; font-weight: 600; }
-    .lini-scope-55047d1a .lini-part-value { font-size: 12px; }
-    .lini-scope-55047d1a .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-55047d1a .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini-scope-55047d1a .lini-links .lini-schematic-wire { stroke: #0a7a2f; stroke-width: 1.5; }
+    .lini-scope-d6bc760d, .lini-scope-d6bc760d text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-d6bc760d { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-d6bc760d .lini-canvas { fill: white; }
+    .lini-scope-d6bc760d .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-oval { stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-d6bc760d .lini-gutter { stroke: none; }
+    .lini-scope-d6bc760d .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-d6bc760d .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 5,4; }
+    .lini-scope-d6bc760d .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
+    .lini-scope-d6bc760d .lini-sheet-caption { font-size: 16px; font-weight: 600; }
+    .lini-scope-d6bc760d .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-page { fill: white; stroke-width: 0; }
+    .lini-scope-d6bc760d .lini-title-block { stroke-width: 1; font-size: 14px; font-weight: 600; }
+    .lini-scope-d6bc760d .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini-scope-d6bc760d .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
+    .lini-scope-d6bc760d .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 11px; }
+    .lini-scope-d6bc760d .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
+    .lini-scope-d6bc760d .lini-component { fill: #fdf6d8; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-d6bc760d .lini-pin { font-size: 11px; }
+    .lini-scope-d6bc760d .lini-label { color: #0e6a6a; font-size: 11px; }
+    .lini-scope-d6bc760d .lini-junction { fill: #0a7a2f; stroke: none; }
+    .lini-scope-d6bc760d .lini-opamp { fill: none; stroke: none; }
+    .lini-scope-d6bc760d .lini-sch-line { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-d6bc760d .lini-sch-solid { fill: #8a1c1c; stroke: none; }
+    .lini-scope-d6bc760d .lini-sch-tag-line { fill: none; stroke: #0e6a6a; stroke-width: 1.5; }
+    .lini-scope-d6bc760d .lini-pin-stub { fill: none; stroke: #8a1c1c; stroke-width: 1.5; }
+    .lini-scope-d6bc760d .lini-pin-number { color: #00000073; font-size: 10px; }
+    .lini-scope-d6bc760d .lini-ref { font-size: 12px; font-weight: 600; }
+    .lini-scope-d6bc760d .lini-part-value { font-size: 12px; }
+    .lini-scope-d6bc760d .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-d6bc760d .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-d6bc760d .lini-links .lini-schematic-wire { stroke: #0a7a2f; stroke-width: 1.5; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>

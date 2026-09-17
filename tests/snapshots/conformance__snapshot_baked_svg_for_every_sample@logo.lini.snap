@@ -3,11 +3,12 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/logo.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-145 -165 290 190" width="290" height="190" class="lini lini-scope-4d765d80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-145 -165 290 190" width="290" height="190" class="lini lini-scope-95cc3fb3">
   <style>
-    .lini-scope-4d765d80 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-4d765d80 .lini-canvas { fill: white; }
-    .lini-scope-4d765d80 .lini-sketch { fill: #e9536c; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-95cc3fb3, .lini-scope-95cc3fb3 text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-95cc3fb3 { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-95cc3fb3 .lini-canvas { fill: white; }
+    .lini-scope-95cc3fb3 .lini-sketch { fill: #e9536c; stroke: none; stroke-width: 2; stroke-dasharray: none; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-145" y="-165" width="290" height="190"/>

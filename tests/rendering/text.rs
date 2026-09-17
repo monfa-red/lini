@@ -208,15 +208,19 @@ fn static_leaves_uncovered_runs_as_text_and_warns() {
 fn global_font_family_weight_color_override_their_var() {
     // SPEC §10: a global font-family / font-weight / color states on `.lini`,
     // overriding its themeable var; unset, the live var stays.
-    let set = lini_root_rule(&render_baked(
-        "{ font-weight: normal; color: navy; font-family: serif }\n|box| \"hi\"\n",
-    ));
+    let baked =
+        render_baked("{ font-weight: normal; color: navy; font-family: serif }\n|box| \"hi\"\n");
+    let set = lini_root_rule(&baked);
     assert!(
-        set.contains("font-weight: normal")
-            && set.contains("color: navy")
-            && set.contains("font-family: serif"),
+        set.contains("font-weight: normal") && set.contains("color: navy"),
         "{}",
         set
+    );
+    // The family rides the font rule, which names the glyph elements too.
+    assert!(
+        lini_font_rule(&baked).contains("font-family: serif"),
+        "{}",
+        baked
     );
     let dflt = lini_root_rule(&render_live("|box| \"hi\"\n"));
     assert!(

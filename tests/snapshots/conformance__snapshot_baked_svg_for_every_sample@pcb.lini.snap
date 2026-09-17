@@ -3,17 +3,18 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/pcb.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-274 -224 548 448" width="548" height="448" class="lini lini-scope-3d7c7088">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-274 -224 548 448" width="548" height="448" class="lini lini-scope-7e5c1882">
   <style>
-    .lini-scope-3d7c7088 { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 12px; font-weight: 500; color: black; }
-    .lini-scope-3d7c7088 .lini-canvas { fill: url(#lini-gradient-c569053c); }
-    .lini-scope-3d7c7088 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-3d7c7088 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-3d7c7088 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-3d7c7088 .lini-chip { stroke: none; color: white; }
-    .lini-scope-3d7c7088 .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
-    .lini-scope-3d7c7088 .lini-passive { fill: #303030; stroke: none; color: white; }
-    .lini-scope-3d7c7088 .lini-link { fill: none; stroke: #f4c450; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-7e5c1882, .lini-scope-7e5c1882 text { font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .lini-scope-7e5c1882 { font-size: 12px; font-weight: 500; color: black; }
+    .lini-scope-7e5c1882 .lini-canvas { fill: url(#lini-gradient-c569053c); }
+    .lini-scope-7e5c1882 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-7e5c1882 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-7e5c1882 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-7e5c1882 .lini-chip { stroke: none; color: white; }
+    .lini-scope-7e5c1882 .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
+    .lini-scope-7e5c1882 .lini-passive { fill: #303030; stroke: none; color: white; }
+    .lini-scope-7e5c1882 .lini-link { fill: none; stroke: #f4c450; stroke-width: 2; stroke-dasharray: none; }
   </style>
   <defs>
     <linearGradient id="lini-gradient-d8ec708d" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>

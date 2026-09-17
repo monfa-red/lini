@@ -1,23 +1,23 @@
 ---
 source: tests/conformance.rs
-assertion_line: 60
 expression: svg
 input_file: samples/cards.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-304.951 -131.2 609.902 283.9" width="609.902" height="283.9" class="lini lini-scope-5a299a72">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-304.951 -131.2 609.902 283.9" width="609.902" height="283.9" class="lini lini-scope-54e52f58">
   <style>
-    .lini-scope-5a299a72 { font-family: "Google Sans"; font-size: 15px; font-weight: 500; color: black; }
-    .lini-scope-5a299a72 .lini-canvas { fill: white; }
-    .lini-scope-5a299a72 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-5a299a72 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini-scope-5a299a72 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini-scope-5a299a72 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini-scope-5a299a72 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
-    .lini-scope-5a299a72 .lini-cut-bg { fill: white; stroke: none; }
-    .lini-scope-5a299a72 .lini-cut { fill: black; stroke: none; }
-    .lini-scope-5a299a72 .lini-marker { fill: #444; stroke: none; }
-    .lini-scope-5a299a72 .lini-style-card-title { font-size: 17px; font-weight: bold; }
-    .lini-scope-5a299a72 .lini-style-card-brief { color: #008e85; font-size: 15px; font-weight: 500; }
+    .lini-scope-54e52f58, .lini-scope-54e52f58 text { font-family: "Google Sans"; }
+    .lini-scope-54e52f58 { font-size: 15px; font-weight: 500; color: black; }
+    .lini-scope-54e52f58 .lini-canvas { fill: white; }
+    .lini-scope-54e52f58 .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-54e52f58 .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
+    .lini-scope-54e52f58 .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini-scope-54e52f58 .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini-scope-54e52f58 .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: 400; }
+    .lini-scope-54e52f58 .lini-cut-bg { fill: white; stroke: none; }
+    .lini-scope-54e52f58 .lini-cut { fill: black; stroke: none; }
+    .lini-scope-54e52f58 .lini-marker { fill: #444; stroke: none; }
+    .lini-scope-54e52f58 .lini-style-card-title { font-size: 17px; font-weight: bold; }
+    .lini-scope-54e52f58 .lini-style-card-brief { color: #008e85; font-size: 15px; font-weight: 500; }
   </style>
   <defs>
     <path id="lini-g1400-0" d="…"/>
@@ -89,7 +89,7 @@ input_file: samples/cards.lini
   </defs>
   <rect class="lini-canvas" x="-304.951" y="-131.2" width="609.902" height="283.9"/>
   <g class="lini-scene">
-    <g class="lini-text" style="font-size: 24px; font-weight: 600">
+    <g class="lini-text" style="font-family: &quot;Google Sans&quot;; font-size: 24px; font-weight: 600">
       <use href="#lini-g1600-119" transform="translate(-59.676 -84.608) scale(0.024 -0.024)"/>
       <use href="#lini-g1600-241" transform="translate(-45.3 -84.608) scale(0.024 -0.024)"/>
       <use href="#lini-g1600-203" transform="translate(-39.42 -84.608) scale(0.024 -0.024)"/>
@@ -104,7 +104,7 @@ input_file: samples/cards.lini
       <rect x="-278.951" y="-81.2" width="557.902" height="162.4" rx="0" ry="0"/>
       <g class="lini-node lini-box lini-block" data-id="starter" transform="translate(-191.4865,0)">
         <rect x="-86.4645" y="-80.2" width="172.929" height="160.4" rx="12" ry="12"/>
-        <g class="lini-text lini-style-card-title">
+        <g class="lini-text lini-style-card-title" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1700-126" transform="translate(-68.4645 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-310" transform="translate(-58.5705 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-177" transform="translate(-51.5155 -47.614) scale(0.017 -0.017)"/>
@@ -113,13 +113,13 @@ input_file: samples/cards.lini
           <use href="#lini-g1700-213" transform="translate(-27.7835 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-299" transform="translate(-17.8555 -47.614) scale(0.017 -0.017)"/>
         </g>
-        <g class="lini-text lini-style-card-brief">
+        <g class="lini-text lini-style-card-brief" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1500-56" transform="translate(-68.4645 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-299" transform="translate(-60.2145 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-213" transform="translate(-54.2895 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-213" transform="translate(-45.7095 -17.33) scale(0.015 -0.015)"/>
         </g>
-        <g class="lini-text" style="font-size: 13px">
+        <g class="lini-text" style="font-family: &quot;Google Sans&quot;; font-size: 13px">
           <use href="#lini-g1500-56" transform="translate(-68.4645 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-271" transform="translate(-61.3145 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-299" transform="translate(-53.4755 12.254) scale(0.013 -0.013)"/>
@@ -186,13 +186,13 @@ input_file: samples/cards.lini
       </g>
       <g class="lini-node lini-box lini-block" data-id="team" style="fill: #cdf9f4" transform="translate(-0.2015,0)">
         <rect x="-78.8205" y="-80.2" width="157.641" height="160.4" rx="12" ry="12"/>
-        <g class="lini-text lini-style-card-title">
+        <g class="lini-text lini-style-card-title" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1700-132" transform="translate(-60.8205 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-213" transform="translate(-50.9775 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-177" transform="translate(-41.0495 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-264" transform="translate(-31.5295 -47.614) scale(0.017 -0.017)"/>
         </g>
-        <g class="lini-text lini-style-card-brief">
+        <g class="lini-text lini-style-card-brief" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1500-1876" transform="translate(-60.8205 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-1653" transform="translate(-52.4955 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-1654" transform="translate(-45.8205 -17.33) scale(0.015 -0.015)"/>
@@ -202,7 +202,7 @@ input_file: samples/cards.lini
           <use href="#lini-g1500-177" transform="translate(-10.0155 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-310" transform="translate(-1.8405 -17.33) scale(0.015 -0.015)"/>
         </g>
-        <g class="lini-text" style="font-size: 13px">
+        <g class="lini-text" style="font-family: &quot;Google Sans&quot;; font-size: 13px">
           <use href="#lini-g1500-126" transform="translate(-60.8205 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-238" transform="translate(-53.4365 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-177" transform="translate(-45.8835 12.254) scale(0.013 -0.013)"/>
@@ -271,14 +271,14 @@ input_file: samples/cards.lini
       </g>
       <g class="lini-node lini-box lini-block" data-id="scale" transform="translate(191.285,0)">
         <rect x="-86.666" y="-80.2" width="173.332" height="160.4" rx="12" ry="12"/>
-        <g class="lini-text lini-style-card-title">
+        <g class="lini-text lini-style-card-title" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1700-126" transform="translate(-68.666 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-203" transform="translate(-58.772 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-177" transform="translate(-49.133 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-259" transform="translate(-39.613 -47.614) scale(0.017 -0.017)"/>
           <use href="#lini-g1700-213" transform="translate(-35.244 -47.614) scale(0.017 -0.017)"/>
         </g>
-        <g class="lini-text lini-style-card-brief">
+        <g class="lini-text lini-style-card-brief" style="font-family: &quot;Google Sans&quot;">
           <use href="#lini-g1500-28" transform="translate(-68.666 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-315" transform="translate(-57.566 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-303" transform="translate(-48.896 -17.33) scale(0.015 -0.015)"/>
@@ -286,7 +286,7 @@ input_file: samples/cards.lini
           <use href="#lini-g1500-271" transform="translate(-35.756 -17.33) scale(0.015 -0.015)"/>
           <use href="#lini-g1500-264" transform="translate(-26.711 -17.33) scale(0.015 -0.015)"/>
         </g>
-        <g class="lini-text" style="font-size: 13px">
+        <g class="lini-text" style="font-family: &quot;Google Sans&quot;; font-size: 13px">
           <use href="#lini-g1500-34" transform="translate(-68.666 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-213" transform="translate(-59.332 12.254) scale(0.013 -0.013)"/>
           <use href="#lini-g1500-209" transform="translate(-51.896 12.254) scale(0.013 -0.013)"/>

@@ -33,8 +33,17 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
 /// retain and the `.lini-links` companion rules, so the two can never drift.
 pub const LINK_WIRE_PAINT: &[&str] = &["stroke", "stroke-width", "stroke-dasharray", "opacity"];
 
+/// The rule that states the measurement font [SPEC 6]. Its selector names the
+/// `<text>` elements as well as the root, because a value that only *inherits*
+/// down to the glyphs loses to any host rule matching them — even a bare
+/// `text { }` — and the glyphs would then paint in a font the boxes were not
+/// measured with. A text leaf whose own font differs inlines it
+/// (`inline_paint_diff`), so this rule is the default and never a lid.
+pub const TEXT_FONT_CLASS: &str = "lini-font";
+
 pub struct Rule {
-    /// The single class the selector keys on (`lini` = the root rule).
+    /// The single class the selector keys on (`lini` = the root rule,
+    /// [`TEXT_FONT_CLASS`] = the root-and-text font rule).
     pub class: String,
     /// CSS property → formatted value, emission order.
     pub props: Vec<(String, String)>,
@@ -56,7 +65,15 @@ impl RuleSet {
             }
             out.push_str("    .");
             out.push_str(scope);
-            if rule.class != "lini" {
+            if rule.class == TEXT_FONT_CLASS {
+                // The one selector list: the root (so non-text descendants and
+                // any `<foreignObject>` inherit it) and the glyph elements
+                // themselves (so nothing can inherit it away). One declaration,
+                // stated once.
+                out.push_str(", .");
+                out.push_str(scope);
+                out.push_str(" text");
+            } else if rule.class != "lini" {
                 out.push_str(" .");
                 out.push_str(&rule.class);
             }

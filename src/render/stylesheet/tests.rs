@@ -21,7 +21,15 @@ fn emit_str(set: &RuleSet) -> String {
 fn root_rule_carries_inherited_text_props() {
     let css = emit_str(&rules_for("|box#x|\n"));
     assert!(
-        css.contains(".lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }"),
+        css.contains(".lini { font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }"),
+        "{}",
+        css
+    );
+    // `font-family` rides its own selector list — the root *and* the glyph
+    // elements — so no host rule matching `text` can inherit it away and
+    // repaint boxes in a face they were not measured with.
+    assert!(
+        css.contains(".lini, .lini text { font-family: var(--lini-font-family); }"),
         "{}",
         css
     );

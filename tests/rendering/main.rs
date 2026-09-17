@@ -59,6 +59,15 @@ fn lini_root_rule(svg: &str) -> String {
         .to_string()
 }
 
+/// The rule that states the measurement font — the root *and* the glyph
+/// elements, so nothing can inherit it away [SPEC 6].
+fn lini_font_rule(svg: &str) -> String {
+    svg.lines()
+        .find(|l| l.trim_start().starts_with(".lini, .lini text {"))
+        .expect(".lini font rule")
+        .to_string()
+}
+
 /// Every `marker`-introduced value in an SVG, in document order, each read to
 /// the next `end`. The one scrape every assertion below shares: `attr="` for
 /// an attribute value, a full opening tag for an element's text.
