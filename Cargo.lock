@@ -333,7 +333,7 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "lini"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "clap",
  "insta",
@@ -343,7 +343,7 @@ dependencies = [
 
 [[package]]
 name = "lini-wasm"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "js-sys",
  "lini",
