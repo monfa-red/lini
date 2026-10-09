@@ -6,7 +6,7 @@
 //! a raster folds to a base64 data
 //! URI. HTTP(S) URLs and authored `data:` URIs pass through untouched — the
 //! compiler never touches the network. Under `lini serve` reads are confined
-//! to the served root [SPEC 20].
+//! to the served root; under `--no-fs` there are none [SPEC 20].
 
 use super::ir::{AttrMap, ResolvedValue};
 use crate::error::{Code, Error};
@@ -23,6 +23,9 @@ use std::path::PathBuf;
 pub struct AssetEnv {
     pub base_dir: Option<PathBuf>,
     pub root: Option<PathBuf>,
+    /// No local reads at all [SPEC 7/20] — the host compiles source it did
+    /// not write. Refused before a path is joined or opened.
+    pub no_fs: bool,
     /// Assets the host hands over, keyed by the `src:` **exactly as written**.
     /// A host with no filesystem — the browser — cannot be given a path to
     /// open, so it supplies the bytes instead and this is consulted before any
@@ -88,8 +91,16 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
 
 /// Read a local asset from disk — the arm taken when the host supplied
 /// nothing for this `src:`. The path resolves against the source file's
-/// directory [SPEC 7] and the read is confined to the served root [SPEC 20].
+/// directory [SPEC 7] and the read is confined to the served root, or
+/// refused outright under `--no-fs` [SPEC 20].
 fn read_asset(env: &AssetEnv, src: &str, span: Span) -> Result<Vec<u8>, Error> {
+    if env.no_fs {
+        return Err(Error::at(
+            span,
+            format!("cannot read image '{src}' — local files are off (--no-fs); use an http(s) URL or a data: URI"),
+        )
+        .code(Code::ASSET_NO_FS));
+    }
     let full = match &env.base_dir {
         Some(base) => base.join(src),
         None => PathBuf::from(src),

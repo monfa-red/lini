@@ -39,6 +39,7 @@ R020 schematic-invent
 R021 schematic-arity
 R022 duplicate-wire
 R023 color-component-out-of-range
+R024 asset-no-fs
 V000 validate
 V001 unknown-property
 V002 misused-property

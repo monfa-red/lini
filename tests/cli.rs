@@ -433,3 +433,45 @@ fn highlight_colours_a_file_that_does_not_compile() {
         "an unknown property still colours, weakly"
     );
 }
+
+/// `--no-fs` is the flag a rendering service passes: the source arrives on
+/// stdin and must not be able to make the compiler open a file — neither an
+/// `|image|` path in it nor a `--theme` the service forwards.
+#[test]
+fn no_fs_reads_nothing_but_stdin() {
+    let run = |args: &[&str], src: &str| {
+        let mut child = Command::new(env!("CARGO_BIN_EXE_lini"))
+            .args(args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("spawn lini");
+        std::io::Write::write_all(child.stdin.as_mut().unwrap(), src.as_bytes()).unwrap();
+        child.wait_with_output().expect("wait for lini")
+    };
+    let image = "|image| { src: \"Cargo.toml\"; width: 8; height: 8 }\n";
+
+    let out = run(&["-", "--no-fs"], image);
+    assert_eq!(out.status.code(), Some(1));
+    assert!(out.stdout.is_empty());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("local files are off (--no-fs)"), "{err}");
+
+    // A theme the service forwards: built-ins and pairs work, a path does not.
+    for theme in ["dark", "light/dark"] {
+        let out = run(&["-", "--no-fs", "--theme", theme], "|box| \"x\"\n");
+        assert_eq!(out.status.code(), Some(0), "{theme}");
+        assert!(String::from_utf8_lossy(&out.stdout).starts_with("<svg"));
+    }
+    let out = run(&["-", "--no-fs", "--theme", "Cargo.toml"], "|box| \"x\"\n");
+    assert_eq!(out.status.code(), Some(3));
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("--no-fs reads no theme file"), "{err}");
+
+    // Without the flag the same image compiles from the working directory —
+    // the flag is what changed, not the source.
+    let out = run(&["-"], image);
+    assert_eq!(out.status.code(), Some(1), "Cargo.toml is not an image");
+    assert!(String::from_utf8_lossy(&out.stderr).contains("not an SVG or raster"));
+}

@@ -782,7 +782,8 @@ contract) and is **deterministic from the bytes**: the same file and assets give
 byte-identical output on every run. The compiler never touches the network — URLs and
 authored data URIs pass through untouched, so a URL is the authored non-embedded
 form. Under `lini serve`, assets resolve inside the served root only
-([SPEC 20](#20-cli)).
+([SPEC 20](#20-cli)); under `--no-fs` there are no reads at all — a local path errors
+before anything is opened, so the error says nothing about the disk.
 
 A host with **no filesystem** — the WebAssembly build in a browser — cannot be given
 a path to open, so it may **supply the bytes** instead, keyed by the `src:` exactly
@@ -4452,6 +4453,7 @@ lini theme [NAME]
 | `--static` | A self-contained SVG that renders identically anywhere ([SPEC 10.6](#106---static), [SPEC 18](#18-svg-output)). |
 | `--embed-font` | Embed the used bundled family × weights as base64 `@font-face` — browser-only ([SPEC 18](#18-svg-output)). Both font flags need the default-on `font` build feature; name-only output never does. |
 | `--watch` | Recompile on every input change (requires `-o`). |
+| `--no-fs` | Read nothing from disk but the input: a local `\|image\|` path errors ([SPEC 7](#7-nodes)) and `--theme` takes built-ins only. For a host compiling source it did not write — a rendering service. |
 | `-h`, `-V` | Help / version. |
 
 `lini -` reads stdin (filename `<stdin>` in errors). **`lini serve`** runs a local live
@@ -4638,6 +4640,7 @@ error.
 | `hatch()` off `fill` | `'hatch' is a fill — 'stroke' takes a colour or gradient` |
 | Unreadable image path | `cannot read image './logo.svg' — no such file` ([SPEC 7](#7-nodes)) |
 | Asset escapes the served root | `'../secret.svg' resolves outside the served root` ([SPEC 20](#20-cli)) |
+| Local asset under `--no-fs` | `cannot read image './logo.svg' — local files are off (--no-fs); use an http(s) URL or a data: URI` ([SPEC 20](#20-cli)) |
 
 **Layout — grid**
 

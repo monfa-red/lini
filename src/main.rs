@@ -114,6 +114,12 @@ struct CompileArgs {
     #[arg(long = "watch", requires = "output")]
     watch: bool,
 
+    /// Read nothing from disk but the input: a local `|image|` path errors
+    /// and `--theme` takes a built-in only. For compiling source you did not
+    /// write (a rendering service).
+    #[arg(long = "no-fs")]
+    no_fs: bool,
+
     /// Suppress lint warnings.
     #[arg(long = "no-warn", conflicts_with = "strict")]
     no_warn: bool,
@@ -179,7 +185,7 @@ fn main() -> ExitCode {
     // Resolve `--theme` (a built-in name, a light/dark pair, or a file) to the
     // `--lini-*` CSS the resolver layers over the defaults.
     let theme_css = match &cli.theme {
-        Some(arg) => match theme_css_for(arg) {
+        Some(arg) => match theme_css_for(arg, !cli.no_fs) {
             Ok(css) => Some(css),
             Err(code) => return code,
         },
@@ -198,6 +204,7 @@ fn main() -> ExitCode {
         format,
         theme_css,
         base_dir,
+        no_fs: cli.no_fs,
         ..Default::default()
     };
     let build = Build {
@@ -348,7 +355,7 @@ fn run_serve(input: Option<String>, port: u16, static_mode: bool, theme: Option<
     // The served compiles carry the theme exactly as a `lini --theme` compile
     // does — one apply path, so the preview shows what the file will ship as.
     let theme_css = match theme {
-        Some(arg) => match theme_css_for(arg) {
+        Some(arg) => match theme_css_for(arg, true) {
             Ok(css) => Some(css),
             Err(code) => return code,
         },
@@ -483,8 +490,8 @@ fn recompile(input: &Path, opts: &lini::Options, build: &Build) {
 }
 
 /// Resolve a `--theme` argument to its `--lini-*` CSS: a built-in name, then a
-/// `light/dark` pair of built-ins, else a file path.
-fn theme_css_for(arg: &str) -> Result<String, ExitCode> {
+/// `light/dark` pair of built-ins, else — when `files` allows — a file path.
+fn theme_css_for(arg: &str, files: bool) -> Result<String, ExitCode> {
     if let Some(css) = lini::builtin_css(arg) {
         return Ok(css);
     }
@@ -492,6 +499,14 @@ fn theme_css_for(arg: &str) -> Result<String, ExitCode> {
         && let Some(css) = lini::pair_css(l.trim(), r.trim())
     {
         return Ok(css);
+    }
+    if !files {
+        eprintln!(
+            "error: theme '{}' is not a built-in (try: {}), and --no-fs reads no theme file",
+            arg,
+            theme_names()
+        );
+        return Err(ExitCode::from(3));
     }
     match std::fs::read_to_string(arg) {
         Ok(s) => Ok(s),

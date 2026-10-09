@@ -176,6 +176,7 @@ catalog! {
     Resolve 21 SCHEMATIC_ARITY "schematic-arity";
     Resolve 22 DUPLICATE_WIRE "duplicate-wire";
     Resolve 23 COLOR_RANGE "color-component-out-of-range";
+    Resolve 24 ASSET_NO_FS "asset-no-fs";
 
     // ── Validate [SPEC 17/21] ──
     Validate 0 VALIDATE "validate";

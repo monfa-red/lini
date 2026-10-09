@@ -111,3 +111,51 @@ fn an_asset_escaping_the_served_root_errors() {
     )
     .expect("in-root asset compiles");
 }
+
+#[test]
+fn no_fs_refuses_every_local_path_before_any_read() {
+    // `--no-fs` [SPEC 7/20]: a host compiling source it did not write. The
+    // refusal comes before the path is opened, so a file that exists and one
+    // that does not read the same — the error says nothing about the disk.
+    let compile = |src: &str, assets: &[(&str, &[u8])]| {
+        lini::compile_str_with(
+            src,
+            &Options {
+                base_dir: Some("samples".into()),
+                no_fs: true,
+                assets: assets
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_vec()))
+                    .collect(),
+                ..Default::default()
+            },
+        )
+    };
+    for path in ["assets/logo.svg", "assets/nope.svg", "/etc/passwd"] {
+        let err = compile(
+            &format!("|image| {{ src: \"{path}\"; width: 8; height: 8 }}\n"),
+            &[],
+        )
+        .expect_err("a local path under --no-fs");
+        assert_eq!(
+            err.to_string(),
+            format!(
+                "error: cannot read image '{path}' — local files are off (--no-fs); use an http(s) URL or a data: URI"
+            ),
+        );
+    }
+    // URLs and data URIs are not reads; they pass as always.
+    compile(
+        "|image| { src: \"https://example.com/x.png\"; width: 8; height: 8 }\n|image| { src: \"data:image/gif;base64,R0lGOD\"; width: 8; height: 8 }\n",
+        &[],
+    )
+    .expect("URLs compile");
+    // Bytes the host hands over are not reads either — they still embed.
+    let logo = std::fs::read("samples/assets/logo.svg").expect("the sample logo");
+    let svg = compile(
+        "|image| { src: \"logo.svg\"; width: 8; height: 8 }\n",
+        &[("logo.svg", &logo)],
+    )
+    .expect("a supplied asset compiles");
+    assert!(svg.contains(r#"viewBox="0 0 48 48""#), "{svg}");
+}

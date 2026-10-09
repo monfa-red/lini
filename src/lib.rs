@@ -143,6 +143,11 @@ pub struct Options {
     /// this root — an escape is a compile error. `None` (the plain CLI) is
     /// unbounded: you compile your own file.
     pub asset_root: Option<std::path::PathBuf>,
+    /// `--no-fs` [SPEC 7/20]: the compile opens no file — a local `src:` path
+    /// errors before any filesystem call, so the error says nothing about
+    /// the disk. Supplied assets still embed. For a host compiling source it
+    /// did not write.
+    pub no_fs: bool,
     /// Assets supplied by the host, keyed by the `src:` exactly as written
     /// [SPEC 7]. A host with no filesystem — a browser running the WebAssembly
     /// build — hands the bytes over rather than a path to open, and these are
@@ -319,6 +324,7 @@ fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error
     let env = resolve::AssetEnv {
         base_dir: opts.base_dir.clone(),
         root: opts.asset_root.clone(),
+        no_fs: opts.no_fs,
         supplied: opts.assets.clone(),
     };
     resolve::resolve_with_env(&lowered, &theme, env).map_err(|e| e.in_phase(Phase::Resolve))
