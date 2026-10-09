@@ -214,15 +214,26 @@ pub fn num(n: f64) -> String {
     }
 }
 
+/// An attribute value: character data plus both quotes.
 pub fn escape_xml(s: &str) -> String {
+    escape(s, true)
+}
+
+/// Character data — the `<style>` body. Quotes stay literal, so the CSS
+/// reads as written; the markup characters cannot end the element early.
+pub fn escape_text(s: &str) -> String {
+    escape(s, false)
+}
+
+fn escape(s: &str, quotes: bool) -> String {
     let mut out = String::with_capacity(s.len());
     for ch in s.chars() {
         match ch {
             '<' => out.push_str("&lt;"),
             '>' => out.push_str("&gt;"),
             '&' => out.push_str("&amp;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&apos;"),
+            '"' if quotes => out.push_str("&quot;"),
+            '\'' if quotes => out.push_str("&apos;"),
             _ => out.push(ch),
         }
     }

@@ -5,7 +5,7 @@
 
 use super::fonts::{self, FontSink};
 use super::rules::RuleSet;
-use super::values::format_value;
+use super::values::{escape_text, format_value};
 use crate::Options;
 use crate::resolve::VarTable;
 use std::collections::BTreeSet;
@@ -40,15 +40,20 @@ pub fn emit(
     tooltip_cards: usize,
     embed: Option<&FontSink>,
 ) {
-    out.push_str("  <style>\n");
+    let mut body = String::new();
 
     // `--embed-font` [SPEC 18]: the used faces inline first, so the rules
     // below can already resolve against them.
     if let Some(sink) = embed {
-        fonts::emit_font_faces(out, sink);
+        fonts::emit_font_faces(&mut body, sink);
     }
 
-    emit_scoped(out, scope, vars, rules, used, opts, tooltip_cards);
+    emit_scoped(&mut body, scope, vars, rules, used, opts, tooltip_cards);
+    // The stylesheet is character data like any other text: an authored
+    // string (`font-family: "A & B"`, a `"</style>"`) must neither break the
+    // document nor end the element and open markup of its own.
+    out.push_str("  <style>\n");
+    out.push_str(&escape_text(&body));
     out.push_str("  </style>\n");
 }
 

@@ -33,6 +33,27 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
 }
 
 #[test]
+fn an_authored_string_cannot_end_the_style_element() {
+    // A rule value and a variable both land in the `<style>` body, which is
+    // character data: a raw `&` breaks the document, and a raw `</style>`
+    // would close the element and let the rest open markup of its own.
+    let svg = render_live(
+        "{\n  --accent: \"</style><script>alert(1)</script>\";\n  |k::box| { font-family: \"A & B\" }\n}\n|k| \"x\" { fill: --accent }\n",
+    );
+    let style = svg
+        .split_once("<style>")
+        .and_then(|(_, rest)| rest.split_once("</style>"))
+        .map(|(body, _)| body)
+        .expect("a style block");
+    assert!(
+        style.contains("&lt;/style&gt;&lt;script&gt;alert(1)&lt;/script&gt;"),
+        "{svg}"
+    );
+    assert!(style.contains("font-family: \"A &amp; B\""), "{svg}");
+    assert!(!svg.contains("<script"), "{svg}");
+}
+
+#[test]
 fn theme_font_inherit_stays_a_keyword() {
     // SPEC §11: `--lini-font-family: inherit` lets an embedded diagram pick up
     // the host page's font. It must stay the bare CSS keyword, never quoted.
