@@ -4101,7 +4101,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 
 | Property | Value | Notes |
 |---|---|---|
-| `href` | quoted URL | wraps the node / link in `<a href>` — clickable. |
+| `href` | quoted URL | wraps the node / link in `<a href>` — clickable. A `javascript:`, `vbscript:` or `data:` URL errors: a link goes somewhere, it never runs code. |
 | `hint` | quoted string | emits a `<title>` child (tooltip + screen-reader name). |
 
 ### Type-owned properties
@@ -4570,6 +4570,7 @@ error.
 | Arbitrary numeric `font-weight` | `'font-weight' takes normal, medium, semibold, bold, or 400, 500, 600, 700` (100–900 is deferred) |
 | Gradient in a text-colour slot | `'color' takes a flat colour — a gradient fills a shape, and gradient-on-text is deferred` |
 | `%` outside a colour component | `'width' takes a number — a '%' is a colour component` ([SPEC 2](#2-lexical-syntax)) |
+| Script URL in `href` | `'href' links to a page — a 'javascript:' URL runs code when clicked` (also `vbscript:`, `data:`; case, padding and a tab inside the scheme do not hide it) |
 
 **Identity, cascade & statements**
 

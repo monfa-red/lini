@@ -636,6 +636,24 @@ impl<'a> Ctx<'a> {
                     out.push(Diagnostic::error(d.span, message).code(Code::MALFORMED_VALUE));
                 }
             }
+            // A link goes somewhere; it never runs code [SPEC 17]. A clicked
+            // script URL executes in whatever page serves the SVG, and a host
+            // compiling untrusted source cannot vet each one.
+            "href" => {
+                for v in d.groups.iter().flatten() {
+                    if let Value::String(url) = v
+                        && let Some(scheme) = script_scheme(url)
+                    {
+                        out.push(
+                            Diagnostic::error(
+                                d.span,
+                                format!("'href' links to a page — a '{scheme}:' URL runs code when clicked"),
+                            )
+                            .code(Code::MALFORMED_VALUE),
+                        );
+                    }
+                }
+            }
             // The built face set [SPEC 6]: the four keywords and their numbers.
             // Arbitrary 100–900 is deferred [SPEC 24] — measurement would read
             // the nearest built static while the emitted CSS asked for another,
@@ -1094,4 +1112,22 @@ fn is_gradient(v: &Value) -> bool {
         c.name.as_str(),
         "gradient" | "linear-gradient" | "radial-gradient"
     ))
+}
+
+/// The script-running scheme a URL names, if any — read the way a browser's
+/// URL parser reads it: surrounding controls and spaces dropped, tabs and
+/// newlines removed anywhere, case folded (`" Java\tScript:"` counts).
+fn script_scheme(url: &str) -> Option<&'static str> {
+    let url: String = url
+        .trim_matches(|c: char| c <= ' ')
+        .chars()
+        .filter(|c| !matches!(c, '\t' | '\n' | '\r'))
+        .collect::<String>()
+        .to_ascii_lowercase();
+    ["javascript", "vbscript", "data"]
+        .into_iter()
+        .find(|scheme| {
+            url.strip_prefix(scheme)
+                .is_some_and(|rest| rest.starts_with(':'))
+        })
 }

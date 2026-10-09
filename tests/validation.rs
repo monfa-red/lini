@@ -279,6 +279,34 @@ fn pins_and_number_take_counts() {
     assert_silent("|schematic#s| [ |component#u1| [ |pin#a| { number: 3 } ] ]\n");
 }
 
+#[test]
+fn an_href_never_runs_code() {
+    // [SPEC 17/21] a clicked script URL runs in whatever page serves the SVG —
+    // on a node, a link, or through a rule alike.
+    insta::assert_snapshot!(
+        diags("|box#a| { href: \"javascript:alert(1)\" }\n"),
+        @"test.lini:1:11: error: 'href' links to a page — a 'javascript:' URL runs code when clicked"
+    );
+    insta::assert_snapshot!(
+        diags("|box#a|\n|box#b|\na -> b { href: \"data:text/html,x\" }\n"),
+        @"test.lini:3:10: error: 'href' links to a page — a 'data:' URL runs code when clicked"
+    );
+    insta::assert_snapshot!(
+        diags("{ |k::box| { href: \"VBScript:x\" } }\n|k#a|\n"),
+        @"test.lini:1:14: error: 'href' links to a page — a 'vbscript:' URL runs code when clicked"
+    );
+    // Read the way a browser reads it: case, padding, and a tab inside the
+    // scheme do not hide it.
+    insta::assert_snapshot!(
+        diags("|box#a| { href: \" Java\\tScript:alert(1)\" }\n"),
+        @"test.lini:1:11: error: 'href' links to a page — a 'javascript:' URL runs code when clicked"
+    );
+    // Pages, mail, fragments, relative paths, app links — all fine.
+    assert_silent(
+        "|box#a| { href: \"https://lini.rs\" }\n|box#b| { href: \"mailto:a@b.c\" }\n|box#c| { href: \"#top\" }\n|box#d| { href: \"docs/javascript.html\" }\n|box#e| { href: \"obsidian://open?file=x\" }\n",
+    );
+}
+
 // ── The auto-create near-miss warning [SPEC 3/20] ──
 
 #[test]
