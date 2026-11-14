@@ -1,0 +1,19 @@
+---
+source: tests/rendering/shapes.rs
+expression: out
+---
+|cyl| { width: 80; height: 50 }
+  <path d="M -40 -20 L -40 20 A 40 5 0 0 0 40 20 L 40 -20 A 40 5 0 0 0 -40 -20 Z"/>
+  <ellipse cx="0" cy="-20" rx="40" ry="5"/>
+|cyl| { width: 50; height: 80; facing: right }
+  <path d="M 20 -40 L -20 -40 A 5 40 0 0 0 -20 40 L 20 40 A 5 40 0 0 0 20 -40 Z"/>
+  <ellipse cx="20" cy="0" rx="5" ry="40"/>
+|queue| { width: 80; height: 50 }
+  <path d="M 35 -25 L -35 -25 A 5 25 0 0 0 -35 25 L 35 25 A 5 25 0 0 0 35 -25 Z"/>
+  <ellipse cx="35" cy="0" rx="5" ry="25"/>
+|cyl| { width: 80; height: 50; facing: down }
+  <path d="M 40 20 L 40 -20 A 40 5 0 0 0 -40 -20 L -40 20 A 40 5 0 0 0 40 20 Z"/>
+  <ellipse cx="0" cy="20" rx="40" ry="5"/>
+|cyl| { width: 80; height: 50; facing: left }
+  <path d="M -35 25 L 35 25 A 5 25 0 0 0 35 -25 L -35 -25 A 5 25 0 0 0 -35 25 Z"/>
+  <ellipse cx="-35" cy="0" rx="5" ry="25"/>

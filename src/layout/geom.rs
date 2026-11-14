@@ -25,6 +25,19 @@ pub fn scale(a: P, s: f64) -> P {
     (a.0 * s, a.1 * s)
 }
 
+/// A `facing:` keyword's unit direction on a y-down screen — `None` for any
+/// other word. The one reading for every owner (a plane's arrows, a cylinder's
+/// rim [SPEC 7, 15.8]); resolve rejects a bad word before layout reads one.
+pub fn facing(word: &str) -> Option<P> {
+    Some(match word {
+        "right" => (1.0, 0.0),
+        "left" => (-1.0, 0.0),
+        "down" => (0.0, 1.0),
+        "up" => (0.0, -1.0),
+        _ => return None,
+    })
+}
+
 pub fn dot(a: P, b: P) -> f64 {
     a.0 * b.0 + a.1 * b.1
 }

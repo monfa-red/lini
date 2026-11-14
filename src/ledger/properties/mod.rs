@@ -769,7 +769,16 @@ pub static PROPERTIES: &[Property] = &[
         No,
     )
     .hard(),
-    row("facing", &[Type("plane")], One(Kind::Ident), Engine, No),
+    // Which way a direction-bearing node points [SPEC 7, 15.8]: a plane's
+    // viewing arrows, a cylinder's full rim (`up` by default; `|queue|` says
+    // `right`). One reading, `geom::facing`.
+    row(
+        "facing",
+        &[Type("plane"), Type("cyl")],
+        One(Kind::Ident),
+        Engine,
+        No,
+    ),
     row(
         "of",
         &[Type("drawing")],

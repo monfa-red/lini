@@ -260,6 +260,17 @@ pub fn resolve_node(
         ));
     }
 
+    // `facing:` names a direction for every owner — a plane's arrows, a
+    // cylinder's rim [SPEC 7, 15.8] — so one check answers a bad word for all.
+    if let Some(ResolvedValue::Ident(f)) = attrs.get("facing")
+        && crate::layout::geom::facing(f).is_none()
+    {
+        return Err(Error::at(
+            node.span,
+            "'facing' is a direction — left, right, up, or down",
+        ));
+    }
+
     // Inherited text context for children: overlay this node's own text props.
     let mut child_text_ctx = text_ctx.clone();
     for name in properties::inherited_text() {

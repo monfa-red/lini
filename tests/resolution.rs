@@ -71,6 +71,18 @@ fn err_slant_skew_out_of_range() {
 }
 
 #[test]
+fn err_facing_not_a_direction() {
+    // SPEC §7/§15.8: every `facing:` owner — a plane's arrows, a cylinder's
+    // rim — reads the same four words, so one check rejects any other.
+    for src in [
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 40; height: 40 }\n|plane| \"A\" { at: 0; facing: sideways }\n",
+        "|queue#q| \"jobs\" { facing: sideways }\n",
+    ] {
+        assert_resolve_error(src, "'facing' is a direction — left, right, up, or down");
+    }
+}
+
+#[test]
 fn err_define_name_collides_with_template() {
     assert_resolve_error(
         "{\n  |badge::box| { }\n}\n|box#cat|\n",

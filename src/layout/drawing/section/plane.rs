@@ -11,6 +11,7 @@ pub(crate) const PLANE_END: &str = "plane-end";
 pub(crate) const PLANE_SHAFT: &str = "plane-shaft";
 pub(crate) const PLANE_ARROW: &str = "plane-arrow";
 use crate::layout::drawing::geometry::project;
+use crate::layout::geom;
 
 /// Fill every authored `|plane|` among a view's children from its
 /// geometry box [SPEC 15.8]: the placeholder becomes the thin chain line and
@@ -63,26 +64,21 @@ fn read_at(cp: &PlacedNode, geo: Bbox) -> Result<(f64, P), Error> {
 
 /// The viewing (sight) direction the arrows point [SPEC 15.8] — `facing:` or
 /// the plane's default (`right` for a vertical plane, `down` for a horizontal).
-fn read_facing(cp: &PlacedNode, axis: P) -> Result<P, Error> {
-    match cp.attrs.get("facing") {
-        Some(ResolvedValue::Ident(f)) => match f.as_str() {
-            "right" => Ok((1.0, 0.0)),
-            "left" => Ok((-1.0, 0.0)),
-            "down" => Ok((0.0, 1.0)),
-            "up" => Ok((0.0, -1.0)),
-            _ => Err(Error::at(
-                cp.span,
-                "'facing' turns the arrows — left, right, up, or down",
-            )),
-        },
-        _ if axis.0 != 0.0 => Ok((1.0, 0.0)), // a vertical plane → look right
-        _ => Ok((0.0, 1.0)),                  // a horizontal plane → look down
-    }
+fn read_facing(cp: &PlacedNode, axis: P) -> P {
+    let authored = match cp.attrs.get("facing") {
+        Some(ResolvedValue::Ident(f)) => geom::facing(f),
+        _ => None,
+    };
+    authored.unwrap_or(if axis.0 != 0.0 {
+        (1.0, 0.0) // a vertical plane → look right
+    } else {
+        (0.0, 1.0) // a horizontal plane → look down
+    })
 }
 
 fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
     let (n, axis) = read_at(cp, geo)?;
-    let facing = read_facing(cp, axis)?;
+    let facing = read_facing(cp, axis);
     let line_dir = (-axis.1, axis.0); // the plane runs perpendicular to its axis
 
     // The station along the axis; it must sit within the model's extent.

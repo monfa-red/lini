@@ -43,6 +43,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `else` | `block` | `else` |
 | `note` | `block` | `note` |
 | `balloon` | `oval` | `balloon` |
+| `queue` | `cyl` | `queue` |
 | `topic` | `block` | `topic` |
 | `mindmap` | `block` | `topic` → `mindmap` |
 | `drawing` | `block` | `drawing` |
@@ -215,7 +216,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `datums` | \|feature-control\|, \|control\| | `list:any` | `none` | — | — |
 | `modifiers` | \|feature-control\|, \|control\| | `list:any` | `none` | — | — |
 | `project` | dimension (role) | `one:ident` | `none` | — | hard-gate |
-| `facing` | \|plane\| | `one:ident` | `engine` | — | — |
+| `facing` | \|plane\|, \|cyl\| | `one:ident` | `engine` | — | — |
 | `of` | \|drawing\| | `one:ident` | `none` | — | — |
 | `title` | title-block (role) | `one:string` | `none` | — | — |
 | `drawing-number` | title-block (role) | `one:string` | `none` | — | — |

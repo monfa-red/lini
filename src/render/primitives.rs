@@ -13,6 +13,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, attr_points, class_list, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
+use crate::layout::cyl::Rim;
 use crate::math;
 use crate::resolve::{MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::fmt::Write;
@@ -234,42 +235,41 @@ fn emit_slant(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
 }
 
 fn emit_cyl(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
-    // Cylinder = ellipse top + body rect + ellipse bottom. The bbox carries
-    // total height; the ellipse rx == w/2, ry ≈ h/10.
+    // Cylinder = body (both side walls + the far end's arc) + the full rim
+    // ellipse on the end it faces ([`Rim`]). Drawn in the cylinder's own frame —
+    // `along` toward the rim, `across` a quarter-turn clockwise of it — so every
+    // `facing:` is one rotation of the upright drum (sweep flags survive it).
     let (w, h) = dim_excluding_stroke(n, thickness);
-    let rx = w / 2.0;
-    let ry = (h / 10.0).max(2.0);
-    let top_cy = -h / 2.0 + ry;
-    let bottom_cy = h / 2.0 - ry;
-    // Body as a path that draws sides + bottom arc (fill the cylinder).
+    let rim = Rim::of(&n.attrs, w, h);
+    let (a, d) = (rim.dir, rim.depth);
+    let c = (-a.1, a.0);
+    let upright = a.0 == 0.0;
+    let (half_len, r) = if upright { (h, w) } else { (w, h) };
+    let (end, r) = (half_len / 2.0 - d, r / 2.0);
+    let at = |along: f64, across: f64| {
+        (
+            num(along * a.0 + across * c.0),
+            num(along * a.1 + across * c.1),
+        )
+    };
+    // The end ellipse's screen radii: `r` across the cylinder, `d` along it.
+    let (erx, ery) = if upright {
+        (num(r), num(d))
+    } else {
+        (num(d), num(r))
+    };
+    let (p1, p2, p3, p4) = (at(end, -r), at(-end, -r), at(-end, r), at(end, r));
     writeln!(
         out,
-        r#"{}<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {} A {} {} 0 0 0 {} {} Z"/>"#,
-        indent,
-        num(-rx),
-        num(top_cy),
-        num(-rx),
-        num(bottom_cy),
-        num(rx),
-        num(ry),
-        num(rx),
-        num(bottom_cy),
-        num(rx),
-        num(top_cy),
-        num(rx),
-        num(ry),
-        num(-rx),
-        num(top_cy),
+        r#"{indent}<path d="M {} {} L {} {} A {erx} {ery} 0 0 0 {} {} L {} {} A {erx} {ery} 0 0 0 {} {} Z"/>"#,
+        p1.0, p1.1, p2.0, p2.1, p3.0, p3.1, p4.0, p4.1, p1.0, p1.1,
     )
     .unwrap();
-    // Top ellipse rim (visible curve on top).
+    let rim_c = at(end, 0.0);
     writeln!(
         out,
-        r#"{}<ellipse cx="0" cy="{}" rx="{}" ry="{}"/>"#,
-        indent,
-        num(top_cy),
-        num(rx),
-        num(ry),
+        r#"{indent}<ellipse cx="{}" cy="{}" rx="{erx}" ry="{ery}"/>"#,
+        rim_c.0, rim_c.1,
     )
     .unwrap();
 }

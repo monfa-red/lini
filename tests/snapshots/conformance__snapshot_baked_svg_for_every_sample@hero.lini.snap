@@ -256,17 +256,19 @@ input_file: samples/hero.lini
           <use href="#lini-g1500-303" transform="translate(11.6025 7.08) scale(0.015 -0.015)"/>
         </g>
       </g>
-      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #feedca; stroke: #9f6900; color: #6d3b00" transform="translate(119.8975,0)">
+      <g class="lini-node lini-queue lini-cyl" data-id="queue" style="fill: #feedca; stroke: #9f6900; color: #6d3b00" transform="translate(119.8975,0)">
         <g transform="translate(4,-4)">
-          <rect x="-43.475" y="-27.5" width="86.95" height="55" rx="8" ry="8"/>
+          <path d="M 37.975 -27.5 L -37.975 -27.5 A 5.5 27.5 0 0 0 -37.975 27.5 L 37.975 27.5 A 5.5 27.5 0 0 0 37.975 -27.5 Z"/>
+          <ellipse cx="37.975" cy="0" rx="5.5" ry="27.5"/>
         </g>
-        <rect x="-43.475" y="-27.5" width="86.95" height="55" rx="8" ry="8"/>
+        <path d="M 37.975 -27.5 L -37.975 -27.5 A 5.5 27.5 0 0 0 -37.975 27.5 L 37.975 27.5 A 5.5 27.5 0 0 0 37.975 -27.5 Z"/>
+        <ellipse cx="37.975" cy="0" rx="5.5" ry="27.5"/>
         <g class="lini-text">
-          <use href="#lini-g1500-121" transform="translate(-23.475 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-315" transform="translate(-11.025 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-213" transform="translate(-2.355 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-315" transform="translate(6.225 5.37) scale(0.015 -0.015)"/>
-          <use href="#lini-g1500-213" transform="translate(14.895 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-121" transform="translate(-25.185 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-315" transform="translate(-12.735 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-213" transform="translate(-4.065 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-315" transform="translate(4.515 5.37) scale(0.015 -0.015)"/>
+          <use href="#lini-g1500-213" transform="translate(13.185 5.37) scale(0.015 -0.015)"/>
         </g>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-171.6105,-62.5)">

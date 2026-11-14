@@ -55,9 +55,11 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("alt", "block"),
     ("else", "block"),
     // Core cross-layout templates [SPEC 8]: the note card (sequence, drawing,
-    // and plain diagrams alike) and the assembly balloon.
+    // and plain diagrams alike), the assembly balloon, and the queue — a
+    // cylinder laid on its side.
     ("note", "block"),
     ("balloon", "oval"),
+    ("queue", "cyl"),
     // Trees [SPEC 12]: the structural topic node — a compact framed card over
     // |block|; custom structural types derive from it (`|person::topic|`) — and
     // the |mindmap| preset over it: the node is the visible root topic; desugar

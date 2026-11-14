@@ -34,6 +34,10 @@
   |cap| "cyl"
 ]
 |tile| [
+  |queue| { width: 70; height: 46; fill: --blue-wash; stroke: --blue-deep; }
+  |cap| "queue"
+]
+|tile| [
   |diamond| { width: 70; height: 60; fill: --sky-wash; stroke: --sky-deep; }
   |cap| "diamond"
 ]

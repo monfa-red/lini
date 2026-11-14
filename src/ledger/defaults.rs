@@ -363,6 +363,10 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             n("scale", 1.0),
         ],
+        // The message queue [SPEC 8]: a cylinder on its side, rim toward the
+        // consumer — PlantUML's `queue`, C4's `ContainerQueue`, ISO 5807's
+        // direct-access storage. Paint rides `.lini-cyl`, so no second rule.
+        "queue" => vec![id("facing", "right")],
         // The datum layout [SPEC 12]: frameless, and padding-free like the
         // drawing built on it — the placed geometry is the content.
         "stack" => vec![id("layout", "stack"), n("padding", 0.0)],

@@ -686,7 +686,7 @@ empty `|oval|`) make a circle.
 | `\|oval\|` | size (auto) | Bbox ellipse; equal width/height = circle. |
 | `\|hex\|` | size (auto) | Regular hex, flat top/bottom. |
 | `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89), default 15. |
-| `\|cyl\|` | size (auto) | Cylinder; end ellipses ≈ h/10. |
+| `\|cyl\|` | size (auto) | Cylinder; its end ellipses a tenth of the **shorter** side deep, the full rim on the end it **faces** — `facing: up` (default) · `right` · `down` · `left`, each a rotation of the upright drum that keeps its label level (`rotate:` would turn the label too). `\|queue\|` is the one laid on its side ([SPEC 8](#8-templates)). |
 | `\|diamond\|` | size (auto) | Rhombus inscribed in the bbox. |
 | `\|poly\|` | `points` | ≥3 points, local (centre-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
@@ -805,6 +805,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 |---|---|---|---|
 | `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 8; padding: 20` | The **default** node — a rounded, framed card. |
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
+| `\|queue\|` | `\|cyl\|` | `facing: right` | A message **queue** — the cylinder on its side, its rim toward the consumer (PlantUML's `queue`, ISO 5807 direct-access storage). |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 8; padding: 20` | Dashed frame for a caption + children. |
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -20; color: --caption-color; font-size: 12∕15 of inherited ([SPEC 6](#6-paint-stroke--text)); font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
 | `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 19; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
@@ -960,6 +961,7 @@ template:
 |---|---|
 | Circle | `\|oval\| { width: 40 }` |
 | Database | `\|cyl\|` |
+| Queue | `\|queue\|` |
 | Arrow | `\|line\| { marker-end: arrow; points: 0 0, 50 0 }` |
 
 ---
@@ -4165,7 +4167,7 @@ out of scope.
 | `side` | a dimension / callout (also `\|axis\|`, above) | side · corner · `left` / `right` along an aligned span | by axis | [SPEC 15.6](#156-dimensions) |
 | `project` | a `(-)` dimension | `horizontal` · `vertical` · `aligned` | inferred | [SPEC 15.6](#156-dimensions) |
 | `gap` | a mate | signed number — separation along the normal (a dimension stands off by `clearance` — [SPEC 21](#21-errors)) | — | [SPEC 15.5](#155-mates--seating) |
-| `facing` | `\|plane\|` | `left`·`right`·`up`·`down` | by plane | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `facing` | `\|plane\|` · `\|cyl\|` | `left`·`right`·`up`·`down` | by plane · `up` | the viewing arrows ([SPEC 15.8](#158-assemblies-views-sheets--titles)) · the full rim's end ([SPEC 7](#7-nodes)) |
 | `of` | `\|drawing\|` | a `\|plane\|` / `\|magnifier\|` id | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `thickness` | a floorplan scope · `\|wall\|` — **inherits**, nearest wins | number > 0 | 200 mm | [SPEC 15.11](#1511-floorplan--the-architectural-dialect) |
@@ -4753,7 +4755,7 @@ error.
 | `of:` names a non-marker | `'of' names 'X', not a '\|plane\|' or '\|magnifier\|'` |
 | Detail of a sourced view | `a detail magnifies a base view — 'of' can't name a marker inside another sourced view` |
 | `at:` off the model | `a 'plane' at N sits off the model` |
-| Bad `facing:` | `'facing' turns the arrows — left, right, up, or down` |
+| Bad `facing:` | `'facing' is a direction — left, right, up, or down` |
 | Marked projection op | `a projection line is unmarked — write 'side.screw:head - end.od:top'` |
 | Projection ends in one view | `a projection link ties two views — both ends read 'side'` |
 | Projection end off a view | `a projection link ties drawing anchors — 'notes' is not in a drawing view` |

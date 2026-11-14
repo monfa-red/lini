@@ -173,6 +173,7 @@ Templates (all overridable; extend with `|name::base| { … }`):
 |---|---|
 | `\|box\|` | the default: rounded framed card (radius 8, padding 20) |
 | `\|rect\|` | sharp-cornered box |
+| `\|queue\|` | message queue — a `\|cyl\|` on its side, label level; any cyl takes `facing: up \| right \| down \| left` (never `rotate:`, which turns the label) |
 | `\|group\|` | dashed light frame for a captioned region |
 | `\|caption\|` · `\|footnote\|` · `\|sheet-caption\|` | small muted title pinned above the top-left corner (a group/table **label becomes one**) · at the bottom centre · inside the top-left corner (a schematic scope's label lowers to it) |
 | `\|badge\|` | small accent pill pinned over the top-right corner |

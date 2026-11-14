@@ -1,6 +1,7 @@
 mod anchors;
 mod arrange;
 pub(crate) mod chart;
+pub(crate) mod cyl;
 pub(crate) mod datum;
 pub(crate) mod drawing;
 mod flex;
@@ -688,19 +689,13 @@ fn layout_inst(
         };
         let text_only = children.iter().all(|c| c.kind == NodeKind::Text);
 
-        // Some closed shapes carry decoration at the top — a cloud's lobes, a
-        // cylinder's rim — so the optical body-center sits below the bbox center
-        // and a centered label reads too high. Drop a text-only label into the
-        // body by a per-primitive fraction of the height (the outlines are
-        // scale-invariant, so a fraction holds at any size).
-        const CYL_LABEL_DROP: f64 = 0.03;
-        let label_drop = match inst.kind {
-            NodeKind::Cyl => CYL_LABEL_DROP,
-            _ => 0.0,
-        };
-        if label_drop > 0.0 && text_only {
-            let dy = b.h() * label_drop;
+        // A cylinder's rim crowds the end it faces, so the optical body-centre
+        // sits off the bbox centre and a centred label reads too close to the
+        // rim: lean a text-only label away from it ([`cyl::Rim`]).
+        if inst.kind == NodeKind::Cyl && text_only {
+            let (dx, dy) = cyl::Rim::of(&inst.attrs, b.w(), b.h()).label_lean();
             for c in &mut children {
+                c.cx += dx;
                 c.cy += dy;
             }
         }

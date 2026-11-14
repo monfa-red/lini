@@ -32,6 +32,30 @@ fn every_primitive_emits_its_element() {
     }
 }
 
+/// A cylinder's full rim rides the end it faces [SPEC 7] — each `facing:` one
+/// rotation of the upright drum, the `|queue|` the one laid on its side
+/// [SPEC 8]; the rim's depth reads the shorter side, so the turned ones match.
+#[test]
+fn cyl_rim_rides_the_end_it_faces() {
+    let mut out = String::new();
+    for src in [
+        "|cyl| { width: 80; height: 50 }",
+        "|cyl| { width: 50; height: 80; facing: right }",
+        "|queue| { width: 80; height: 50 }",
+        "|cyl| { width: 80; height: 50; facing: down }",
+        "|cyl| { width: 80; height: 50; facing: left }",
+    ] {
+        let svg = render_live(&format!("{src}\n"));
+        let geometry: Vec<&str> = svg
+            .lines()
+            .map(str::trim)
+            .filter(|l| l.starts_with("<path") || l.starts_with("<ellipse"))
+            .collect();
+        out.push_str(&format!("{src}\n  {}\n", geometry.join("\n  ")));
+    }
+    insta::assert_snapshot!(out);
+}
+
 // ───────────────────────────── icons (SPEC §7) ─────────────────────────────
 
 #[cfg(feature = "icons")]

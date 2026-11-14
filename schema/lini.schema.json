@@ -626,6 +626,17 @@
       }
     },
     {
+      "name": "queue",
+      "primitive": "cyl",
+      "base": "cyl",
+      "chain": [
+        "queue"
+      ],
+      "defaults": {
+        "facing": "right"
+      }
+    },
+    {
       "name": "topic",
       "primitive": "block",
       "base": "block",
@@ -3331,6 +3342,10 @@
         {
           "kind": "type",
           "name": "plane"
+        },
+        {
+          "kind": "type",
+          "name": "cyl"
         }
       ],
       "shape": "one",

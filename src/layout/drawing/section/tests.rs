@@ -86,16 +86,6 @@ fn at_off_the_model_errors() {
 }
 
 #[test]
-fn bad_facing_errors() {
-    assert_eq!(
-        layout_err(
-            "{ layout: drawing; density: 1 }\n|rect#plate| { width: 40; height: 40 }\n|plane| \"A\" { at: 0; facing: sideways }\n",
-        ),
-        "'facing' turns the arrows — left, right, up, or down"
-    );
-}
-
-#[test]
 fn a_detail_view_re_lays_the_region_titles_and_clips_and_dims_the_clone() {
     // A plate with a marker `c`; the detail magnifies it 2:1 (scale 8 over
     // the page's 4) and dimensions the **clone** (40, pre-scale, deferred
