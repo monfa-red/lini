@@ -258,8 +258,8 @@ pub(crate) fn polyline(chain: &Chain) -> Vec<(f64, f64)> {
     };
     let mut pts = Vec::with_capacity(chain.runs.len() + 1);
     pts.push(port(0, &chain.ends[0]));
-    for i in 0..chain.runs.len() - 1 {
-        pts.push(match chain.runs[i].axis {
+    for (i, run) in chain.runs.iter().enumerate().take(chain.runs.len() - 1) {
+        pts.push(match run.axis {
             Axis::H => (ord(i + 1), ord(i)),
             Axis::V => (ord(i), ord(i + 1)),
         });
